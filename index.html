@@ -3,337 +3,960 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0b1020">
+<meta name="theme-color" content="#ffffff">
 <title>Crypto Trader Pro</title>
 
 <style>
-*{box-sizing:border-box}
-body{
-  margin:0;padding:16px;
-  background:#0b1020;color:#f1f5f9;
-  font-family:Arial,sans-serif
+:root {
+  --red: #e53945;
+  --green: #16a34a;
+  --violet: #7c3aed;
+  --orange: #f97316;
+  --blue: #2563eb;
+  --text: #172033;
+  --muted: #64748b;
+  --border: #e2e8f0;
 }
-.app{max-width:500px;margin:auto}
-header{text-align:center;margin-bottom:18px}
-h1{font-size:24px;color:#f9d423;margin:10px 0}
-.subtitle{font-size:12px;color:#94a3b8}
-.card{
-  background:#151d32;border:1px solid #293653;
-  border-radius:15px;padding:16px;margin-bottom:14px
+
+* {
+  box-sizing: border-box;
 }
-.stats{
-  display:grid;grid-template-columns:1fr 1fr;gap:10px
+
+body {
+  margin: 0;
+  background: #ffffff;
+  color: var(--text);
+  font-family: Arial, sans-serif;
 }
-.stat{background:#202b43;padding:12px;border-radius:10px}
-.label{font-size:12px;color:#94a3b8}
-.value{font-size:21px;font-weight:bold;margin-top:6px}
-.timer{text-align:center;font-size:48px;font-weight:bold;color:#f9d423}
-.status{text-align:center;color:#4ade80;font-size:13px}
-.period{text-align:center;color:#94a3b8;font-size:12px;margin-top:8px}
-h2{font-size:15px;margin:0 0 12px}
-.amount{display:flex;gap:8px;margin-bottom:10px}
-input{
-  width:100%;min-width:0;padding:12px;
-  border-radius:9px;border:1px solid #344563;
-  background:#0b1020;color:white;font-size:16px
+
+.app {
+  max-width: 520px;
+  margin: auto;
+  padding: 16px 14px 30px;
 }
-button{
-  border:0;border-radius:9px;padding:12px 5px;
-  color:white;font-weight:bold;cursor:pointer;
-  touch-action:manipulation
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
 }
-button:disabled{opacity:.35;cursor:not-allowed}
-.quick{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:16px}
-.quick button{background:#293653}
-.numbers{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:18px}
-.number{background:#1769aa;font-size:18px;min-height:48px}
-.violet{background:#8129ad!important}
-.colors{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
-.red{background:#dc303b}
-.green{background:#199653}
-.purple{background:#8129ad}
-.sizes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.big{background:#e87918}
-.small{background:#087e8b}
-#message{text-align:center;line-height:1.6;font-size:14px}
-.history{display:flex;gap:7px;flex-wrap:wrap}
-.ball{
-  width:34px;height:34px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-weight:bold;font-size:12px
+
+.logo {
+  font-size: 19px;
+  font-weight: 900;
 }
-.muted{color:#94a3b8;font-size:12px}
-footer{text-align:center;color:#64748b;font-size:11px;padding:12px}
+
+.logo span {
+  color: var(--blue);
+}
+
+.badge {
+  background: #eff6ff;
+  color: var(--blue);
+  padding: 7px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.notice {
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.heading {
+  font-size: 16px;
+  font-weight: 900;
+  margin: 20px 0 10px;
+}
+
+.wallets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.wallet {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: white;
+  box-shadow: 0 3px 12px #00000008;
+}
+
+.wallet.usdt {
+  border-top: 4px solid var(--green);
+}
+
+.wallet.points {
+  border-top: 4px solid var(--blue);
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.balance {
+  font-size: 22px;
+  font-weight: 900;
+  margin: 9px 0 4px;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn {
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--blue);
+  color: white;
+  font-weight: bold;
+}
+
+.btn.secondary {
+  background: #eff6ff;
+  color: var(--blue);
+  border: 1px solid #bfdbfe;
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  padding: 14px;
+  background: white;
+}
+
+.round {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.timer {
+  font-size: 29px;
+  font-weight: 900;
+  color: var(--blue);
+}
+
+.period {
+  font-weight: bold;
+  margin-top: 5px;
+}
+
+.progress {
+  height: 5px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 13px 0 8px;
+}
+
+.fill {
+  height: 100%;
+  width: 100%;
+  background: var(--blue);
+  transition: width 0.3s;
+}
+
+.status {
+  color: var(--green);
+  font-size: 12px;
+}
+
+.status.locked {
+  color: #b45309;
+}
+
+.choices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pick {
+  min-height: 60px;
+  border: 0;
+  border-radius: 12px;
+  padding: 11px 4px;
+  color: white;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.pick small {
+  display: block;
+  margin-top: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.red {
+  background: var(--red);
+}
+
+.green {
+  background: var(--green);
+}
+
+.violet {
+  background: var(--violet);
+}
+
+.orange {
+  background: var(--orange);
+}
+
+.blue {
+  background: var(--blue);
+}
+
+.neutral {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.selected {
+  outline: 3px solid #172033;
+  outline-offset: 2px;
+}
+
+.numbers {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.num {
+  height: 46px;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 18px;
+  font-weight: 900;
+  position: relative;
+}
+
+.num.red {
+  background: var(--red);
+}
+
+.num.green {
+  background: var(--green);
+}
+
+.num.special::after {
+  content: "V";
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--violet);
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 16px;
+  background: white;
+  color: var(--text);
+}
+
+.quick {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.quick button {
+  padding: 10px 2px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: var(--blue);
+  font-weight: bold;
+}
+
+.summary {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  font-size: 12px;
+  line-height: 1.9;
+}
+
+.summary div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.summary strong {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.place {
+  width: 100%;
+  margin-top: 12px;
+  padding: 15px;
+  border: none;
+  border-radius: 11px;
+  background: linear-gradient(90deg, #2563eb, #4f46e5);
+  color: white;
+  font-weight: 900;
+}
+
+.place:disabled,
+.pick:disabled,
+.num:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.rows {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.empty {
+  padding: 14px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.message {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.foot {
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+@media (max-width: 350px) {
+  .app {
+    padding: 12px 10px;
+  }
+
+  .balance {
+    font-size: 19px;
+  }
+
+  .timer {
+    font-size: 25px;
+  }
+}
 </style>
 </head>
 
 <body>
-<div class="app">
-<header>
-  <h1>🚀 CRYPTO TRADER PRO</h1>
-  <div class="subtitle">3-Minute Demo Prediction Game</div>
+<main class="app" id="app">
+
+<header class="header">
+  <div>
+    <div class="logo">CRYPTO <span>TRADER PRO</span></div>
+    <div class="muted">Colour Prediction Game</div>
+  </div>
+  <span class="badge">DEMO MODE</span>
 </header>
 
-<div class="card stats">
-  <div class="stat">
-    <div class="label">💰 DEMO BALANCE</div>
-    <div class="value" id="balance">1000.00</div>
-  </div>
-  <div class="stat">
-    <div class="label">📊 NET P/L</div>
-    <div class="value" id="pl">0.00</div>
-  </div>
+<div class="notice">
+  <strong>Demo only:</strong> Balances and results are simulated in this browser.
+  Real USDT deposits and withdrawals are not enabled.
 </div>
 
-<div class="card">
-  <div class="timer" id="timer">150</div>
-  <div class="status" id="status">🟢 BETTING OPEN</div>
-  <div class="period">Period #<span id="period">001</span></div>
-  <p class="muted" style="text-align:center">150s betting · 30s result · 180s total</p>
-</div>
+<section>
+  <h2 class="heading">💼 My Wallet</h2>
 
-<div class="card">
-  <h2>💰 Bet Amount (Points)</h2>
-  <div class="amount">
-    <input id="amount" type="number" value="10" min="10" step="1">
+  <div class="wallets">
+    <div class="wallet usdt">
+      <div class="muted">💵 USDT Balance</div>
+      <div class="balance" id="usdt">10.00</div>
+      <div class="muted">USDT</div>
+    </div>
+
+    <div class="wallet points">
+      <div class="muted">🪙 Points Balance</div>
+      <div class="balance" id="points">1,000</div>
+      <div class="muted">100 Points = 1 USDT</div>
+    </div>
   </div>
+
+  <div class="actions">
+    <button class="btn" id="deposit">＋ Deposit</button>
+    <button class="btn secondary" id="withdraw">↗ Withdraw</button>
+  </div>
+</section>
+
+<section>
+  <h2 class="heading">🎮 Game Round</h2>
+
+  <div class="panel">
+    <div class="round">
+      <div>
+        <div class="muted">CURRENT PERIOD</div>
+        <div class="period" id="period">DEMO-000001</div>
+      </div>
+
+      <div style="text-align:right">
+        <div class="timer" id="timer">3:00</div>
+        <div class="muted">ROUND TIMER</div>
+      </div>
+    </div>
+
+    <div class="progress">
+      <div class="fill" id="fill"></div>
+    </div>
+
+    <div class="status" id="status">● Betting is open</div>
+  </div>
+</section>
+
+<section>
+  <h2 class="heading">🎨 Choose Colour</h2>
+
+  <div class="choices">
+    <button class="pick red" data-kind="colour" data-value="Red">
+      🔴 RED
+      <small>0, 2, 4, 6, 8</small>
+      <small>0 pays 0.5×</small>
+    </button>
+
+    <button class="pick green" data-kind="colour" data-value="Green">
+      🟢 GREEN
+      <small>1, 3, 5, 7, 9</small>
+      <small>5 pays 0.5×</small>
+    </button>
+
+    <button class="pick violet" data-kind="colour" data-value="Violet">
+      🟣 VIOLET
+      <small>0 and 5</small>
+      <small>4.5× payout</small>
+    </button>
+  </div>
+</section>
+
+<section>
+  <h2 class="heading">📏 Choose Big / Small</h2>
+
+  <div class="choices">
+    <button class="pick orange" data-kind="size" data-value="Big">
+      BIG
+      <small>5–9 · 2×</small>
+    </button>
+
+    <button class="pick blue" data-kind="size" data-value="Small">
+      SMALL
+      <small>0–4 · 2×</small>
+    </button>
+
+    <button class="pick neutral" data-kind="size" data-value="none">
+      NO PICK
+      <small>Optional</small>
+    </button>
+  </div>
+</section>
+
+<section>
+  <h2 class="heading">🔢 Choose Number</h2>
+
+  <div class="numbers" id="numbers"></div>
+
+  <div class="muted" style="margin-top:8px">
+    Purple V badge marks Violet numbers 0 and 5.
+  </div>
+</section>
+
+<section class="panel" style="margin-top:20px">
+  <h2 class="heading">💰 Bet Amount</h2>
+
+  <label class="muted" for="amount">Amount in Points · Minimum 10</label>
+
+  <input
+    class="input"
+    id="amount"
+    type="number"
+    min="10"
+    step="1"
+    value="10"
+    inputmode="numeric"
+  >
 
   <div class="quick">
     <button data-amount="10">10</button>
-    <button data-amount="25">25</button>
     <button data-amount="50">50</button>
     <button data-amount="100">100</button>
-    <button data-amount="250">250</button>
+    <button data-amount="500">500</button>
   </div>
 
-  <h2>🔢 Choose Number · 9x</h2>
-  <div class="numbers" id="numbers"></div>
-
-  <h2>🎨 Choose Color</h2>
-  <div class="colors">
-    <button class="red" data-type="color" data-value="red">🔴 RED<br>2x</button>
-    <button class="green" data-type="color" data-value="green">🟢 GREEN<br>2x</button>
-    <button class="purple" data-type="color" data-value="violet">🟣 VIOLET<br>5x</button>
+  <div class="summary">
+    <div>
+      <span class="muted">Selected bet</span>
+      <strong id="selected">None</strong>
+    </div>
+    <div>
+      <span class="muted">Stake</span>
+      <strong id="stake">10 Points</strong>
+    </div>
+    <div>
+      <span class="muted">Platform fee (2%)</span>
+      <strong id="fee">0.20 Points</strong>
+    </div>
+    <div>
+      <span class="muted">Illustrative payout</span>
+      <strong id="payout">0 Points</strong>
+    </div>
   </div>
 
-  <h2 style="margin-top:16px">📈 Big / Small</h2>
-  <div class="sizes">
-    <button class="big" data-type="size" data-value="big">⬆ BIG · 2x</button>
-    <button class="small" data-type="size" data-value="small">⬇ SMALL · 2x</button>
+  <button class="place" id="place">PLACE DEMO BET</button>
+  <div class="message" id="message" aria-live="polite"></div>
+</section>
+
+<section class="panel" style="margin-top:18px">
+  <h2 class="heading">📌 Current Bets</h2>
+  <div id="bets" class="empty">No bets placed this round.</div>
+</section>
+
+<section class="panel" style="margin-top:18px">
+  <h2 class="heading">📊 Recent Results</h2>
+  <div id="history" class="empty">Waiting for first demo result.</div>
+</section>
+
+<section class="panel" style="margin-top:18px">
+  <h2 class="heading">📘 Game Rules</h2>
+  <div style="font-size:12px;line-height:1.9">
+    🔴 Red: 0, 2, 4, 6, 8<br>
+    🟢 Green: 1, 3, 5, 7, 9<br>
+    🟣 Violet: 0 and 5<br>
+    🟠 Big: 5–9 · 🔵 Small: 0–4<br>
+    Regular Red/Green match: 2× total payout<br>
+    Red on 0 / Green on 5: 0.5× total payout<br>
+    Violet on 0 or 5: 4.5× total payout<br>
+    Betting closes during the last 30 seconds.
   </div>
-  <p class="muted">Small: 0–4 · Big: 5–9</p>
+</section>
+
+<div class="foot">
+  Frontend demo only. Real deposits, withdrawals, secure balances and
+  server-verified game results require a backend and appropriate legal
+  and payment-provider approval.
 </div>
 
-<div class="card">
-  <h2>📋 My Bets</h2>
-  <div id="bets"><p class="muted">No bets placed.</p></div>
-</div>
-
-<div class="card">
-  <h2>🎯 Latest Result</h2>
-  <div id="message">Waiting for the first result...</div>
-</div>
-
-<div class="card">
-  <h2>📜 Recent Results</h2>
-  <div class="history" id="history"></div>
-</div>
-
-<footer>
-  Demo points only · No real deposits or withdrawals<br>
-  Results are generated locally in your browser.
-</footer>
-</div>
+</main>
 
 <script>
-(function(){
+(() => {
+  "use strict";
+
   const $ = id => document.getElementById(id);
 
-  let balance = 1000;
-  let netPL = 0;
-  let period = 1;
-  let remaining = 150;
-  let phase = "BET";
+  let points = 1000;
+  let round = 1;
+  let left = 180;
+  let locked = false;
+
+  let selected = {
+    colour: null,
+    size: null,
+    number: null
+  };
+
   let bets = [];
   let history = [];
-  let interval = null;
-  let roundToken = 0;
 
-  for(let n=0;n<=9;n++){
-    const btn=document.createElement("button");
-    btn.className="number"+([0,5].includes(n)?" violet":"");
-    btn.textContent=n;
-    btn.dataset.type="number";
-    btn.dataset.value=n;
-    $("numbers").appendChild(btn);
-  }
+  const feeRate = 0.02;
 
-  document.querySelectorAll("[data-amount]").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      $("amount").value=btn.dataset.amount;
-    });
+  const fmt = n => Number(n).toLocaleString("en-US", {
+    maximumFractionDigits: 2
   });
 
-  document.querySelectorAll("[data-type]").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      placeBet(btn.dataset.type,btn.dataset.value);
-    });
-  });
+  const sizeOf = n => n >= 5 ? "Big" : "Small";
 
-  function update(){
-    $("balance").textContent=balance.toFixed(2);
-    $("pl").textContent=(netPL>0?"+":"")+netPL.toFixed(2);
-    $("timer").textContent=remaining;
-    $("period").textContent=String(period).padStart(3,"0");
+  const colourOf = n => {
+    if (n === 0) return "Red + Violet";
+    if (n === 5) return "Green + Violet";
+    return n % 2 === 0 ? "Red" : "Green";
+  };
 
-    $("status").textContent=phase==="BET"
-      ?"🟢 BETTING OPEN"
-      :phase==="LOCKED"
-      ?"🔒 BETTING CLOSED"
-      :"🔴 RESULT PHASE";
+  const open = () => left > 30 && !locked;
 
-    document.querySelectorAll("[data-type]").forEach(btn=>{
-      btn.disabled=phase!=="BET";
-    });
+  const safe = s => String(s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[c]));
 
-    $("bets").innerHTML=bets.length
-      ?bets.map(b=>`<p>${b.label} — ${b.amount} pts</p>`).join("")
-      :'<p class="muted">No bets placed.</p>';
+  function message(text) {
+    $("message").textContent = text;
   }
 
-  function placeBet(type,value){
-    if(phase!=="BET")return;
+  function balances() {
+    $("points").textContent = fmt(points);
+    $("usdt").textContent = (points / 100).toFixed(2);
+  }
 
-    const amount=Number($("amount").value);
-    if(!Number.isSafeInteger(amount)||amount<10){
-      alert("Minimum bet is 10 whole points.");
+  function getPicks() {
+    return Object.entries(selected)
+      .filter(([key, value]) => value !== null)
+      .map(([kind, value]) => ({ kind, value }));
+  }
+
+  function updateSummary() {
+    const stake = Number($("amount").value) || 0;
+
+    $("selected").textContent = getPicks()
+      .map(p => p.kind === "number"
+        ? "Number " + p.value
+        : p.value
+      ).join(" + ") || "None";
+
+    $("stake").textContent = fmt(stake) + " Points";
+    $("fee").textContent = fmt(stake * feeRate) + " Points";
+
+    const multiplier = selected.colour === "Violet"
+      ? 4.5
+      : selected.number !== null
+        ? 9
+        : 2;
+
+    $("payout").textContent =
+      fmt(Math.max(0, stake - stake * feeRate) * multiplier) +
+      " Points";
+  }
+
+  function renderBets() {
+    $("bets").innerHTML = bets.length
+      ? bets.map(b => `
+        <div class="rows">
+          <span>
+            ${safe(b.label)}<br>
+            <span class="muted">
+              ${safe(b.period)} · ${safe(b.outcome || "Pending")}
+            </span>
+          </span>
+          <strong>${fmt(b.stake)} pts</strong>
+        </div>
+      `).join("")
+      : '<div class="empty">No bets placed this round.</div>';
+  }
+
+  function renderHistory() {
+    $("history").innerHTML = history.length
+      ? history.map(h => `
+        <div class="rows">
+          <span>
+            ${safe(h.period)} · <strong>${h.number}</strong> ·
+            ${safe(h.colour)} · ${safe(h.size)}
+          </span>
+          <strong>${safe(h.time)}</strong>
+        </div>
+      `).join("")
+      : '<div class="empty">Waiting for first demo result.</div>';
+  }
+
+  function updateTimer() {
+    const minutes = Math.floor(left / 60);
+    const seconds = left % 60;
+
+    $("timer").textContent =
+      minutes + ":" + String(seconds).padStart(2, "0");
+
+    $("period").textContent =
+      "DEMO-" + String(round).padStart(6, "0");
+
+    $("fill").style.width = (left / 180 * 100) + "%";
+
+    $("status").textContent = open()
+      ? "● Betting is open"
+      : left > 0
+        ? "🔒 Betting is locked"
+        : "Round settling";
+
+    $("status").classList.toggle("locked", !open());
+
+    document.querySelectorAll("#app [data-kind], #place")
+      .forEach(button => {
+        button.disabled = !open();
+      });
+  }
+
+  function choose(kind, value, button) {
+    if (!open()) {
+      message("Betting is locked for this round.");
       return;
     }
 
-    if(amount>balance){
-      alert("Insufficient demo balance.");
+    selected[kind] = value === "none" ? null : value;
+
+    document.querySelectorAll(
+      '#app [data-kind="' + kind + '"]'
+    ).forEach(item => {
+      item.classList.toggle("selected", item === button);
+    });
+
+    updateSummary();
+    message("Selection updated.");
+  }
+
+  function calculateMultiplier(bet, result) {
+    let multiplier = 0;
+
+    if (bet.colour === "Violet" &&
+        (result === 0 || result === 5)) {
+      multiplier += 4.5;
+    } else if (bet.colour === "Red") {
+      if (result === 0) multiplier += 0.5;
+      else if ([2, 4, 6, 8].includes(result)) multiplier += 2;
+    } else if (bet.colour === "Green") {
+      if (result === 5) multiplier += 0.5;
+      else if ([1, 3, 7, 9].includes(result)) multiplier += 2;
+    }
+
+    if (bet.size && bet.size === sizeOf(result)) {
+      multiplier += 2;
+    }
+
+    if (bet.number !== null && Number(bet.number) === result) {
+      multiplier += 9;
+    }
+
+    return multiplier;
+  }
+
+  function settleRound() {
+    if (locked) return;
+
+    locked = true;
+
+    // Random browser result is for demonstration only.
+    const result = Math.floor(Math.random() * 10);
+    let totalPayout = 0;
+
+    for (const bet of bets) {
+      const multiplier = calculateMultiplier(bet, result);
+
+      if (multiplier > 0) {
+        const payout = Math.round(
+          Math.max(0, bet.stake - bet.fee) *
+          multiplier * 100
+        ) / 100;
+
+        points += payout;
+        totalPayout += payout;
+        bet.outcome = "Won " + fmt(payout) + " points";
+      } else {
+        bet.outcome = "Lost";
+      }
+    }
+
+    history.unshift({
+      period: "DEMO-" + String(round).padStart(6, "0"),
+      number: result,
+      colour: colourOf(result),
+      size: sizeOf(result),
+      time: new Date().toLocaleTimeString()
+    });
+
+    history = history.slice(0, 10);
+
+    balances();
+    renderHistory();
+    renderBets();
+
+    message(
+      "Demo result: " + result + " · " +
+      colourOf(result) + " · " + sizeOf(result) +
+      " · Total payout: " + fmt(totalPayout) + " points."
+    );
+  }
+
+  $("numbers").innerHTML = Array.from(
+    { length: 10 },
+    (_, number) => `
+      <button
+        type="button"
+        class="num ${number % 2 === 0 ? "red" : "green"}
+        ${(number === 0 || number === 5) ? "special" : ""}"
+        data-kind="number"
+        data-value="${number}"
+        aria-label="Number ${number}"
+      >${number}</button>
+    `
+  ).join("");
+
+  $("app").addEventListener("click", event => {
+    const button = event.target.closest("button");
+    if (!button) return;
+
+    if (button.dataset.kind) {
+      choose(
+        button.dataset.kind,
+        button.dataset.value,
+        button
+      );
       return;
     }
 
-    let label;
-    if(type==="number")label="Number "+value;
-    else if(type==="color")label=value.toUpperCase();
-    else label=value.toUpperCase();
+    if (button.dataset.amount) {
+      $("amount").value = button.dataset.amount;
+      updateSummary();
+      return;
+    }
 
-    balance-=amount;
-    netPL-=amount;
-    bets.push({type,value:type==="number"?Number(value):value,amount,label});
-    update();
-  }
+    if (button.id === "place") {
+      if (!open()) return;
 
-  function endRound(token){
-    if(token!==roundToken)return;
-    phase="RESULT";
+      const stake = Number($("amount").value);
 
-    const number=Math.floor(Math.random()*10);
-    const violet=[0,5].includes(number);
-    const color=violet?"violet":number%2===0?"red":"green";
-
-    let payout=0;
-    const details=[];
-
-    bets.forEach(b=>{
-      let won=false,multiplier=0;
-
-      if(b.type==="number"&&b.value===number){
-        won=true;multiplier=9;
-      }else if(b.type==="color"&&b.value===color){
-        won=true;multiplier=color==="violet"?5:2;
-      }else if(b.type==="size"&&(
-        (b.value==="big"&&number>=5)||
-        (b.value==="small"&&number<=4)
-      )){
-        won=true;multiplier=2;
-      }
-
-      if(won){
-        const amount=b.amount*multiplier;
-        payout+=amount;
-        details.push(b.label+" won "+amount+" pts");
-      }
-    });
-
-    balance+=payout;
-    netPL+=payout;
-
-    const ballColor=color==="red"?"#dc303b":
-      color==="green"?"#199653":"#8129ad";
-
-    $("message").innerHTML=
-      `<div class="ball" style="margin:0 auto 12px;background:${ballColor};width:58px;height:58px;font-size:22px">${number}</div>
-      <strong>${color.toUpperCase()}</strong><br>
-      ${payout>0?"🎉 Payout: "+payout+" pts":"No winning bets"}<br>
-      <span class="muted">${details.join(" · ")}</span>`;
-
-    history.unshift({number,color,period});
-    history=history.slice(0,15);
-
-    $("history").innerHTML=history.map(h=>{
-      const c=h.color==="red"?"#dc303b":
-        h.color==="green"?"#199653":"#8129ad";
-      return `<div class="ball" title="Period ${h.period}" style="background:${c}">${h.number}</div>`;
-    }).join("");
-
-    bets=[];
-    update();
-
-    remaining=30;
-    const resultToken=token;
-    interval=setInterval(()=>{
-      if(resultToken!==roundToken){
-        clearInterval(interval);
-        return;
-      }
-      remaining--;
-      update();
-
-      if(remaining<=0){
-        clearInterval(interval);
-        period++;
-        remaining=150;
-        phase="BET";
-        $("message").textContent="Waiting for the next result...";
-        update();
-        startRound();
-      }
-    },1000);
-  }
-
-  function startRound(){
-    if(interval)clearInterval(interval);
-    const token=++roundToken;
-    remaining=150;
-    phase="BET";
-    update();
-
-    interval=setInterval(()=>{
-      if(token!==roundToken){
-        clearInterval(interval);
+      if (!Number.isInteger(stake) || stake < 10) {
+        message("Minimum bet is 10 whole Points.");
         return;
       }
 
-      remaining--;
-
-      if(remaining===0){
-        clearInterval(interval);
-        phase="LOCKED";
-        remaining=0;
-        update();
-        endRound(token);
+      if (stake > points) {
+        message("Insufficient demo Points.");
         return;
       }
 
-      update();
-    },1000);
-  }
+      if (!getPicks().length) {
+        message("Choose colour, size, or number first.");
+        return;
+      }
 
-  update();
-  startRound();
+      const fee = Math.round(stake * feeRate * 100) / 100;
+
+      points = Math.round((points - stake) * 100) / 100;
+
+      const label = getPicks().map(p =>
+        p.kind === "number"
+          ? "Number " + p.value
+          : p.value
+      ).join(" + ");
+
+      bets.push({
+        period: "DEMO-" + String(round).padStart(6, "0"),
+        label,
+        colour: selected.colour,
+        size: selected.size,
+        number: selected.number,
+        stake,
+        fee,
+        outcome: "Pending"
+      });
+
+      balances();
+      renderBets();
+      updateSummary();
+
+      message(
+        "Demo bet placed: " + stake +
+        " points; platform fee " + fee + " points."
+      );
+    }
+  });
+
+  $("amount").addEventListener("input", updateSummary);
+
+  $("deposit").addEventListener("click", () => {
+    message(
+      "Demo only: minimum deposit is 1 USDT. " +
+      "Real payment verification is not connected."
+    );
+  });
+
+  $("withdraw").addEventListener("click", () => {
+    message(
+      "Demo only: minimum withdrawal is 3 USDT, " +
+      "with a planned 10% fee. Real withdrawals are disabled."
+    );
+  });
+
+  balances();
+  updateSummary();
+  renderBets();
+  renderHistory();
+  updateTimer();
+
+  setInterval(() => {
+    if (locked) return;
+
+    if (left > 0) left--;
+
+    updateTimer();
+
+    if (left === 30) {
+      message("Betting locked. Waiting for round result.");
+    }
+
+    if (left === 0) {
+      settleRound();
+
+      setTimeout(() => {
+        round++;
+        left = 180;
+        locked = false;
+        bets = [];
+
+        selected = {
+          colour: null,
+          size: null,
+          number: null
+        };
+
+        document.querySelectorAll("#app .selected")
+          .forEach(button => {
+            button.classList.remove("selected");
+          });
+
+        renderBets();
+        updateSummary();
+        updateTimer();
+      }, 1800);
+    }
+  }, 1000);
 })();
 </script>
 </body>
