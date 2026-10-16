@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>Crypto Trader Pro</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;padding:16px;
+  background:#0b1020;color:#f1f5f9;
+  font-family:Arial,sans-serif
+}
+.app{max-width:500px;margin:auto}
+header{text-align:center;margin-bottom:18px}
+h1{font-size:24px;color:#f9d423;margin:10px 0}
+.subtitle{font-size:12px;color:#94a3b8}
+.card{
+  background:#151d32;border:1px solid #293653;
+  border-radius:15px;padding:16px;margin-bottom:14px
+}
+.stats{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px
+}
+.stat{background:#202b43;padding:12px;border-radius:10px}
+.label{font-size:12px;color:#94a3b8}
+.value{font-size:21px;font-weight:bold;margin-top:6px}
+.timer{text-align:center;font-size:48px;font-weight:bold;color:#f9d423}
+.status{text-align:center;color:#4ade80;font-size:13px}
+.period{text-align:center;color:#94a3b8;font-size:12px;margin-top:8px}
+h2{font-size:15px;margin:0 0 12px}
+.amount{display:flex;gap:8px;margin-bottom:10px}
+input{
+  width:100%;min-width:0;padding:12px;
+  border-radius:9px;border:1px solid #344563;
+  background:#0b1020;color:white;font-size:16px
+}
+button{
+  border:0;border-radius:9px;padding:12px 5px;
+  color:white;font-weight:bold;cursor:pointer;
+  touch-action:manipulation
+}
+button:disabled{opacity:.35;cursor:not-allowed}
+.quick{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:16px}
+.quick button{background:#293653}
+.numbers{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:18px}
+.number{background:#1769aa;font-size:18px;min-height:48px}
+.violet{background:#8129ad!important}
+.colors{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.red{background:#dc303b}
+.green{background:#199653}
+.purple{background:#8129ad}
+.sizes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.big{background:#e87918}
+.small{background:#087e8b}
+#message{text-align:center;line-height:1.6;font-size:14px}
+.history{display:flex;gap:7px;flex-wrap:wrap}
+.ball{
+  width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:bold;font-size:12px
+}
+.muted{color:#94a3b8;font-size:12px}
+footer{text-align:center;color:#64748b;font-size:11px;padding:12px}
+</style>
+</head>
+
+<body>
+<div class="app">
+<header>
+  <h1>🚀 CRYPTO TRADER PRO</h1>
+  <div class="subtitle">3-Minute Demo Prediction Game</div>
+</header>
+
+<div class="card stats">
+  <div class="stat">
+    <div class="label">💰 DEMO BALANCE</div>
+    <div class="value" id="balance">1000.00</div>
+  </div>
+  <div class="stat">
+    <div class="label">📊 NET P/L</div>
+    <div class="value" id="pl">0.00</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="timer" id="timer">150</div>
+  <div class="status" id="status">🟢 BETTING OPEN</div>
+  <div class="period">Period #<span id="period">001</span></div>
+  <p class="muted" style="text-align:center">150s betting · 30s result · 180s total</p>
+</div>
+
+<div class="card">
+  <h2>💰 Bet Amount (Points)</h2>
+  <div class="amount">
+    <input id="amount" type="number" value="10" min="10" step="1">
+  </div>
+
+  <div class="quick">
+    <button data-amount="10">10</button>
+    <button data-amount="25">25</button>
+    <button data-amount="50">50</button>
+    <button data-amount="100">100</button>
+    <button data-amount="250">250</button>
+  </div>
+
+  <h2>🔢 Choose Number · 9x</h2>
+  <div class="numbers" id="numbers"></div>
+
+  <h2>🎨 Choose Color</h2>
+  <div class="colors">
+    <button class="red" data-type="color" data-value="red">🔴 RED<br>2x</button>
+    <button class="green" data-type="color" data-value="green">🟢 GREEN<br>2x</button>
+    <button class="purple" data-type="color" data-value="violet">🟣 VIOLET<br>5x</button>
+  </div>
+
+  <h2 style="margin-top:16px">📈 Big / Small</h2>
+  <div class="sizes">
+    <button class="big" data-type="size" data-value="big">⬆ BIG · 2x</button>
+    <button class="small" data-type="size" data-value="small">⬇ SMALL · 2x</button>
+  </div>
+  <p class="muted">Small: 0–4 · Big: 5–9</p>
+</div>
+
+<div class="card">
+  <h2>📋 My Bets</h2>
+  <div id="bets"><p class="muted">No bets placed.</p></div>
+</div>
+
+<div class="card">
+  <h2>🎯 Latest Result</h2>
+  <div id="message">Waiting for the first result...</div>
+</div>
+
+<div class="card">
+  <h2>📜 Recent Results</h2>
+  <div class="history" id="history"></div>
+</div>
+
+<footer>
+  Demo points only · No real deposits or withdrawals<br>
+  Results are generated locally in your browser.
+</footer>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+
+  let balance = 1000;
+  let netPL = 0;
+  let period = 1;
+  let remaining = 150;
+  let phase = "BET";
+  let bets = [];
+  let history = [];
+  let interval = null;
+  let roundToken = 0;
+
+  for(let n=0;n<=9;n++){
+    const btn=document.createElement("button");
+    btn.className="number"+([0,5].includes(n)?" violet":"");
+    btn.textContent=n;
+    btn.dataset.type="number";
+    btn.dataset.value=n;
+    $("numbers").appendChild(btn);
+  }
+
+  document.querySelectorAll("[data-amount]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      $("amount").value=btn.dataset.amount;
+    });
+  });
+
+  document.querySelectorAll("[data-type]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      placeBet(btn.dataset.type,btn.dataset.value);
+    });
+  });
+
+  function update(){
+    $("balance").textContent=balance.toFixed(2);
+    $("pl").textContent=(netPL>0?"+":"")+netPL.toFixed(2);
+    $("timer").textContent=remaining;
+    $("period").textContent=String(period).padStart(3,"0");
+
+    $("status").textContent=phase==="BET"
+      ?"🟢 BETTING OPEN"
+      :phase==="LOCKED"
+      ?"🔒 BETTING CLOSED"
+      :"🔴 RESULT PHASE";
+
+    document.querySelectorAll("[data-type]").forEach(btn=>{
+      btn.disabled=phase!=="BET";
+    });
+
+    $("bets").innerHTML=bets.length
+      ?bets.map(b=>`<p>${b.label} — ${b.amount} pts</p>`).join("")
+      :'<p class="muted">No bets placed.</p>';
+  }
+
+  function placeBet(type,value){
+    if(phase!=="BET")return;
+
+    const amount=Number($("amount").value);
+    if(!Number.isSafeInteger(amount)||amount<10){
+      alert("Minimum bet is 10 whole points.");
+      return;
+    }
+
+    if(amount>balance){
+      alert("Insufficient demo balance.");
+      return;
+    }
+
+    let label;
+    if(type==="number")label="Number "+value;
+    else if(type==="color")label=value.toUpperCase();
+    else label=value.toUpperCase();
+
+    balance-=amount;
+    netPL-=amount;
+    bets.push({type,value:type==="number"?Number(value):value,amount,label});
+    update();
+  }
+
+  function endRound(token){
+    if(token!==roundToken)return;
+    phase="RESULT";
+
+    const number=Math.floor(Math.random()*10);
+    const violet=[0,5].includes(number);
+    const color=violet?"violet":number%2===0?"red":"green";
+
+    let payout=0;
+    const details=[];
+
+    bets.forEach(b=>{
+      let won=false,multiplier=0;
+
+      if(b.type==="number"&&b.value===number){
+        won=true;multiplier=9;
+      }else if(b.type==="color"&&b.value===color){
+        won=true;multiplier=color==="violet"?5:2;
+      }else if(b.type==="size"&&(
+        (b.value==="big"&&number>=5)||
+        (b.value==="small"&&number<=4)
+      )){
+        won=true;multiplier=2;
+      }
+
+      if(won){
+        const amount=b.amount*multiplier;
+        payout+=amount;
+        details.push(b.label+" won "+amount+" pts");
+      }
+    });
+
+    balance+=payout;
+    netPL+=payout;
+
+    const ballColor=color==="red"?"#dc303b":
+      color==="green"?"#199653":"#8129ad";
+
+    $("message").innerHTML=
+      `<div class="ball" style="margin:0 auto 12px;background:${ballColor};width:58px;height:58px;font-size:22px">${number}</div>
+      <strong>${color.toUpperCase()}</strong><br>
+      ${payout>0?"🎉 Payout: "+payout+" pts":"No winning bets"}<br>
+      <span class="muted">${details.join(" · ")}</span>`;
+
+    history.unshift({number,color,period});
+    history=history.slice(0,15);
+
+    $("history").innerHTML=history.map(h=>{
+      const c=h.color==="red"?"#dc303b":
+        h.color==="green"?"#199653":"#8129ad";
+      return `<div class="ball" title="Period ${h.period}" style="background:${c}">${h.number}</div>`;
+    }).join("");
+
+    bets=[];
+    update();
+
+    remaining=30;
+    const resultToken=token;
+    interval=setInterval(()=>{
+      if(resultToken!==roundToken){
+        clearInterval(interval);
+        return;
+      }
+      remaining--;
+      update();
+
+      if(remaining<=0){
+        clearInterval(interval);
+        period++;
+        remaining=150;
+        phase="BET";
+        $("message").textContent="Waiting for the next result...";
+        update();
+        startRound();
+      }
+    },1000);
+  }
+
+  function startRound(){
+    if(interval)clearInterval(interval);
+    const token=++roundToken;
+    remaining=150;
+    phase="BET";
+    update();
+
+    interval=setInterval(()=>{
+      if(token!==roundToken){
+        clearInterval(interval);
+        return;
+      }
+
+      remaining--;
+
+      if(remaining===0){
+        clearInterval(interval);
+        phase="LOCKED";
+        remaining=0;
+        update();
+        endRound(token);
+        return;
+      }
+
+      update();
+    },1000);
+  }
+
+  update();
+  startRound();
+})();
+</script>
+</body>
+</html>
