@@ -2,961 +2,1562 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#ffffff">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f3f5fb">
 <title>Crypto Trader Pro</title>
 
 <style>
 :root {
-  --red: #e53945;
-  --green: #16a34a;
-  --violet: #7c3aed;
-  --orange: #f97316;
-  --blue: #2563eb;
-  --text: #172033;
-  --muted: #64748b;
-  --border: #e2e8f0;
+  --bg:#f3f5fb;
+  --card:#fff;
+  --text:#182238;
+  --muted:#748097;
+  --border:#e1e7f0;
+  --primary:#2563eb;
+  --green:#16a34a;
+  --red:#dc2626;
+  --violet:#8b5cf6;
+  --orange:#f59e0b;
+  --blue:#0ea5e9;
+  --pink:#db2777;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing:border-box; }
 
 body {
-  margin: 0;
-  background: #ffffff;
-  color: var(--text);
-  font-family: Arial, sans-serif;
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font:14px Arial,Helvetica,sans-serif;
 }
+
+button,input,select { font:inherit; }
+button { border:0;cursor:pointer; }
+button:disabled { opacity:.5;cursor:not-allowed; }
 
 .app {
-  max-width: 520px;
-  margin: auto;
-  padding: 16px 14px 30px;
+  max-width:600px;
+  margin:auto;
+  min-height:100vh;
+  padding-bottom:120px;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
+header {
+  background:#fff;
+  padding:15px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  border-bottom:1px solid var(--border);
 }
 
-.logo {
-  font-size: 19px;
-  font-weight: 900;
+.brand { font-size:18px;font-weight:900; }
+.brand span { color:var(--primary); }
+.header-actions { display:flex;gap:8px; }
+.icon-btn { background:#eef2ff;border-radius:11px;padding:10px; }
+
+.page { display:none; }
+.page.active { display:block; }
+
+.section { padding:0 14px;margin-bottom:15px; }
+.section-title { font-size:17px;font-weight:900;margin:7px 0 13px; }
+
+.card {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:16px;
+  margin-bottom:13px;
+  overflow-wrap:anywhere;
 }
 
-.logo span {
-  color: var(--blue);
+.muted { color:var(--muted); }
+.small { font-size:12px; }
+
+.row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
 }
 
-.badge {
-  background: #eff6ff;
-  color: var(--blue);
-  padding: 7px 10px;
-  border-radius: 20px;
-  font-size: 10px;
-  font-weight: bold;
+.row + .row { margin-top:12px; }
+
+.balance-card {
+  margin:15px;
+  padding:21px;
+  border-radius:19px;
+  background:linear-gradient(135deg,#1d4ed8,#4f46e5);
+  color:#fff;
 }
 
-.notice {
-  padding: 10px;
-  margin-bottom: 15px;
-  border-radius: 10px;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  color: #9a3412;
-  font-size: 11px;
-  line-height: 1.5;
-}
-
-.heading {
-  font-size: 16px;
-  font-weight: 900;
-  margin: 20px 0 10px;
-}
-
-.wallets {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.wallet {
-  padding: 14px;
-  border: 1px solid var(--border);
-  border-radius: 15px;
-  background: white;
-  box-shadow: 0 3px 12px #00000008;
-}
-
-.wallet.usdt {
-  border-top: 4px solid var(--green);
-}
-
-.wallet.points {
-  border-top: 4px solid var(--blue);
-}
-
-.muted {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.balance {
-  font-size: 22px;
-  font-weight: 900;
-  margin: 9px 0 4px;
-  overflow-wrap: anywhere;
-}
+.balance-label { font-size:12px;opacity:.9; }
+.balance-value { font-size:27px;font-weight:900;margin:9px 0; }
+.balance-sub { font-size:12px;opacity:.9; }
 
 .actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 10px;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin-top:16px;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
+.action-btn {
+  padding:13px 8px;
+  background:#fff;
+  color:#1d4ed8;
+  border-radius:11px;
+  font-weight:800;
 }
 
-.btn {
-  padding: 12px;
-  border: none;
-  border-radius: 10px;
-  background: var(--blue);
-  color: white;
-  font-weight: bold;
-}
-
-.btn.secondary {
-  background: #eff6ff;
-  color: var(--blue);
-  border: 1px solid #bfdbfe;
-}
-
-.panel {
-  border: 1px solid var(--border);
-  border-radius: 15px;
-  padding: 14px;
-  background: white;
-}
-
-.round {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-
-.timer {
-  font-size: 29px;
-  font-weight: 900;
-  color: var(--blue);
+.timer-card {
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:17px;
+  margin-bottom:13px;
+  text-align:center;
 }
 
 .period {
-  font-weight: bold;
-  margin-top: 5px;
+  font-size:12px;
+  color:var(--muted);
+  overflow-wrap:anywhere;
+  margin-top:8px;
 }
 
-.progress {
-  height: 5px;
-  background: #f1f5f9;
-  border-radius: 10px;
-  overflow: hidden;
-  margin: 13px 0 8px;
-}
-
-.fill {
-  height: 100%;
-  width: 100%;
-  background: var(--blue);
-  transition: width 0.3s;
+.timer {
+  font-size:32px;
+  font-weight:900;
+  margin:10px 0;
+  font-variant-numeric:tabular-nums;
 }
 
 .status {
-  color: var(--green);
-  font-size: 12px;
+  display:inline-block;
+  padding:7px 12px;
+  border-radius:20px;
+  background:#dcfce7;
+  color:#15803d;
+  font-weight:800;
+  font-size:11px;
 }
 
-.status.locked {
-  color: #b45309;
+.status.locked { background:#fee2e2;color:#b91c1c; }
+
+.notice {
+  background:#fff7ed;
+  color:#9a3412;
+  padding:12px;
+  border-radius:11px;
+  font-size:12px;
+  line-height:1.7;
+  margin-top:12px;
+  overflow-wrap:anywhere;
 }
 
-.choices {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+.number-grid {
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:9px;
+  margin:15px 0;
 }
 
-.pick {
-  min-height: 60px;
-  border: 0;
-  border-radius: 12px;
-  padding: 11px 4px;
-  color: white;
-  font-size: 13px;
-  font-weight: 900;
+.number-btn {
+  min-width:0;
+  min-height:49px;
+  border-radius:12px;
+  color:#fff;
+  font-size:18px;
+  font-weight:900;
 }
 
-.pick small {
-  display: block;
-  margin-top: 5px;
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 1.3;
+.red { background:#dc2626; }
+.green { background:#16a34a; }
+.violet { background:#8b5cf6; }
+.orange { background:#f59e0b; }
+.blue { background:#0ea5e9; }
+.pink { background:#db2777; }
+
+.num-zero {
+  background:linear-gradient(135deg,#dc2626 0 50%,#8b5cf6 50%);
 }
 
-.red {
-  background: var(--red);
+.num-five {
+  background:linear-gradient(135deg,#16a34a 0 50%,#8b5cf6 50%);
 }
 
-.green {
-  background: var(--green);
+.option-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;
+  margin:13px 0;
 }
 
-.violet {
-  background: var(--violet);
+.option-btn {
+  min-height:46px;
+  padding:8px 4px;
+  border-radius:11px;
+  color:#fff;
+  font-weight:800;
 }
 
-.orange {
-  background: var(--orange);
+.big-small {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
 }
 
-.blue {
-  background: var(--blue);
+.big-small button {
+  min-height:47px;
+  border-radius:11px;
+  color:#fff;
+  font-weight:900;
 }
 
-.neutral {
-  background: #f1f5f9;
-  color: #334155;
-  border: 1px solid #cbd5e1;
+.quick-btn {
+  width:100%;
+  min-height:43px;
+  padding:11px;
+  border-radius:10px;
+  background:linear-gradient(135deg,#7c3aed,#4f46e5);
+  color:#fff;
+  font-weight:900;
 }
 
-.selected {
-  outline: 3px solid #172033;
-  outline-offset: 2px;
+.payout-list {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px;
+  margin-top:12px;
 }
 
-.numbers {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
+.payout-item {
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:11px;
+  line-height:1.6;
+  background:#fafbff;
 }
 
-.num {
-  height: 46px;
-  border: none;
-  border-radius: 12px;
-  color: white;
-  font-size: 18px;
-  font-weight: 900;
-  position: relative;
+.payout-item strong { display:block; }
+.payout-item span { font-size:11px;color:var(--muted); }
+
+.primary-btn {
+  width:100%;
+  padding:14px;
+  border-radius:11px;
+  background:linear-gradient(135deg,#2563eb,#7c3aed);
+  color:#fff;
+  font-weight:900;
+  min-height:46px;
 }
 
-.num.red {
-  background: var(--red);
+.secondary-btn {
+  background:#dcfce7;
+  color:#166534;
+  padding:12px;
+  border-radius:10px;
+  font-weight:800;
 }
 
-.num.green {
-  background: var(--green);
+.bottom-nav {
+  position:fixed;
+  bottom:calc(8px + env(safe-area-inset-bottom));
+  left:50%;
+  transform:translateX(-50%);
+  width:calc(100% - 12px);
+  max-width:588px;
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:4px;
+  background:rgba(255,255,255,.98);
+  border:1px solid var(--border);
+  border-radius:15px;
+  padding:7px 5px;
+  z-index:20;
+  box-shadow:0 3px 14px rgba(15,23,42,.09);
 }
 
-.num.special::after {
-  content: "V";
-  position: absolute;
-  right: 3px;
-  top: 3px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--violet);
-  font-size: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.nav-btn {
+  min-width:0;
+  min-height:53px;
+  padding:5px 2px;
+  border-radius:11px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  background:#f1f5f9;
+  color:#475569;
+  font-size:10px;
+  font-weight:900;
+  overflow-wrap:anywhere;
 }
 
-.input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  font-size: 16px;
-  background: white;
-  color: var(--text);
+.nav-icon { display:block;font-size:20px;line-height:1.2; }
+
+.nav-btn.active {
+  background:#dbeafe;
+  color:#1d4ed8;
+  box-shadow:inset 0 -3px 0 #2563eb;
 }
 
-.quick {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 7px;
-  margin-top: 8px;
+.nav-btn[data-page="home"] .nav-icon { color:#f97316; }
+.nav-btn[data-page="game"] .nav-icon { color:#7c3aed; }
+.nav-btn[data-page="records"] .nav-icon { color:#0891b2; }
+.nav-btn[data-page="wallet"] .nav-icon { color:#16a34a; }
+.nav-btn[data-page="referral"] .nav-icon { color:#d97706; }
+.nav-btn[data-page="profile"] .nav-icon { color:#db2777; }
+
+input,select {
+  display:block;
+  width:100%;
+  min-width:0;
+  padding:13px;
+  margin:7px 0 13px;
+  border:1px solid #d8e0ec;
+  border-radius:10px;
+  background:#fff;
+  color:var(--text);
 }
 
-.quick button {
-  padding: 10px 2px;
-  border: 1px solid #bfdbfe;
-  border-radius: 8px;
-  background: #eff6ff;
-  color: var(--blue);
-  font-weight: bold;
+label { font-weight:800;font-size:12px; }
+
+/* UTC timestamp display */
+.utc-time {
+  font-size:11px;
+  color:#64748b;
+  margin-top:5px;
+  line-height:1.6;
 }
 
-.summary {
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 10px;
-  background: #f8fafc;
-  font-size: 12px;
-  line-height: 1.9;
+/* Colourful trade history cards */
+#homeTradeRecords details,
+#tradeHistory details {
+  background:linear-gradient(135deg,#ffffff,#f0f7ff);
+  border:1px solid #dbeafe;
+  border-left:5px solid #6366f1;
+  border-radius:16px;
+  padding:14px;
+  margin:12px 0;
+  box-shadow:0 4px 12px rgba(37,99,235,.08);
+  overflow:hidden;
 }
 
-.summary div {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
+#homeTradeRecords summary,
+#tradeHistory summary {
+  color:#1d4ed8;
+  font-weight:900;
+  list-style-position:inside;
+  cursor:pointer;
 }
 
-.summary strong {
-  text-align: right;
-  overflow-wrap: anywhere;
+#homeTradeRecords details[open] summary,
+#tradeHistory details[open] summary {
+  padding-bottom:12px;
+  border-bottom:1px solid #dbeafe;
 }
 
-.place {
-  width: 100%;
-  margin-top: 12px;
-  padding: 15px;
-  border: none;
-  border-radius: 11px;
-  background: linear-gradient(90deg, #2563eb, #4f46e5);
-  color: white;
-  font-weight: 900;
+#homeTradeRecords .trade-details,
+#tradeHistory .trade-details {
+  background:#fff;
+  border:1px solid #e2e8f0;
+  border-radius:12px;
+  padding:13px;
+  margin-top:12px;
+  line-height:2;
+  color:#334155;
+  font-size:12px;
 }
 
-.place:disabled,
-.pick:disabled,
-.num:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
+#homeTradeRecords details:has(.success),
+#tradeHistory details:has(.success) {
+  background:linear-gradient(135deg,#f0fdf4,#dcfce7);
+  border-color:#86efac;
+  border-left-color:#16a34a;
 }
 
-.rows {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 12px;
+#homeTradeRecords details:has(.failed),
+#tradeHistory details:has(.failed) {
+  background:linear-gradient(135deg,#fff1f2,#ffe4e6);
+  border-color:#fda4af;
+  border-left-color:#dc2626;
+}
+
+#homeTradeRecords details:has(.pending),
+#tradeHistory details:has(.pending) {
+  background:linear-gradient(135deg,#fffbeb,#fef3c7);
+  border-color:#fcd34d;
+  border-left-color:#f59e0b;
+}
+
+.trade-status {
+  display:inline-block;
+  padding:5px 9px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:900;
+  margin-top:5px;
+}
+
+.trade-status.success { background:#bbf7d0;color:#166534; }
+.trade-status.failed { background:#fecaca;color:#991b1b; }
+.trade-status.pending { background:#fde68a;color:#92400e; }
+
+#homeTradeRecords summary .row>div:last-child,
+#tradeHistory summary .row>div:last-child { text-align:right; }
+
+#homeTradeRecords summary strong,
+#tradeHistory summary strong { overflow-wrap:anywhere; }
+
+.trade-details>div {
+  padding:4px 0;
+  border-bottom:1px dashed #e2e8f0;
+}
+
+.trade-details>div:last-child { border-bottom:none; }
+
+.record-row { padding:13px 0;border-bottom:1px solid var(--border); }
+.record-row:last-child { border-bottom:0; }
+
+.record-number {
+  width:36px;
+  height:36px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  color:#fff;
+  font-weight:900;
+  flex-shrink:0;
 }
 
 .empty {
-  padding: 14px 0;
-  color: var(--muted);
-  font-size: 12px;
+  text-align:center;
+  padding:20px 7px;
+  color:var(--muted);
+  line-height:1.7;
 }
 
-.message {
-  margin-top: 10px;
-  font-size: 12px;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
+details {
+  background:#f8faff;
+  border:1px solid #e2e8f0;
+  border-radius:12px;
+  padding:12px;
+  margin:9px 0;
 }
 
-.foot {
-  margin-top: 18px;
-  color: var(--muted);
-  font-size: 10px;
-  line-height: 1.5;
+summary { cursor:pointer;color:#1d4ed8;font-weight:900;line-height:1.6; }
+
+details p {
+  color:#475569;
+  line-height:1.8;
+  overflow-wrap:anywhere;
+  margin-bottom:0;
 }
 
-@media (max-width: 350px) {
-  .app {
-    padding: 12px 10px;
-  }
+.stat-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
 
-  .balance {
-    font-size: 19px;
-  }
+.stat {
+  padding:14px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:#fafbff;
+}
 
-  .timer {
-    font-size: 25px;
+.stat strong {
+  display:block;
+  font-size:21px;
+  margin-top:7px;
+  overflow-wrap:anywhere;
+}
+
+.link-box {
+  background:#f1f5f9;
+  padding:13px;
+  border-radius:10px;
+  word-break:break-all;
+  line-height:1.6;
+  margin:10px 0;
+}
+
+.amount-presets {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px;
+  margin:12px 0;
+}
+
+.amount-presets button {
+  background:#ede9fe;
+  color:#6d28d9;
+  padding:12px 3px;
+  border-radius:9px;
+  font-weight:900;
+}
+
+.amount-presets button.active { background:#7c3aed;color:white; }
+
+.amount-stepper {
+  display:grid;
+  grid-template-columns:45px minmax(0,1fr) 45px;
+  gap:8px;
+}
+
+.amount-stepper button {
+  border-radius:9px;
+  background:#e2e8f0;
+  font-size:21px;
+}
+
+.amount-stepper input { margin:0;text-align:center; }
+
+.modal-backdrop {
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:50;
+  background:#0f172a88;
+  align-items:center;
+  justify-content:center;
+  padding:15px;
+}
+
+.modal-backdrop.open { display:flex; }
+
+.modal {
+  background:white;
+  width:100%;
+  max-width:430px;
+  max-height:90%;
+  overflow:auto;
+  padding:19px;
+  border-radius:17px;
+}
+
+.modal-title { font-size:18px;font-weight:900; }
+.close-btn { padding:9px 12px;border-radius:9px;background:#e9edf5; }
+
+.result-ball {
+  width:88px;
+  height:88px;
+  margin:18px auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
+  font-size:34px;
+  font-weight:900;
+  border-radius:50%;
+}
+
+.toast {
+  display:none;
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%);
+  bottom:100px;
+  width:max-content;
+  max-width:90%;
+  z-index:90;
+  padding:13px 16px;
+  border-radius:11px;
+  background:#172033;
+  color:#fff;
+  text-align:center;
+  line-height:1.5;
+}
+
+.toast.show { display:block; }
+hr { border:0;border-top:1px solid var(--border);margin:15px 0; }
+#homeResultHistory,#homeTradeHistory { scroll-margin-top:12px; }
+
+@media(max-width:380px) {
+  .nav-btn { font-size:9px; }
+  .nav-icon { font-size:18px; }
+  .section { padding:0 10px; }
+  .balance-card { margin:10px; }
+  .card { padding:13px; }
+  .bottom-nav { gap:2px;padding:6px 3px; }
+  #homeTradeRecords details,#tradeHistory details { padding:11px; }
+  #homeTradeRecords .trade-details,#tradeHistory .trade-details {
+    padding:10px;
+    font-size:11px;
   }
 }
 </style>
 </head>
 
 <body>
-<main class="app" id="app">
+<div class="app">
 
-<header class="header">
+<header>
   <div>
-    <div class="logo">CRYPTO <span>TRADER PRO</span></div>
-    <div class="muted">Colour Prediction Game</div>
+    <div class="brand">CRYPTO <span>TRADER PRO</span></div>
+    <div class="small muted">Prediction Dashboard · UTC</div>
   </div>
-  <span class="badge">DEMO MODE</span>
+  <div class="header-actions">
+    <button class="icon-btn" id="soundToggle" type="button">🔊</button>
+    <button class="icon-btn" id="headerProfile" type="button">👤</button>
+  </div>
 </header>
 
-<div class="notice">
-  <strong>Demo only:</strong> Balances and results are simulated in this browser.
-  Real USDT deposits and withdrawals are not enabled.
-</div>
-
-<section>
-  <h2 class="heading">💼 My Wallet</h2>
-
-  <div class="wallets">
-    <div class="wallet usdt">
-      <div class="muted">💵 USDT Balance</div>
-      <div class="balance" id="usdt">10.00</div>
-      <div class="muted">USDT</div>
-    </div>
-
-    <div class="wallet points">
-      <div class="muted">🪙 Points Balance</div>
-      <div class="balance" id="points">1,000</div>
-      <div class="muted">100 Points = 1 USDT</div>
+<section class="page active" id="page-home">
+  <div class="balance-card">
+    <div class="balance-label">DEMO BALANCE</div>
+    <div class="balance-value"><span id="homePoints">10,000.00</span> Points</div>
+    <div class="balance-sub">≈ <span id="homeUsdt">100.00</span> USDT</div>
+    <div class="actions">
+      <button class="action-btn" data-action="deposit">💰 Deposit</button>
+      <button class="action-btn" data-action="withdraw">↗ Withdraw</button>
     </div>
   </div>
 
-  <div class="actions">
-    <button class="btn" id="deposit">＋ Deposit</button>
-    <button class="btn secondary" id="withdraw">↗ Withdraw</button>
-  </div>
-</section>
+  <div class="section">
+    <div class="timer-card">
+      <div class="row">
+        <span class="muted small">Current Period</span>
+        <span class="muted small">3-minute round</span>
+      </div>
+      <div class="period" id="periodId"></div>
+      <div class="timer" id="timer">02:30</div>
+      <span class="status" id="betStatus">BETTING OPEN</span>
+      <div class="notice">All displayed timestamps use UTC. Demo results are generated in your browser.</div>
+    </div>
 
-<section>
-  <h2 class="heading">🎮 Game Round</h2>
+    <div class="card">
+      <div class="section-title">🔢 Choose a Number</div>
+      <div class="muted small">Select a number to open the bet amount window.</div>
+      <div class="number-grid" id="numberGrid"></div>
 
-  <div class="panel">
-    <div class="round">
-      <div>
-        <div class="muted">CURRENT PERIOD</div>
-        <div class="period" id="period">DEMO-000001</div>
+      <div class="section-title">🎨 Choose a Colour</div>
+      <div class="option-grid">
+        <button class="option-btn red" data-bet="Red">🔴 Red</button>
+        <button class="option-btn green" data-bet="Green">🟢 Green</button>
+        <button class="option-btn violet" data-bet="Violet">🟣 Violet</button>
       </div>
 
-      <div style="text-align:right">
-        <div class="timer" id="timer">3:00</div>
-        <div class="muted">ROUND TIMER</div>
+      <div class="section-title">📊 Big / Small</div>
+      <div class="big-small">
+        <button class="orange" data-bet="Big">🟠 Big (5–9)</button>
+        <button class="blue" data-bet="Small">🔵 Small (0–4)</button>
       </div>
     </div>
 
-    <div class="progress">
-      <div class="fill" id="fill"></div>
+    <div class="card">
+      <div class="section-title">📈 Potential Payouts</div>
+      <button class="quick-btn" id="openPayouts" type="button">View Potential Payouts</button>
     </div>
 
-    <div class="status" id="status">● Betting is open</div>
-  </div>
-</section>
-
-<section>
-  <h2 class="heading">🎨 Choose Colour</h2>
-
-  <div class="choices">
-    <button class="pick red" data-kind="colour" data-value="Red">
-      🔴 RED
-      <small>0, 2, 4, 6, 8</small>
-      <small>0 pays 0.5×</small>
-    </button>
-
-    <button class="pick green" data-kind="colour" data-value="Green">
-      🟢 GREEN
-      <small>1, 3, 5, 7, 9</small>
-      <small>5 pays 0.5×</small>
-    </button>
-
-    <button class="pick violet" data-kind="colour" data-value="Violet">
-      🟣 VIOLET
-      <small>0 and 5</small>
-      <small>4.5× payout</small>
-    </button>
-  </div>
-</section>
-
-<section>
-  <h2 class="heading">📏 Choose Big / Small</h2>
-
-  <div class="choices">
-    <button class="pick orange" data-kind="size" data-value="Big">
-      BIG
-      <small>5–9 · 2×</small>
-    </button>
-
-    <button class="pick blue" data-kind="size" data-value="Small">
-      SMALL
-      <small>0–4 · 2×</small>
-    </button>
-
-    <button class="pick neutral" data-kind="size" data-value="none">
-      NO PICK
-      <small>Optional</small>
-    </button>
-  </div>
-</section>
-
-<section>
-  <h2 class="heading">🔢 Choose Number</h2>
-
-  <div class="numbers" id="numbers"></div>
-
-  <div class="muted" style="margin-top:8px">
-    Purple V badge marks Violet numbers 0 and 5.
-  </div>
-</section>
-
-<section class="panel" style="margin-top:20px">
-  <h2 class="heading">💰 Bet Amount</h2>
-
-  <label class="muted" for="amount">Amount in Points · Minimum 10</label>
-
-  <input
-    class="input"
-    id="amount"
-    type="number"
-    min="10"
-    step="1"
-    value="10"
-    inputmode="numeric"
-  >
-
-  <div class="quick">
-    <button data-amount="10">10</button>
-    <button data-amount="50">50</button>
-    <button data-amount="100">100</button>
-    <button data-amount="500">500</button>
-  </div>
-
-  <div class="summary">
-    <div>
-      <span class="muted">Selected bet</span>
-      <strong id="selected">None</strong>
+    <div class="card" id="homeResultHistory">
+      <div class="section-title">🎯 Result History</div>
+      <div class="muted small">Latest completed rounds · UTC</div>
+      <div id="homeParityRecords"></div>
     </div>
-    <div>
-      <span class="muted">Stake</span>
-      <strong id="stake">10 Points</strong>
-    </div>
-    <div>
-      <span class="muted">Platform fee (2%)</span>
-      <strong id="fee">0.20 Points</strong>
-    </div>
-    <div>
-      <span class="muted">Illustrative payout</span>
-      <strong id="payout">0 Points</strong>
+
+    <div class="card" id="homeTradeHistory">
+      <div class="section-title">📋 My Trade History</div>
+      <div class="muted small">Your latest bets and their results · UTC</div>
+      <div id="homeTradeRecords"></div>
     </div>
   </div>
-
-  <button class="place" id="place">PLACE DEMO BET</button>
-  <div class="message" id="message" aria-live="polite"></div>
 </section>
 
-<section class="panel" style="margin-top:18px">
-  <h2 class="heading">📌 Current Bets</h2>
-  <div id="bets" class="empty">No bets placed this round.</div>
-</section>
-
-<section class="panel" style="margin-top:18px">
-  <h2 class="heading">📊 Recent Results</h2>
-  <div id="history" class="empty">Waiting for first demo result.</div>
-</section>
-
-<section class="panel" style="margin-top:18px">
-  <h2 class="heading">📘 Game Rules</h2>
-  <div style="font-size:12px;line-height:1.9">
-    🔴 Red: 0, 2, 4, 6, 8<br>
-    🟢 Green: 1, 3, 5, 7, 9<br>
-    🟣 Violet: 0 and 5<br>
-    🟠 Big: 5–9 · 🔵 Small: 0–4<br>
-    Regular Red/Green match: 2× total payout<br>
-    Red on 0 / Green on 5: 0.5× total payout<br>
-    Violet on 0 or 5: 4.5× total payout<br>
-    Betting closes during the last 30 seconds.
+<section class="page" id="page-game">
+  <div class="section">
+    <div class="section-title">🎮 Prediction Game</div>
+    <div class="card">
+      <div class="row">
+        <div><div class="muted small">Demo Points</div><strong id="gamePoints">10,000.00</strong></div>
+        <div style="text-align:right"><div class="muted small">USDT Equivalent</div><strong id="gameUsdt">100.00</strong></div>
+      </div>
+    </div>
+    <div class="timer-card">
+      <div class="period" id="gamePeriod"></div>
+      <div class="timer" id="gameTimer">02:30</div>
+      <span class="status" id="gameStatus">BETTING OPEN</span>
+    </div>
+    <div class="card">
+      <div class="section-title">Select Your Prediction</div>
+      <div class="number-grid" id="gameNumberGrid"></div>
+      <div class="option-grid">
+        <button class="option-btn red" data-bet="Red">🔴 Red</button>
+        <button class="option-btn green" data-bet="Green">🟢 Green</button>
+        <button class="option-btn violet" data-bet="Violet">🟣 Violet</button>
+      </div>
+      <div class="big-small">
+        <button class="orange" data-bet="Big">🟠 Big</button>
+        <button class="blue" data-bet="Small">🔵 Small</button>
+      </div>
+      <div class="notice">Betting closes during the final 30 seconds.</div>
+    </div>
   </div>
 </section>
 
-<div class="foot">
-  Frontend demo only. Real deposits, withdrawals, secure balances and
-  server-verified game results require a backend and appropriate legal
-  and payment-provider approval.
+<section class="page" id="page-records">
+  <div class="section">
+    <div class="section-title">📊 Records</div>
+    <div class="card">
+      <div class="section-title">🎯 Result History · UTC</div>
+      <div id="parityRecords"></div>
+    </div>
+    <div class="card">
+      <div class="section-title">📋 My Trade History · UTC</div>
+      <div id="tradeHistory"></div>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="page-wallet">
+  <div class="section">
+    <div class="section-title">💰 Wallet</div>
+    <div class="card">
+      <div class="muted small">Demo wallet balance</div>
+      <div style="font-size:27px;font-weight:900;margin:9px 0"><span id="walletPoints">10,000.00</span> Points</div>
+      <div class="muted small">100 Points = 1 USDT (display conversion)</div>
+      <div class="actions">
+        <button class="primary-btn" data-action="deposit">＋ Deposit</button>
+        <button class="secondary-btn" data-action="withdraw">↗ Withdraw</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">Transaction Requests · UTC</div>
+      <div class="muted small">Local demo requests only.</div>
+      <div id="walletRequests"></div>
+    </div>
+    <div class="card">
+      <div class="section-title">Wallet Guidelines</div>
+      <p>Minimum requested deposit: <strong>1 USDT</strong></p>
+      <p>Minimum requested withdrawal: <strong>3 USDT</strong></p>
+      <p>Illustrative withdrawal fee: <strong>10%</strong></p>
+      <div class="notice">No real deposits or withdrawals are processed. Do not send funds using this demo.</div>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="page-referral">
+  <div class="section">
+    <div class="section-title">👥 Referral Program</div>
+    <div class="card" style="background:linear-gradient(135deg,#fff7ed,#ffedd5)">
+      <div style="font-size:30px">🎁</div>
+      <h3 style="color:#9a3412">Invite Friends & Earn</h3>
+      <p style="line-height:1.7;color:#9a3412">Proposed rewards require eligibility checks and backend implementation.</p>
+    </div>
+    <div class="stat-grid">
+      <div class="stat" style="background:#eff6ff"><span class="muted small">Total Referrals</span><strong id="refCount" style="color:#2563eb">0</strong></div>
+      <div class="stat" style="background:#f0fdf4"><span class="muted small">Referral Rewards</span><strong id="refRewards" style="color:#16a34a">0</strong><span class="muted small">Demo Points</span></div>
+    </div>
+    <div class="card" style="margin-top:13px">
+      <div class="section-title">🔗 Your Referral Link</div>
+      <div class="link-box" id="referralLink"></div>
+      <button class="primary-btn" id="copyReferral">📋 Copy Referral Link</button>
+      <div class="notice">Demo link only. Referral tracking is not active.</div>
+    </div>
+    <div class="card">
+      <div class="section-title">🏆 Direct Referral Reward</div>
+      <div class="row"><span>Proposed eligible reward</span><strong style="color:#16a34a">100 Points</strong></div>
+      <p class="muted small">Proposed condition: the referred user completes a first verified deposit of at least 1 USDT.</p>
+    </div>
+    <div class="card">
+      <div class="section-title">💎 Multi-Level Commissions</div>
+      <div class="row"><span>🥇 Level 1</span><strong style="color:#2563eb">15%</strong></div><hr>
+      <div class="row"><span>🥈 Level 2</span><strong style="color:#7c3aed">10%</strong></div><hr>
+      <div class="row"><span>🥉 Level 3</span><strong style="color:#db2777">5%</strong></div>
+      <div class="notice">Proposed percentages apply to eligible platform fees, not wagers. No commissions are processed.</div>
+    </div>
+    <div class="card">
+      <div class="section-title">📖 How It Works</div>
+      <details><summary>1. Share your referral link</summary><p>Copy your demo link and share it.</p></details>
+      <details><summary>2. Friend joins</summary><p>A live system must verify referral attribution and eligibility.</p></details>
+      <details><summary>3. Eligible reward</summary><p>The backend must verify conditions before crediting rewards.</p></details>
+      <details><summary>4. Track earnings</summary><p>A live dashboard can display verified referrals and commission entries.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="page-profile">
+  <div class="section">
+    <div class="section-title">👤 Profile & Settings</div>
+    <div class="card" style="background:linear-gradient(135deg,#eff6ff,#f5f3ff)">
+      <div class="row">
+        <div><div class="muted small">Account</div><strong>Demo User</strong><div class="muted small">Telegram verification not connected</div></div>
+        <div style="font-size:30px">👤</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">🌍 Language</div>
+      <label for="languageSelect">Choose language</label>
+      <select id="languageSelect">
+        <option value="en">🇬🇧 English</option>
+        <option value="hi">🇮🇳 Hindi</option>
+        <option value="ar">🇸🇦 Arabic</option>
+        <option value="es">🇪🇸 Spanish</option>
+        <option value="ru">🇷🇺 Russian</option>
+        <option value="zh">🇨🇳 Chinese</option>
+        <option value="bn">🇧🇩 Bengali</option>
+        <option value="fr">🇫🇷 French</option>
+        <option value="pt">🇵🇹 Portuguese</option>
+        <option value="id">🇮🇩 Indonesian</option>
+        <option value="tr">🇹🇷 Turkish</option>
+        <option value="vi">🇻🇳 Vietnamese</option>
+      </select>
+      <div class="notice">Language preference is saved locally. Some text remains in English.</div>
+    </div>
+    <div class="card">
+      <div class="section-title">🔊 Sound Settings</div>
+      <div class="row"><span>Bet and round sounds</span><button class="secondary-btn" id="profileSound">🔊 Enabled</button></div>
+    </div>
+    <div class="card">
+      <div class="section-title">❓ FAQ & Support</div>
+      <details><summary>🎮 Is this a real-money game?</summary><p>No. This is a frontend demo. Balances and results are not connected to a secure backend.</p></details>
+      <details><summary>🎲 How are demo results generated?</summary><p>The browser generates sample numbers for testing. They are not independently verified.</p></details>
+      <details><summary>💳 Are deposits and withdrawals active?</summary><p>No. Wallet forms only save local demo requests.</p></details>
+      <details><summary>👥 Are referrals tracked?</summary><p>No. Counts and commissions are illustrative until backend integration.</p></details>
+      <details><summary>🛟 How can I contact support?</summary><p>Configure an official support contact before launch.</p></details>
+    </div>
+    <div class="card">
+      <div class="section-title">📜 Legal & Responsible Use</div>
+      <div class="notice">Before any real-money launch, obtain legal review and confirm applicable laws, licensing, age restrictions, taxation and payment requirements.</div>
+      <details><summary>📄 Terms of Service</summary><p>Publish reviewed terms covering eligibility, account rules, fees, disputes and service restrictions.</p></details>
+      <details><summary>🔐 Privacy Policy</summary><p>Explain data collection, usage, retention and applicable user rights.</p></details>
+      <details><summary>💰 Fees & Transactions</summary><p>Clearly disclose fees, verification rules, withdrawal conditions and dispute procedures.</p></details>
+      <details><summary>🧠 Responsible Use</summary><p>Do not risk money you cannot afford to lose. Random outcomes are not a reliable source of income.</p></details>
+      <div class="notice">Demo only. For software testing and educational purposes. Not financial advice.</div>
+    </div>
+  </div>
+</section>
+
+<nav class="bottom-nav" aria-label="Main navigation">
+  <button class="nav-btn active" data-page="home" type="button"><span class="nav-icon">🏠</span><span>Home</span></button>
+  <button class="nav-btn" data-page="game" type="button"><span class="nav-icon">🎮</span><span>Game</span></button>
+  <button class="nav-btn" data-page="records" type="button"><span class="nav-icon">📊</span><span>Records</span></button>
+  <button class="nav-btn" data-page="wallet" type="button"><span class="nav-icon">💰</span><span>Wallet</span></button>
+  <button class="nav-btn" data-page="referral" type="button"><span class="nav-icon">🎁</span><span>Referral</span></button>
+  <button class="nav-btn" data-page="profile" type="button"><span class="nav-icon">👤</span><span>Profile</span></button>
+</nav>
 </div>
 
-</main>
+<div class="modal-backdrop" id="betModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title" id="betModalTitle">Place Demo Bet</div><button class="close-btn" data-close="betModal" type="button">✕</button></div>
+    <p class="muted small" id="betModalPeriod"></p>
+    <div class="amount-presets">
+      <button type="button" data-amount="10">10</button>
+      <button type="button" data-amount="50">50</button>
+      <button type="button" data-amount="100">100</button>
+      <button type="button" data-amount="500">500</button>
+    </div>
+    <label for="betAmount">Original Bet Amount (Points)</label>
+    <div class="amount-stepper"><button id="minusAmount" type="button">−</button><input id="betAmount" type="number" min="10" max="100000" step="1" value="100"><button id="plusAmount" type="button">+</button></div>
+    <div class="row"><span class="muted">Original bet</span><strong id="betOriginal">100.00</strong></div>
+    <div class="row"><span class="muted">Platform fee (2%)</span><strong id="betFee">2.00</strong></div>
+    <div class="row"><span class="muted">Actual trade amount</span><strong id="betStake">98.00</strong></div>
+    <div class="row"><span class="muted">Balance deduction</span><strong id="betTotal">100.00 Points</strong></div>
+    <div class="row"><span class="muted">Gross multiplier</span><strong id="betMultiplier">2×</strong></div>
+    <div class="row"><span class="muted">Potential gross payout</span><strong id="betPotential">196.00 Points</strong></div>
+    <div class="notice">The 2% fee is taken from the original bet. Only the remaining 98% is used as the trade amount.</div>
+    <button class="primary-btn" id="confirmBet" type="button" style="margin-top:14px">Confirm Demo Bet</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="payoutModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title">📈 Potential Payouts</div><button class="close-btn" data-close="payoutModal" type="button">✕</button></div>
+    <div class="payout-list">
+      <div class="payout-item"><strong>🔴 Red — 2×</strong><span>2, 4, 6, 8</span></div>
+      <div class="payout-item"><strong>🟢 Green — 2×</strong><span>1, 3, 7, 9</span></div>
+      <div class="payout-item"><strong>🟣 Violet — 4.5×</strong><span>0 or 5</span></div>
+      <div class="payout-item"><strong>🟠 Big — 2×</strong><span>5 to 9</span></div>
+      <div class="payout-item"><strong>🔵 Small — 2×</strong><span>0 to 4</span></div>
+      <div class="payout-item"><strong>🔢 Number — 9×</strong><span>Exact number</span></div>
+    </div>
+    <div class="notice">Demo multipliers only. Gross payout is calculated on the actual trade amount after the 2% fee. Payouts are illustrative and not guaranteed.</div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="walletModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title" id="walletModalTitle">Deposit Request</div><button class="close-btn" data-close="walletModal" type="button">✕</button></div>
+    <form id="walletForm">
+      <label for="walletAmount">Amount (USDT)</label><input id="walletAmount" type="number" min="1" step="0.01" value="1" required>
+      <label for="walletAddress">USDT BEP-20 Wallet Address</label><input id="walletAddress" type="text" placeholder="Enter wallet address" required>
+      <div id="txidField"><label for="walletTxid">Transaction ID (TXID)</label><input id="walletTxid" type="text" placeholder="Enter TXID"></div>
+      <div id="withdrawFeeInfo" class="notice" style="display:none">Illustrative withdrawal fee: 10%. This form does not process withdrawals.</div>
+      <button class="primary-btn" type="submit">Save Demo Request</button>
+    </form>
+    <div class="notice">No transaction is sent or verified. Do not send funds using this demo.</div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="resultModal">
+  <div class="modal" style="text-align:center">
+    <div class="row"><div class="modal-title">Round Result</div><button class="close-btn" data-close="resultModal" type="button">✕</button></div>
+    <div class="muted small" id="resultPeriod"></div>
+    <div class="result-ball" id="resultBall">0</div>
+    <div style="font-size:21px;font-weight:900" id="resultColour"></div>
+    <p class="muted" id="resultSize"></p>
+    <p id="resultMessage"></p>
+    <button class="primary-btn" data-close="resultModal" type="button">Continue</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-(() => {
-  "use strict";
+(function(){
+"use strict";
 
-  const $ = id => document.getElementById(id);
+const $=id=>document.getElementById(id);
+const STORAGE_KEY="ctp_demo_utc_v8";
+const ROUND_SECONDS=180;
+const LOCK_SECONDS=30;
+const MIN_BET=10;
+const MAX_BET=100000;
+const FEE_RATE=.02;
+const COLOURS={Red:"#dc2626",Green:"#16a34a",Violet:"#8b5cf6"};
+const LANGUAGES={en:1,hi:1,ar:1,es:1,ru:1,zh:1,bn:1,fr:1,pt:1,id:1,tr:1,vi:1};
 
-  let points = 1000;
-  let round = 1;
-  let left = 180;
-  let locked = false;
+function loadState(){
+  try {
+    const d=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");
+    return d&&typeof d==="object"?d:null;
+  } catch(e) { return null; }
+}
 
-  let selected = {
-    colour: null,
-    size: null,
-    number: null
-  };
+const saved=loadState();
+const state={
+  points:Number.isFinite(saved?.points)?Math.max(0,saved.points):10000,
+  bets:Array.isArray(saved?.bets)?saved.bets.slice(0,500):[],
+  records:Array.isArray(saved?.records)?saved.records.slice(0,100):[],
+  requests:Array.isArray(saved?.requests)?saved.requests.slice(0,100):[],
+  language:LANGUAGES[saved?.language]?saved.language:"en",
+  sound:saved?.sound!==false,
+  roundIndex:Math.floor(Date.now()/(ROUND_SECONDS*1000))
+};
 
-  let bets = [];
-  let history = [];
+let currentBet=null;
+let currentWalletMode="deposit";
+let audioContext=null;
+let toastTimer=null;
+let lastLockRound=-1;
+let lastRoundSettled=-1;
 
-  const feeRate = 0.02;
+function saveState(){
+  try {
+    localStorage.setItem(STORAGE_KEY,JSON.stringify({
+      points:state.points,
+      bets:state.bets.slice(0,500),
+      records:state.records.slice(0,100),
+      requests:state.requests.slice(0,100),
+      language:state.language,
+      sound:state.sound
+    }));
+  } catch(e) {}
+}
 
-  const fmt = n => Number(n).toLocaleString("en-US", {
-    maximumFractionDigits: 2
-  });
-
-  const sizeOf = n => n >= 5 ? "Big" : "Small";
-
-  const colourOf = n => {
-    if (n === 0) return "Red + Violet";
-    if (n === 5) return "Green + Violet";
-    return n % 2 === 0 ? "Red" : "Green";
-  };
-
-  const open = () => left > 30 && !locked;
-
-  const safe = s => String(s).replace(/[&<>"']/g, c => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
+function escapeHTML(v){
+  return String(v??"").replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
   }[c]));
+}
 
-  function message(text) {
-    $("message").textContent = text;
+function fmt(v,d=0){
+  return Number(v).toLocaleString("en-US",{
+    minimumFractionDigits:d,
+    maximumFractionDigits:d
+  });
+}
+
+function money(v){return fmt(v,2);}
+function roundMoney(v){return Math.round((v+Number.EPSILON)*100)/100;}
+
+/* All history timestamps are explicitly formatted in UTC. */
+function formatUTC(value){
+  const date=new Date(value);
+  if(Number.isNaN(date.getTime()))return "Invalid date";
+  const datePart=new Intl.DateTimeFormat("en-GB",{
+    timeZone:"UTC",
+    day:"2-digit",
+    month:"2-digit",
+    year:"numeric"
+  }).format(date);
+  const timePart=new Intl.DateTimeFormat("en-GB",{
+    timeZone:"UTC",
+    hour:"2-digit",
+    minute:"2-digit",
+    second:"2-digit",
+    hourCycle:"h23"
+  }).format(date);
+  return datePart+" "+timePart+" UTC";
+}
+
+function currentRound(){return Math.floor(Date.now()/(ROUND_SECONDS*1000));}
+function remainingSeconds(){return ROUND_SECONDS-Math.floor((Date.now()/1000)%ROUND_SECONDS);}
+function bettingOpen(){return remainingSeconds()>LOCK_SECONDS;}
+function periodId(r=currentRound()){return "CTP"+String(r).padStart(10,"0");}
+
+function colourOf(n){
+  if(n===0||n===5)return "Violet";
+  return n%2===0?"Red":"Green";
+}
+
+function numberClass(n){
+  if(n===0)return "num-zero";
+  if(n===5)return "num-five";
+  return n%2===0?"red":"green";
+}
+
+function multiplierFor(b){
+  if(b.type==="Number")return 9;
+  if(b.type==="Violet")return 4.5;
+  return 2;
+}
+
+function matches(b,n){
+  if(b.type==="Number")return n===Number(b.selection);
+  if(b.type==="Violet")return n===0||n===5;
+  if(b.type==="Red")return [2,4,6,8].includes(n);
+  if(b.type==="Green")return [1,3,7,9].includes(n);
+  if(b.type==="Big")return n>=5;
+  if(b.type==="Small")return n<=4;
+  return false;
+}
+
+function playSound(freq=700,duration=.12){
+  if(!state.sound)return;
+  try {
+    const Ctx=window.AudioContext||window.webkitAudioContext;
+    if(!Ctx)return;
+    if(!audioContext)audioContext=new Ctx();
+    if(audioContext.state==="suspended")audioContext.resume().catch(()=>{});
+    const osc=audioContext.createOscillator();
+    const gain=audioContext.createGain();
+    osc.frequency.value=freq;
+    gain.gain.value=.04;
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+duration);
+    osc.stop(audioContext.currentTime+duration);
+  } catch(e) {}
+}
+
+function toast(msg){
+  $("toast").textContent=msg;
+  $("toast").classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>$("toast").classList.remove("show"),2600);
+}
+
+function openModal(id){$(id).classList.add("open");}
+function closeModal(id){$(id).classList.remove("open");}
+
+function showPage(name){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  const page=$("page-"+name);
+  const nav=document.querySelector('.nav-btn[data-page="'+name+'"]');
+  if(page)page.classList.add("active");
+  if(nav)nav.classList.add("active");
+  renderAllHistories();
+  if(name==="wallet")renderRequests();
+  if(name==="referral")renderReferral();
+}
+
+function renderNumbers(id){
+  const box=$(id);
+  box.innerHTML="";
+  for(let n=0;n<=9;n++){
+    const b=document.createElement("button");
+    b.type="button";
+    b.className="number-btn "+numberClass(n);
+    b.textContent=String(n);
+    b.setAttribute("aria-label","Bet on number "+n);
+    b.addEventListener("click",()=>openBet("Number",n));
+    box.appendChild(b);
+  }
+}
+
+function renderBalances(){
+  const p=fmt(state.points,2);
+  const u=fmt(state.points/100,2);
+  ["homePoints","gamePoints","walletPoints"].forEach(id=>$(id).textContent=p);
+  ["homeUsdt","gameUsdt"].forEach(id=>$(id).textContent=u);
+  $("soundToggle").textContent=state.sound?"🔊":"🔇";
+  $("profileSound").textContent=state.sound?"🔊 Enabled":"🔇 Disabled";
+}
+
+function renderTimer(){
+  const s=remainingSeconds();
+  const txt=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+  const open=s>LOCK_SECONDS;
+
+  $("timer").textContent=txt;
+  $("gameTimer").textContent=txt;
+  $("periodId").textContent=periodId();
+  $("gamePeriod").textContent=periodId();
+  $("betStatus").textContent=open?"BETTING OPEN":"BETTING LOCKED";
+  $("gameStatus").textContent=open?"BETTING OPEN":"BETTING LOCKED";
+  $("betStatus").classList.toggle("locked",!open);
+  $("gameStatus").classList.toggle("locked",!open);
+
+  if(!open&&lastLockRound!==currentRound()){
+    lastLockRound=currentRound();
+    playSound(430,.22);
+  }
+}
+
+function openBet(type,selection=null){
+  if(!bettingOpen()){
+    toast("Betting is locked for the final 30 seconds.");
+    return;
   }
 
-  function balances() {
-    $("points").textContent = fmt(points);
-    $("usdt").textContent = (points / 100).toFixed(2);
+  currentBet={type,selection,period:periodId(),round:currentRound()};
+  $("betModalTitle").textContent=type==="Number"?"Bet on Number "+selection:"Bet on "+type;
+  $("betModalPeriod").textContent="Period: "+currentBet.period+" · UTC";
+  $("betAmount").value="100";
+  updateBetPreview();
+  openModal("betModal");
+}
+
+function calculateFee(amount){return roundMoney(amount*FEE_RATE);}
+
+function updateBetPreview(){
+  const amount=Number($("betAmount").value);
+  const valid=Number.isInteger(amount)&&amount>=MIN_BET&&amount<=MAX_BET;
+  const original=valid?amount:0;
+  const fee=calculateFee(original);
+  const tradeAmount=roundMoney(original-fee);
+  const multiplier=currentBet?multiplierFor(currentBet):2;
+
+  $("betOriginal").textContent=money(original);
+  $("betFee").textContent=money(fee);
+  $("betStake").textContent=money(tradeAmount);
+  $("betTotal").textContent=money(original)+" Points";
+  $("betMultiplier").textContent=multiplier+"×";
+  $("betPotential").textContent=money(tradeAmount*multiplier)+" Points";
+
+  $("confirmBet").disabled=
+    !valid||original>state.points||!currentBet||!bettingOpen();
+
+  document.querySelectorAll("[data-amount]").forEach(b=>
+    b.classList.toggle("active",Number(b.dataset.amount)===original)
+  );
+}
+
+function confirmBet(){
+  if(!currentBet||!bettingOpen()||currentBet.round!==currentRound()){
+    toast("Round changed or betting is locked. Please try again.");
+    closeModal("betModal");
+    return;
   }
 
-  function getPicks() {
-    return Object.entries(selected)
-      .filter(([key, value]) => value !== null)
-      .map(([kind, value]) => ({ kind, value }));
+  const amount=Number($("betAmount").value);
+  if(!Number.isInteger(amount)||amount<MIN_BET||amount>MAX_BET){
+    toast("Enter a valid whole-number amount.");
+    return;
   }
 
-  function updateSummary() {
-    const stake = Number($("amount").value) || 0;
+  const fee=calculateFee(amount);
+  const tradeAmount=roundMoney(amount-fee);
 
-    $("selected").textContent = getPicks()
-      .map(p => p.kind === "number"
-        ? "Number " + p.value
-        : p.value
-      ).join(" + ") || "None";
-
-    $("stake").textContent = fmt(stake) + " Points";
-    $("fee").textContent = fmt(stake * feeRate) + " Points";
-
-    const multiplier = selected.colour === "Violet"
-      ? 4.5
-      : selected.number !== null
-        ? 9
-        : 2;
-
-    $("payout").textContent =
-      fmt(Math.max(0, stake - stake * feeRate) * multiplier) +
-      " Points";
+  if(amount>state.points){
+    toast("Insufficient demo points.");
+    return;
   }
 
-  function renderBets() {
-    $("bets").innerHTML = bets.length
-      ? bets.map(b => `
-        <div class="rows">
-          <span>
-            ${safe(b.label)}<br>
-            <span class="muted">
-              ${safe(b.period)} · ${safe(b.outcome || "Pending")}
-            </span>
-          </span>
-          <strong>${fmt(b.stake)} pts</strong>
+  state.points=roundMoney(state.points-amount);
+
+  state.bets.unshift({
+    id:"B"+Date.now()+Math.random().toString(36).slice(2,7),
+    type:currentBet.type,
+    selection:currentBet.selection,
+    amount,
+    fee,
+    tradeAmount,
+    total:amount,
+    multiplier:multiplierFor(currentBet),
+    period:currentBet.period,
+    round:currentBet.round,
+    createdAt:new Date().toISOString(),
+    status:"Pending",
+    payout:0,
+    resultNumber:null,
+    resultColour:null
+  });
+
+  state.bets=state.bets.slice(0,500);
+  saveState();
+  renderBalances();
+  renderAllHistories();
+  closeModal("betModal");
+  playSound(820,.13);
+  toast("Demo bet placed successfully.");
+}
+
+function settleRound(round){
+  if(lastRoundSettled===round||state.records.some(r=>r.round===round))return;
+  lastRoundSettled=round;
+
+  const n=Math.floor(Math.random()*10);
+  const result={
+    round,
+    period:periodId(round),
+    number:n,
+    colour:colourOf(n),
+    size:n>=5?"Big":"Small",
+    createdAt:new Date().toISOString()
+  };
+
+  state.bets.forEach(b=>{
+    if(b.round!==round||b.status!=="Pending")return;
+
+    b.resultNumber=n;
+    b.resultColour=result.colour;
+
+    if(matches(b,n)){
+      b.status="Success";
+      const stake=Number.isFinite(b.tradeAmount)
+        ?b.tradeAmount
+        :roundMoney(b.amount-(b.fee||0));
+
+      b.payout=roundMoney(stake*b.multiplier);
+      state.points=roundMoney(state.points+b.payout);
+    } else {
+      b.status="Failed";
+      b.payout=0;
+    }
+  });
+
+  state.records.unshift(result);
+  state.records=state.records.slice(0,100);
+
+  saveState();
+  renderBalances();
+  renderAllHistories();
+
+  $("resultPeriod").textContent=result.period+" · UTC";
+  $("resultBall").textContent=String(n);
+  $("resultBall").style.background=COLOURS[result.colour];
+  $("resultColour").textContent=result.colour;
+  $("resultSize").textContent=result.size;
+  $("resultMessage").textContent="Browser-generated demo result; not independently verified.";
+
+  openModal("resultModal");
+  playSound(550,.2);
+}
+
+function renderResultContainer(containerId,limit){
+  const box=$(containerId);
+
+  if(!state.records.length){
+    box.innerHTML='<div class="empty">No completed demo rounds yet.</div>';
+    return;
+  }
+
+  box.innerHTML=state.records.slice(0,limit).map(r=>`
+    <div class="record-row">
+      <div class="row">
+        <div>
+          <strong>${escapeHTML(r.period)}</strong>
+          <div class="utc-time">${escapeHTML(formatUTC(r.createdAt))}</div>
         </div>
-      `).join("")
-      : '<div class="empty">No bets placed this round.</div>';
-  }
-
-  function renderHistory() {
-    $("history").innerHTML = history.length
-      ? history.map(h => `
-        <div class="rows">
-          <span>
-            ${safe(h.period)} · <strong>${h.number}</strong> ·
-            ${safe(h.colour)} · ${safe(h.size)}
-          </span>
-          <strong>${safe(h.time)}</strong>
+        <div class="row">
+          <span class="record-number" style="background:${COLOURS[r.colour]||"#8b5cf6"}">${r.number}</span>
+          <div>
+            <strong>${escapeHTML(r.colour)}</strong>
+            <div class="muted small">${escapeHTML(r.size)}</div>
+          </div>
         </div>
-      `).join("")
-      : '<div class="empty">Waiting for first demo result.</div>';
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderTradeContainer(containerId,limit){
+  const box=$(containerId);
+
+  if(!state.bets.length){
+    box.innerHTML='<div class="empty">No demo trades yet. Your trades will appear here.</div>';
+    return;
   }
 
-  function updateTimer() {
-    const minutes = Math.floor(left / 60);
-    const seconds = left % 60;
+  box.innerHTML=state.bets.slice(0,limit).map(b=>{
+    const cls=b.status==="Success"?"success":b.status==="Failed"?"failed":"pending";
+    const selection=b.type==="Number"?b.selection:b.type;
+    const tradeAmount=Number.isFinite(b.tradeAmount)
+      ?b.tradeAmount
+      :roundMoney(b.amount-(b.fee||0));
 
-    $("timer").textContent =
-      minutes + ":" + String(seconds).padStart(2, "0");
+    return `
+      <details class="record-row">
+        <summary>
+          <div class="row">
+            <div>
+              <strong>${escapeHTML(selection)}</strong>
+              <div class="utc-time">${escapeHTML(b.period)}</div>
+            </div>
+            <div style="text-align:right">
+              <strong>${money(b.amount)} Points</strong>
+              <div class="trade-status ${cls}">${escapeHTML(b.status)}</div>
+            </div>
+          </div>
+        </summary>
 
-    $("period").textContent =
-      "DEMO-" + String(round).padStart(6, "0");
+        <div class="trade-details">
+          <div>🆔 Bet ID: ${escapeHTML(b.id)}</div>
+          <div>🎯 Bet type: ${escapeHTML(b.type)}</div>
+          <div>🔢 Selection: ${escapeHTML(selection)}</div>
+          <div>🗓️ Period: ${escapeHTML(b.period)}</div>
+          <div>💰 Original bet: ${money(b.amount)} Points</div>
+          <div>🏦 Platform fee (2%): ${money(b.fee||0)} Points</div>
+          <div>📊 Actual trade amount: ${money(tradeAmount)} Points</div>
+          <div>➖ Total balance deduction: ${money(b.total??b.amount)} Points</div>
+          <div>✖️ Gross multiplier: ${money(b.multiplier)}×</div>
+          <div>🎲 Result number: ${b.resultNumber===null?"Pending":b.resultNumber}</div>
+          <div>🎨 Result colour: ${escapeHTML(b.resultColour||"Pending")}</div>
+          <div>💵 Gross payout: ${money(b.payout||0)} Points</div>
+          <div>🕒 Placed: ${escapeHTML(formatUTC(b.createdAt))}</div>
+        </div>
+      </details>
+    `;
+  }).join("");
+}
 
-    $("fill").style.width = (left / 180 * 100) + "%";
+function renderAllHistories(){
+  renderResultContainer("homeParityRecords",10);
+  renderTradeContainer("homeTradeRecords",10);
+  renderResultContainer("parityRecords",50);
+  renderTradeContainer("tradeHistory",100);
+}
 
-    $("status").textContent = open()
-      ? "● Betting is open"
-      : left > 0
-        ? "🔒 Betting is locked"
-        : "Round settling";
+function openWallet(mode){
+  currentWalletMode=mode;
+  $("walletModalTitle").textContent=mode==="deposit"?"Deposit Request":"Withdraw Request";
+  $("walletAmount").value=mode==="deposit"?"1":"3";
+  $("walletAddress").value="";
+  $("walletTxid").value="";
+  $("txidField").style.display=mode==="deposit"?"block":"none";
+  $("withdrawFeeInfo").style.display=mode==="withdraw"?"block":"none";
+  $("walletAmount").min=mode==="deposit"?"1":"3";
+  openModal("walletModal");
+}
 
-    $("status").classList.toggle("locked", !open());
+function submitWallet(event){
+  event.preventDefault();
 
-    document.querySelectorAll("#app [data-kind], #place")
-      .forEach(button => {
-        button.disabled = !open();
-      });
+  const amount=Number($("walletAmount").value);
+  const address=$("walletAddress").value.trim();
+  const txid=$("walletTxid").value.trim();
+
+  if(!Number.isFinite(amount)||amount<(currentWalletMode==="deposit"?1:3)){
+    toast(currentWalletMode==="deposit"
+      ?"Minimum demo deposit request is 1 USDT."
+      :"Minimum demo withdrawal request is 3 USDT.");
+    return;
   }
 
-  function choose(kind, value, button) {
-    if (!open()) {
-      message("Betting is locked for this round.");
-      return;
-    }
-
-    selected[kind] = value === "none" ? null : value;
-
-    document.querySelectorAll(
-      '#app [data-kind="' + kind + '"]'
-    ).forEach(item => {
-      item.classList.toggle("selected", item === button);
-    });
-
-    updateSummary();
-    message("Selection updated.");
+  if(address.length<10){
+    toast("Enter a valid-looking wallet address.");
+    return;
   }
 
-  function calculateMultiplier(bet, result) {
-    let multiplier = 0;
-
-    if (bet.colour === "Violet" &&
-        (result === 0 || result === 5)) {
-      multiplier += 4.5;
-    } else if (bet.colour === "Red") {
-      if (result === 0) multiplier += 0.5;
-      else if ([2, 4, 6, 8].includes(result)) multiplier += 2;
-    } else if (bet.colour === "Green") {
-      if (result === 5) multiplier += 0.5;
-      else if ([1, 3, 7, 9].includes(result)) multiplier += 2;
-    }
-
-    if (bet.size && bet.size === sizeOf(result)) {
-      multiplier += 2;
-    }
-
-    if (bet.number !== null && Number(bet.number) === result) {
-      multiplier += 9;
-    }
-
-    return multiplier;
+  if(currentWalletMode==="deposit"&&!txid){
+    toast("Enter a TXID for this demo request.");
+    return;
   }
 
-  function settleRound() {
-    if (locked) return;
-
-    locked = true;
-
-    // Random browser result is for demonstration only.
-    const result = Math.floor(Math.random() * 10);
-    let totalPayout = 0;
-
-    for (const bet of bets) {
-      const multiplier = calculateMultiplier(bet, result);
-
-      if (multiplier > 0) {
-        const payout = Math.round(
-          Math.max(0, bet.stake - bet.fee) *
-          multiplier * 100
-        ) / 100;
-
-        points += payout;
-        totalPayout += payout;
-        bet.outcome = "Won " + fmt(payout) + " points";
-      } else {
-        bet.outcome = "Lost";
-      }
-    }
-
-    history.unshift({
-      period: "DEMO-" + String(round).padStart(6, "0"),
-      number: result,
-      colour: colourOf(result),
-      size: sizeOf(result),
-      time: new Date().toLocaleTimeString()
-    });
-
-    history = history.slice(0, 10);
-
-    balances();
-    renderHistory();
-    renderBets();
-
-    message(
-      "Demo result: " + result + " · " +
-      colourOf(result) + " · " + sizeOf(result) +
-      " · Total payout: " + fmt(totalPayout) + " points."
-    );
-  }
-
-  $("numbers").innerHTML = Array.from(
-    { length: 10 },
-    (_, number) => `
-      <button
-        type="button"
-        class="num ${number % 2 === 0 ? "red" : "green"}
-        ${(number === 0 || number === 5) ? "special" : ""}"
-        data-kind="number"
-        data-value="${number}"
-        aria-label="Number ${number}"
-      >${number}</button>
-    `
-  ).join("");
-
-  $("app").addEventListener("click", event => {
-    const button = event.target.closest("button");
-    if (!button) return;
-
-    if (button.dataset.kind) {
-      choose(
-        button.dataset.kind,
-        button.dataset.value,
-        button
-      );
-      return;
-    }
-
-    if (button.dataset.amount) {
-      $("amount").value = button.dataset.amount;
-      updateSummary();
-      return;
-    }
-
-    if (button.id === "place") {
-      if (!open()) return;
-
-      const stake = Number($("amount").value);
-
-      if (!Number.isInteger(stake) || stake < 10) {
-        message("Minimum bet is 10 whole Points.");
-        return;
-      }
-
-      if (stake > points) {
-        message("Insufficient demo Points.");
-        return;
-      }
-
-      if (!getPicks().length) {
-        message("Choose colour, size, or number first.");
-        return;
-      }
-
-      const fee = Math.round(stake * feeRate * 100) / 100;
-
-      points = Math.round((points - stake) * 100) / 100;
-
-      const label = getPicks().map(p =>
-        p.kind === "number"
-          ? "Number " + p.value
-          : p.value
-      ).join(" + ");
-
-      bets.push({
-        period: "DEMO-" + String(round).padStart(6, "0"),
-        label,
-        colour: selected.colour,
-        size: selected.size,
-        number: selected.number,
-        stake,
-        fee,
-        outcome: "Pending"
-      });
-
-      balances();
-      renderBets();
-      updateSummary();
-
-      message(
-        "Demo bet placed: " + stake +
-        " points; platform fee " + fee + " points."
-      );
-    }
+  state.requests.unshift({
+    id:"W"+Date.now(),
+    type:currentWalletMode,
+    amount,
+    address,
+    txid:currentWalletMode==="deposit"?txid:"",
+    status:"Demo only — not submitted",
+    createdAt:new Date().toISOString()
   });
 
-  $("amount").addEventListener("input", updateSummary);
+  state.requests=state.requests.slice(0,100);
+  saveState();
+  renderRequests();
+  closeModal("walletModal");
+  toast("Saved locally. No transaction was sent.");
+}
 
-  $("deposit").addEventListener("click", () => {
-    message(
-      "Demo only: minimum deposit is 1 USDT. " +
-      "Real payment verification is not connected."
+function renderRequests(){
+  const box=$("walletRequests");
+
+  if(!state.requests.length){
+    box.innerHTML='<div class="empty">No demo requests yet.</div>';
+    return;
+  }
+
+  box.innerHTML=state.requests.slice(0,30).map(r=>`
+    <div class="record-row">
+      <div class="row">
+        <div>
+          <strong>${escapeHTML(r.type.toUpperCase())}</strong>
+          <div class="utc-time">${escapeHTML(formatUTC(r.createdAt))}</div>
+        </div>
+        <div style="text-align:right">
+          <strong>${money(r.amount)} USDT</strong>
+          <div class="pending small">Demo only</div>
+        </div>
+      </div>
+      <div class="muted small" style="margin-top:8px">Request ID: ${escapeHTML(r.id)}</div>
+    </div>
+  `).join("");
+}
+
+function renderReferral(){
+  $("referralLink").textContent=location.origin+location.pathname+"?ref=demo-user";
+  $("refCount").textContent="0";
+  $("refRewards").textContent="0";
+}
+
+async function copyReferral(){
+  const value=$("referralLink").textContent;
+
+  try {
+    if(navigator.clipboard&&window.isSecureContext){
+      await navigator.clipboard.writeText(value);
+      toast("Referral link copied.");
+    } else {
+      toast("Long-press the referral link and copy it.");
+    }
+  } catch(e) {
+    toast("Long-press the referral link and copy it.");
+  }
+}
+
+function applyLanguage(){
+  document.documentElement.lang=state.language;
+  document.documentElement.dir=state.language==="ar"?"rtl":"ltr";
+  $("languageSelect").value=state.language;
+}
+
+function initEvents(){
+  document.querySelectorAll("[data-page]").forEach(b=>
+    b.addEventListener("click",()=>showPage(b.dataset.page))
+  );
+
+  $("headerProfile").addEventListener("click",()=>showPage("profile"));
+
+  document.querySelectorAll("[data-action]").forEach(b=>
+    b.addEventListener("click",()=>openWallet(b.dataset.action))
+  );
+
+  document.querySelectorAll("[data-bet]").forEach(b=>
+    b.addEventListener("click",()=>openBet(b.dataset.bet))
+  );
+
+  document.querySelectorAll("[data-close]").forEach(b=>
+    b.addEventListener("click",()=>closeModal(b.dataset.close))
+  );
+
+  document.querySelectorAll(".modal-backdrop").forEach(m=>
+    m.addEventListener("click",e=>{
+      if(e.target===m)closeModal(m.id);
+    })
+  );
+
+  document.querySelectorAll("[data-amount]").forEach(b=>
+    b.addEventListener("click",()=>{
+      $("betAmount").value=b.dataset.amount;
+      updateBetPreview();
+    })
+  );
+
+  $("betAmount").addEventListener("input",updateBetPreview);
+
+  $("minusAmount").addEventListener("click",()=>{
+    $("betAmount").value=Math.max(
+      MIN_BET,(Number($("betAmount").value)||MIN_BET)-10
     );
+    updateBetPreview();
   });
 
-  $("withdraw").addEventListener("click", () => {
-    message(
-      "Demo only: minimum withdrawal is 3 USDT, " +
-      "with a planned 10% fee. Real withdrawals are disabled."
+  $("plusAmount").addEventListener("click",()=>{
+    $("betAmount").value=Math.min(
+      MAX_BET,(Number($("betAmount").value)||MIN_BET)+10
     );
+    updateBetPreview();
   });
 
-  balances();
-  updateSummary();
-  renderBets();
-  renderHistory();
-  updateTimer();
+  $("confirmBet").addEventListener("click",confirmBet);
+  $("walletForm").addEventListener("submit",submitWallet);
+  $("copyReferral").addEventListener("click",copyReferral);
+  $("openPayouts").addEventListener("click",()=>openModal("payoutModal"));
 
-  setInterval(() => {
-    if (locked) return;
+  $("languageSelect").addEventListener("change",e=>{
+    state.language=e.target.value;
+    applyLanguage();
+    saveState();
+    toast("Language preference saved.");
+  });
 
-    if (left > 0) left--;
+  function toggleSound(){
+    state.sound=!state.sound;
+    renderBalances();
+    saveState();
+    toast("Sound "+(state.sound?"enabled":"disabled")+".");
+    if(state.sound)playSound();
+  }
 
-    updateTimer();
+  $("soundToggle").addEventListener("click",toggleSound);
+  $("profileSound").addEventListener("click",toggleSound);
 
-    if (left === 30) {
-      message("Betting locked. Waiting for round result.");
+  document.addEventListener("keydown",e=>{
+    if(e.key==="Escape"){
+      document.querySelectorAll(".modal-backdrop.open").forEach(m=>closeModal(m.id));
+    }
+  });
+}
+
+function init(){
+  if(!saved){
+    const lang=(navigator.language||"en").slice(0,2).toLowerCase();
+    if(LANGUAGES[lang])state.language=lang;
+  }
+
+  renderNumbers("numberGrid");
+  renderNumbers("gameNumberGrid");
+  initEvents();
+  renderBalances();
+  renderTimer();
+  renderAllHistories();
+  renderRequests();
+  renderReferral();
+  applyLanguage();
+
+  state.roundIndex=currentRound();
+
+  setInterval(()=>{
+    const r=currentRound();
+
+    if(r!==state.roundIndex){
+      settleRound(state.roundIndex);
+      state.roundIndex=r;
+      saveState();
     }
 
-    if (left === 0) {
-      settleRound();
+    renderTimer();
 
-      setTimeout(() => {
-        round++;
-        left = 180;
-        locked = false;
-        bets = [];
-
-        selected = {
-          colour: null,
-          size: null,
-          number: null
-        };
-
-        document.querySelectorAll("#app .selected")
-          .forEach(button => {
-            button.classList.remove("selected");
-          });
-
-        renderBets();
-        updateSummary();
-        updateTimer();
-      }, 1800);
+    if($("betModal").classList.contains("open")){
+      updateBetPreview();
     }
-  }, 1000);
+  },250);
+}
+
+init();
 })();
 </script>
 </body>
