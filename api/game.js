@@ -73,7 +73,7 @@ function verifyTelegramInitData(initData, botToken) {
 
 module.exports = async function handler(req, res) {
   res.setHeader("Content-Type", "application/json");
-  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
 
   if (req.method !== "GET" && req.method !== "POST") {
     return res.status(405).json({
@@ -95,8 +95,19 @@ module.exports = async function handler(req, res) {
   try {
     const sql = neon(databaseUrl);
 
-    // GET: Return recent rounds and explicitly identify the current round.
+    /*
+     * GET:
+     * Use PostgreSQL NOW() to identify the current round.
+     * Do not depend on the serverless host's JavaScript clock
+     * to decide whether a round is currently open for betting.
+     */
     if (req.method === "GET") {
+      const timeRows = await sql`
+        SELECT NOW() AS server_time
+      `;
+
+      const serverTime = timeRows[0].server_time;
+
       const rows = await sql`
         SELECT
           id,
@@ -109,32 +120,42 @@ module.exports = async function handler(req, res) {
           settled_at
         FROM game_rounds
         ORDER BY starts_at DESC
-        LIMIT 20
+        LIMIT 100
       `;
 
-      const now = Date.now();
+      const currentRows = await sql`
+        SELECT
+          id,
+          round_code,
+          status,
+          starts_at,
+          betting_closes_at,
+          ends_at,
+          result_number,
+          settled_at
+        FROM game_rounds
+        WHERE status = 'open'
+          AND starts_at <= NOW()
+          AND betting_closes_at > NOW()
+          AND ends_at > NOW()
+        ORDER BY starts_at DESC
+        LIMIT 1
+      `;
 
-      const currentRound = rows.find(round => {
-        const starts = new Date(round.starts_at).getTime();
-        const ends = new Date(round.ends_at).getTime();
-
-        return (
-          round.status === "open" &&
-          Number.isFinite(starts) &&
-          Number.isFinite(ends) &&
-          starts <= now &&
-          ends > now
-        );
-      }) || null;
+      const currentRound = currentRows[0] || null;
 
       return res.status(200).json({
         success: true,
-        server_time: new Date().toISOString(),
+        server_time: new Date(serverTime).toISOString(),
         current_round: currentRound,
         rounds: rows
       });
     }
 
+    /*
+     * POST:
+     * Authenticate the Telegram user.
+     */
     const body = req.body || {};
 
     const telegramUser = verifyTelegramInitData(
@@ -159,12 +180,19 @@ module.exports = async function handler(req, res) {
       throw new Error("Unable to resolve your account.");
     }
 
+    /*
+     * Ensure a wallet row exists.
+     * Existing balances are not overwritten.
+     */
     await sql`
       INSERT INTO wallet_balances (user_id, balance)
       VALUES (${user.id}, 0)
       ON CONFLICT (user_id) DO NOTHING
     `;
 
+    /*
+     * BALANCE
+     */
     if (body.action === "balance") {
       const wallets = await sql`
         SELECT balance
@@ -184,22 +212,29 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    /*
+     * MY BETS
+     */
     if (body.action === "my_bets") {
       const bets = await sql`
         SELECT
-          id,
-          round_id,
-          bet_type,
-          selection,
-          stake,
-          fee,
-          status,
-          payout,
-          created_at,
-          settled_at
-        FROM bets
-        WHERE user_id = ${user.id}
-        ORDER BY id DESC
+          b.id,
+          b.round_id,
+          b.bet_type,
+          b.selection,
+          b.stake,
+          b.fee,
+          b.status,
+          b.payout,
+          b.created_at,
+          b.settled_at,
+          r.round_code,
+          r.result_number
+        FROM bets b
+        LEFT JOIN game_rounds r
+          ON r.id = b.round_id
+        WHERE b.user_id = ${user.id}
+        ORDER BY b.id DESC
         LIMIT 100
       `;
 
@@ -209,6 +244,16 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    /*
+     * PLACE BET
+     *
+     * The database function remains responsible for:
+     * - Locking the wallet and round
+     * - Checking the round's betting window
+     * - Validating available balance
+     * - Deducting the stake atomically
+     * - Preventing duplicate requests
+     */
     if (body.action === "place_bet") {
       const roundCode = body.round_code;
       const betType = body.bet_type;
@@ -227,7 +272,9 @@ module.exports = async function handler(req, res) {
 
       if (
         typeof requestId !== "string" ||
-        !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId)
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          requestId
+        )
       ) {
         return res.status(400).json({
           success: false,
@@ -256,7 +303,11 @@ module.exports = async function handler(req, res) {
 
       const stake = Number(stakeText);
 
-      if (!Number.isFinite(stake) || stake < 0.01 || stake > 1000) {
+      if (
+        !Number.isFinite(stake) ||
+        stake < 0.01 ||
+        stake > 1000
+      ) {
         return res.status(400).json({
           success: false,
           message: "Stake must be between 0.01 and 1000 test points."
@@ -264,7 +315,12 @@ module.exports = async function handler(req, res) {
       }
 
       const allowedTypes = [
-        "Number", "Red", "Green", "Violet", "Big", "Small"
+        "Number",
+        "Red",
+        "Green",
+        "Violet",
+        "Big",
+        "Small"
       ];
 
       if (!allowedTypes.includes(betType)) {
@@ -291,8 +347,6 @@ module.exports = async function handler(req, res) {
         selection = body.selection;
       }
 
-      // The database function performs the authoritative timing check,
-      // locks the round and wallet, and atomically deducts the stake.
       const resultRows = await sql`
         SELECT place_bet_atomic(
           ${user.id}::bigint,
