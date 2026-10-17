@@ -27,7 +27,7 @@ module.exports = async function handler(req, res) {
 
     if (
       typeof initData !== "string" ||
-      !initData ||
+      initData.length === 0 ||
       initData.length > 10000
     ) {
       return res.status(400).json({
@@ -39,14 +39,17 @@ module.exports = async function handler(req, res) {
     const params = new URLSearchParams(initData);
     const receivedHash = params.get("hash");
 
-    if (!receivedHash || !/^[a-f0-9]{64}$/i.test(receivedHash)) {
+    if (
+      !receivedHash ||
+      !/^[a-f0-9]{64}$/i.test(receivedHash)
+    ) {
       return res.status(401).json({
         success: false,
         message: "Invalid Telegram signature"
       });
     }
 
-    // Remove hash before calculating Telegram's signature
+    // Remove hash before signature verification
     params.delete("hash");
 
     const dataCheckString = [...params.entries()]
@@ -54,7 +57,7 @@ module.exports = async function handler(req, res) {
       .map(([key, value]) => `${key}=${value}`)
       .join("\n");
 
-    // Telegram Mini App official HMAC validation
+    // Verify Telegram Mini App initData
     const secretKey = crypto
       .createHmac("sha256", "WebAppData")
       .update(botToken)
@@ -70,7 +73,10 @@ module.exports = async function handler(req, res) {
 
     if (
       receivedBuffer.length !== calculatedBuffer.length ||
-      !crypto.timingSafeEqual(receivedBuffer, calculatedBuffer)
+      !crypto.timingSafeEqual(
+        receivedBuffer,
+        calculatedBuffer
+      )
     ) {
       return res.status(401).json({
         success: false,
@@ -78,6 +84,7 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    // Check authentication timestamp
     const authDate = Number(params.get("auth_date"));
     const now = Math.floor(Date.now() / 1000);
 
@@ -93,6 +100,7 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    // Parse Telegram user
     const userString = params.get("user");
 
     if (!userString) {
@@ -124,6 +132,7 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    // Register or update user in Neon database
     const sql = neon(databaseUrl);
 
     const users = await sql`
@@ -142,6 +151,7 @@ module.exports = async function handler(req, res) {
       message: "Telegram user verified",
       user: users[0]
     });
+
   } catch (error) {
     console.error("Auth API error:", error.message);
 
