@@ -71,14 +71,6 @@ function verifyTelegramInitData(initData, botToken) {
   return user;
 }
 
-function getBody(req) {
-  if (req.body && typeof req.body === "object") {
-    return req.body;
-  }
-
-  return {};
-}
-
 module.exports = async function handler(req, res) {
   res.setHeader("Content-Type", "application/json");
   res.setHeader("Cache-Control", "no-store");
@@ -103,8 +95,9 @@ module.exports = async function handler(req, res) {
   try {
     const sql = neon(databaseUrl);
 
+    // GET: Return recent rounds and explicitly identify the current round.
     if (req.method === "GET") {
-      const rounds = await sql`
+      const rows = await sql`
         SELECT
           id,
           round_code,
@@ -115,17 +108,34 @@ module.exports = async function handler(req, res) {
           result_number,
           settled_at
         FROM game_rounds
-        ORDER BY id DESC
-        LIMIT 10
+        ORDER BY starts_at DESC
+        LIMIT 20
       `;
+
+      const now = Date.now();
+
+      const currentRound = rows.find(round => {
+        const starts = new Date(round.starts_at).getTime();
+        const ends = new Date(round.ends_at).getTime();
+
+        return (
+          round.status === "open" &&
+          Number.isFinite(starts) &&
+          Number.isFinite(ends) &&
+          starts <= now &&
+          ends > now
+        );
+      }) || null;
 
       return res.status(200).json({
         success: true,
-        rounds
+        server_time: new Date().toISOString(),
+        current_round: currentRound,
+        rounds: rows
       });
     }
 
-    const body = getBody(req);
+    const body = req.body || {};
 
     const telegramUser = verifyTelegramInitData(
       body.initData,
@@ -155,9 +165,7 @@ module.exports = async function handler(req, res) {
       ON CONFLICT (user_id) DO NOTHING
     `;
 
-    const action = body.action;
-
-    if (action === "balance") {
+    if (body.action === "balance") {
       const wallets = await sql`
         SELECT balance
         FROM wallet_balances
@@ -176,7 +184,7 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    if (action === "my_bets") {
+    if (body.action === "my_bets") {
       const bets = await sql`
         SELECT
           id,
@@ -201,11 +209,11 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    if (action === "place_bet") {
+    if (body.action === "place_bet") {
       const roundCode = body.round_code;
       const betType = body.bet_type;
-      const stakeInput = body.stake;
       const requestId = body.request_id;
+      const stakeInput = body.stake;
 
       if (
         typeof roundCode !== "string" ||
@@ -214,6 +222,16 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({
           success: false,
           message: "Invalid round code."
+        });
+      }
+
+      if (
+        typeof requestId !== "string" ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "A valid request ID is required."
         });
       }
 
@@ -232,16 +250,16 @@ module.exports = async function handler(req, res) {
       if (!/^\d{1,4}(\.\d{1,2})?$/.test(stakeText)) {
         return res.status(400).json({
           success: false,
-          message: "Stake must have at most two decimal places."
+          message: "Invalid stake amount."
         });
       }
 
       const stake = Number(stakeText);
 
-      if (!Number.isFinite(stake) || stake <= 0 || stake > 1000) {
+      if (!Number.isFinite(stake) || stake < 0.01 || stake > 1000) {
         return res.status(400).json({
           success: false,
-          message: "Stake must be between 0.01 and 1000 test credits."
+          message: "Stake must be between 0.01 and 1000 test points."
         });
       }
 
@@ -273,17 +291,9 @@ module.exports = async function handler(req, res) {
         selection = body.selection;
       }
 
-      if (
-        typeof requestId !== "string" ||
-        !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId)
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "A valid UUID v4 request_id is required."
-        });
-      }
-
-      const results = await sql`
+      // The database function performs the authoritative timing check,
+      // locks the round and wallet, and atomically deducts the stake.
+      const resultRows = await sql`
         SELECT place_bet_atomic(
           ${user.id}::bigint,
           ${roundCode}::text,
@@ -294,7 +304,7 @@ module.exports = async function handler(req, res) {
         ) AS result
       `;
 
-      const result = results[0]?.result;
+      const result = resultRows[0]?.result;
 
       if (!result || result.success !== true) {
         return res.status(400).json({
