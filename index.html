@@ -6,383 +6,1031 @@
 <meta name="theme-color" content="#f3f5fb">
 <title>Crypto Trader Pro</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <style>
-:root{--bg:#f3f5fb;--card:#fff;--text:#182238;--muted:#748097;--border:#e1e7f0;--primary:#2563eb;--green:#16a34a;--red:#dc2626;--violet:#8b5cf6}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:14px Arial,Helvetica,sans-serif}
-button,input{font:inherit}
-button{border:0;cursor:pointer}
-button:disabled{opacity:.45;cursor:not-allowed}
-.app{max-width:600px;margin:auto;min-height:100vh;padding-bottom:105px}
-header{background:#fff;padding:15px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border)}
-.brand{font-size:18px;font-weight:900}.brand span{color:var(--primary)}
-.icon-btn{background:#eef2ff;border-radius:11px;padding:10px}
-.page{display:none}.page.active{display:block}
-.section{padding:0 14px;margin-bottom:15px}
-.section-title{font-size:17px;font-weight:900;margin:7px 0 13px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:13px;overflow-wrap:anywhere}
-.muted{color:var(--muted)}.small{font-size:12px}
-.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.balance-card{margin:15px;padding:21px;border-radius:19px;background:linear-gradient(135deg,#1d4ed8,#4f46e5);color:#fff}
-.balance-label{font-size:12px;opacity:.9}.balance-value{font-size:27px;font-weight:900;margin:9px 0}.balance-sub{font-size:12px;opacity:.9}
-.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
-.action-btn{padding:13px 8px;background:#fff;color:#1d4ed8;border-radius:11px;font-weight:800}
-.timer-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:17px;margin-bottom:13px;text-align:center}
-.period{font-size:12px;color:var(--muted);overflow-wrap:anywhere;margin-top:8px}
-.timer{font-size:32px;font-weight:900;margin:10px 0;font-variant-numeric:tabular-nums}
-.status{display:inline-block;padding:7px 12px;border-radius:20px;background:#dcfce7;color:#15803d;font-weight:800;font-size:11px}
-.status.locked{background:#fee2e2;color:#b91c1c}
-.notice{background:#fff7ed;color:#9a3412;padding:12px;border-radius:11px;font-size:12px;line-height:1.7;margin-top:12px;overflow-wrap:anywhere}
-.number-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:15px 0}
-.number-btn{min-width:0;min-height:49px;border-radius:12px;color:#fff;font-size:18px;font-weight:900}
-.red{background:#dc2626}.green{background:#16a34a}.violet{background:#8b5cf6}.orange{background:#f59e0b}.blue{background:#0ea5e9}
-.num-zero{background:linear-gradient(135deg,#dc2626 0 50%,#8b5cf6 50%)}
-.num-five{background:linear-gradient(135deg,#16a34a 0 50%,#8b5cf6 50%)}
-.option-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:13px 0}
-.option-btn{min-height:46px;padding:8px 4px;border-radius:11px;color:#fff;font-weight:800}
-.big-small{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.big-small button{min-height:47px;border-radius:11px;color:#fff;font-weight:900}
-.primary-btn{width:100%;padding:14px;border-radius:11px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;font-weight:900;min-height:46px}
-.secondary-btn{width:100%;padding:12px;border-radius:11px;background:#e8efff;color:#1d4ed8;font-weight:900;min-height:44px}
-.bottom-nav{position:fixed;bottom:calc(8px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:calc(100% - 12px);max-width:588px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;background:rgba(255,255,255,.98);border:1px solid var(--border);border-radius:15px;padding:7px 5px;z-index:20;box-shadow:0 3px 14px #0f172a18}
-.nav-btn{min-width:0;min-height:53px;padding:5px 2px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#f1f5f9;color:#475569;font-size:10px;font-weight:900}
-.nav-icon{display:block;font-size:20px;line-height:1.2}.nav-btn.active{background:#dbeafe;color:#1d4ed8;box-shadow:inset 0 -3px 0 #2563eb}
-input{display:block;width:100%;min-width:0;padding:13px;margin:7px 0 13px;border:1px solid #d8e0ec;border-radius:10px;background:#fff;color:var(--text)}
-label{font-weight:800;font-size:12px}.utc-time{font-size:11px;color:#64748b;margin-top:5px;line-height:1.6}
-.empty{text-align:center;padding:20px 7px;color:var(--muted);line-height:1.7}
-.history-card{border-radius:13px;padding:12px;margin:9px 0;border:1px solid #dbe4f0;background:linear-gradient(135deg,#fff,#f8fafc)}
-.history-card.win{border-color:#86efac;background:linear-gradient(135deg,#f0fdf4,#dcfce7)}
-.history-card.loss{border-color:#fca5a5;background:linear-gradient(135deg,#fff1f2,#fee2e2)}
-.badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.3px}
-.badge.win{background:#16a34a;color:#fff}.badge.loss{background:#dc2626;color:#fff}.badge.pending{background:#facc15;color:#713f12}.badge.cancelled{background:#64748b;color:#fff}
-.modal-backdrop{display:none;position:fixed;inset:0;z-index:50;background:#0f172a88;align-items:center;justify-content:center;padding:15px}
-.modal-backdrop.open{display:flex}.modal{background:white;width:100%;max-width:430px;max-height:90%;overflow:auto;padding:19px;border-radius:17px}
-.modal-title{font-size:18px;font-weight:900}.close-btn{padding:9px 12px;border-radius:9px;background:#e9edf5}
-.amount-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:12px 0}
-.amount-presets button{background:#ede9fe;color:#6d28d9;padding:12px 3px;border-radius:9px;font-weight:900}
-.amount-stepper{display:grid;grid-template-columns:45px minmax(0,1fr) 45px;gap:8px}
-.amount-stepper button{border-radius:9px;background:#e2e8f0;font-size:21px}.amount-stepper input{margin:0;text-align:center}
-.toast{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:100px;width:max-content;max-width:90%;z-index:90;padding:13px 16px;border-radius:11px;background:#172033;color:#fff;text-align:center;line-height:1.5}
-.toast.show{display:block}
-.referral-hero{padding:20px;border-radius:17px;background:linear-gradient(135deg,#1e40af,#7c3aed);color:white;margin-bottom:13px}
-.referral-hero .hero-label{font-size:12px;opacity:.9}.referral-hero .hero-value{font-size:28px;font-weight:900;margin:9px 0}.referral-hero .hero-sub{font-size:12px;line-height:1.6;opacity:.95}
-.referral-link-box{background:#f1f5f9;border:1px dashed #94a3b8;padding:12px;border-radius:10px;overflow-wrap:anywhere;word-break:break-word;font-size:12px;line-height:1.7;margin:10px 0}
-.referral-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}
-.referral-stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.referral-stat{padding:13px;border:1px solid var(--border);border-radius:12px;background:#f8fafc}
-.stat-label{font-size:11px;color:var(--muted);line-height:1.5}.stat-value{font-size:20px;font-weight:900;margin-top:7px;overflow-wrap:anywhere}
-.level-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid var(--border)}
-.level-row:last-child{border-bottom:0}.level-title{font-weight:900}.level-rate{font-size:12px;color:#2563eb;font-weight:900}
-.reward-status{padding:10px 12px;border-radius:10px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:800;line-height:1.7}
-.reward-status.credited{background:#dcfce7;color:#166534}
-@media(max-width:380px){.nav-btn{font-size:9px}.nav-icon{font-size:18px}.section{padding:0 10px}.balance-card{margin:10px}.card{padding:13px}.bottom-nav{gap:2px;padding:6px 3px}}
+:root {
+  --bg:#f3f5fb;
+  --card:#fff;
+  --text:#182238;
+  --muted:#748097;
+  --border:#e1e7f0;
+  --primary:#2563eb;
+  --green:#16a34a;
+  --red:#dc2626;
+  --violet:#8b5cf6;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font:14px Arial,Helvetica,sans-serif;
+}
+button,input { font:inherit; }
+button { border:0;cursor:pointer; }
+button:disabled { opacity:.45;cursor:not-allowed; }
+.app { max-width:600px;margin:auto;min-height:100vh;padding-bottom:105px; }
+header {
+  background:#fff;padding:15px;display:flex;align-items:center;
+  justify-content:space-between;gap:10px;border-bottom:1px solid var(--border);
+}
+.brand { font-size:18px;font-weight:900; }
+.brand span { color:var(--primary); }
+.icon-btn { background:#eef2ff;border-radius:11px;padding:10px; }
+.page { display:none; }
+.page.active { display:block; }
+.section { padding:0 14px;margin-bottom:15px; }
+.section-title { font-size:17px;font-weight:900;margin:7px 0 13px; }
+.card {
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:16px;margin-bottom:13px;overflow-wrap:anywhere;
+}
+.muted { color:var(--muted); }
+.small { font-size:12px; }
+.row { display:flex;align-items:center;justify-content:space-between;gap:10px; }
+.balance-card {
+  margin:15px;padding:21px;border-radius:19px;
+  background:linear-gradient(135deg,#1d4ed8,#4f46e5);color:#fff;
+}
+.balance-label { font-size:12px;opacity:.9; }
+.balance-value { font-size:27px;font-weight:900;margin:9px 0; }
+.balance-sub { font-size:12px;opacity:.9; }
+.actions { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px; }
+.action-btn { padding:13px 8px;background:#fff;color:#1d4ed8;border-radius:11px;font-weight:800; }
+.timer-card {
+  background:#fff;border:1px solid var(--border);border-radius:16px;
+  padding:17px;margin-bottom:13px;text-align:center;
+}
+.period { font-size:12px;color:var(--muted);overflow-wrap:anywhere;margin-top:8px; }
+.timer { font-size:32px;font-weight:900;margin:10px 0;font-variant-numeric:tabular-nums; }
+.status { display:inline-block;padding:7px 12px;border-radius:20px;background:#dcfce7;color:#15803d;font-weight:800;font-size:11px; }
+.status.locked { background:#fee2e2;color:#b91c1c; }
+.notice { background:#fff7ed;color:#9a3412;padding:12px;border-radius:11px;font-size:12px;line-height:1.7;margin-top:12px;overflow-wrap:anywhere; }
+.number-grid { display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:15px 0; }
+.number-btn { min-width:0;min-height:49px;border-radius:12px;color:#fff;font-size:18px;font-weight:900; }
+.red { background:#dc2626; }
+.green { background:#16a34a; }
+.violet { background:#8b5cf6; }
+.orange { background:#f59e0b; }
+.blue { background:#0ea5e9; }
+.num-zero { background:linear-gradient(135deg,#dc2626 0 50%,#8b5cf6 50%); }
+.num-five { background:linear-gradient(135deg,#16a34a 0 50%,#8b5cf6 50%); }
+.option-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:13px 0; }
+.option-btn { min-height:46px;padding:8px 4px;border-radius:11px;color:#fff;font-weight:800; }
+.big-small { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+.big-small button { min-height:47px;border-radius:11px;color:#fff;font-weight:900; }
+.primary-btn {
+  width:100%;padding:14px;border-radius:11px;
+  background:linear-gradient(135deg,#2563eb,#7c3aed);
+  color:#fff;font-weight:900;min-height:46px;
+}
+.secondary-btn { width:100%;padding:12px;border-radius:11px;background:#e8efff;color:#1d4ed8;font-weight:900;min-height:44px; }
+.bottom-nav {
+  position:fixed;bottom:calc(8px + env(safe-area-inset-bottom));
+  left:50%;transform:translateX(-50%);width:calc(100% - 12px);
+  max-width:588px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:4px;background:rgba(255,255,255,.98);border:1px solid var(--border);
+  border-radius:15px;padding:7px 5px;z-index:20;
+  box-shadow:0 3px 14px #0f172a18;
+}
+.nav-btn {
+  min-width:0;min-height:53px;padding:5px 2px;border-radius:11px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;background:#f1f5f9;color:#475569;font-size:10px;font-weight:900;
+}
+.nav-icon { display:block;font-size:20px;line-height:1.2; }
+.nav-btn.active { background:#dbeafe;color:#1d4ed8;box-shadow:inset 0 -3px 0 #2563eb; }
+input { display:block;width:100%;min-width:0;padding:13px;margin:7px 0 13px;border:1px solid #d8e0ec;border-radius:10px;background:#fff;color:var(--text); }
+label { font-weight:800;font-size:12px; }
+.utc-time { font-size:11px;color:#64748b;margin-top:5px;line-height:1.6; }
+.empty { text-align:center;padding:20px 7px;color:var(--muted);line-height:1.7; }
+.history-card { border-radius:13px;padding:12px;margin:9px 0;border:1px solid #dbe4f0;background:linear-gradient(135deg,#fff,#f8fafc); }
+.history-card.win { border-color:#86efac;background:linear-gradient(135deg,#f0fdf4,#dcfce7); }
+.history-card.loss { border-color:#fca5a5;background:linear-gradient(135deg,#fff1f2,#fee2e2); }
+.badge { display:inline-block;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.3px; }
+.badge.win { background:#16a34a;color:#fff; }
+.badge.loss { background:#dc2626;color:#fff; }
+.badge.pending { background:#facc15;color:#713f12; }
+.badge.cancelled { background:#64748b;color:#fff; }
+.modal-backdrop { display:none;position:fixed;inset:0;z-index:50;background:#0f172a88;align-items:center;justify-content:center;padding:15px; }
+.modal-backdrop.open { display:flex; }
+.modal { background:white;width:100%;max-width:430px;max-height:90%;overflow:auto;padding:19px;border-radius:17px; }
+.modal-title { font-size:18px;font-weight:900; }
+.close-btn { padding:9px 12px;border-radius:9px;background:#e9edf5; }
+.amount-presets { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:12px 0; }
+.amount-presets button { background:#ede9fe;color:#6d28d9;padding:12px 3px;border-radius:9px;font-weight:900; }
+.amount-stepper { display:grid;grid-template-columns:45px minmax(0,1fr) 45px;gap:8px; }
+.amount-stepper button { border-radius:9px;background:#e2e8f0;font-size:21px; }
+.amount-stepper input { margin:0;text-align:center; }
+.toast { display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:100px;width:max-content;max-width:90%;z-index:90;padding:13px 16px;border-radius:11px;background:#172033;color:#fff;text-align:center;line-height:1.5; }
+.toast.show { display:block; }
+.referral-hero { padding:20px;border-radius:17px;background:linear-gradient(135deg,#1e40af,#7c3aed);color:white;margin-bottom:13px; }
+.referral-hero .hero-label { font-size:12px;opacity:.9; }
+.referral-hero .hero-value { font-size:28px;font-weight:900;margin:9px 0; }
+.referral-hero .hero-sub { font-size:12px;line-height:1.6;opacity:.95; }
+.referral-link-box { background:#f1f5f9;border:1px dashed #94a3b8;padding:12px;border-radius:10px;overflow-wrap:anywhere;word-break:break-word;font-size:12px;line-height:1.7;margin:10px 0; }
+.referral-actions { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px; }
+.referral-stat-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+.referral-stat { padding:13px;border:1px solid var(--border);border-radius:12px;background:#f8fafc; }
+.stat-label { font-size:11px;color:var(--muted);line-height:1.5; }
+.stat-value { font-size:20px;font-weight:900;margin-top:7px;overflow-wrap:anywhere; }
+.level-row { display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid var(--border); }
+.level-row:last-child { border-bottom:0; }
+.level-title { font-weight:900; }
+.level-rate { font-size:12px;color:#2563eb;font-weight:900; }
+.reward-status { padding:10px 12px;border-radius:10px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:800;line-height:1.7; }
+.reward-status.credited { background:#dcfce7;color:#166534; }
+@media(max-width:380px) {
+  .nav-btn { font-size:9px; }
+  .nav-icon { font-size:18px; }
+  .section { padding:0 10px; }
+  .balance-card { margin:10px; }
+  .card { padding:13px; }
+  .bottom-nav { gap:2px;padding:6px 3px; }
+}
 </style>
 </head>
+
 <body>
 <div class="app">
 <header>
-<div><div class="brand">CRYPTO <span>TRADER PRO</span></div><div class="small muted">Prediction Dashboard · UTC</div></div>
-<button class="icon-btn" id="headerProfile" type="button">👤</button>
+  <div>
+    <div class="brand">CRYPTO <span>TRADER PRO</span></div>
+    <div class="small muted">Prediction Dashboard · UTC</div>
+  </div>
+  <button class="icon-btn" id="headerProfile" type="button">👤</button>
 </header>
 
 <section class="page active" id="page-home">
-<div class="balance-card">
-<div class="balance-label">BACKEND WALLET BALANCE</div>
-<div class="balance-value"><span id="homePoints">—</span> Points</div>
-<div class="balance-sub">Server database · Test credits only</div>
-<div class="actions"><button class="action-btn" data-page-go="wallet">💰 Wallet</button><button class="action-btn" id="refreshBtn">↻ Refresh</button></div>
-</div>
-<div class="section">
-<div class="timer-card">
-<div class="row"><span class="muted small">Current Period</span><span class="muted small">3-minute round</span></div>
-<div class="period" id="periodId">Loading server round…</div>
-<div class="timer" id="timer">--:--</div>
-<span class="status" id="betStatus">CONNECTING</span>
-<div class="notice" id="serverNotice">Connecting to backend…</div>
-</div>
-<div class="card">
-<div class="section-title">🔢 Choose a Number</div>
-<div class="muted small">Select a number to open the test-bet window.</div>
-<div class="number-grid" id="numberGrid"></div>
-<div class="section-title">🎨 Choose a Colour</div>
-<div class="option-grid"><button class="option-btn red" data-bet="Red">🔴 Red</button><button class="option-btn green" data-bet="Green">🟢 Green</button><button class="option-btn violet" data-bet="Violet">🟣 Violet</button></div>
-<div class="section-title">📊 Big / Small</div>
-<div class="big-small"><button class="orange" data-bet="Big">🟠 Big (5–9)</button><button class="blue" data-bet="Small">🔵 Small (0–4)</button></div>
-</div>
-<div class="card"><div class="section-title">🎯 Result History</div><div id="homeParityRecords" class="empty">Loading…</div></div>
-<div class="card"><div class="section-title">📋 Trade History</div><div id="homeTradeRecords" class="empty">Loading…</div></div>
-</div>
+  <div class="balance-card">
+    <div class="balance-label">BACKEND WALLET BALANCE</div>
+    <div class="balance-value"><span id="homePoints">—</span> Points</div>
+    <div class="balance-sub">Server database · Test credits only</div>
+    <div class="actions">
+      <button class="action-btn" data-page-go="wallet">💰 Wallet</button>
+      <button class="action-btn" id="refreshBtn">↻ Refresh</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="timer-card">
+      <div class="row"><span class="muted small">Current Period</span><span class="muted small">3-minute round</span></div>
+      <div class="period" id="periodId">Loading server round…</div>
+      <div class="timer" id="timer">--:--</div>
+      <span class="status" id="betStatus">CONNECTING</span>
+      <div class="notice" id="serverNotice">Connecting to backend…</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">🔢 Choose a Number</div>
+      <div class="muted small">Select a number to open the test-bet window.</div>
+      <div class="number-grid" id="numberGrid"></div>
+      <div class="section-title">🎨 Choose a Colour</div>
+      <div class="option-grid">
+        <button class="option-btn red" data-bet="Red">🔴 Red</button>
+        <button class="option-btn green" data-bet="Green">🟢 Green</button>
+        <button class="option-btn violet" data-bet="Violet">🟣 Violet</button>
+      </div>
+      <div class="section-title">📊 Big / Small</div>
+      <div class="big-small">
+        <button class="orange" data-bet="Big">🟠 Big (5–9)</button>
+        <button class="blue" data-bet="Small">🔵 Small (0–4)</button>
+      </div>
+    </div>
+
+    <div class="card"><div class="section-title">🎯 Result History</div><div id="homeParityRecords" class="empty">Loading…</div></div>
+    <div class="card"><div class="section-title">📋 Trade History</div><div id="homeTradeRecords" class="empty">Loading…</div></div>
+  </div>
 </section>
 
-<section class="page" id="page-game"><div class="section">
-<div class="section-title">🎮 Prediction Game</div>
-<div class="card"><div class="muted small">Server wallet balance</div><strong id="gamePoints">—</strong></div>
-<div class="timer-card"><div class="period" id="gamePeriod">Loading…</div><div class="timer" id="gameTimer">--:--</div><span class="status" id="gameStatus">CONNECTING</span></div>
-<div class="card"><div class="section-title">Select Your Prediction</div><div class="number-grid" id="gameNumberGrid"></div>
-<div class="option-grid"><button class="option-btn red" data-bet="Red">🔴 Red</button><button class="option-btn green" data-bet="Green">🟢 Green</button><button class="option-btn violet" data-bet="Violet">🟣 Violet</button></div>
-<div class="big-small"><button class="orange" data-bet="Big">🟠 Big</button><button class="blue" data-bet="Small">🔵 Small</button></div>
-<div class="notice">Testing only. Verify settlement before any live launch.</div></div>
-</div></section>
+<section class="page" id="page-game">
+  <div class="section">
+    <div class="section-title">🎮 Prediction Game</div>
+    <div class="card"><div class="muted small">Server wallet balance</div><strong id="gamePoints">—</strong></div>
+    <div class="timer-card">
+      <div class="period" id="gamePeriod">Loading…</div>
+      <div class="timer" id="gameTimer">--:--</div>
+      <span class="status" id="gameStatus">CONNECTING</span>
+    </div>
+    <div class="card">
+      <div class="section-title">Select Your Prediction</div>
+      <div class="number-grid" id="gameNumberGrid"></div>
+      <div class="option-grid">
+        <button class="option-btn red" data-bet="Red">🔴 Red</button>
+        <button class="option-btn green" data-bet="Green">🟢 Green</button>
+        <button class="option-btn violet" data-bet="Violet">🟣 Violet</button>
+      </div>
+      <div class="big-small">
+        <button class="orange" data-bet="Big">🟠 Big</button>
+        <button class="blue" data-bet="Small">🔵 Small</button>
+      </div>
+      <div class="notice">Testing only. Verify settlement before any live launch.</div>
+    </div>
+  </div>
+</section>
 
-<section class="page" id="page-records"><div class="section">
-<div class="section-title">📊 Records</div>
-<div class="card"><div class="section-title">🎯 Result History</div><div id="parityRecords" class="empty">Loading…</div></div>
-<div class="card"><div class="section-title">📋 Trade History</div><div id="tradeHistory" class="empty">Loading…</div></div>
-</div></section>
+<section class="page" id="page-records">
+  <div class="section">
+    <div class="section-title">📊 Records</div>
+    <div class="card"><div class="section-title">🎯 Result History</div><div id="parityRecords" class="empty">Loading…</div></div>
+    <div class="card"><div class="section-title">📋 Trade History</div><div id="tradeHistory" class="empty">Loading…</div></div>
+  </div>
+</section>
 
-<section class="page" id="page-wallet"><div class="section">
-<div class="section-title">💰 Wallet</div>
-<div class="card"><div class="muted small">Database test-credit balance</div><div style="font-size:27px;font-weight:900;margin:9px 0"><span id="walletPoints">—</span> Points</div>
-<div class="notice">Deposit and withdrawal backend is not connected yet. Do not send cryptocurrency.</div>
-<button class="primary-btn" id="walletRefresh">Refresh Balance</button></div>
-</div></section>
+<section class="page" id="page-wallet">
+  <div class="section">
+    <div class="section-title">💰 Wallet</div>
+    <div class="card">
+      <div class="muted small">Database test-credit balance</div>
+      <div style="font-size:27px;font-weight:900;margin:9px 0"><span id="walletPoints">—</span> Points</div>
+      <div class="notice">Deposit and withdrawal backend is not connected yet. Do not send cryptocurrency.</div>
+      <button class="primary-btn" id="walletRefresh">Refresh Balance</button>
+    </div>
+  </div>
+</section>
 
-<section class="page" id="page-referral"><div class="section">
-<div class="section-title">👥 Referral Program</div>
-<div class="referral-hero"><div class="hero-label">TOTAL REFERRAL COMMISSIONS</div><div class="hero-value"><span id="refTotalCommission">—</span> Points</div><div class="hero-sub">Commission totals are loaded from the server.</div></div>
-<div class="card"><div class="section-title">🔗 Your Referral Link</div><div class="referral-link-box" id="referralLink">Loading referral link…</div>
-<div class="row"><span class="muted small">Referral code</span><strong id="referralCode">—</strong></div>
-<div class="referral-actions"><button class="primary-btn" id="copyReferralBtn">📋 Copy Link</button><button class="secondary-btn" id="shareReferralBtn">📲 Share Link</button></div>
-<button class="secondary-btn" id="refreshReferralBtn" style="margin-top:10px">↻ Refresh Referral Data</button></div>
-<div class="card"><div class="section-title">📊 Referral Overview</div><div class="referral-stat-grid">
-<div class="referral-stat"><div class="stat-label">Direct Referrals</div><div class="stat-value" id="directReferralCount">—</div></div>
-<div class="referral-stat"><div class="stat-label">Total Commission</div><div class="stat-value" id="refCommissionTotalStat">—</div></div>
-<div class="referral-stat"><div class="stat-label">Pending Reward</div><div class="stat-value" id="refPendingReward">—</div></div>
-<div class="referral-stat"><div class="stat-label">Credited Reward</div><div class="stat-value" id="refCreditedReward">—</div></div>
-</div></div>
-<div class="card"><div class="section-title">💰 Commission Levels</div>
-<div class="level-row"><div><div class="level-title">Level 1</div><div class="muted small">Direct referrals</div></div><div style="text-align:right"><div class="level-rate">15%</div><strong id="refLevel1">— Points</strong></div></div>
-<div class="level-row"><div><div class="level-title">Level 2</div><div class="muted small">Second level</div></div><div style="text-align:right"><div class="level-rate">10%</div><strong id="refLevel2">— Points</strong></div></div>
-<div class="level-row"><div><div class="level-title">Level 3</div><div class="muted small">Third level</div></div><div style="text-align:right"><div class="level-rate">5%</div><strong id="refLevel3">— Points</strong></div></div>
-</div>
-<div class="card"><div class="section-title">🎁 Referral Reward</div><p class="muted small">100 Points reward requires a qualifying confirmed recharge of at least 100 Points. Recharge is not connected yet, so rewards may remain pending.</p><div id="refRewardStatus" class="reward-status">Loading reward status…</div></div>
-<div class="card"><div class="section-title">🎟️ Apply Referral Code</div><p class="muted small">Referral attribution cannot be changed after it is set.</p><label for="referralCodeInput">Referral Code</label><input id="referralCodeInput" type="text" maxlength="80" placeholder="Enter referral code" autocomplete="off"><button class="primary-btn" id="applyReferralBtn">Apply Referral Code</button></div>
-<div class="card"><div class="section-title">📋 Commission History</div><div id="referralHistory" class="empty">Loading commission history…</div></div>
-</div></section>
+<section class="page" id="page-referral">
+  <div class="section">
+    <div class="section-title">👥 Referral Program</div>
 
-<section class="page" id="page-profile"><div class="section">
-<div class="section-title">👤 Profile & Settings</div>
-<div class="card"><div class="muted small">Telegram account</div><strong id="profileName">Checking Telegram…</strong><p class="muted small" id="profileStatus">Authenticating with Telegram</p><button class="primary-btn" id="authRetry">Retry Authentication</button></div>
-<div class="card"><div class="section-title">About</div><p>Server-controlled rounds and test-credit wallet.</p><div class="notice">Testing only.</div></div>
-</div></section>
+    <div class="referral-hero">
+      <div class="hero-label">TOTAL REFERRAL COMMISSIONS</div>
+      <div class="hero-value"><span id="refTotalCommission">—</span> Points</div>
+      <div class="hero-sub">Commission totals are loaded from the server.</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">🔗 Your Referral Link</div>
+      <div class="referral-link-box" id="referralLink">Loading referral link…</div>
+      <div class="row"><span class="muted small">Referral code</span><strong id="referralCode">—</strong></div>
+      <div class="referral-actions">
+        <button class="primary-btn" id="copyReferralBtn">📋 Copy Link</button>
+        <button class="secondary-btn" id="shareReferralBtn">📲 Share Link</button>
+      </div>
+      <button class="secondary-btn" id="refreshReferralBtn" style="margin-top:10px">↻ Refresh Referral Data</button>
+    </div>
+
+    <div class="card">
+      <div class="section-title">📊 Referral Overview</div>
+      <div class="referral-stat-grid">
+        <div class="referral-stat"><div class="stat-label">Direct Referrals</div><div class="stat-value" id="directReferralCount">—</div></div>
+        <div class="referral-stat"><div class="stat-label">Total Commission</div><div class="stat-value" id="refCommissionTotalStat">—</div></div>
+        <div class="referral-stat"><div class="stat-label">Pending Reward</div><div class="stat-value" id="refPendingReward">—</div></div>
+        <div class="referral-stat"><div class="stat-label">Credited Reward</div><div class="stat-value" id="refCreditedReward">—</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">💰 Commission Levels</div>
+      <div class="level-row"><div><div class="level-title">Level 1</div><div class="muted small">Direct referrals</div></div><div style="text-align:right"><div class="level-rate">15%</div><strong id="refLevel1">— Points</strong></div></div>
+      <div class="level-row"><div><div class="level-title">Level 2</div><div class="muted small">Second level</div></div><div style="text-align:right"><div class="level-rate">10%</div><strong id="refLevel2">— Points</strong></div></div>
+      <div class="level-row"><div><div class="level-title">Level 3</div><div class="muted small">Third level</div></div><div style="text-align:right"><div class="level-rate">5%</div><strong id="refLevel3">— Points</strong></div></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">🎁 Referral Reward</div>
+      <p class="muted small">100 Points reward requires a qualifying confirmed recharge of at least 100 Points. Recharge is not connected yet, so rewards may remain pending.</p>
+      <div id="refRewardStatus" class="reward-status">Loading reward status…</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">🎟️ Apply Referral Code</div>
+      <p class="muted small">Referral attribution cannot be changed after it is set.</p>
+      <label for="referralCodeInput">Referral Code</label>
+      <input id="referralCodeInput" type="text" maxlength="80" placeholder="Enter referral code" autocomplete="off">
+      <button class="primary-btn" id="applyReferralBtn">Apply Referral Code</button>
+    </div>
+
+    <div class="card"><div class="section-title">📋 Commission History</div><div id="referralHistory" class="empty">Loading commission history…</div></div>
+  </div>
+</section>
+
+<section class="page" id="page-profile">
+  <div class="section">
+    <div class="section-title">👤 Profile & Settings</div>
+    <div class="card">
+      <div class="muted small">Telegram account</div>
+      <strong id="profileName">Checking Telegram…</strong>
+      <p class="muted small" id="profileStatus">Authenticating with Telegram</p>
+      <button class="primary-btn" id="authRetry">Retry Authentication</button>
+    </div>
+    <div class="card"><div class="section-title">About</div><p>Server-controlled rounds and test-credit wallet.</p><div class="notice">Testing only.</div></div>
+  </div>
+</section>
 
 <nav class="bottom-nav" aria-label="Main navigation">
-<button class="nav-btn active" data-page="home"><span class="nav-icon">🏠</span><span>Home</span></button>
-<button class="nav-btn" data-page="game"><span class="nav-icon">🎮</span><span>Game</span></button>
-<button class="nav-btn" data-page="records"><span class="nav-icon">📊</span><span>Records</span></button>
-<button class="nav-btn" data-page="wallet"><span class="nav-icon">💰</span><span>Wallet</span></button>
-<button class="nav-btn" data-page="referral"><span class="nav-icon">🎁</span><span>Referral</span></button>
-<button class="nav-btn" data-page="profile"><span class="nav-icon">👤</span><span>Profile</span></button>
+  <button class="nav-btn active" data-page="home"><span class="nav-icon">🏠</span><span>Home</span></button>
+  <button class="nav-btn" data-page="game"><span class="nav-icon">🎮</span><span>Game</span></button>
+  <button class="nav-btn" data-page="records"><span class="nav-icon">📊</span><span>Records</span></button>
+  <button class="nav-btn" data-page="wallet"><span class="nav-icon">💰</span><span>Wallet</span></button>
+  <button class="nav-btn" data-page="referral"><span class="nav-icon">🎁</span><span>Referral</span></button>
+  <button class="nav-btn" data-page="profile"><span class="nav-icon">👤</span><span>Profile</span></button>
 </nav>
 </div>
 
-<div class="modal-backdrop" id="betModal"><div class="modal">
-<div class="row"><div class="modal-title" id="betModalTitle">Place Test Bet</div><button class="close-btn" data-close="betModal">✕</button></div>
-<p class="muted small" id="betModalPeriod"></p><label for="betAmount">Bet Amount (Test Points)</label>
-<div class="amount-presets"><button data-amount="10">10</button><button data-amount="50">50</button><button data-amount="100">100</button><button data-amount="500">500</button></div>
-<div class="amount-stepper"><button id="minusAmount">−</button><input id="betAmount" type="number" min="0.01" max="1000" step="0.01" value="100"><button id="plusAmount">+</button></div>
-<div class="notice">Test credits only. A bet deducts test credits.</div><button class="primary-btn" id="confirmBet" style="margin-top:14px">Place Test Bet</button>
-</div></div>
-<div class="modal-backdrop" id="resultModal" role="dialog" aria-modal="true"><div class="modal">
-<div style="text-align:center;font-size:23px;font-weight:900">🎉 ROUND RESULT</div><div class="muted small" id="resultPopupPeriod" style="text-align:center;margin-top:8px">Period —</div>
-<div id="resultPopupNumber" style="width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:48px;font-weight:900;margin:20px auto">—</div>
-<div class="row" style="justify-content:center"><strong id="resultPopupColor">COLOR —</strong><strong id="resultPopupSize">—</strong></div><button class="primary-btn" id="resultPopupClose" style="margin-top:18px">CONTINUE</button>
-</div></div>
+<div class="modal-backdrop" id="betModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title" id="betModalTitle">Place Test Bet</div><button class="close-btn" data-close="betModal">✕</button></div>
+    <p class="muted small" id="betModalPeriod"></p>
+    <label for="betAmount">Bet Amount (Test Points)</label>
+    <div class="amount-presets"><button data-amount="10">10</button><button data-amount="50">50</button><button data-amount="100">100</button><button data-amount="500">500</button></div>
+    <div class="amount-stepper"><button id="minusAmount">−</button><input id="betAmount" type="number" min="0.01" max="1000" step="0.01" value="100"><button id="plusAmount">+</button></div>
+    <div class="notice">Test credits only. A bet deducts test credits.</div>
+    <button class="primary-btn" id="confirmBet" style="margin-top:14px">Place Test Bet</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="resultModal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div style="text-align:center;font-size:23px;font-weight:900">🎉 ROUND RESULT</div>
+    <div class="muted small" id="resultPopupPeriod" style="text-align:center;margin-top:8px">Period —</div>
+    <div id="resultPopupNumber" style="width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:48px;font-weight:900;margin:20px auto">—</div>
+    <div class="row" style="justify-content:center"><strong id="resultPopupColor">COLOR —</strong><strong id="resultPopupSize">—</strong></div>
+    <button class="primary-btn" id="resultPopupClose" style="margin-top:18px">CONTINUE</button>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-(function(){
+(function () {
 "use strict";
-const $=id=>document.getElementById(id);
-const tg=window.Telegram&&window.Telegram.WebApp;
-let initData="",authed=false,user=null,rounds=[],bets=[],currentRound=null,currentBet=null,pendingBetRequest=null,toastTimer=null,refreshing=false,serverTimeOffset=0,lastSeenResultEnd=0,resultPopupQueue=[],resultPopupOpen=false,referralLoading=false;
 
-function toast(message){$("toast").textContent=message;$("toast").classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").classList.remove("show"),3500)}
-function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function money(v){const n=Number(v);return Number.isFinite(n)?n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}):"—"}
-function dateUTC(v){const d=new Date(v);return Number.isNaN(d.getTime())?"":d.toLocaleString("en-GB",{timeZone:"UTC",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"})+" UTC"}
+const $ = id => document.getElementById(id);
+const tg = window.Telegram && window.Telegram.WebApp;
 
-function showPage(name){
-document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id==="page-"+name));
-document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
-if(name==="referral"&&authed)loadReferralData();
-}
-function numClass(n){return n===0?"num-zero":n===5?"num-five":n%2===0?"red":"green"}
-function renderNumbers(id){
-const box=$(id);if(!box)return;box.replaceChildren();
-for(let n=0;n<=9;n++){const b=document.createElement("button");b.type="button";b.className="number-btn "+numClass(n);b.textContent=String(n);b.addEventListener("click",()=>openBet("Number",n));box.appendChild(b)}
-}
-function makeRequestId(){
-if(window.crypto?.randomUUID)return window.crypto.randomUUID();
-if(window.crypto?.getRandomValues){const a=new Uint8Array(16);window.crypto.getRandomValues(a);a[6]=(a[6]&15)|64;a[8]=(a[8]&63)|128;const h=Array.from(a,x=>x.toString(16).padStart(2,"0")).join("");return h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20)}
-throw new Error("Secure request IDs are not supported");
-}
-async function parseResponse(response){let d;try{d=await response.json()}catch{throw new Error("Backend returned invalid JSON.")}if(!response.ok||d.success===false)throw new Error(d.message||"Backend request failed.");return d}
-async function api(action,extra={}){if(!initData)throw new Error("Open the Mini App inside Telegram.");const r=await fetch("/api/game",{method:"POST",headers:{"Content-Type":"application/json"},cache:"no-store",body:JSON.stringify({initData,action,...extra})});return parseResponse(r)}
-async function getRounds(){const r=await fetch("/api/game",{cache:"no-store"});const d=await parseResponse(r);return{rounds:d.rounds||[],currentRound:d.current_round||null,serverTime:d.server_time||null}}
+let initData = "";
+let authed = false;
+let user = null;
+let rounds = [];
+let bets = [];
+let currentRound = null;
+let currentBet = null;
+let pendingBetRequest = null;
+let toastTimer = null;
+let refreshing = false;
+let serverTimeOffset = 0;
+let referralLoading = false;
 
-function setStatus(value){["betStatus","gameStatus"].forEach(id=>{$(id).textContent=value;$(id).classList.toggle("locked",value.includes("LOCKED")||value.includes("ERROR"))})}
-function updateBalance(v){["homePoints","gamePoints","walletPoints"].forEach(id=>$(id).textContent=money(v))}
-function resultColour(n){return n===0||n===5?"#8b5cf6":n%2===0?"#dc2626":"#16a34a"}
-function resultColorName(n){return n===0||n===5?"VIOLET":n%2===0?"RED":"GREEN"}
-
-function renderRounds(){
-const html=rounds.length?rounds.map(r=>{
-const has=r.result_number!==null&&r.result_number!==undefined,n=has?Number(r.result_number):"—",colour=has?resultColour(n):"#94a3b8",name=has?resultColorName(n):"PENDING",size=has?(n>=5?"BIG":"SMALL"):"WAITING";
-return `<div class="history-card"><div class="row"><div><strong>Period ${esc(r.round_code)}</strong><div class="utc-time">${esc(dateUTC(r.ends_at))}</div><div style="margin-top:7px"><span class="badge ${has?(n%2===0?"loss":"win"):"pending"}">${name}</span> <span class="badge pending">${size}</span></div></div><span class="number-btn" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:${colour}">${esc(n)}</span></div><div class="muted small" style="margin-top:8px">Status: ${esc(String(r.status||"").toUpperCase())}</div></div>`;
-}).join(""):'<div class="empty">No server rounds found.</div>';
-$("homeParityRecords").innerHTML=html;$("parityRecords").innerHTML=html;
-}
-function renderBets(){
-const html=bets.length?bets.map(b=>{
-const s=String(b.status||"pending").toLowerCase(),cls=s==="won"?"win":s==="lost"?"loss":"pending",choice=b.bet_type==="Number"&&b.selection!==null?` · ${esc(b.selection)}`:"";
-return `<div class="history-card ${cls}"><div class="row"><div><strong>${esc(b.bet_type)}${choice}</strong><div class="utc-time">Period ${esc(b.round_code||b.round_id)}</div><div class="utc-time">${esc(dateUTC(b.created_at))}</div></div><span class="badge ${cls}">${esc(s.toUpperCase())}</span></div><div class="row" style="margin-top:9px"><span>Stake ${money(b.stake)}</span><strong>Payout: ${money(b.payout||0)}</strong></div></div>`;
-}).join(""):'<div class="empty">No bets recorded yet.</div>';
-$("homeTradeRecords").innerHTML=html;$("tradeHistory").innerHTML=html;
-}
-function activeRound(){
-const now=Date.now()+serverTimeOffset,valid=r=>r&&now>=new Date(r.starts_at).getTime()&&now<new Date(r.ends_at).getTime();
-return valid(currentRound)?currentRound:rounds.find(valid)||null;
-}
-function bettingOpen(r){const now=Date.now()+serverTimeOffset;return !!r&&r.status==="open"&&now>=new Date(r.starts_at).getTime()&&now<new Date(r.betting_closes_at).getTime()&&now<new Date(r.ends_at).getTime()}
-function updateRoundDisplay(){
-const r=activeRound();
-if(!r){$("periodId").textContent="Waiting for next server round…";$("gamePeriod").textContent="Waiting for next server round…";$("timer").textContent="--:--";$("gameTimer").textContent="--:--";setStatus("BETTING LOCKED");return}
-$("periodId").textContent=r.round_code;$("gamePeriod").textContent=r.round_code;
-const left=Math.max(0,Math.ceil((new Date(r.ends_at).getTime()-(Date.now()+serverTimeOffset))/1000));
-const time=String(Math.floor(left/60)).padStart(2,"0")+":"+String(left%60).padStart(2,"0");
-$("timer").textContent=time;$("gameTimer").textContent=time;
-const open=bettingOpen(r);setStatus(open?"BETTING OPEN":"BETTING LOCKED");
-document.querySelectorAll("[data-bet],.number-btn").forEach(b=>b.disabled=!open||!authed);
-}
-async function refreshAll(){
-if(!authed||refreshing)return;refreshing=true;
-try{
-const [rd,bd,bt]=await Promise.all([getRounds(),api("balance"),api("my_bets")]);
-rounds=rd.rounds;currentRound=rd.currentRound;bets=bt.bets||[];
-if(rd.serverTime){const ms=new Date(rd.serverTime).getTime();if(Number.isFinite(ms))serverTimeOffset=ms-Date.now()}
-updateBalance(bd.balance);renderRounds();renderBets();updateRoundDisplay();
-$("serverNotice").textContent="Connected to backend. Betting closes 30 seconds before each round ends.";
-}catch(e){$("serverNotice").textContent="Backend unavailable: "+e.message;setStatus("BACKEND ERROR")}
-finally{refreshing=false}
-}
-function openBet(type,selection=null){
-if(!authed){toast("Authenticate through Telegram first.");return}
-const r=activeRound();if(!bettingOpen(r)){toast("Betting is locked. Wait for the next round.");return}
-currentBet={type,selection,roundCode:r.round_code};pendingBetRequest=null;
-$("betModalTitle").textContent="Bet on "+type+(selection===null?"":" "+selection);
-$("betModalPeriod").textContent="Server round: "+r.round_code;$("betAmount").value="100";$("confirmBet").disabled=false;$("betModal").classList.add("open");
-}
-async function confirmBet(){
-if(!currentBet||!authed)return;
-const stake=Number($("betAmount").value);
-if(!Number.isFinite(stake)||stake<.01||stake>1000||Math.round(stake*100)!==stake*100){toast("Enter an amount between 0.01 and 1000 test points.");return}
-$("confirmBet").disabled=true;
-try{
-if(!pendingBetRequest)pendingBetRequest={requestId:makeRequestId(),roundCode:currentBet.roundCode,betType:currentBet.type,selection:currentBet.type==="Number"?currentBet.selection:null,stake};
-const q=pendingBetRequest;
-const result=await api("place_bet",{round_code:q.roundCode,bet_type:q.betType,selection:q.selection,stake:q.stake,request_id:q.requestId});
-pendingBetRequest=null;$("betModal").classList.remove("open");toast(result.message||"Test bet accepted.");await refreshAll();
-}catch(e){toast(e.message||"Unable to place test bet.")}
-finally{$("confirmBet").disabled=false}
+function toast(message) {
+  $("toast").textContent = String(message || "");
+  $("toast").classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $("toast").classList.remove("show"), 3500);
 }
 
-async function authenticate(){
-if(!tg){$("profileName").textContent="Not opened in Telegram";$("profileStatus").textContent="Open this Mini App inside Telegram.";setStatus("TELEGRAM REQUIRED");return}
-try{
-tg.ready();tg.expand();initData=tg.initData||"";
-if(!initData){$("profileName").textContent="Telegram initData missing";$("profileStatus").textContent="Open the official Telegram Mini App.";setStatus("AUTH REQUIRED");return}
-const r=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({initData})});
-const d=await parseResponse(r);authed=true;user=d.user;
-$("profileName").textContent=user?.username?"@"+user.username:"Telegram user "+(user?.telegram_id||"");
-$("profileStatus").textContent="Telegram identity verified by server.";
-await refreshAll();await processStartParameter();
-}catch(e){authed=false;$("profileStatus").textContent=e.message;setStatus("BACKEND ERROR");toast(e.message)}
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[char]));
 }
 
-/* Referral UI */
-function unwrapReferral(d){return d?.referral&&typeof d.referral==="object"?d.referral:d?.data&&typeof d.data==="object"?d.data:d||{}}
-function renderReferral(raw){
-const d=unwrapReferral(raw),totals=d.commission_totals||d.commissions_by_level||d.level_commissions||{},rewards=d.reward_summary||d.rewards||{};
-const code=d.referral_code||d.referralCode||d.code||"",link=d.referral_link||d.referralLink||d.invite_link||"";
-const total=d.total_commission??d.totalCommission??totals.total??totals.total_commission;
-$("referralCode").textContent=code||"Not available";$("referralLink").textContent=link||"Referral link not available";
-$("directReferralCount").textContent=String(d.direct_referrals??d.directReferrals??d.referral_count??d.total_referrals??0);
-$("refTotalCommission").textContent=total==null?"—":money(total);$("refCommissionTotalStat").textContent=total==null?"—":money(total);
-$("refLevel1").textContent=money(d.level_1_commission??totals.level_1??totals.level1??totals["1"]??0)+" Points";
-$("refLevel2").textContent=money(d.level_2_commission??totals.level_2??totals.level2??totals["2"]??0)+" Points";
-$("refLevel3").textContent=money(d.level_3_commission??totals.level_3??totals.level3??totals["3"]??0)+" Points";
-const pending=d.pending_reward??rewards.pending??rewards.pending_points??0,credited=d.credited_reward??rewards.credited??rewards.credited_points??0;
-$("refPendingReward").textContent=money(pending);$("refCreditedReward").textContent=money(credited);
-$("refRewardStatus").textContent=Number(credited)>0?"Referral reward credited.":"Reward pending qualification or recharge confirmation.";
-$("refRewardStatus").className="reward-status"+(Number(credited)>0?" credited":"");
-const already=Boolean(d.referred_by??d.referredBy??d.has_referrer);
-$("referralCodeInput").disabled=already;$("applyReferralBtn").disabled=already;
-const history=d.commission_history||d.commissionHistory||d.history||d.commissions||[];
-$("referralHistory").innerHTML=Array.isArray(history)&&history.length?history.map(x=>`<div class="history-card"><div class="row"><div><strong>Level ${esc(x.referral_level??x.level??"—")} Commission</strong><div class="utc-time">${esc(x.source_username||x.source_user_id||"Referral")}</div><div class="utc-time">${esc(x.created_at?dateUTC(x.created_at):"")}</div></div><strong>${money(x.commission_amount??x.amount??0)} Points</strong></div></div>`).join(""):'<div class="empty">No commission records available yet.</div>';
-}
-async function loadReferralData(){
-if(!authed||referralLoading)return;referralLoading=true;$("refreshReferralBtn").disabled=true;
-try{renderReferral(await api("referral_data"))}
-catch(e){$("referralHistory").innerHTML='<div class="empty">Could not load referral data: '+esc(e.message)+'</div>';toast("Referral data: "+e.message)}
-finally{referralLoading=false;$("refreshReferralBtn").disabled=false}
-}
-async function copyReferralLink(){
-const link=$("referralLink").textContent.trim();
-if(!link||!link.startsWith("http")){toast("Referral link is not available yet.");return}
-try{if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(link);else{const t=document.createElement("textarea");t.value=link;document.body.appendChild(t);t.select();const ok=document.execCommand("copy");t.remove();if(!ok)throw Error("Copy failed")}toast("Referral link copied!")}
-catch(e){toast("Could not copy link.")}
-}
-async function shareReferralLink(){
-const link=$("referralLink").textContent.trim();if(!link||!link.startsWith("http")){toast("Referral link is not available yet.");return}
-const url="https://t.me/share/url?url="+encodeURIComponent(link)+"&text="+encodeURIComponent("Join me on Crypto Trader Pro!");
-try{if(tg?.openTelegramLink)tg.openTelegramLink(url);else if(navigator.share)await navigator.share({title:"Crypto Trader Pro",url});else await copyReferralLink()}
-catch(e){if(e.name!=="AbortError")toast("Unable to share link.")}
-}
-async function applyReferralCode(){
-if(!authed){toast("Open the Mini App through Telegram first.");return}
-const code=$("referralCodeInput").value.trim();if(!code){toast("Enter a referral code.");return}
-$("applyReferralBtn").disabled=true;
-try{const d=await api("apply_referral",{referral_code:code,code});toast(d.message||"Referral code processed.");$("referralCodeInput").value="";await loadReferralData()}
-catch(e){toast(e.message||"Unable to apply referral code.")}
-finally{$("applyReferralBtn").disabled=false}
-}
-async function processStartParameter(){
-if(!authed||!tg)return;
-try{
-const raw=(tg.initDataUnsafe&&tg.initDataUnsafe.start_param)||tg.startParam||"";
-const m=String(raw).match(/^ref_(.+)$/i);if(!m)return;
-const key="ctp_referral_start_processed";
-if(sessionStorage.getItem(key)===raw)return;
-const code=decodeURIComponent(m[1]);
-const d=await api("apply_referral",{referral_code:code,code});
-sessionStorage.setItem(key,raw);if(d.success!==false){toast(d.message||"Referral code processed.");await loadReferralData()}
-}catch(e){console.warn("Referral attribution:",e.message)}
+function money(value) {
+  const n = Number(value);
+  return Number.isFinite(n)
+    ? n.toLocaleString("en-US", {minimumFractionDigits:2,maximumFractionDigits:2})
+    : "0.00";
 }
 
-function init(){
-/* Render navigation and numbers immediately, independently of authentication. */
-renderNumbers("numberGrid");renderNumbers("gameNumberGrid");
-document.querySelectorAll(".nav-btn").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page)));
-document.querySelectorAll("[data-page-go]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.pageGo)));
-$("headerProfile").addEventListener("click",()=>showPage("profile"));
-$("refreshBtn").addEventListener("click",refreshAll);$("walletRefresh").addEventListener("click",refreshAll);
-$("authRetry").addEventListener("click",authenticate);$("confirmBet").addEventListener("click",confirmBet);
-$("copyReferralBtn").addEventListener("click",copyReferralLink);$("shareReferralBtn").addEventListener("click",shareReferralLink);
-$("refreshReferralBtn").addEventListener("click",loadReferralData);$("applyReferralBtn").addEventListener("click",applyReferralCode);
-$("resultPopupClose").addEventListener("click",()=>{$("resultModal").classList.remove("open");resultPopupOpen=false;showNextResult()});
-document.querySelectorAll("[data-bet]").forEach(b=>b.addEventListener("click",()=>openBet(b.dataset.bet)));
-document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>$(b.dataset.close).classList.remove("open")));
-document.querySelectorAll(".modal-backdrop").forEach(m=>m.addEventListener("click",e=>{if(e.target===m)m.classList.remove("open")}));
-document.querySelectorAll("[data-amount]").forEach(b=>b.addEventListener("click",()=>{$("betAmount").value=b.dataset.amount;pendingBetRequest=null}));
-$("minusAmount").addEventListener("click",()=>{$("betAmount").value=Math.max(.01,(Number($("betAmount").value)||1)-10).toFixed(2);pendingBetRequest=null});
-$("plusAmount").addEventListener("click",()=>{$("betAmount").value=Math.min(1000,(Number($("betAmount").value)||1)+10).toFixed(2);pendingBetRequest=null});
-$("betAmount").addEventListener("input",()=>pendingBetRequest=null);
-authenticate();
-setInterval(updateRoundDisplay,1000);
-setInterval(()=>{if(authed)refreshAll()},3000);
+function dateUTC(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString("en-GB", {
+    timeZone:"UTC",day:"2-digit",month:"2-digit",year:"numeric",
+    hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"
+  }) + " UTC";
 }
-function showNextResult(){if(resultPopupOpen||!resultPopupQueue.length)return;const r=resultPopupQueue.shift(),n=Number(r.result_number);if(!Number.isInteger(n)||n<0||n>9)return;resultPopupOpen=true;$("resultPopupPeriod").textContent="Period "+r.round_code;$("resultPopupNumber").textContent=String(n);$("resultPopupNumber").style.background=resultColour(n);$("resultPopupColor").textContent=resultColorName(n);$("resultPopupSize").textContent=n>=5?"BIG":"SMALL";$("resultModal").classList.add("open")}
+
+function showPage(name) {
+  document.querySelectorAll(".page").forEach(page => {
+    page.classList.toggle("active", page.id === "page-" + name);
+  });
+  document.querySelectorAll(".nav-btn").forEach(button => {
+    button.classList.toggle("active", button.dataset.page === name);
+  });
+  if (name === "referral" && authed) loadReferralData();
+}
+
+function numClass(number) {
+  return number === 0 ? "num-zero" :
+         number === 5 ? "num-five" :
+         number % 2 === 0 ? "red" : "green";
+}
+
+function renderNumbers(id) {
+  const box = $(id);
+  if (!box) return;
+  box.replaceChildren();
+
+  for (let n = 0; n <= 9; n++) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "number-btn " + numClass(n);
+    button.textContent = String(n);
+    button.addEventListener("click", () => openBet("Number", n));
+    box.appendChild(button);
+  }
+}
+
+function makeRequestId() {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  throw new Error("Secure request IDs are not supported by this browser.");
+}
+
+async function parseResponse(response) {
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error("Backend returned invalid JSON.");
+  }
+  if (!response.ok || data.success === false) {
+    throw new Error(data.message || "Backend request failed.");
+  }
+  return data;
+}
+
+async function api(action, extra = {}) {
+  if (!initData) throw new Error("Open the Mini App inside Telegram.");
+
+  const response = await fetch("/api/game", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    cache:"no-store",
+    body:JSON.stringify({initData,action,...extra})
+  });
+
+  return parseResponse(response);
+}
+
+async function getRounds() {
+  const response = await fetch("/api/game", {cache:"no-store"});
+  const data = await parseResponse(response);
+
+  return {
+    rounds:data.rounds || [],
+    currentRound:data.current_round || null,
+    serverTime:data.server_time || null
+  };
+}
+
+function setStatus(value) {
+  ["betStatus","gameStatus"].forEach(id => {
+    $(id).textContent = value;
+    $(id).classList.toggle("locked", value.includes("LOCKED") || value.includes("ERROR"));
+  });
+}
+
+function updateBalance(value) {
+  ["homePoints","gamePoints","walletPoints"].forEach(id => {
+    $(id).textContent = money(value);
+  });
+}
+
+function resultColour(number) {
+  return number === 0 || number === 5 ? "#8b5cf6" :
+         number % 2 === 0 ? "#dc2626" : "#16a34a";
+}
+
+function resultColorName(number) {
+  return number === 0 || number === 5 ? "VIOLET" :
+         number % 2 === 0 ? "RED" : "GREEN";
+}
+
+function renderRounds() {
+  const html = rounds.length ? rounds.map(round => {
+    const hasResult = round.result_number !== null && round.result_number !== undefined;
+    const number = hasResult ? Number(round.result_number) : "—";
+    const colour = hasResult ? resultColour(number) : "#94a3b8";
+    const name = hasResult ? resultColorName(number) : "PENDING";
+    const size = hasResult ? (number >= 5 ? "BIG" : "SMALL") : "WAITING";
+
+    return `
+      <div class="history-card">
+        <div class="row">
+          <div>
+            <strong>Period ${esc(round.round_code)}</strong>
+            <div class="utc-time">${esc(dateUTC(round.ends_at))}</div>
+            <div style="margin-top:7px">
+              <span class="badge ${hasResult ? (number % 2 === 0 ? "loss" : "win") : "pending"}">${name}</span>
+              <span class="badge pending">${size}</span>
+            </div>
+          </div>
+          <span class="number-btn" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:${colour}">${esc(number)}</span>
+        </div>
+        <div class="muted small" style="margin-top:8px">Status: ${esc(String(round.status || "").toUpperCase())}</div>
+      </div>`;
+  }).join("") : '<div class="empty">No server rounds found.</div>';
+
+  $("homeParityRecords").innerHTML = html;
+  $("parityRecords").innerHTML = html;
+}
+
+function renderBets() {
+  const html = bets.length ? bets.map(bet => {
+    const status = String(bet.status || "pending").toLowerCase();
+    const cls = status === "won" ? "win" : status === "lost" ? "loss" : "pending";
+    const choice = bet.bet_type === "Number" && bet.selection !== null
+      ? " · " + esc(bet.selection) : "";
+
+    return `
+      <div class="history-card ${cls}">
+        <div class="row">
+          <div>
+            <strong>${esc(bet.bet_type)}${choice}</strong>
+            <div class="utc-time">Period ${esc(bet.round_code || bet.round_id)}</div>
+            <div class="utc-time">${esc(dateUTC(bet.created_at))}</div>
+          </div>
+          <span class="badge ${cls}">${esc(status.toUpperCase())}</span>
+        </div>
+        <div class="row" style="margin-top:9px">
+          <span>Stake ${money(bet.stake)}</span>
+          <strong>Payout: ${money(bet.payout || 0)}</strong>
+        </div>
+      </div>`;
+  }).join("") : '<div class="empty">No bets recorded yet.</div>';
+
+  $("homeTradeRecords").innerHTML = html;
+  $("tradeHistory").innerHTML = html;
+}
+
+function activeRound() {
+  const now = Date.now() + serverTimeOffset;
+  const valid = round => round &&
+    now >= new Date(round.starts_at).getTime() &&
+    now < new Date(round.ends_at).getTime();
+
+  return valid(currentRound) ? currentRound : rounds.find(valid) || null;
+}
+
+function bettingOpen(round) {
+  const now = Date.now() + serverTimeOffset;
+  return !!round &&
+    round.status === "open" &&
+    now >= new Date(round.starts_at).getTime() &&
+    now < new Date(round.betting_closes_at).getTime() &&
+    now < new Date(round.ends_at).getTime();
+}
+
+function updateRoundDisplay() {
+  const round = activeRound();
+
+  if (!round) {
+    $("periodId").textContent = "Waiting for next server round…";
+    $("gamePeriod").textContent = "Waiting for next server round…";
+    $("timer").textContent = "--:--";
+    $("gameTimer").textContent = "--:--";
+    setStatus("BETTING LOCKED");
+    return;
+  }
+
+  $("periodId").textContent = round.round_code;
+  $("gamePeriod").textContent = round.round_code;
+
+  const secondsLeft = Math.max(0, Math.ceil(
+    (new Date(round.ends_at).getTime() - (Date.now() + serverTimeOffset)) / 1000
+  ));
+
+  const time = String(Math.floor(secondsLeft / 60)).padStart(2,"0") +
+    ":" + String(secondsLeft % 60).padStart(2,"0");
+
+  $("timer").textContent = time;
+  $("gameTimer").textContent = time;
+
+  const open = bettingOpen(round);
+  setStatus(open ? "BETTING OPEN" : "BETTING LOCKED");
+
+  document.querySelectorAll("[data-bet],.number-btn").forEach(button => {
+    button.disabled = !open || !authed;
+  });
+}
+
+async function refreshAll() {
+  if (!authed || refreshing) return;
+  refreshing = true;
+
+  try {
+    const [roundData,balanceData,betData] = await Promise.all([
+      getRounds(),api("balance"),api("my_bets")
+    ]);
+
+    rounds = roundData.rounds;
+    currentRound = roundData.currentRound;
+    bets = betData.bets || [];
+
+    if (roundData.serverTime) {
+      const serverMs = new Date(roundData.serverTime).getTime();
+      if (Number.isFinite(serverMs)) serverTimeOffset = serverMs - Date.now();
+    }
+
+    updateBalance(balanceData.balance);
+    renderRounds();
+    renderBets();
+    updateRoundDisplay();
+
+    $("serverNotice").textContent =
+      "Connected to backend. Betting closes 30 seconds before each round ends.";
+  } catch (error) {
+    $("serverNotice").textContent = "Backend unavailable: " + error.message;
+    setStatus("BACKEND ERROR");
+  } finally {
+    refreshing = false;
+  }
+}
+
+function openBet(type, selection = null) {
+  if (!authed) {
+    toast("Authenticate through Telegram first.");
+    return;
+  }
+
+  const round = activeRound();
+
+  if (!bettingOpen(round)) {
+    toast("Betting is locked. Wait for the next round.");
+    return;
+  }
+
+  currentBet = {type,selection,roundCode:round.round_code};
+  pendingBetRequest = null;
+
+  $("betModalTitle").textContent = "Bet on " + type +
+    (selection === null ? "" : " " + selection);
+
+  $("betModalPeriod").textContent = "Server round: " + round.round_code;
+  $("betAmount").value = "100";
+  $("confirmBet").disabled = false;
+  $("betModal").classList.add("open");
+}
+
+async function confirmBet() {
+  if (!currentBet || !authed) return;
+
+  const stake = Number($("betAmount").value);
+
+  if (!Number.isFinite(stake) || stake < .01 || stake > 1000 ||
+      Math.round(stake * 100) !== stake * 100) {
+    toast("Enter an amount between 0.01 and 1000 test points.");
+    return;
+  }
+
+  $("confirmBet").disabled = true;
+
+  try {
+    if (!pendingBetRequest) {
+      pendingBetRequest = {
+        requestId:makeRequestId(),
+        roundCode:currentBet.roundCode,
+        betType:currentBet.type,
+        selection:currentBet.type === "Number" ? currentBet.selection : null,
+        stake
+      };
+    }
+
+    const request = pendingBetRequest;
+
+    const result = await api("place_bet", {
+      round_code:request.roundCode,
+      bet_type:request.betType,
+      selection:request.selection,
+      stake:request.stake,
+      request_id:request.requestId
+    });
+
+    pendingBetRequest = null;
+    $("betModal").classList.remove("open");
+    toast(result.message || "Test bet accepted.");
+    await refreshAll();
+  } catch (error) {
+    toast(error.message || "Unable to place test bet.");
+  } finally {
+    $("confirmBet").disabled = false;
+  }
+}
+
+async function authenticate() {
+  if (!tg) {
+    $("profileName").textContent = "Not opened in Telegram";
+    $("profileStatus").textContent = "Open this Mini App inside Telegram.";
+    setStatus("TELEGRAM REQUIRED");
+    return;
+  }
+
+  try {
+    tg.ready();
+    tg.expand();
+    initData = tg.initData || "";
+
+    if (!initData) {
+      $("profileName").textContent = "Telegram initData missing";
+      $("profileStatus").textContent = "Open the official Telegram Mini App.";
+      setStatus("AUTH REQUIRED");
+      return;
+    }
+
+    const response = await fetch("/api/auth", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({initData})
+    });
+
+    const data = await parseResponse(response);
+    authed = true;
+    user = data.user;
+
+    $("profileName").textContent = user?.username
+      ? "@" + user.username
+      : "Telegram user " + (user?.telegram_id || "");
+
+    $("profileStatus").textContent = "Telegram identity verified by server.";
+
+    await refreshAll();
+    await processStartParameter();
+  } catch (error) {
+    authed = false;
+    $("profileStatus").textContent = error.message;
+    setStatus("BACKEND ERROR");
+    toast(error.message);
+  }
+}
+
+/* Corrected referral renderer for the actual api/game.js response. */
+function unwrapReferral(data) {
+  return data?.referral && typeof data.referral === "object"
+    ? data.referral
+    : data?.data && typeof data.data === "object"
+      ? data.data
+      : data || {};
+}
+
+function renderReferral(raw) {
+  const data = unwrapReferral(raw);
+  const levels = Array.isArray(data.commission_levels) ? data.commission_levels : [];
+  const reward = data.reward && typeof data.reward === "object" ? data.reward : {};
+  const history = Array.isArray(data.commission_history) ? data.commission_history : [];
+  const directList = Array.isArray(data.direct_referrals) ? data.direct_referrals : [];
+
+  const directCount = Number(data.total_direct_referrals ?? directList.length ?? 0);
+  const totalCommission = Number(data.total_commission ?? 0);
+
+  $("referralCode").textContent = data.referral_code || "Not available";
+  $("referralLink").textContent = data.referral_link || "Referral link not available";
+  $("directReferralCount").textContent = Number.isFinite(directCount) ? String(directCount) : "0";
+
+  $("refTotalCommission").textContent = money(totalCommission);
+  $("refCommissionTotalStat").textContent = money(totalCommission);
+
+  function commissionForLevel(levelNumber) {
+    const level = levels.find(item => Number(item.level) === levelNumber);
+    return Number(level?.total_commission ?? 0);
+  }
+
+  $("refLevel1").textContent = money(commissionForLevel(1)) + " Points";
+  $("refLevel2").textContent = money(commissionForLevel(2)) + " Points";
+  $("refLevel3").textContent = money(commissionForLevel(3)) + " Points";
+
+  const pending = Number(reward.pending_points ?? 0);
+  const credited = Number(reward.credited_points ?? 0);
+
+  $("refPendingReward").textContent = money(pending);
+  $("refCreditedReward").textContent = money(credited);
+
+  if (credited > 0) {
+    $("refRewardStatus").textContent = "Referral reward credited: " + money(credited) + " Points.";
+    $("refRewardStatus").className = "reward-status credited";
+  } else {
+    $("refRewardStatus").textContent = reward.message ||
+      "Reward pending qualification or recharge confirmation.";
+    $("refRewardStatus").className = "reward-status";
+  }
+
+  const hasReferrer = data.referred_by !== null && data.referred_by !== undefined;
+  $("referralCodeInput").disabled = hasReferrer;
+  $("applyReferralBtn").disabled = hasReferrer;
+
+  if (hasReferrer) {
+    $("referralCodeInput").placeholder = "Referral attribution already set";
+  }
+
+  $("referralHistory").innerHTML = history.length
+    ? history.map(item => `
+      <div class="history-card">
+        <div class="row">
+          <div>
+            <strong>Level ${esc(item.referral_level ?? "—")} Commission</strong>
+            <div class="utc-time">${esc(item.round_code ? "Period " + item.round_code : "Bet #" + (item.bet_id ?? "—"))}</div>
+            <div class="utc-time">${esc(item.created_at ? dateUTC(item.created_at) : "")}</div>
+          </div>
+          <strong>${money(item.commission_amount ?? 0)} Points</strong>
+        </div>
+      </div>
+    `).join("")
+    : '<div class="empty">No commission records available yet.</div>';
+}
+
+async function loadReferralData() {
+  if (!authed || referralLoading) return;
+
+  referralLoading = true;
+  $("refreshReferralBtn").disabled = true;
+
+  try {
+    const data = await api("referral_data");
+    renderReferral(data);
+  } catch (error) {
+    $("referralHistory").innerHTML =
+      '<div class="empty">Could not load referral data: ' + esc(error.message) + '</div>';
+    toast("Referral data: " + error.message);
+  } finally {
+    referralLoading = false;
+    $("refreshReferralBtn").disabled = false;
+  }
+}
+
+async function copyReferralLink() {
+  const link = $("referralLink").textContent.trim();
+
+  if (!link || !link.startsWith("http")) {
+    toast("Referral link is not available yet.");
+    return;
+  }
+
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(link);
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = link;
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      textarea.remove();
+      if (!copied) throw new Error("Copy failed");
+    }
+    toast("Referral link copied!");
+  } catch {
+    toast("Could not copy link.");
+  }
+}
+
+async function shareReferralLink() {
+  const link = $("referralLink").textContent.trim();
+
+  if (!link || !link.startsWith("http")) {
+    toast("Referral link is not available yet.");
+    return;
+  }
+
+  const shareUrl = "https://t.me/share/url?url=" +
+    encodeURIComponent(link) +
+    "&text=" + encodeURIComponent("Join me on Crypto Trader Pro!");
+
+  try {
+    if (tg?.openTelegramLink) tg.openTelegramLink(shareUrl);
+    else if (navigator.share) await navigator.share({title:"Crypto Trader Pro",url:link});
+    else await copyReferralLink();
+  } catch (error) {
+    if (error.name !== "AbortError") toast("Unable to share link.");
+  }
+}
+
+async function applyReferralCode() {
+  if (!authed) {
+    toast("Open the Mini App through Telegram first.");
+    return;
+  }
+
+  const code = $("referralCodeInput").value.trim();
+
+  if (!code) {
+    toast("Enter a referral code.");
+    return;
+  }
+
+  $("applyReferralBtn").disabled = true;
+
+  try {
+    const result = await api("apply_referral", {
+      referral_code:code,
+      code
+    });
+
+    toast(result.message || "Referral code processed.");
+    $("referralCodeInput").value = "";
+    await loadReferralData();
+  } catch (error) {
+    toast(error.message || "Unable to apply referral code.");
+  } finally {
+    $("applyReferralBtn").disabled = false;
+  }
+}
+
+/*
+ * Handles Mini App start parameters.
+ * This works only if Telegram actually supplies start_param,
+ * for example when the bot opens the app with a startapp parameter.
+ */
+async function processStartParameter() {
+  if (!authed) return;
+
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    const raw =
+      tg?.initDataUnsafe?.start_param ||
+      tg?.startParam ||
+      urlParams.get("startapp") ||
+      "";
+
+    const match = String(raw).match(/^ref_([A-Za-z0-9_-]{1,64})$/i);
+
+    if (!match) return;
+
+    const code = match[1].toUpperCase();
+    const storageKey = "ctp_referral_start_processed_" + code;
+
+    if (sessionStorage.getItem(storageKey)) return;
+
+    const result = await api("apply_referral", {
+      referral_code:code,
+      code
+    });
+
+    if (result.success !== false) {
+      sessionStorage.setItem(storageKey, "1");
+      toast(result.message || "Referral code processed.");
+      await loadReferralData();
+    }
+  } catch (error) {
+    console.warn("Referral attribution:", error.message);
+  }
+}
+
+function init() {
+  renderNumbers("numberGrid");
+  renderNumbers("gameNumberGrid");
+
+  document.querySelectorAll(".nav-btn").forEach(button => {
+    button.addEventListener("click", () => showPage(button.dataset.page));
+  });
+
+  document.querySelectorAll("[data-page-go]").forEach(button => {
+    button.addEventListener("click", () => showPage(button.dataset.pageGo));
+  });
+
+  $("headerProfile").addEventListener("click", () => showPage("profile"));
+  $("refreshBtn").addEventListener("click", refreshAll);
+  $("walletRefresh").addEventListener("click", refreshAll);
+  $("authRetry").addEventListener("click", authenticate);
+  $("confirmBet").addEventListener("click", confirmBet);
+
+  $("copyReferralBtn").addEventListener("click", copyReferralLink);
+  $("shareReferralBtn").addEventListener("click", shareReferralLink);
+  $("refreshReferralBtn").addEventListener("click", loadReferralData);
+  $("applyReferralBtn").addEventListener("click", applyReferralCode);
+
+  $("resultPopupClose").addEventListener("click", () => {
+    $("resultModal").classList.remove("open");
+  });
+
+  document.querySelectorAll("[data-bet]").forEach(button => {
+    button.addEventListener("click", () => openBet(button.dataset.bet));
+  });
+
+  document.querySelectorAll("[data-close]").forEach(button => {
+    button.addEventListener("click", () => $(button.dataset.close).classList.remove("open"));
+  });
+
+  document.querySelectorAll(".modal-backdrop").forEach(modal => {
+    modal.addEventListener("click", event => {
+      if (event.target === modal) modal.classList.remove("open");
+    });
+  });
+
+  document.querySelectorAll("[data-amount]").forEach(button => {
+    button.addEventListener("click", () => {
+      $("betAmount").value = button.dataset.amount;
+      pendingBetRequest = null;
+    });
+  });
+
+  $("minusAmount").addEventListener("click", () => {
+    $("betAmount").value = Math.max(.01, (Number($("betAmount").value) || 1) - 10).toFixed(2);
+    pendingBetRequest = null;
+  });
+
+  $("plusAmount").addEventListener("click", () => {
+    $("betAmount").value = Math.min(1000, (Number($("betAmount").value) || 1) + 10).toFixed(2);
+    pendingBetRequest = null;
+  });
+
+  $("betAmount").addEventListener("input", () => pendingBetRequest = null);
+
+  authenticate();
+  setInterval(updateRoundDisplay, 1000);
+  setInterval(() => { if (authed) refreshAll(); }, 3000);
+}
+
 init();
 })();
 </script>
