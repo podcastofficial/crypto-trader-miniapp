@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,272 +9,51 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{--bg:#f3f5fb;--card:#fff;--text:#182238;--muted:#748097;--border:#e1e7f0;--primary:#2563eb;--green:#16a34a;--red:#dc2626;--violet:#8b5cf6}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:14px Arial,Helvetica,sans-serif}
-button,input,select{font:inherit}
-button{border:0;cursor:pointer}
-button:disabled{opacity:.5;cursor:not-allowed}
-.app{max-width:600px;margin:auto;min-height:100vh;padding-bottom:110px}
-header{background:#fff;padding:15px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border)}
-.brand{font-size:18px;font-weight:900}
-.brand span{color:var(--primary)}
-.icon-btn{background:#eef2ff;border-radius:11px;padding:10px}
-.page{display:none}
-.page.active{display:block}
-.section{padding:0 14px;margin-bottom:15px}
-.section-title{font-size:17px;font-weight:900;margin:7px 0 13px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:13px;overflow-wrap:anywhere}
-.muted{color:var(--muted)}
-.small{font-size:12px}
-.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.balance-card{margin:15px;padding:21px;border-radius:19px;background:linear-gradient(135deg,#1d4ed8,#4f46e5);color:#fff}
-.balance-label{font-size:12px;opacity:.9}
-.balance-value{font-size:27px;font-weight:900;margin:9px 0}
-.balance-sub{font-size:12px;opacity:.9}
-.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
-.action-btn{padding:13px 8px;background:#fff;color:#1d4ed8;border-radius:11px;font-weight:800}
-.timer-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:17px;margin-bottom:13px;text-align:center}
-.period{font-size:12px;color:var(--muted);overflow-wrap:anywhere;margin-top:8px}
-.timer{font-size:32px;font-weight:900;margin:10px 0;font-variant-numeric:tabular-nums}
-.status{display:inline-block;padding:7px 12px;border-radius:20px;background:#dcfce7;color:#15803d;font-weight:800;font-size:11px}
-.status.locked{background:#fee2e2;color:#b91c1c}
-.notice{background:#fff7ed;color:#9a3412;padding:12px;border-radius:11px;font-size:12px;line-height:1.7;margin-top:12px;overflow-wrap:anywhere}
-.number-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:15px 0}
-.number-btn{min-width:0;min-height:49px;border-radius:12px;color:#fff;font-size:18px;font-weight:900}
-.red{background:#dc2626}
-.green{background:#16a34a}
-.violet{background:#8b5cf6}
-.orange{background:#f59e0b}
-.blue{background:#0ea5e9}
-.num-zero{background:linear-gradient(135deg,#dc2626 0 50%,#8b5cf6 50%)}
-.num-five{background:linear-gradient(135deg,#16a34a 0 50%,#8b5cf6 50%)}
-.option-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:13px 0}
-.option-btn{min-height:46px;padding:8px 4px;border-radius:11px;color:#fff;font-weight:800}
-.big-small{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.big-small button{min-height:47px;border-radius:11px;color:#fff;font-weight:900}
-.primary-btn{width:100%;padding:14px;border-radius:11px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;font-weight:900;min-height:46px}
-.secondary-btn{background:#dcfce7;color:#166534;padding:12px;border-radius:10px;font-weight:800}
-.bottom-nav{position:fixed;bottom:calc(8px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:calc(100% - 12px);max-width:588px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;background:rgba(255,255,255,.98);border:1px solid var(--border);border-radius:15px;padding:7px 5px;z-index:20;box-shadow:0 3px 14px #0f172a18}
-.nav-btn{min-width:0;min-height:53px;padding:5px 2px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#f1f5f9;color:#475569;font-size:10px;font-weight:900}
-.nav-icon{display:block;font-size:20px;line-height:1.2}
-.nav-btn.active{background:#dbeafe;color:#1d4ed8;box-shadow:inset 0 -3px 0 #2563eb}
-input,select{display:block;width:100%;min-width:0;padding:13px;margin:7px 0 13px;border:1px solid #d8e0ec;border-radius:10px;background:#fff;color:var(--text)}
-label{font-weight:800;font-size:12px}
-.utc-time{font-size:11px;color:#64748b;margin-top:5px;line-height:1.6}
-.record-row{padding:13px 0;border-bottom:1px solid var(--border)}
-.record-row:last-child{border-bottom:0}
-.record-number{width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:900;flex-shrink:0}
-.empty{text-align:center;padding:20px 7px;color:var(--muted);line-height:1.7}
-.stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.stat{padding:14px;border-radius:12px;border:1px solid var(--border);background:#fafbff}
-.stat strong{display:block;font-size:21px;margin-top:7px;overflow-wrap:anywhere}
-.link-box{background:#f1f5f9;padding:13px;border-radius:10px;word-break:break-all;line-height:1.6;margin:10px 0}
-.modal-backdrop{display:none;position:fixed;inset:0;z-index:50;background:#0f172a88;align-items:center;justify-content:center;padding:15px}
-.modal-backdrop.open{display:flex}
-.modal{background:white;width:100%;max-width:430px;max-height:90%;overflow:auto;padding:19px;border-radius:17px}
-.modal-title{font-size:18px;font-weight:900}
-.close-btn{padding:9px 12px;border-radius:9px;background:#e9edf5}
-.amount-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:12px 0}
-.amount-presets button{background:#ede9fe;color:#6d28d9;padding:12px 3px;border-radius:9px;font-weight:900}
-.amount-stepper{display:grid;grid-template-columns:45px minmax(0,1fr) 45px;gap:8px}
-.amount-stepper button{border-radius:9px;background:#e2e8f0;font-size:21px}
-.amount-stepper input{margin:0;text-align:center}
-.toast{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:100px;width:max-content;max-width:90%;z-index:90;padding:13px 16px;border-radius:11px;background:#172033;color:#fff;text-align:center;line-height:1.5}
-.toast.show{display:block}
-details{background:#f8faff;border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin:9px 0}
-summary{cursor:pointer;color:#1d4ed8;font-weight:900;line-height:1.6}
-details p{color:#475569;line-height:1.8}
-hr{border:0;border-top:1px solid var(--border);margin:15px 0}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px Arial,Helvetica,sans-serif}button,input{font:inherit}button{border:0;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
+.app{max-width:600px;margin:auto;min-height:100vh;padding-bottom:110px}header{background:#fff;padding:15px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border)}.brand{font-size:18px;font-weight:900}.brand span{color:var(--primary)}.icon-btn{background:#eef2ff;border-radius:11px;padding:10px}
+.page{display:none}.page.active{display:block}.section{padding:0 14px;margin-bottom:15px}.section-title{font-size:17px;font-weight:900;margin:7px 0 13px}.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:13px;overflow-wrap:anywhere}.muted{color:var(--muted)}.small{font-size:12px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.balance-card{margin:15px;padding:21px;border-radius:19px;background:linear-gradient(135deg,#1d4ed8,#4f46e5);color:#fff}.balance-label{font-size:12px;opacity:.9}.balance-value{font-size:27px;font-weight:900;margin:9px 0}.balance-sub{font-size:12px;opacity:.9}.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}.action-btn{padding:13px 8px;background:#fff;color:#1d4ed8;border-radius:11px;font-weight:800}
+.timer-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:17px;margin-bottom:13px;text-align:center}.period{font-size:12px;color:var(--muted);overflow-wrap:anywhere;margin-top:8px}.timer{font-size:32px;font-weight:900;margin:10px 0;font-variant-numeric:tabular-nums}.status{display:inline-block;padding:7px 12px;border-radius:20px;background:#dcfce7;color:#15803d;font-weight:800;font-size:11px}.status.locked{background:#fee2e2;color:#b91c1c}.notice{background:#fff7ed;color:#9a3412;padding:12px;border-radius:11px;font-size:12px;line-height:1.7;margin-top:12px;overflow-wrap:anywhere}
+.number-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:15px 0}.number-btn{min-width:0;min-height:49px;border-radius:12px;color:#fff;font-size:18px;font-weight:900}.red{background:#dc2626}.green{background:#16a34a}.violet{background:#8b5cf6}.orange{background:#f59e0b}.blue{background:#0ea5e9}.num-zero{background:linear-gradient(135deg,#dc2626 0 50%,#8b5cf6 50%)}.num-five{background:linear-gradient(135deg,#16a34a 0 50%,#8b5cf6 50%)}
+.option-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:13px 0}.option-btn{min-height:46px;padding:8px 4px;border-radius:11px;color:#fff;font-weight:800}.big-small{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.big-small button{min-height:47px;border-radius:11px;color:#fff;font-weight:900}.primary-btn{width:100%;padding:14px;border-radius:11px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;font-weight:900;min-height:46px}
+.bottom-nav{position:fixed;bottom:calc(8px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:calc(100% - 12px);max-width:588px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;background:rgba(255,255,255,.98);border:1px solid var(--border);border-radius:15px;padding:7px 5px;z-index:20;box-shadow:0 3px 14px #0f172a18}.nav-btn{min-width:0;min-height:53px;padding:5px 2px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#f1f5f9;color:#475569;font-size:10px;font-weight:900}.nav-icon{display:block;font-size:20px;line-height:1.2}.nav-btn.active{background:#dbeafe;color:#1d4ed8;box-shadow:inset 0 -3px 0 #2563eb}
+input{display:block;width:100%;min-width:0;padding:13px;margin:7px 0 13px;border:1px solid #d8e0ec;border-radius:10px;background:#fff;color:var(--text)}label{font-weight:800;font-size:12px}.utc-time{font-size:11px;color:#64748b;margin-top:5px;line-height:1.6}
+.record-row{padding:12px;margin:9px 0;border:1px solid var(--border);border-radius:13px;background:#fff}.record-number{width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:900;flex-shrink:0;box-shadow:0 3px 9px #0f172a20}.empty{text-align:center;padding:20px 7px;color:var(--muted);line-height:1.7}
+.history-card{border-radius:13px;padding:12px;margin:9px 0;border:1px solid #dbe4f0;background:linear-gradient(135deg,#fff,#f8fafc)}.history-card.win{border-color:#86efac;background:linear-gradient(135deg,#f0fdf4,#dcfce7)}.history-card.loss{border-color:#fca5a5;background:linear-gradient(135deg,#fff1f2,#fee2e2)}.history-card.pending{border-color:#fcd34d;background:linear-gradient(135deg,#fffbeb,#fef3c7)}.history-card.cancelled{border-color:#cbd5e1;background:linear-gradient(135deg,#f8fafc,#e2e8f0)}.badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.3px}.badge.win{background:#16a34a;color:#fff}.badge.loss{background:#dc2626;color:#fff}.badge.pending{background:#facc15;color:#713f12}.badge.cancelled{background:#64748b;color:#fff}.badge.violet-badge{background:#8b5cf6;color:#fff}.modal-backdrop{display:none;position:fixed;inset:0;z-index:50;background:#0f172a88;align-items:center;justify-content:center;padding:15px}.modal-backdrop.open{display:flex}.modal{background:white;width:100%;max-width:430px;max-height:90%;overflow:auto;padding:19px;border-radius:17px}.modal-title{font-size:18px;font-weight:900}.close-btn{padding:9px 12px;border-radius:9px;background:#e9edf5}.amount-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:12px 0}.amount-presets button{background:#ede9fe;color:#6d28d9;padding:12px 3px;border-radius:9px;font-weight:900}.amount-stepper{display:grid;grid-template-columns:45px minmax(0,1fr) 45px;gap:8px}.amount-stepper button{border-radius:9px;background:#e2e8f0;font-size:21px}.amount-stepper input{margin:0;text-align:center}.toast{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:100px;width:max-content;max-width:90%;z-index:90;padding:13px 16px;border-radius:11px;background:#172033;color:#fff;text-align:center;line-height:1.5}.toast.show{display:block}.result-modal-number{width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:48px;font-weight:900;margin:20px auto;box-shadow:0 8px 24px #0f172a30;border:5px solid #ffffff}.result-modal-title{text-align:center;font-size:23px;font-weight:900}.result-modal-sub{text-align:center;color:#64748b;font-size:12px;line-height:1.7;overflow-wrap:anywhere}.result-modal-badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:14px 0}.result-modal-badges span{padding:8px 13px;border-radius:999px;background:#e0e7ff;color:#3730a3;font-size:11px;font-weight:900}.result-modal .primary-btn{margin-top:8px}
 @media(max-width:380px){.nav-btn{font-size:9px}.nav-icon{font-size:18px}.section{padding:0 10px}.balance-card{margin:10px}.card{padding:13px}.bottom-nav{gap:2px;padding:6px 3px}}
 </style>
 </head>
 <body>
 <div class="app">
-<header>
-  <div>
-    <div class="brand">CRYPTO <span>TRADER PRO</span></div>
-    <div class="small muted" id="subtitle">Prediction Dashboard · UTC</div>
-  </div>
-  <div>
-    <button class="icon-btn" id="soundToggle" type="button">🔊</button>
-    <button class="icon-btn" id="headerProfile" type="button">👤</button>
-  </div>
-</header>
+<header><div><div class="brand">CRYPTO <span>TRADER PRO</span></div><div class="small muted">Prediction Dashboard · UTC</div></div><button class="icon-btn" id="headerProfile" type="button">👤</button></header>
 
 <section class="page active" id="page-home">
-  <div class="balance-card">
-    <div class="balance-label">BACKEND WALLET BALANCE</div>
-    <div class="balance-value"><span id="homePoints">—</span> Points</div>
-    <div class="balance-sub">Balance from server database</div>
-    <div class="actions">
-      <button class="action-btn" data-page-go="wallet">💰 Wallet</button>
-      <button class="action-btn" id="refreshBtn">↻ Refresh</button>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="timer-card">
-      <div class="row">
-        <span class="muted small">Current Period</span>
-        <span class="muted small">3-minute round</span>
-      </div>
-      <div class="period" id="periodId">Loading server round…</div>
-      <div class="timer" id="timer">--:--</div>
-      <span class="status" id="betStatus">CONNECTING</span>
-      <div class="notice" id="serverNotice">Connecting to authenticated backend. No browser-generated results are used.</div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">🔢 Choose a Number</div>
-      <div class="muted small">Select a number to open the bet amount window.</div>
-      <div class="number-grid" id="numberGrid"></div>
-      <div class="section-title">🎨 Choose a Colour</div>
-      <div class="option-grid">
-        <button class="option-btn red" data-bet="Red">🔴 Red</button>
-        <button class="option-btn green" data-bet="Green">🟢 Green</button>
-        <button class="option-btn violet" data-bet="Violet">🟣 Violet</button>
-      </div>
-      <div class="section-title">📊 Big / Small</div>
-      <div class="big-small">
-        <button class="orange" data-bet="Big">🟠 Big (5–9)</button>
-        <button class="blue" data-bet="Small">🔵 Small (0–4)</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">🎯 Server Round History</div>
-      <div id="homeParityRecords" class="empty">Loading…</div>
-    </div>
-    <div class="card">
-      <div class="section-title">📋 My Bet History</div>
-      <div id="homeTradeRecords" class="empty">Loading…</div>
-    </div>
-  </div>
+<div class="balance-card"><div class="balance-label">BACKEND WALLET BALANCE</div><div class="balance-value"><span id="homePoints">—</span> Points</div><div class="balance-sub">Server database · Test credits only</div><div class="actions"><button class="action-btn" data-page-go="wallet">💰 Wallet</button><button class="action-btn" id="refreshBtn">↻ Refresh</button></div></div>
+<div class="section">
+<div class="timer-card"><div class="row"><span class="muted small">Current Period</span><span class="muted small">3-minute round</span></div><div class="period" id="periodId">Loading server round…</div><div class="timer" id="timer">--:--</div><span class="status" id="betStatus">CONNECTING</span><div class="notice" id="serverNotice">Connecting to backend…</div></div>
+<div class="card"><div class="section-title">🔢 Choose a Number</div><div class="muted small">Select a number to open the test-bet window.</div><div class="number-grid" id="numberGrid"></div><div class="section-title">🎨 Choose a Colour</div><div class="option-grid"><button class="option-btn red" data-bet="Red">🔴 Red</button><button class="option-btn green" data-bet="Green">🟢 Green</button><button class="option-btn violet" data-bet="Violet">🟣 Violet</button></div><div class="section-title">📊 Big / Small</div><div class="big-small"><button class="orange" data-bet="Big">🟠 Big (5–9)</button><button class="blue" data-bet="Small">🔵 Small (0–4)</button></div></div>
+<div class="card"><div class="section-title">🎯 Result History</div><div id="homeParityRecords" class="empty">Loading…</div></div>
+<div class="card"><div class="section-title">📋 Trade History</div><div id="homeTradeRecords" class="empty">Loading…</div></div>
+</div>
 </section>
 
-<section class="page" id="page-game">
-  <div class="section">
-    <div class="section-title">🎮 Prediction Game</div>
-    <div class="card">
-      <div class="muted small">Server wallet balance</div>
-      <strong id="gamePoints">—</strong>
-    </div>
-    <div class="timer-card">
-      <div class="period" id="gamePeriod">Loading…</div>
-      <div class="timer" id="gameTimer">--:--</div>
-      <span class="status" id="gameStatus">CONNECTING</span>
-    </div>
-    <div class="card">
-      <div class="section-title">Select Your Prediction</div>
-      <div class="number-grid" id="gameNumberGrid"></div>
-      <div class="option-grid">
-        <button class="option-btn red" data-bet="Red">🔴 Red</button>
-        <button class="option-btn green" data-bet="Green">🟢 Green</button>
-        <button class="option-btn violet" data-bet="Violet">🟣 Violet</button>
-      </div>
-      <div class="big-small">
-        <button class="orange" data-bet="Big">🟠 Big</button>
-        <button class="blue" data-bet="Small">🔵 Small</button>
-      </div>
-      <div class="notice">Only bets accepted by the server are recorded. Results and payouts require a configured server settlement process.</div>
-    </div>
-  </div>
-</section>
+<section class="page" id="page-game"><div class="section"><div class="section-title">🎮 Prediction Game</div><div class="card"><div class="muted small">Server wallet balance</div><strong id="gamePoints">—</strong></div><div class="timer-card"><div class="period" id="gamePeriod">Loading…</div><div class="timer" id="gameTimer">--:--</div><span class="status" id="gameStatus">CONNECTING</span></div><div class="card"><div class="section-title">Select Your Prediction</div><div class="number-grid" id="gameNumberGrid"></div><div class="option-grid"><button class="option-btn red" data-bet="Red">🔴 Red</button><button class="option-btn green" data-bet="Green">🟢 Green</button><button class="option-btn violet" data-bet="Violet">🟣 Violet</button></div><div class="big-small"><button class="orange" data-bet="Big">🟠 Big</button><button class="blue" data-bet="Small">🔵 Small</button></div><div class="notice">Testing only. Verify settlement before any live launch.</div></div></div></section>
 
-<section class="page" id="page-records">
-  <div class="section">
-    <div class="section-title">📊 Records</div>
-    <div class="card">
-      <div class="section-title">Server Round History</div>
-      <div id="parityRecords" class="empty">Loading…</div>
-    </div>
-    <div class="card">
-      <div class="section-title">My Bet History</div>
-      <div id="tradeHistory" class="empty">Loading…</div>
-    </div>
-  </div>
-</section>
+<section class="page" id="page-records"><div class="section"><div class="section-title">📊 Records</div><div class="card"><div class="section-title">🎯 Result History</div><div id="parityRecords" class="empty">Loading…</div></div><div class="card"><div class="section-title">📋 Trade History</div><div id="tradeHistory" class="empty">Loading…</div></div></div></section>
 
-<section class="page" id="page-wallet">
-  <div class="section">
-    <div class="section-title">💰 Wallet</div>
-    <div class="card">
-      <div class="muted small">Database balance</div>
-      <div style="font-size:27px;font-weight:900;margin:9px 0"><span id="walletPoints">—</span> Points</div>
-      <div class="notice">Wallet balance is read from the backend. Deposit and withdrawal processing is not enabled.</div>
-      <button class="primary-btn" id="walletRefresh">Refresh Balance</button>
-    </div>
-    <div class="card">
-      <div class="section-title">Wallet Status</div>
-      <p>Real deposits and withdrawals are disabled.</p>
-      <p>Do not send cryptocurrency to any address for this demo.</p>
-    </div>
-  </div>
-</section>
+<section class="page" id="page-wallet"><div class="section"><div class="section-title">💰 Wallet</div><div class="card"><div class="muted small">Database test-credit balance</div><div style="font-size:27px;font-weight:900;margin:9px 0"><span id="walletPoints">—</span> Points</div><div class="notice">Deposit and withdrawal backend is not connected yet. Do not send cryptocurrency.</div><button class="primary-btn" id="walletRefresh">Refresh Balance</button></div></div></section>
 
-<section class="page" id="page-referral">
-  <div class="section">
-    <div class="section-title">👥 Referral Program</div>
-    <div class="card">
-      <h3>Referral features not connected</h3>
-      <p class="muted">Referral attribution and rewards require backend implementation.</p>
-    </div>
-  </div>
-</section>
+<section class="page" id="page-referral"><div class="section"><div class="section-title">👥 Referral Program</div><div class="card"><h3>Invite Friends</h3><p class="muted">Share your personal referral link with friends.</p><label for="referralLinkInput">Your Referral Link</label><div class="link-box" id="referralLinkInput" style="user-select:all;overflow-wrap:anywhere">Sign in through Telegram to generate your link.</div><button class="primary-btn" id="copyReferral" type="button">📋 Copy Referral Link</button><div class="notice">Referral link sharing is available in this interface. Referral attribution, referral counts and reward credits must be implemented and verified on the backend before rewards can be paid.</div><div class="stat-grid" style="margin-top:12px"><div class="stat"><span class="muted small">Total Referrals</span><strong id="referralCount">—</strong></div><div class="stat"><span class="muted small">Referral Rewards</span><strong id="referralRewards">—</strong></div></div></div></div></section>
 
-<section class="page" id="page-profile">
-  <div class="section">
-    <div class="section-title">👤 Profile & Settings</div>
-    <div class="card">
-      <div class="muted small">Telegram account</div>
-      <strong id="profileName">Checking Telegram…</strong>
-      <p class="muted small" id="profileStatus">Authenticating with Telegram</p>
-      <button class="primary-btn" id="authRetry">Retry Authentication</button>
-    </div>
-    <div class="card">
-      <div class="section-title">About</div>
-      <p>This interface uses the backend API for wallet balance, rounds, and bet requests.</p>
-      <div class="notice">Real-money deposits/withdrawals and automatic payouts are not enabled. Do not deposit funds.</div>
-    </div>
-  </div>
-</section>
+<section class="page" id="page-profile"><div class="section"><div class="section-title">👤 Profile & Settings</div><div class="card"><div class="muted small">Telegram account</div><strong id="profileName">Checking Telegram…</strong><p class="muted small" id="profileStatus">Authenticating with Telegram</p><button class="primary-btn" id="authRetry">Retry Authentication</button></div><div class="card"><div class="section-title">About</div><p>Server-controlled rounds and test-credit wallet.</p><div class="notice">Testing only.</div></div></div></section>
 
-<nav class="bottom-nav" aria-label="Main navigation">
-  <button class="nav-btn active" data-page="home"><span class="nav-icon">🏠</span><span>Home</span></button>
-  <button class="nav-btn" data-page="game"><span class="nav-icon">🎮</span><span>Game</span></button>
-  <button class="nav-btn" data-page="records"><span class="nav-icon">📊</span><span>Records</span></button>
-  <button class="nav-btn" data-page="wallet"><span class="nav-icon">💰</span><span>Wallet</span></button>
-  <button class="nav-btn" data-page="referral"><span class="nav-icon">🎁</span><span>Referral</span></button>
-  <button class="nav-btn" data-page="profile"><span class="nav-icon">👤</span><span>Profile</span></button>
-</nav>
+<nav class="bottom-nav" aria-label="Main navigation"><button class="nav-btn active" data-page="home"><span class="nav-icon">🏠</span><span>Home</span></button><button class="nav-btn" data-page="game"><span class="nav-icon">🎮</span><span>Game</span></button><button class="nav-btn" data-page="records"><span class="nav-icon">📊</span><span>Records</span></button><button class="nav-btn" data-page="wallet"><span class="nav-icon">💰</span><span>Wallet</span></button><button class="nav-btn" data-page="referral"><span class="nav-icon">🎁</span><span>Referral</span></button><button class="nav-btn" data-page="profile"><span class="nav-icon">👤</span><span>Profile</span></button></nav>
 </div>
 
-<div class="modal-backdrop" id="betModal">
-  <div class="modal">
-    <div class="row">
-      <div class="modal-title" id="betModalTitle">Place Bet</div>
-      <button class="close-btn" data-close="betModal">✕</button>
-    </div>
-    <p class="muted small" id="betModalPeriod"></p>
-    <label for="betAmount">Bet Amount (Points)</label>
-    <div class="amount-presets">
-      <button data-amount="10">10</button>
-      <button data-amount="50">50</button>
-      <button data-amount="100">100</button>
-      <button data-amount="500">500</button>
-    </div>
-    <div class="amount-stepper">
-      <button id="minusAmount">−</button>
-      <input id="betAmount" type="number" min="1" max="1000000" step="0.01" value="100">
-      <button id="plusAmount">+</button>
-    </div>
-    <div class="notice">This submits a bet to the backend. The server currently has no complete settlement/payout implementation.</div>
-    <button class="primary-btn" id="confirmBet" style="margin-top:14px">Place Server Bet</button>
-  </div>
-</div>
+<div class="modal-backdrop" id="betModal"><div class="modal"><div class="row"><div class="modal-title" id="betModalTitle">Place Test Bet</div><button class="close-btn" data-close="betModal">✕</button></div><p class="muted small" id="betModalPeriod"></p><label for="betAmount">Bet Amount (Test Points)</label><div class="amount-presets"><button data-amount="10">10</button><button data-amount="50">50</button><button data-amount="100">100</button><button data-amount="500">500</button></div><div class="amount-stepper"><button id="minusAmount">−</button><input id="betAmount" type="number" min="0.01" max="1000" step="0.01" value="100"><button id="plusAmount">+</button></div><div class="notice">Test credits only. A bet deducts test credits.</div><button class="primary-btn" id="confirmBet" style="margin-top:14px">Place Test Bet</button></div></div>
 
+<div class="modal-backdrop" id="resultModal" role="dialog" aria-modal="true" aria-labelledby="resultPopupTitle"><div class="modal result-modal"><div class="result-modal-title" id="resultPopupTitle">🎉 ROUND RESULT</div><div class="result-modal-sub" id="resultPopupPeriod">Period —</div><div class="result-modal-number" id="resultPopupNumber">—</div><div class="result-modal-badges"><span id="resultPopupColor">COLOR —</span><span id="resultPopupSize">—</span></div><div class="result-modal-sub">The result was received from the game server.</div><button class="primary-btn" id="resultPopupClose" type="button">CONTINUE</button></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
 <script>
 (function(){
 "use strict";
@@ -289,10 +69,13 @@ let rounds=[];
 let bets=[];
 let currentBet=null;
 let toastTimer=null;
-let refreshTimer=null;
 let serverTimeOffset=0;
+let lastShownResult="";
+let soundEnabled=true;
 
-const COLOURS={Red:"#dc2626",Green:"#16a34a",Violet:"#8b5cf6"};
+function serverNow(){
+  return Date.now()+serverTimeOffset;
+}
 
 function toast(message){
   $("toast").textContent=message;
@@ -303,11 +86,7 @@ function toast(message){
 
 function esc(v){
   return String(v??"").replace(/[&<>"']/g,c=>({
-    "&":"&amp;",
-    "<":"&lt;",
-    ">":"&gt;",
-    '"':"&quot;",
-    "'":"&#39;"
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
   }[c]));
 }
 
@@ -320,18 +99,10 @@ function money(v){
 
 function dateUTC(v){
   const d=new Date(v);
-  return Number.isNaN(d.getTime())
-    ?""
-    :d.toLocaleString("en-GB",{
-      timeZone:"UTC",
-      day:"2-digit",
-      month:"2-digit",
-      year:"numeric",
-      hour:"2-digit",
-      minute:"2-digit",
-      second:"2-digit",
-      hourCycle:"h23"
-    })+" UTC";
+  return Number.isNaN(d.getTime())?"":d.toLocaleString("en-GB",{
+    timeZone:"UTC",day:"2-digit",month:"2-digit",year:"numeric",
+    hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"
+  })+" UTC";
 }
 
 function showPage(name){
@@ -361,27 +132,16 @@ function renderNumbers(id){
 }
 
 async function api(action,extra={}){
-  if(!initData){
-    throw new Error("Open this app from the Telegram bot's Mini App button.");
-  }
-
+  if(!initData)throw new Error("Open this app from Telegram to authenticate.");
   const response=await fetch("/api/game",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({initData,action,...extra})
   });
-
-  let data;
-  try{
-    data=await response.json();
-  }catch(e){
-    throw new Error("Backend returned an invalid response.");
-  }
-
+  const data=await response.json();
   if(!response.ok||!data.success){
     throw new Error(data.message||"Backend request failed.");
   }
-
   return data;
 }
 
@@ -390,7 +150,7 @@ async function authenticate(){
     if(!tg){
       authed=false;
       $("profileName").textContent="Not opened in Telegram";
-      $("profileStatus").textContent="Open the Mini App inside Telegram to authenticate.";
+      $("profileStatus").textContent="Open this Mini App inside Telegram.";
       setStatus("TELEGRAM REQUIRED");
       return;
     }
@@ -400,11 +160,7 @@ async function authenticate(){
     initData=tg.initData||"";
 
     if(!initData){
-      authed=false;
-      $("profileName").textContent="Telegram initData missing";
-      $("profileStatus").textContent="Open the official Telegram Mini App, not the direct website.";
-      setStatus("AUTH REQUIRED");
-      return;
+      throw new Error("Telegram authentication data is missing.");
     }
 
     const response=await fetch("/api/auth",{
@@ -412,57 +168,106 @@ async function authenticate(){
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({initData})
     });
-
     const data=await response.json();
 
     if(!response.ok||!data.success){
-      throw new Error(data.message||"Telegram authentication failed");
+      throw new Error(data.message||"Telegram authentication failed.");
     }
 
     authed=true;
     user=data.user;
+
     $("profileName").textContent=user.username
       ?"@"+user.username
       :"Telegram user "+user.telegram_id;
-    $("profileStatus").textContent="Telegram identity verified by server";
-    setStatus("AUTHENTICATED");
+
+    $("profileStatus").textContent="Telegram identity verified by server.";
+
+    updateReferralLink();
     await refreshAll();
 
   }catch(e){
     authed=false;
     $("profileStatus").textContent=e.message;
-    setStatus("BACKEND ERROR");
+    setStatus("AUTH ERROR");
     toast(e.message);
   }
 }
 
-function setStatus(s){
+function updateReferralLink(){
+  const box=$("referralLinkInput");
+  if(!box)return;
+
+  if(!user||!user.telegram_id){
+    box.textContent="Sign in through Telegram to generate your link.";
+    return;
+  }
+
+  /*
+   * This creates a Telegram start link.
+   * Actual referral attribution must be implemented on the backend.
+   */
+  const botUsername=window.CRYPTO_TRADER_BOT_USERNAME||"";
+  if(!botUsername){
+    box.textContent="Configure CRYPTO_TRADER_BOT_USERNAME to generate your bot referral link.";
+    return;
+  }
+
+  box.textContent=
+    "https://t.me/"+botUsername+"?start=ref_"+encodeURIComponent(user.telegram_id);
+}
+
+async function copyReferralLink(){
+  const value=$("referralLinkInput").textContent.trim();
+
+  if(!value.startsWith("https://t.me/")){
+    toast("Referral bot username is not configured yet.");
+    return;
+  }
+
+  try{
+    await navigator.clipboard.writeText(value);
+    toast("Referral link copied!");
+  }catch(e){
+    const area=document.createElement("textarea");
+    area.value=value;
+    document.body.appendChild(area);
+    area.select();
+    const ok=document.execCommand("copy");
+    area.remove();
+    toast(ok?"Referral link copied!":"Please copy the referral link manually.");
+  }
+}
+
+function setStatus(status){
   ["betStatus","gameStatus"].forEach(id=>{
-    $(id).textContent=s;
-    $(id).classList.toggle("locked",s==="BETTING LOCKED"||s==="BACKEND ERROR");
+    const el=$(id);
+    el.textContent=status;
+    el.classList.toggle(
+      "locked",
+      status==="BETTING LOCKED"||status==="BACKEND ERROR"||status==="AUTH ERROR"
+    );
   });
 }
 
-function updateBalance(v){
-  balance=v;
-  $("homePoints").textContent=money(v);
-  $("gamePoints").textContent=money(v);
-  $("walletPoints").textContent=money(v);
+function updateBalance(value){
+  balance=value;
+  $("homePoints").textContent=money(value);
+  $("gamePoints").textContent=money(value);
+  $("walletPoints").textContent=money(value);
+}
+
+function colourForNumber(n){
+  if(n===0||n===5)return "#8b5cf6";
+  return n%2===0?"#dc2626":"#16a34a";
 }
 
 function renderRounds(){
-  const boxes=["homeParityRecords","parityRecords"];
-
   const html=rounds.length
     ?rounds.map(r=>{
-      const n=r.result_number===null||r.result_number===undefined?"—":r.result_number;
-      const colour=n==="—"
-        ?"#94a3b8"
-        :(Number(n)===0||Number(n)===5
-          ?"#8b5cf6"
-          :Number(n)%2===0
-            ?"#dc2626"
-            :"#16a34a");
+      const valid=r.result_number!==null&&r.result_number!==undefined;
+      const n=valid?Number(r.result_number):null;
+      const color=valid?colourForNumber(n):"#94a3b8";
 
       return `<div class="record-row">
         <div class="row">
@@ -471,153 +276,203 @@ function renderRounds(){
             <div class="utc-time">${esc(dateUTC(r.ends_at))}</div>
             <div class="muted small">${esc(r.status)}</div>
           </div>
-          <span class="record-number" style="background:${colour}">${esc(n)}</span>
+          <span class="record-number" style="background:${color}">${valid?esc(n):"—"}</span>
         </div>
       </div>`;
     }).join("")
-    :'<div class="empty">No server rounds found.</div>';
+    :'<div class="empty">No settled results available.</div>';
 
-  boxes.forEach(id=>$(id).innerHTML=html);
+  ["homeParityRecords","parityRecords"].forEach(id=>{
+    $(id).innerHTML=html;
+  });
 }
 
 function renderBets(){
   const html=bets.length
-    ?bets.map(b=>`<div class="record-row">
-      <div class="row">
-        <div>
-          <strong>${esc(b.bet_type)}${b.selection!==null&&b.selection!==undefined?" · "+esc(b.selection):""}</strong>
-          <div class="utc-time">Round ID ${esc(b.round_id)} · ${esc(dateUTC(b.created_at))}</div>
-          <div class="muted small">Status: ${esc(b.status)}</div>
+    ?bets.map(b=>{
+      const status=String(b.status||"pending").toLowerCase();
+      const safeStatus=["win","loss","pending","cancelled"].includes(status)
+        ?status:"pending";
+
+      return `<div class="history-card ${safeStatus}">
+        <div class="row">
+          <div>
+            <strong>${esc(b.bet_type||b.selection||"Bet")}</strong>
+            <div class="utc-time">Round ${esc(b.round_id)} · ${esc(dateUTC(b.created_at))}</div>
+            <div class="muted small">Stake: ${money(b.stake)} Points</div>
+          </div>
+          <div style="text-align:right">
+            <span class="badge ${safeStatus}">${esc(safeStatus.toUpperCase())}</span>
+            <div style="margin-top:8px;font-weight:900">${money(b.payout)} Points</div>
+          </div>
         </div>
-        <div style="text-align:right">
-          <strong>${money(b.stake)} Points</strong>
-          <div class="muted small">Payout: ${money(b.payout)}</div>
-        </div>
-      </div>
-    </div>`).join("")
+      </div>`;
+    }).join("")
     :'<div class="empty">No server bets found.</div>';
 
-  ["homeTradeRecords","tradeHistory"].forEach(id=>$(id).innerHTML=html);
+  ["homeTradeRecords","tradeHistory"].forEach(id=>{
+    $(id).innerHTML=html;
+  });
 }
 
-/*
- * Server clock:
- * Uses the backend's server_time response and estimates the offset
- * at the midpoint of the request to reduce network-latency error.
- */
-function serverNow(){
-  return Date.now()+serverTimeOffset;
+function showLatestResult(){
+  const latest=rounds.find(r=>
+    r.status==="settled"&&
+    r.result_number!==null&&
+    r.result_number!==undefined
+  );
+
+  if(!latest)return;
+
+  const key=String(latest.id||latest.round_code);
+  if(key===lastShownResult)return;
+
+  lastShownResult=key;
+
+  const n=Number(latest.result_number);
+  $("resultPopupPeriod").textContent="Period "+latest.round_code;
+  $("resultPopupNumber").textContent=String(n);
+  $("resultPopupNumber").style.background=colourForNumber(n);
+  $("resultPopupColor").textContent=
+    n===0||n===5?"VIOLET":n%2===0?"RED":"GREEN";
+  $("resultPopupSize").textContent=n>=5?"BIG":"SMALL";
+  $("resultModal").classList.add("open");
+
+  if(soundEnabled)playResultSound();
+}
+
+function playResultSound(){
+  try{
+    const AudioContext=window.AudioContext||window.webkitAudioContext;
+    if(!AudioContext)return;
+    const ctx=new AudioContext();
+    const oscillator=ctx.createOscillator();
+    const gain=ctx.createGain();
+
+    oscillator.type="sine";
+    oscillator.frequency.setValueAtTime(660,ctx.currentTime);
+    oscillator.frequency.setValueAtTime(880,ctx.currentTime+.12);
+    gain.gain.setValueAtTime(.08,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.3);
+
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    oscillator.start();
+    oscillator.stop(ctx.currentTime+.3);
+    oscillator.onended=()=>ctx.close();
+  }catch(e){}
 }
 
 async function refreshAll(){
   if(!authed)return;
 
   try{
-    const requestStartedAt=Date.now();
+    const requestStart=Date.now();
 
     const [roundData,balData]=await Promise.all([
-      fetch("/api/game").then(async r=>{
-        const d=await r.json();
-        if(!r.ok||!d.success){
-          throw new Error(d.message||"Unable to load rounds");
+      fetch("/api/game").then(async response=>{
+        const data=await response.json();
+        if(!response.ok||!data.success){
+          throw new Error(data.message||"Unable to load server rounds.");
         }
-        return d;
+        return data;
       }),
       api("balance")
     ]);
 
-    const responseReceivedAt=Date.now();
+    const responseEnd=Date.now();
 
     if(roundData.server_time){
       const serverMs=new Date(roundData.server_time).getTime();
-
       if(Number.isFinite(serverMs)){
-        const midpoint=requestStartedAt+(responseReceivedAt-requestStartedAt)/2;
-        const newOffset=serverMs-midpoint;
+        const midpoint=requestStart+(responseEnd-requestStart)/2;
+        const measuredOffset=serverMs-midpoint;
 
-        if(!Number.isFinite(serverTimeOffset)||serverTimeOffset===0){
-          serverTimeOffset=newOffset;
+        if(serverTimeOffset===0){
+          serverTimeOffset=measuredOffset;
         }else{
-          serverTimeOffset=serverTimeOffset*0.7+newOffset*0.3;
+          serverTimeOffset=serverTimeOffset*.7+measuredOffset*.3;
         }
       }
     }
 
     rounds=roundData.rounds||[];
     balance=Number(balData.balance);
-    bets=balData.bets||[];
+
+    // Use the actual field returned by your backend.
+    bets=Array.isArray(balData.bets)?balData.bets:[];
 
     updateBalance(balance);
     renderRounds();
     renderBets();
     updateRoundDisplay();
+    showLatestResult();
 
     $("serverNotice").textContent=
-      "Connected to backend. Round results are shown only when the server records them.";
+      "Connected to server. Round timing is synchronized with server_time.";
 
-    setStatus("BACKEND CONNECTED");
+    $("referralCount").textContent="Backend required";
+    $("referralRewards").textContent="Backend required";
 
   }catch(e){
-    toast(e.message);
     $("serverNotice").textContent="Backend unavailable: "+e.message;
     setStatus("BACKEND ERROR");
+    toast(e.message);
   }
 }
 
-function updateRoundDisplay(){
+function getActiveRound(){
   const now=serverNow();
 
-  const open=rounds.find(r=>{
-    const startAt=new Date(r.starts_at).getTime();
-    const endsAt=new Date(r.ends_at).getTime();
+  return rounds.find(r=>{
+    const start=new Date(r.starts_at).getTime();
+    const close=new Date(r.betting_closes_at).getTime();
+    const end=new Date(r.ends_at).getTime();
 
-    return r.status==="open"
-      &&Number.isFinite(startAt)
-      &&Number.isFinite(endsAt)
-      &&now>=startAt
-      &&now<endsAt;
-  });
+    return r.status==="open"&&
+      Number.isFinite(start)&&
+      Number.isFinite(close)&&
+      Number.isFinite(end)&&
+      now>=start&&now<end;
+  })||null;
+}
 
-  if(!open){
+function updateRoundDisplay(){
+  const round=getActiveRound();
+
+  if(!round){
     $("periodId").textContent="Waiting for next server round…";
     $("gamePeriod").textContent="Waiting for next server round…";
     $("timer").textContent="--:--";
     $("gameTimer").textContent="--:--";
     setStatus("WAITING FOR ROUND");
 
-    document.querySelectorAll("[data-bet],.number-btn").forEach(b=>{
-      b.disabled=true;
+    document.querySelectorAll("[data-bet],.number-btn").forEach(button=>{
+      button.disabled=true;
     });
-
     return;
   }
 
-  $("periodId").textContent=open.round_code;
-  $("gamePeriod").textContent=open.round_code;
+  $("periodId").textContent=round.round_code;
+  $("gamePeriod").textContent=round.round_code;
 
-  const endsAt=new Date(open.ends_at).getTime();
-  const closeAt=new Date(open.betting_closes_at).getTime();
+  const now=serverNow();
+  const end=new Date(round.ends_at).getTime();
+  const close=new Date(round.betting_closes_at).getTime();
 
-  const roundLeft=Math.max(0,Math.ceil((endsAt-now)/1000));
+  const secondsLeft=Math.max(0,Math.ceil((end-now)/1000));
+  const timeText=
+    String(Math.floor(secondsLeft/60)).padStart(2,"0")+":"+
+    String(secondsLeft%60).padStart(2,"0");
 
-  const txt=
-    String(Math.floor(roundLeft/60)).padStart(2,"0")
-    +":"
-    +String(roundLeft%60).padStart(2,"0");
+  $("timer").textContent=timeText;
+  $("gameTimer").textContent=timeText;
 
-  $("timer").textContent=txt;
-  $("gameTimer").textContent=txt;
-
-  const canBet=
-    Number.isFinite(closeAt)
-    &&now<closeAt
-    &&now<endsAt
-    &&open.status==="open";
-
+  const canBet=now<close&&now<end;
   setStatus(canBet?"BETTING OPEN":"BETTING LOCKED");
 
-  document.querySelectorAll("[data-bet],.number-btn").forEach(b=>{
-    b.disabled=!(canBet&&authed);
+  document.querySelectorAll("[data-bet],.number-btn").forEach(button=>{
+    button.disabled=!(canBet&&authed);
   });
 }
 
@@ -627,45 +482,32 @@ function openBet(type,selection=null){
     return;
   }
 
+  const round=getActiveRound();
+  if(!round){
+    toast("No active server round available.");
+    return;
+  }
+
   const now=serverNow();
+  const close=new Date(round.betting_closes_at).getTime();
 
-  const r=rounds.find(x=>{
-    const startAt=new Date(x.starts_at).getTime();
-    const closeAt=new Date(x.betting_closes_at).getTime();
-    const endsAt=new Date(x.ends_at).getTime();
-
-    return x.status==="open"
-      &&Number.isFinite(startAt)
-      &&Number.isFinite(closeAt)
-      &&Number.isFinite(endsAt)
-      &&now>=startAt
-      &&now<closeAt
-      &&now<endsAt;
-  });
-
-  if(!r){
-    toast("Betting is locked or no open server round is available.");
+  if(!Number.isFinite(close)||now>=close){
+    toast("Betting is locked for this round.");
     return;
   }
 
   currentBet={
     type,
     selection,
-    roundId:Number(r.id),
-    roundCode:r.round_code
+    roundId:Number(round.id),
+    roundCode:round.round_code
   };
 
   $("betModalTitle").textContent=
     "Bet on "+type+(selection===null?"":" "+selection);
-
-  $("betModalPeriod").textContent="Server round: "+r.round_code;
+  $("betModalPeriod").textContent="Server round: "+round.round_code;
   $("betAmount").value="100";
   $("confirmBet").disabled=false;
-
-  document.querySelectorAll("[data-amount]").forEach(b=>{
-    b.onclick=()=>{$("betAmount").value=b.dataset.amount};
-  });
-
   $("betModal").classList.add("open");
 }
 
@@ -674,13 +516,13 @@ async function confirmBet(){
 
   const stake=Number($("betAmount").value);
 
-  if(!Number.isFinite(stake)||stake<=0||Math.round(stake*100)!==stake*100){
-    toast("Enter a valid positive amount with at most two decimals.");
+  if(!Number.isFinite(stake)||stake<=0){
+    toast("Enter a valid positive test-credit amount.");
     return;
   }
 
-  const btn=$("confirmBet");
-  btn.disabled=true;
+  const button=$("confirmBet");
+  button.disabled=true;
 
   try{
     const data=await api("place_bet",{
@@ -691,13 +533,13 @@ async function confirmBet(){
     });
 
     $("betModal").classList.remove("open");
-    toast(data.message||"Bet accepted by server.");
+    toast(data.message||"Bet request accepted.");
     await refreshAll();
 
   }catch(e){
     toast(e.message);
   }finally{
-    btn.disabled=false;
+    button.disabled=false;
   }
 }
 
@@ -705,12 +547,26 @@ function init(){
   renderNumbers("numberGrid");
   renderNumbers("gameNumberGrid");
 
-  document.querySelectorAll(".nav-btn").forEach(b=>{
-    b.onclick=()=>showPage(b.dataset.page);
+  document.querySelectorAll(".nav-btn").forEach(button=>{
+    button.onclick=()=>showPage(button.dataset.page);
   });
 
-  document.querySelectorAll("[data-page-go]").forEach(b=>{
-    b.onclick=()=>showPage(b.dataset.pageGo);
+  document.querySelectorAll("[data-page-go]").forEach(button=>{
+    button.onclick=()=>showPage(button.dataset.pageGo);
+  });
+
+  document.querySelectorAll("[data-bet]").forEach(button=>{
+    button.onclick=()=>openBet(button.dataset.bet);
+  });
+
+  document.querySelectorAll("[data-close]").forEach(button=>{
+    button.onclick=()=>$(button.dataset.close).classList.remove("open");
+  });
+
+  document.querySelectorAll(".modal-backdrop").forEach(modal=>{
+    modal.addEventListener("click",event=>{
+      if(event.target===modal)modal.classList.remove("open");
+    });
   });
 
   $("headerProfile").onclick=()=>showPage("profile");
@@ -718,48 +574,25 @@ function init(){
   $("walletRefresh").onclick=refreshAll;
   $("authRetry").onclick=authenticate;
   $("confirmBet").onclick=confirmBet;
+  $("copyReferral").onclick=copyReferralLink;
+  $("resultPopupClose").onclick=()=>$("resultModal").classList.remove("open");
 
-  document.querySelectorAll("[data-bet]").forEach(b=>{
-    b.onclick=()=>openBet(b.dataset.bet);
-  });
-
-  document.querySelectorAll("[data-close]").forEach(b=>{
-    b.onclick=()=>$(b.dataset.close).classList.remove("open");
-  });
-
-  document.querySelectorAll(".modal-backdrop").forEach(m=>{
-    m.addEventListener("click",e=>{
-      if(e.target===m)m.classList.remove("open");
-    });
+  document.querySelectorAll("[data-amount]").forEach(button=>{
+    button.onclick=()=>{$("betAmount").value=button.dataset.amount};
   });
 
   $("minusAmount").onclick=()=>{
-    $("betAmount").value=Math.max(
-      1,
-      (Number($("betAmount").value)||1)-10
-    );
+    $("betAmount").value=Math.max(0.01,(Number($("betAmount").value)||1)-10);
   };
 
   $("plusAmount").onclick=()=>{
-    $("betAmount").value=Math.min(
-      1000000,
-      (Number($("betAmount").value)||1)+10
-    );
-  };
-
-  $("soundToggle").onclick=()=>{
-    toast("Sound is not enabled in this backend-connected build.");
+    $("betAmount").value=Math.min(1000,(Number($("betAmount").value)||1)+10);
   };
 
   authenticate();
 
-  setInterval(()=>{
-    updateRoundDisplay();
-  },1000);
-
-  refreshTimer=setInterval(()=>{
-    if(authed)refreshAll();
-  },5000);
+  setInterval(updateRoundDisplay,1000);
+  setInterval(()=>{if(authed)refreshAll()},5000);
 }
 
 init();
