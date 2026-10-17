@@ -9,36 +9,17 @@
 
 <style>
 :root{
-  --bg:#f3f5fb;
-  --card:#fff;
-  --text:#182238;
-  --muted:#748097;
-  --border:#e1e7f0;
-  --primary:#2563eb;
-  --green:#16a34a;
-  --red:#dc2626;
-  --violet:#8b5cf6
+  --bg:#f3f5fb;--card:#fff;--text:#182238;--muted:#748097;
+  --border:#e1e7f0;--primary:#2563eb;--green:#16a34a;
+  --red:#dc2626;--violet:#8b5cf6
 }
 *{box-sizing:border-box}
-body{
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  font:14px Arial,Helvetica,sans-serif
-}
+body{margin:0;background:var(--bg);color:var(--text);font:14px Arial,Helvetica,sans-serif}
 button,input{font:inherit}
 button{border:0;cursor:pointer}
 button:disabled{opacity:.45;cursor:not-allowed}
 .app{max-width:600px;margin:auto;min-height:100vh;padding-bottom:105px}
-header{
-  background:#fff;
-  padding:15px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  border-bottom:1px solid var(--border)
-}
+header{background:#fff;padding:15px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border)}
 .brand{font-size:18px;font-weight:900}
 .brand span{color:var(--primary)}
 .icon-btn{background:#eef2ff;border-radius:11px;padding:10px}
@@ -46,146 +27,49 @@ header{
 .page.active{display:block}
 .section{padding:0 14px;margin-bottom:15px}
 .section-title{font-size:17px;font-weight:900;margin:7px 0 13px}
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:16px;
-  margin-bottom:13px;
-  overflow-wrap:anywhere
-}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:13px;overflow-wrap:anywhere}
 .muted{color:var(--muted)}
 .small{font-size:12px}
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.balance-card{
-  margin:15px;
-  padding:21px;
-  border-radius:19px;
-  background:linear-gradient(135deg,#1d4ed8,#4f46e5);
-  color:#fff
-}
+.balance-card{margin:15px;padding:21px;border-radius:19px;background:linear-gradient(135deg,#1d4ed8,#4f46e5);color:#fff}
 .balance-label{font-size:12px;opacity:.9}
 .balance-value{font-size:27px;font-weight:900;margin:9px 0}
 .balance-sub{font-size:12px;opacity:.9}
 .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
 .action-btn{padding:13px 8px;background:#fff;color:#1d4ed8;border-radius:11px;font-weight:800}
-.timer-card{
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:17px;
-  margin-bottom:13px;
-  text-align:center
-}
+.timer-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:17px;margin-bottom:13px;text-align:center}
 .period{font-size:12px;color:var(--muted);overflow-wrap:anywhere;margin-top:8px}
 .timer{font-size:32px;font-weight:900;margin:10px 0;font-variant-numeric:tabular-nums}
 .status{display:inline-block;padding:7px 12px;border-radius:20px;background:#dcfce7;color:#15803d;font-weight:800;font-size:11px}
 .status.locked{background:#fee2e2;color:#b91c1c}
-.notice{
-  background:#fff7ed;
-  color:#9a3412;
-  padding:12px;
-  border-radius:11px;
-  font-size:12px;
-  line-height:1.7;
-  margin-top:12px;
-  overflow-wrap:anywhere
-}
+.notice{background:#fff7ed;color:#9a3412;padding:12px;border-radius:11px;font-size:12px;line-height:1.7;margin-top:12px;overflow-wrap:anywhere}
 .number-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:15px 0}
 .number-btn{min-width:0;min-height:49px;border-radius:12px;color:#fff;font-size:18px;font-weight:900}
-.red{background:#dc2626}
-.green{background:#16a34a}
-.violet{background:#8b5cf6}
-.orange{background:#f59e0b}
-.blue{background:#0ea5e9}
+.red{background:#dc2626}.green{background:#16a34a}.violet{background:#8b5cf6}
+.orange{background:#f59e0b}.blue{background:#0ea5e9}
 .num-zero{background:linear-gradient(135deg,#dc2626 0 50%,#8b5cf6 50%)}
 .num-five{background:linear-gradient(135deg,#16a34a 0 50%,#8b5cf6 50%)}
 .option-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:13px 0}
 .option-btn{min-height:46px;padding:8px 4px;border-radius:11px;color:#fff;font-weight:800}
 .big-small{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .big-small button{min-height:47px;border-radius:11px;color:#fff;font-weight:900}
-.primary-btn{
-  width:100%;
-  padding:14px;
-  border-radius:11px;
-  background:linear-gradient(135deg,#2563eb,#7c3aed);
-  color:#fff;
-  font-weight:900;
-  min-height:46px
-}
+.primary-btn{width:100%;padding:14px;border-radius:11px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;font-weight:900;min-height:46px}
 .secondary-btn{width:100%;padding:12px;border-radius:11px;background:#e8efff;color:#1d4ed8;font-weight:900;min-height:44px}
-.bottom-nav{
-  position:fixed;
-  bottom:calc(8px + env(safe-area-inset-bottom));
-  left:50%;
-  transform:translateX(-50%);
-  width:calc(100% - 12px);
-  max-width:588px;
-  display:grid;
-  grid-template-columns:repeat(6,minmax(0,1fr));
-  gap:4px;
-  background:rgba(255,255,255,.98);
-  border:1px solid var(--border);
-  border-radius:15px;
-  padding:7px 5px;
-  z-index:20;
-  box-shadow:0 3px 14px #0f172a18
-}
-.nav-btn{
-  min-width:0;
-  min-height:53px;
-  padding:5px 2px;
-  border-radius:11px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:4px;
-  background:#f1f5f9;
-  color:#475569;
-  font-size:10px;
-  font-weight:900
-}
+.bottom-nav{position:fixed;bottom:calc(8px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:calc(100% - 12px);max-width:588px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;background:rgba(255,255,255,.98);border:1px solid var(--border);border-radius:15px;padding:7px 5px;z-index:20;box-shadow:0 3px 14px #0f172a18}
+.nav-btn{min-width:0;min-height:53px;padding:5px 2px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#f1f5f9;color:#475569;font-size:10px;font-weight:900}
 .nav-icon{display:block;font-size:20px;line-height:1.2}
 .nav-btn.active{background:#dbeafe;color:#1d4ed8;box-shadow:inset 0 -3px 0 #2563eb}
-input{
-  display:block;
-  width:100%;
-  min-width:0;
-  padding:13px;
-  margin:7px 0 13px;
-  border:1px solid #d8e0ec;
-  border-radius:10px;
-  background:#fff;
-  color:var(--text)
-}
+input{display:block;width:100%;min-width:0;padding:13px;margin:7px 0 13px;border:1px solid #d8e0ec;border-radius:10px;background:#fff;color:var(--text)}
 label{font-weight:800;font-size:12px}
 .utc-time{font-size:11px;color:#64748b;margin-top:5px;line-height:1.6}
 .empty{text-align:center;padding:20px 7px;color:var(--muted);line-height:1.7}
-.history-card{
-  border-radius:13px;
-  padding:12px;
-  margin:9px 0;
-  border:1px solid #dbe4f0;
-  background:linear-gradient(135deg,#fff,#f8fafc)
-}
+.history-card{border-radius:13px;padding:12px;margin:9px 0;border:1px solid #dbe4f0;background:linear-gradient(135deg,#fff,#f8fafc)}
 .history-card.win{border-color:#86efac;background:linear-gradient(135deg,#f0fdf4,#dcfce7)}
 .history-card.loss{border-color:#fca5a5;background:linear-gradient(135deg,#fff1f2,#fee2e2)}
 .badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.3px}
-.badge.win{background:#16a34a;color:#fff}
-.badge.loss{background:#dc2626;color:#fff}
-.badge.pending{background:#facc15;color:#713f12}
-.badge.cancelled{background:#64748b;color:#fff}
-.modal-backdrop{
-  display:none;
-  position:fixed;
-  inset:0;
-  z-index:50;
-  background:#0f172a88;
-  align-items:center;
-  justify-content:center;
-  padding:15px
-}
+.badge.win{background:#16a34a;color:#fff}.badge.loss{background:#dc2626;color:#fff}
+.badge.pending{background:#facc15;color:#713f12}.badge.cancelled{background:#64748b;color:#fff}
+.modal-backdrop{display:none;position:fixed;inset:0;z-index:50;background:#0f172a88;align-items:center;justify-content:center;padding:15px}
 .modal-backdrop.open{display:flex}
 .modal{background:white;width:100%;max-width:430px;max-height:90%;overflow:auto;padding:19px;border-radius:17px}
 .modal-title{font-size:18px;font-weight:900}
@@ -195,38 +79,12 @@ label{font-weight:800;font-size:12px}
 .amount-stepper{display:grid;grid-template-columns:45px minmax(0,1fr) 45px;gap:8px}
 .amount-stepper button{border-radius:9px;background:#e2e8f0;font-size:21px}
 .amount-stepper input{margin:0;text-align:center}
-.toast{
-  display:none;
-  position:fixed;
-  left:50%;
-  transform:translateX(-50%);
-  bottom:100px;
-  width:max-content;
-  max-width:90%;
-  z-index:90;
-  padding:13px 16px;
-  border-radius:11px;
-  background:#172033;
-  color:#fff;
-  text-align:center;
-  line-height:1.5
-}
+.toast{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:100px;width:max-content;max-width:90%;z-index:90;padding:13px 16px;border-radius:11px;background:#172033;color:#fff;text-align:center;line-height:1.5}
 .toast.show{display:block}
 .referral-hero{padding:20px;border-radius:17px;background:linear-gradient(135deg,#1e40af,#7c3aed);color:white;margin-bottom:13px}
-.referral-hero .hero-label{font-size:12px;opacity:.9}
-.referral-hero .hero-value{font-size:28px;font-weight:900;margin:9px 0}
-.referral-hero .hero-sub{font-size:12px;line-height:1.6;opacity:.95}
-.referral-link-box{
-  background:#f1f5f9;
-  border:1px dashed #94a3b8;
-  padding:12px;
-  border-radius:10px;
-  overflow-wrap:anywhere;
-  word-break:break-word;
-  font-size:12px;
-  line-height:1.7;
-  margin:10px 0
-}
+.hero-label{font-size:12px;opacity:.9}.hero-value{font-size:28px;font-weight:900;margin:9px 0}
+.hero-sub{font-size:12px;line-height:1.6;opacity:.95}
+.referral-link-box{background:#f1f5f9;border:1px dashed #94a3b8;padding:12px;border-radius:10px;overflow-wrap:anywhere;word-break:break-word;font-size:12px;line-height:1.7;margin:10px 0}
 .referral-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}
 .referral-stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .referral-stat{padding:13px;border:1px solid var(--border);border-radius:12px;background:#f8fafc}
@@ -234,24 +92,18 @@ label{font-weight:800;font-size:12px}
 .stat-value{font-size:20px;font-weight:900;margin-top:7px;overflow-wrap:anywhere}
 .level-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid var(--border)}
 .level-row:last-child{border-bottom:0}
-.level-title{font-weight:900}
-.level-rate{font-size:12px;color:#2563eb;font-weight:900}
+.level-title{font-weight:900}.level-rate{font-size:12px;color:#2563eb;font-weight:900}
 .reward-status{padding:10px 12px;border-radius:10px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:800;line-height:1.7}
 .reward-status.credited{background:#dcfce7;color:#166534}
-@media(max-width:380px){
-  .nav-btn{font-size:9px}
-  .nav-icon{font-size:18px}
-  .section{padding:0 10px}
-  .balance-card{margin:10px}
-  .card{padding:13px}
-  .bottom-nav{gap:2px;padding:6px 3px}
-}
+.pagination{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px}
+.pagination button{background:#e8efff;color:#1d4ed8;border-radius:9px;padding:10px 12px;font-weight:800}
+.pagination span{font-size:11px;color:var(--muted);text-align:center}
+@media(max-width:380px){.nav-btn{font-size:9px}.nav-icon{font-size:18px}.section{padding:0 10px}.balance-card{margin:10px}.card{padding:13px}.bottom-nav{gap:2px;padding:6px 3px}}
 </style>
 </head>
 
 <body>
 <div class="app">
-
 <header>
   <div>
     <div class="brand">CRYPTO <span>TRADER PRO</span></div>
@@ -273,10 +125,7 @@ label{font-weight:800;font-size:12px}
 
   <div class="section">
     <div class="timer-card">
-      <div class="row">
-        <span class="muted small">Current Period</span>
-        <span class="muted small">3-minute round</span>
-      </div>
+      <div class="row"><span class="muted small">Current Period</span><span class="muted small">3-minute round</span></div>
       <div class="period" id="periodId">Loading server round…</div>
       <div class="timer" id="timer">--:--</div>
       <span class="status" id="betStatus">CONNECTING</span>
@@ -287,14 +136,12 @@ label{font-weight:800;font-size:12px}
       <div class="section-title">🔢 Choose a Number</div>
       <div class="muted small">Select a number to open the test-bet window.</div>
       <div class="number-grid" id="numberGrid"></div>
-
       <div class="section-title">🎨 Choose a Colour</div>
       <div class="option-grid">
         <button class="option-btn red" data-bet="Red">🔴 Red</button>
         <button class="option-btn green" data-bet="Green">🟢 Green</button>
         <button class="option-btn violet" data-bet="Violet">🟣 Violet</button>
       </div>
-
       <div class="section-title">📊 Big / Small</div>
       <div class="big-small">
         <button class="orange" data-bet="Big">🟠 Big (5–9)</button>
@@ -305,11 +152,21 @@ label{font-weight:800;font-size:12px}
     <div class="card">
       <div class="section-title">🎯 Result History</div>
       <div id="homeParityRecords" class="empty">Loading…</div>
+      <div class="pagination">
+        <button id="homeResultsPrev">← Previous</button>
+        <span id="homeResultsPage">Page 1</span>
+        <button id="homeResultsNext">Next →</button>
+      </div>
     </div>
 
     <div class="card">
       <div class="section-title">📋 Trade History</div>
       <div id="homeTradeRecords" class="empty">Loading…</div>
+      <div class="pagination">
+        <button id="homeTradesPrev">← Previous</button>
+        <span id="homeTradesPage">Page 1</span>
+        <button id="homeTradesNext">Next →</button>
+      </div>
     </div>
   </div>
 </section>
@@ -317,33 +174,24 @@ label{font-weight:800;font-size:12px}
 <section class="page" id="page-game">
   <div class="section">
     <div class="section-title">🎮 Prediction Game</div>
-
-    <div class="card">
-      <div class="muted small">Server wallet balance</div>
-      <strong id="gamePoints">—</strong>
-    </div>
-
+    <div class="card"><div class="muted small">Server wallet balance</div><strong id="gamePoints">—</strong></div>
     <div class="timer-card">
       <div class="period" id="gamePeriod">Loading…</div>
       <div class="timer" id="gameTimer">--:--</div>
       <span class="status" id="gameStatus">CONNECTING</span>
     </div>
-
     <div class="card">
       <div class="section-title">Select Your Prediction</div>
       <div class="number-grid" id="gameNumberGrid"></div>
-
       <div class="option-grid">
         <button class="option-btn red" data-bet="Red">🔴 Red</button>
         <button class="option-btn green" data-bet="Green">🟢 Green</button>
         <button class="option-btn violet" data-bet="Violet">🟣 Violet</button>
       </div>
-
       <div class="big-small">
         <button class="orange" data-bet="Big">🟠 Big</button>
         <button class="blue" data-bet="Small">🔵 Small</button>
       </div>
-
       <div class="notice">Testing only. Verify settlement before any live launch.</div>
     </div>
   </div>
@@ -355,10 +203,20 @@ label{font-weight:800;font-size:12px}
     <div class="card">
       <div class="section-title">🎯 Result History</div>
       <div id="parityRecords" class="empty">Loading…</div>
+      <div class="pagination">
+        <button id="resultsPrev">← Previous</button>
+        <span id="resultsPage">Page 1</span>
+        <button id="resultsNext">Next →</button>
+      </div>
     </div>
     <div class="card">
       <div class="section-title">📋 Trade History</div>
       <div id="tradeHistory" class="empty">Loading…</div>
+      <div class="pagination">
+        <button id="tradesPrev">← Previous</button>
+        <span id="tradesPage">Page 1</span>
+        <button id="tradesNext">Next →</button>
+      </div>
     </div>
   </div>
 </section>
@@ -368,9 +226,7 @@ label{font-weight:800;font-size:12px}
     <div class="section-title">💰 Wallet</div>
     <div class="card">
       <div class="muted small">Database test-credit balance</div>
-      <div style="font-size:27px;font-weight:900;margin:9px 0">
-        <span id="walletPoints">—</span> Points
-      </div>
+      <div style="font-size:27px;font-weight:900;margin:9px 0"><span id="walletPoints">—</span> Points</div>
       <div class="notice">Deposit and withdrawal backend is not connected yet. Do not send cryptocurrency.</div>
       <button class="primary-btn" id="walletRefresh">Refresh Balance</button>
     </div>
@@ -380,7 +236,6 @@ label{font-weight:800;font-size:12px}
 <section class="page" id="page-referral">
   <div class="section">
     <div class="section-title">👥 Referral Program</div>
-
     <div class="referral-hero">
       <div class="hero-label">TOTAL REFERRAL COMMISSIONS</div>
       <div class="hero-value"><span id="refTotalCommission">—</span> Points</div>
@@ -390,91 +245,34 @@ label{font-weight:800;font-size:12px}
     <div class="card">
       <div class="section-title">🔗 Your Referral Link</div>
       <div class="referral-link-box" id="referralLink">Loading referral link…</div>
-
-      <div class="row">
-        <span class="muted small">Referral code</span>
-        <strong id="referralCode">—</strong>
-      </div>
-
+      <div class="row"><span class="muted small">Referral code</span><strong id="referralCode">—</strong></div>
       <div class="referral-actions">
         <button class="primary-btn" id="copyReferralBtn">📋 Copy Link</button>
         <button class="secondary-btn" id="shareReferralBtn">📲 Share Link</button>
       </div>
-
-      <button class="secondary-btn" id="refreshReferralBtn" style="margin-top:10px">
-        ↻ Refresh Referral Data
-      </button>
+      <button class="secondary-btn" id="refreshReferralBtn" style="margin-top:10px">↻ Refresh Referral Data</button>
     </div>
 
     <div class="card">
       <div class="section-title">📊 Referral Overview</div>
-
       <div class="referral-stat-grid">
-        <div class="referral-stat">
-          <div class="stat-label">Direct Referrals</div>
-          <div class="stat-value" id="directReferralCount">—</div>
-        </div>
-
-        <div class="referral-stat">
-          <div class="stat-label">Total Commission</div>
-          <div class="stat-value" id="refCommissionTotalStat">—</div>
-        </div>
-
-        <div class="referral-stat">
-          <div class="stat-label">Pending Reward</div>
-          <div class="stat-value" id="refPendingReward">—</div>
-        </div>
-
-        <div class="referral-stat">
-          <div class="stat-label">Credited Reward</div>
-          <div class="stat-value" id="refCreditedReward">—</div>
-        </div>
+        <div class="referral-stat"><div class="stat-label">Direct Referrals</div><div class="stat-value" id="directReferralCount">—</div></div>
+        <div class="referral-stat"><div class="stat-label">Total Commission</div><div class="stat-value" id="refCommissionTotalStat">—</div></div>
+        <div class="referral-stat"><div class="stat-label">Pending Reward</div><div class="stat-value" id="refPendingReward">—</div></div>
+        <div class="referral-stat"><div class="stat-label">Credited Reward</div><div class="stat-value" id="refCreditedReward">—</div></div>
       </div>
     </div>
 
     <div class="card">
       <div class="section-title">💰 Commission Levels</div>
-
-      <div class="level-row">
-        <div>
-          <div class="level-title">Level 1</div>
-          <div class="muted small">Direct referrals</div>
-        </div>
-        <div style="text-align:right">
-          <div class="level-rate">15%</div>
-          <strong id="refLevel1">— Points</strong>
-        </div>
-      </div>
-
-      <div class="level-row">
-        <div>
-          <div class="level-title">Level 2</div>
-          <div class="muted small">Second level</div>
-        </div>
-        <div style="text-align:right">
-          <div class="level-rate">10%</div>
-          <strong id="refLevel2">— Points</strong>
-        </div>
-      </div>
-
-      <div class="level-row">
-        <div>
-          <div class="level-title">Level 3</div>
-          <div class="muted small">Third level</div>
-        </div>
-        <div style="text-align:right">
-          <div class="level-rate">5%</div>
-          <strong id="refLevel3">— Points</strong>
-        </div>
-      </div>
+      <div class="level-row"><div><div class="level-title">Level 1</div><div class="muted small">Direct referrals</div></div><div style="text-align:right"><div class="level-rate">15%</div><strong id="refLevel1">— Points</strong></div></div>
+      <div class="level-row"><div><div class="level-title">Level 2</div><div class="muted small">Second level</div></div><div style="text-align:right"><div class="level-rate">10%</div><strong id="refLevel2">— Points</strong></div></div>
+      <div class="level-row"><div><div class="level-title">Level 3</div><div class="muted small">Third level</div></div><div style="text-align:right"><div class="level-rate">5%</div><strong id="refLevel3">— Points</strong></div></div>
     </div>
 
     <div class="card">
       <div class="section-title">🎁 Referral Reward</div>
-      <p class="muted small">
-        100 Points reward requires a qualifying confirmed recharge of at least
-        100 Points. Recharge is not connected yet, so rewards may remain pending.
-      </p>
+      <p class="muted small">100 Points reward requires a qualifying confirmed recharge of at least 100 Points. Recharge is not connected yet, so rewards may remain pending.</p>
       <div id="refRewardStatus" class="reward-status">Loading reward status…</div>
     </div>
 
@@ -482,8 +280,7 @@ label{font-weight:800;font-size:12px}
       <div class="section-title">🎟️ Apply Referral Code</div>
       <p class="muted small">Referral attribution cannot be changed after it is set.</p>
       <label for="referralCodeInput">Referral Code</label>
-      <input id="referralCodeInput" type="text" maxlength="80"
-        placeholder="Enter referral code" autocomplete="off">
+      <input id="referralCodeInput" type="text" maxlength="80" placeholder="Enter referral code" autocomplete="off">
       <button class="primary-btn" id="applyReferralBtn">Apply Referral Code</button>
     </div>
 
@@ -497,14 +294,12 @@ label{font-weight:800;font-size:12px}
 <section class="page" id="page-profile">
   <div class="section">
     <div class="section-title">👤 Profile & Settings</div>
-
     <div class="card">
       <div class="muted small">Telegram account</div>
       <strong id="profileName">Checking Telegram…</strong>
       <p class="muted small" id="profileStatus">Authenticating with Telegram</p>
       <button class="primary-btn" id="authRetry">Retry Authentication</button>
     </div>
-
     <div class="card">
       <div class="section-title">About</div>
       <p>Server-controlled rounds and test-credit wallet.</p>
@@ -521,32 +316,21 @@ label{font-weight:800;font-size:12px}
   <button class="nav-btn" data-page="referral"><span class="nav-icon">🎁</span><span>Referral</span></button>
   <button class="nav-btn" data-page="profile"><span class="nav-icon">👤</span><span>Profile</span></button>
 </nav>
-
 </div>
 
 <div class="modal-backdrop" id="betModal">
   <div class="modal">
-    <div class="row">
-      <div class="modal-title" id="betModalTitle">Place Test Bet</div>
-      <button class="close-btn" data-close="betModal">✕</button>
-    </div>
-
+    <div class="row"><div class="modal-title" id="betModalTitle">Place Test Bet</div><button class="close-btn" data-close="betModal">✕</button></div>
     <p class="muted small" id="betModalPeriod"></p>
     <label for="betAmount">Bet Amount (Test Points)</label>
-
     <div class="amount-presets">
-      <button data-amount="10">10</button>
-      <button data-amount="50">50</button>
-      <button data-amount="100">100</button>
-      <button data-amount="500">500</button>
+      <button data-amount="10">10</button><button data-amount="50">50</button><button data-amount="100">100</button><button data-amount="500">500</button>
     </div>
-
     <div class="amount-stepper">
       <button id="minusAmount">−</button>
       <input id="betAmount" type="number" min="0.01" max="1000" step="0.01" value="100">
       <button id="plusAmount">+</button>
     </div>
-
     <div class="notice">Test credits only. A bet deducts test credits.</div>
     <button class="primary-btn" id="confirmBet" style="margin-top:14px">Place Test Bet</button>
   </div>
@@ -557,10 +341,7 @@ label{font-weight:800;font-size:12px}
     <div style="text-align:center;font-size:23px;font-weight:900">🎉 ROUND RESULT</div>
     <div class="muted small" id="resultPopupPeriod" style="text-align:center;margin-top:8px">Period —</div>
     <div id="resultPopupNumber" style="width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:48px;font-weight:900;margin:20px auto">—</div>
-    <div class="row" style="justify-content:center">
-      <strong id="resultPopupColor">COLOR —</strong>
-      <strong id="resultPopupSize">—</strong>
-    </div>
+    <div class="row" style="justify-content:center"><strong id="resultPopupColor">COLOR —</strong><strong id="resultPopupSize">—</strong></div>
     <button class="primary-btn" id="resultPopupClose" style="margin-top:18px">CONTINUE</button>
   </div>
 </div>
@@ -573,6 +354,7 @@ label{font-weight:800;font-size:12px}
 
 const $ = id => document.getElementById(id);
 const tg = window.Telegram && window.Telegram.WebApp;
+const PAGE_SIZE = 10;
 
 let initData = "";
 let authed = false;
@@ -584,26 +366,27 @@ let currentBet = null;
 let pendingBetRequest = null;
 let toastTimer = null;
 let refreshing = false;
+let referralLoading = false;
 let serverTimeOffset = 0;
-let lastSeenResultEnd = 0;
+let resultsPage = 1;
+let tradesPage = 1;
+let resultsPagination = {page:1,total_pages:1,has_next:false,has_previous:false};
+let tradesPagination = {page:1,total_pages:1,has_next:false,has_previous:false};
+let lastResultSignature = "";
 let resultPopupQueue = [];
 let resultPopupOpen = false;
-let referralLoading = false;
+let pageIsVisible = !document.hidden;
 
 function toast(message){
   $("toast").textContent = String(message || "");
   $("toast").classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => $("toast").classList.remove("show"), 3500);
+  toastTimer = setTimeout(()=>$("toast").classList.remove("show"),3500);
 }
 
 function esc(value){
-  return String(value ?? "").replace(/[&<>"']/g, c => ({
-    "&":"&amp;",
-    "<":"&lt;",
-    ">":"&gt;",
-    '"':"&quot;",
-    "'":"&#39;"
+  return String(value ?? "").replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
   }[c]));
 }
 
@@ -618,392 +401,398 @@ function dateUTC(value){
   const d = new Date(value);
   if(Number.isNaN(d.getTime())) return "";
   return d.toLocaleString("en-GB",{
-    timeZone:"UTC",
-    day:"2-digit",
-    month:"2-digit",
-    year:"numeric",
-    hour:"2-digit",
-    minute:"2-digit",
-    second:"2-digit",
-    hourCycle:"h23"
-  }) + " UTC";
+    timeZone:"UTC",day:"2-digit",month:"2-digit",year:"numeric",
+    hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"
+  })+" UTC";
+}
+
+function serverNow(){
+  return Date.now()+serverTimeOffset;
 }
 
 function showPage(name){
-  document.querySelectorAll(".page").forEach(page => {
-    page.classList.toggle("active",page.id === "page-" + name);
+  document.querySelectorAll(".page").forEach(page=>{
+    page.classList.toggle("active",page.id==="page-"+name);
+  });
+  document.querySelectorAll(".nav-btn").forEach(button=>{
+    button.classList.toggle("active",button.dataset.page===name);
   });
 
-  document.querySelectorAll(".nav-btn").forEach(button => {
-    button.classList.toggle("active",button.dataset.page === name);
-  });
-
-  if(name === "referral" && authed){
-    loadReferralData();
-  }
+  if(name==="referral"&&authed) loadReferralData();
+  if(name==="records"&&authed) refreshHistories();
 }
 
 function numClass(n){
-  return n === 0 ? "num-zero" :
-         n === 5 ? "num-five" :
-         n % 2 === 0 ? "red" : "green";
+  return n===0?"num-zero":n===5?"num-five":n%2===0?"red":"green";
 }
 
 function renderNumbers(id){
-  const box = $(id);
-  if(!box) return;
-
+  const box=$(id);
+  if(!box)return;
   box.replaceChildren();
 
   for(let n=0;n<=9;n++){
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "number-btn " + numClass(n);
-    button.textContent = String(n);
-    button.addEventListener("click",() => openBet("Number",n));
+    const button=document.createElement("button");
+    button.type="button";
+    button.className="number-btn "+numClass(n);
+    button.textContent=String(n);
+    button.dataset.numberButton="true";
+    button.addEventListener("click",()=>openBet("Number",n));
     box.appendChild(button);
   }
 }
 
 function makeRequestId(){
-  if(window.crypto?.randomUUID){
-    return window.crypto.randomUUID();
-  }
-
-  if(window.crypto?.getRandomValues){
-    const bytes = new Uint8Array(16);
-    window.crypto.getRandomValues(bytes);
-    bytes[6] = (bytes[6] & 15) | 64;
-    bytes[8] = (bytes[8] & 63) | 128;
-
-    const hex = Array.from(bytes,b => b.toString(16).padStart(2,"0")).join("");
-
-    return hex.slice(0,8) + "-" +
-      hex.slice(8,12) + "-" +
-      hex.slice(12,16) + "-" +
-      hex.slice(16,20) + "-" +
-      hex.slice(20);
-  }
-
-  throw new Error("Secure request IDs are not supported.");
+  if(!window.crypto?.randomUUID) throw new Error("Secure request IDs are not supported.");
+  return window.crypto.randomUUID();
 }
 
 async function parseResponse(response){
   let data;
-
-  try{
-    data = await response.json();
-  }catch{
-    throw new Error("Backend returned invalid JSON.");
+  try{data=await response.json();}
+  catch{throw new Error("Backend returned invalid JSON.");}
+  if(!response.ok||data.success===false){
+    throw new Error(data.message||"Backend request failed.");
   }
-
-  if(!response.ok || data.success === false){
-    throw new Error(data.message || "Backend request failed.");
-  }
-
   return data;
 }
 
 async function api(action,extra={}){
-  if(!initData){
-    throw new Error("Open the Mini App inside Telegram.");
-  }
-
-  const response = await fetch("/api/game",{
+  if(!initData) throw new Error("Open the Mini App inside Telegram.");
+  const response=await fetch("/api/game",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     cache:"no-store",
     body:JSON.stringify({initData,action,...extra})
   });
-
   return parseResponse(response);
 }
 
-async function getRounds(){
-  const response = await fetch("/api/game",{cache:"no-store"});
-  const data = await parseResponse(response);
-
-  return {
-    rounds:data.rounds || [],
-    currentRound:data.current_round || null,
-    serverTime:data.server_time || null
-  };
+async function getRounds(page=resultsPage){
+  const response=await fetch(
+    "/api/game?page="+encodeURIComponent(page)+"&page_size="+PAGE_SIZE,
+    {cache:"no-store"}
+  );
+  return parseResponse(response);
 }
 
 function setStatus(value){
-  ["betStatus","gameStatus"].forEach(id => {
-    $(id).textContent = value;
-    $(id).classList.toggle(
-      "locked",
-      value.includes("LOCKED") || value.includes("ERROR")
-    );
+  ["betStatus","gameStatus"].forEach(id=>{
+    $(id).textContent=value;
+    $(id).classList.toggle("locked",value.includes("LOCKED")||value.includes("ERROR")||value.includes("REQUIRED"));
   });
 }
 
 function updateBalance(value){
-  ["homePoints","gamePoints","walletPoints"].forEach(id => {
-    $(id).textContent = money(value);
-  });
+  ["homePoints","gamePoints","walletPoints"].forEach(id=>$(id).textContent=money(value));
 }
 
 function resultColour(n){
-  return n === 0 || n === 5 ? "#8b5cf6" :
-         n % 2 === 0 ? "#dc2626" : "#16a34a";
+  return n===0||n===5?"#8b5cf6":n%2===0?"#dc2626":"#16a34a";
 }
 
 function resultColorName(n){
-  return n === 0 || n === 5 ? "VIOLET" :
-         n % 2 === 0 ? "RED" : "GREEN";
+  return n===0||n===5?"VIOLET":n%2===0?"RED":"GREEN";
+}
+
+function resultSize(n){
+  return n>=5?"BIG":"SMALL";
+}
+
+function resultCard(round){
+  const hasResult=round.result_number!==null&&round.result_number!==undefined;
+  const n=hasResult?Number(round.result_number):"—";
+  const colour=hasResult?resultColour(n):"#94a3b8";
+  const name=hasResult?resultColorName(n):"PENDING";
+  const size=hasResult?resultSize(n):"WAITING";
+
+  return `<div class="history-card">
+    <div class="row">
+      <div>
+        <strong>Period ${esc(round.round_code)}</strong>
+        <div class="utc-time">${esc(dateUTC(round.ends_at))}</div>
+        <div style="margin-top:7px">
+          <span class="badge ${hasResult?"win":"pending"}">${name}</span>
+          <span class="badge pending">${size}</span>
+        </div>
+      </div>
+      <span class="number-btn" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:${colour}">${esc(n)}</span>
+    </div>
+    <div class="muted small" style="margin-top:8px">Status: ${esc(String(round.status||"").toUpperCase())}</div>
+  </div>`;
 }
 
 function renderRounds(){
-  const html = rounds.length
-    ? rounds.map(r => {
-        const hasResult = r.result_number !== null &&
-                          r.result_number !== undefined;
-        const n = hasResult ? Number(r.result_number) : "—";
-        const colour = hasResult ? resultColour(n) : "#94a3b8";
-        const name = hasResult ? resultColorName(n) : "PENDING";
-        const size = hasResult ? (n >= 5 ? "BIG" : "SMALL") : "WAITING";
+  const html=rounds.length
+    ?rounds.map(resultCard).join("")
+    :'<div class="empty">No settled results found on this page.</div>';
 
-        return `
-          <div class="history-card">
-            <div class="row">
-              <div>
-                <strong>Period ${esc(r.round_code)}</strong>
-                <div class="utc-time">${esc(dateUTC(r.ends_at))}</div>
-                <div style="margin-top:7px">
-                  <span class="badge ${hasResult ? (n % 2 === 0 ? "loss" : "win") : "pending"}">${name}</span>
-                  <span class="badge pending">${size}</span>
-                </div>
-              </div>
-              <span class="number-btn" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:${colour}">${esc(n)}</span>
-            </div>
-            <div class="muted small" style="margin-top:8px">Status: ${esc(String(r.status || "").toUpperCase())}</div>
-          </div>`;
-      }).join("")
-    : '<div class="empty">No server rounds found.</div>';
+  $("homeParityRecords").innerHTML=html;
+  $("parityRecords").innerHTML=html;
 
-  $("homeParityRecords").innerHTML = html;
-  $("parityRecords").innerHTML = html;
-
+  const p=resultsPagination;
+  $("homeResultsPage").textContent=`Page ${p.page} of ${p.total_pages}`;
+  $("resultsPage").textContent=`Page ${p.page} of ${p.total_pages}`;
+  $("homeResultsPrev").disabled=$("resultsPrev").disabled=!p.has_previous;
+  $("homeResultsNext").disabled=$("resultsNext").disabled=!p.has_next;
   checkForNewResults();
 }
 
+function betCard(b){
+  const status=String(b.status||"pending").toLowerCase();
+  const cls=status==="won"?"win":status==="lost"?"loss":status==="cancelled"?"cancelled":"pending";
+  const choice=b.bet_type==="Number"&&b.selection!==null&&b.selection!==undefined
+    ?` · ${esc(b.selection)}`:"";
+
+  return `<div class="history-card ${cls==="cancelled"?"":cls}">
+    <div class="row">
+      <div>
+        <strong>${esc(b.bet_type)}${choice}</strong>
+        <div class="utc-time">Period ${esc(b.round_code||b.round_id||"—")}</div>
+        <div class="utc-time">${esc(dateUTC(b.created_at))}</div>
+      </div>
+      <span class="badge ${cls}">${esc(status.toUpperCase())}</span>
+    </div>
+    <div class="row" style="margin-top:9px">
+      <span>Stake ${money(b.stake)}</span>
+      <strong>Payout: ${money(b.payout||0)}</strong>
+    </div>
+    ${b.settled_at?`<div class="utc-time">Settled: ${esc(dateUTC(b.settled_at))}</div>`:""}
+  </div>`;
+}
+
 function renderBets(){
-  const html = bets.length
-    ? bets.map(b => {
-        const status = String(b.status || "pending").toLowerCase();
-        const cls = status === "won" ? "win" :
-                    status === "lost" ? "loss" : "pending";
-        const choice = b.bet_type === "Number" && b.selection !== null
-          ? ` · ${esc(b.selection)}`
-          : "";
+  const html=bets.length
+    ?bets.map(betCard).join("")
+    :'<div class="empty">No bets recorded on this page.</div>';
 
-        return `
-          <div class="history-card ${cls}">
-            <div class="row">
-              <div>
-                <strong>${esc(b.bet_type)}${choice}</strong>
-                <div class="utc-time">Period ${esc(b.round_code || b.round_id)}</div>
-                <div class="utc-time">${esc(dateUTC(b.created_at))}</div>
-              </div>
-              <span class="badge ${cls}">${esc(status.toUpperCase())}</span>
-            </div>
-            <div class="row" style="margin-top:9px">
-              <span>Stake ${money(b.stake)}</span>
-              <strong>Payout: ${money(b.payout || 0)}</strong>
-            </div>
-          </div>`;
-      }).join("")
-    : '<div class="empty">No bets recorded yet.</div>';
+  $("homeTradeRecords").innerHTML=html;
+  $("tradeHistory").innerHTML=html;
 
-  $("homeTradeRecords").innerHTML = html;
-  $("tradeHistory").innerHTML = html;
+  const p=tradesPagination;
+  $("homeTradesPage").textContent=`Page ${p.page} of ${p.total_pages}`;
+  $("tradesPage").textContent=`Page ${p.page} of ${p.total_pages}`;
+  $("homeTradesPrev").disabled=$("tradesPrev").disabled=!p.has_previous;
+  $("homeTradesNext").disabled=$("tradesNext").disabled=!p.has_next;
 }
 
 function activeRound(){
-  const now = Date.now() + serverTimeOffset;
+  const now=serverNow();
+  const valid=round=>round&&
+    Number.isFinite(new Date(round.starts_at).getTime())&&
+    Number.isFinite(new Date(round.ends_at).getTime())&&
+    now>=new Date(round.starts_at).getTime()&&
+    now<new Date(round.ends_at).getTime();
 
-  const valid = round =>
-    round &&
-    now >= new Date(round.starts_at).getTime() &&
-    now < new Date(round.ends_at).getTime();
-
-  return valid(currentRound) ? currentRound : rounds.find(valid) || null;
+  return valid(currentRound)?currentRound:rounds.find(valid)||null;
 }
 
 function bettingOpen(round){
-  const now = Date.now() + serverTimeOffset;
+  const now=serverNow();
+  if(!round||round.status!=="open")return false;
 
-  return !!round &&
-    round.status === "open" &&
-    now >= new Date(round.starts_at).getTime() &&
-    now < new Date(round.betting_closes_at).getTime() &&
-    now < new Date(round.ends_at).getTime();
+  const start=new Date(round.starts_at).getTime();
+  const close=new Date(round.betting_closes_at).getTime();
+  const end=new Date(round.ends_at).getTime();
+
+  return Number.isFinite(start)&&Number.isFinite(close)&&Number.isFinite(end)&&
+    now>=start&&now<close&&now<end;
 }
 
 function updateRoundDisplay(){
-  const round = activeRound();
+  const round=activeRound();
 
   if(!round){
-    $("periodId").textContent = "Waiting for next server round…";
-    $("gamePeriod").textContent = "Waiting for next server round…";
-    $("timer").textContent = "--:--";
-    $("gameTimer").textContent = "--:--";
+    $("periodId").textContent="Waiting for next server round…";
+    $("gamePeriod").textContent="Waiting for next server round…";
+    $("timer").textContent="--:--";
+    $("gameTimer").textContent="--:--";
     setStatus("BETTING LOCKED");
+    document.querySelectorAll("[data-bet],[data-number-button]").forEach(b=>b.disabled=true);
     return;
   }
 
-  $("periodId").textContent = round.round_code;
-  $("gamePeriod").textContent = round.round_code;
+  $("periodId").textContent=round.round_code;
+  $("gamePeriod").textContent=round.round_code;
 
-  const left = Math.max(
-    0,
-    Math.ceil(
-      (new Date(round.ends_at).getTime() -
-      (Date.now() + serverTimeOffset)) / 1000
-    )
-  );
+  // Timer displays time remaining in the full 180-second round.
+  const left=Math.max(0,Math.ceil((new Date(round.ends_at).getTime()-serverNow())/1000));
+  const time=String(Math.floor(left/60)).padStart(2,"0")+":"+String(left%60).padStart(2,"0");
 
-  const time = String(Math.floor(left/60)).padStart(2,"0") +
-    ":" + String(left%60).padStart(2,"0");
+  $("timer").textContent=time;
+  $("gameTimer").textContent=time;
 
-  $("timer").textContent = time;
-  $("gameTimer").textContent = time;
-
-  const open = bettingOpen(round);
-  setStatus(open ? "BETTING OPEN" : "BETTING LOCKED");
-
-  document.querySelectorAll("[data-bet],.number-btn").forEach(button => {
-    button.disabled = !open || !authed;
+  const open=bettingOpen(round);
+  setStatus(open?"BETTING OPEN":"BETTING LOCKED");
+  document.querySelectorAll("[data-bet],[data-number-button]").forEach(button=>{
+    button.disabled=!open||!authed;
   });
 }
 
-async function refreshAll(){
-  if(!authed || refreshing) return;
+function updatePaginationFromResponse(data){
+  const p=data.rounds_page||{};
+  resultsPagination={
+    page:Number(p.page||resultsPage),
+    total_pages:Number(p.total_pages||1),
+    has_next:Boolean(p.has_next),
+    has_previous:Boolean(p.has_previous)
+  };
+  resultsPage=resultsPagination.page;
+}
 
-  refreshing = true;
+async function refreshHistories(){
+  if(!authed)return;
 
   try{
-    const [roundData,balanceData,betData] = await Promise.all([
-      getRounds(),
-      api("balance"),
-      api("my_bets")
+    const [roundData,betData]=await Promise.all([
+      getRounds(resultsPage),
+      api("my_bets",{page:tradesPage,page_size:PAGE_SIZE})
     ]);
 
-    rounds = roundData.rounds;
-    currentRound = roundData.currentRound;
-    bets = betData.bets || [];
+    rounds=Array.isArray(roundData.rounds)?roundData.rounds:[];
+    updatePaginationFromResponse(roundData);
 
-    if(roundData.serverTime){
-      const serverMs = new Date(roundData.serverTime).getTime();
-      if(Number.isFinite(serverMs)){
-        serverTimeOffset = serverMs - Date.now();
-      }
-    }
+    const serverMs=new Date(roundData.server_time).getTime();
+    if(Number.isFinite(serverMs))serverTimeOffset=serverMs-Date.now();
+
+    bets=Array.isArray(betData.bets)?betData.bets:[];
+    const bp=betData.pagination||{};
+    tradesPagination={
+      page:Number(bp.page||tradesPage),
+      total_pages:Number(bp.total_pages||1),
+      has_next:Boolean(bp.has_next),
+      has_previous:Boolean(bp.has_previous)
+    };
+    tradesPage=tradesPagination.page;
+
+    renderRounds();
+    renderBets();
+    updateRoundDisplay();
+  }catch(error){
+    toast("History: "+error.message);
+  }
+}
+
+async function refreshAll(){
+  if(!authed||refreshing)return;
+  refreshing=true;
+
+  try{
+    const [roundData,balanceData,betData]=await Promise.all([
+      getRounds(resultsPage),
+      api("balance"),
+      api("my_bets",{page:tradesPage,page_size:PAGE_SIZE})
+    ]);
+
+    rounds=Array.isArray(roundData.rounds)?roundData.rounds:[];
+    currentRound=roundData.current_round||null;
+    updatePaginationFromResponse(roundData);
+
+    const serverMs=new Date(roundData.server_time).getTime();
+    if(Number.isFinite(serverMs))serverTimeOffset=serverMs-Date.now();
+
+    bets=Array.isArray(betData.bets)?betData.bets:[];
+    const bp=betData.pagination||{};
+    tradesPagination={
+      page:Number(bp.page||tradesPage),
+      total_pages:Number(bp.total_pages||1),
+      has_next:Boolean(bp.has_next),
+      has_previous:Boolean(bp.has_previous)
+    };
+    tradesPage=tradesPagination.page;
 
     updateBalance(balanceData.balance);
     renderRounds();
     renderBets();
     updateRoundDisplay();
 
-    $("serverNotice").textContent =
-      "Connected to backend. Betting closes 30 seconds before each round ends.";
+    $("serverNotice").textContent=
+      "Connected. Round duration: 180 seconds. Betting closes 30 seconds before round end.";
   }catch(error){
-    $("serverNotice").textContent = "Backend unavailable: " + error.message;
+    $("serverNotice").textContent="Backend unavailable: "+error.message;
     setStatus("BACKEND ERROR");
   }finally{
-    refreshing = false;
+    refreshing=false;
   }
 }
 
 function openBet(type,selection=null){
-  if(!authed){
-    toast("Authenticate through Telegram first.");
-    return;
-  }
+  if(!authed){toast("Authenticate through Telegram first.");return;}
 
-  const round = activeRound();
-
+  const round=activeRound();
   if(!bettingOpen(round)){
     toast("Betting is locked. Wait for the next round.");
     return;
   }
 
-  currentBet = {
-    type,
-    selection,
-    roundCode:round.round_code
-  };
+  currentBet={type,selection,roundCode:round.round_code};
+  pendingBetRequest=null;
 
-  pendingBetRequest = null;
-
-  $("betModalTitle").textContent =
-    "Bet on " + type + (selection === null ? "" : " " + selection);
-
-  $("betModalPeriod").textContent = "Server round: " + round.round_code;
-  $("betAmount").value = "100";
-  $("confirmBet").disabled = false;
+  $("betModalTitle").textContent="Bet on "+type+(selection===null?"":" "+selection);
+  $("betModalPeriod").textContent="Server round: "+round.round_code;
+  $("betAmount").value="100";
+  $("confirmBet").disabled=false;
   $("betModal").classList.add("open");
 }
 
 async function confirmBet(){
-  if(!currentBet || !authed) return;
+  if(!currentBet||!authed)return;
 
-  const stake = Number($("betAmount").value);
-
-  if(
-    !Number.isFinite(stake) ||
-    stake < 0.01 ||
-    stake > 1000 ||
-    Math.round(stake * 100) !== stake * 100
-  ){
-    toast("Enter an amount between 0.01 and 1000 test points.");
+  const stake=Number($("betAmount").value);
+  if(!Number.isFinite(stake)||stake<0.01||stake>1000||Math.round(stake*100)!==stake*100){
+    toast("Enter an amount between 0.01 and 1000 test points, with up to 2 decimals.");
     return;
   }
 
-  $("confirmBet").disabled = true;
+  // Recheck the current server round immediately before sending.
+  const round=activeRound();
+  if(!bettingOpen(round)||round.round_code!==currentBet.roundCode){
+    toast("This round is no longer accepting bets.");
+    $("betModal").classList.remove("open");
+    await refreshAll();
+    return;
+  }
+
+  $("confirmBet").disabled=true;
 
   try{
     if(!pendingBetRequest){
-      pendingBetRequest = {
+      pendingBetRequest={
         requestId:makeRequestId(),
         roundCode:currentBet.roundCode,
         betType:currentBet.type,
-        selection:currentBet.type === "Number" ? currentBet.selection : null,
+        selection:currentBet.type==="Number"?currentBet.selection:null,
         stake
       };
     }
 
-    const request = pendingBetRequest;
-
-    const result = await api("place_bet",{
-      round_code:request.roundCode,
-      bet_type:request.betType,
-      selection:request.selection,
-      stake:request.stake,
-      request_id:request.requestId
+    const r=pendingBetRequest;
+    const result=await api("place_bet",{
+      round_code:r.roundCode,
+      bet_type:r.betType,
+      selection:r.selection,
+      stake:r.stake,
+      request_id:r.requestId
     });
 
-    pendingBetRequest = null;
+    pendingBetRequest=null;
     $("betModal").classList.remove("open");
-    toast(result.message || "Test bet accepted.");
-
+    toast(result.message||"Test bet accepted.");
     await refreshAll();
   }catch(error){
-    toast(error.message || "Unable to place test bet.");
+    // Keep request ID if request outcome is uncertain; a retry must be idempotent.
+    toast(error.message||"Unable to place test bet.");
   }finally{
-    $("confirmBet").disabled = false;
+    $("confirmBet").disabled=false;
   }
 }
 
-/* TELEGRAM AUTHENTICATION */
+/* TELEGRAM AUTH */
 
 async function authenticate(){
   if(!tg){
-    $("profileName").textContent = "Not opened in Telegram";
-    $("profileStatus").textContent = "Open this Mini App inside Telegram.";
+    $("profileName").textContent="Not opened in Telegram";
+    $("profileStatus").textContent="Open this Mini App inside Telegram.";
     setStatus("TELEGRAM REQUIRED");
     return;
   }
@@ -1011,468 +800,292 @@ async function authenticate(){
   try{
     tg.ready();
     tg.expand();
-
-    initData = tg.initData || "";
+    initData=tg.initData||"";
 
     if(!initData){
-      $("profileName").textContent = "Telegram initData missing";
-      $("profileStatus").textContent = "Open the official Telegram Mini App.";
+      $("profileName").textContent="Telegram initData missing";
+      $("profileStatus").textContent="Open the official Telegram Mini App.";
       setStatus("AUTH REQUIRED");
       return;
     }
 
-    const response = await fetch("/api/auth",{
+    const response=await fetch("/api/auth",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
+      cache:"no-store",
       body:JSON.stringify({initData})
     });
+    const data=await parseResponse(response);
 
-    const data = await parseResponse(response);
+    authed=true;
+    user=data.user||null;
 
-    authed = true;
-    user = data.user;
+    // api/auth.js returns the internal database ID in user.id and Telegram ID in user.telegram_id.
+    $("profileName").textContent=user?.username
+      ?"@"+user.username
+      :"Telegram user "+(user?.telegram_id||"");
 
-    $("profileName").textContent = user?.username
-      ? "@" + user.username
-      : "Telegram user " + (user?.telegram_id || "");
-
-    $("profileStatus").textContent =
-      "Telegram identity verified by server.";
-
+    $("profileStatus").textContent="Telegram identity verified by server.";
     await refreshAll();
     await processStartParameter();
   }catch(error){
-    authed = false;
-    $("profileStatus").textContent = error.message;
+    authed=false;
+    $("profileStatus").textContent=error.message;
     setStatus("BACKEND ERROR");
     toast(error.message);
   }
 }
 
-/* REFERRAL RESPONSE NORMALIZATION */
+/* REFERRAL */
 
 function unwrapReferral(data){
-  if(data?.referral && typeof data.referral === "object"){
-    return data.referral;
-  }
-
-  if(data?.data && typeof data.data === "object"){
-    return data.data;
-  }
-
-  return data || {};
+  if(data?.referral&&typeof data.referral==="object")return data.referral;
+  if(data?.data&&typeof data.data==="object")return data.data;
+  return data||{};
 }
 
 function getLevelTotal(data,level){
-  const levelArray = Array.isArray(data.commission_levels)
-    ? data.commission_levels
-    : [];
-
-  const row = levelArray.find(item => Number(item.level) === level);
-
-  if(row){
-    return row.total_commission ?? row.commission_amount ?? 0;
-  }
-
-  const totals =
-    data.commission_totals ||
-    data.commissions_by_level ||
-    data.level_commissions ||
-    {};
-
-  return data["level_" + level + "_commission"] ??
-    totals["level_" + level] ??
-    totals["level" + level] ??
-    totals[String(level)] ??
-    0;
+  const rows=Array.isArray(data.commission_levels)?data.commission_levels:[];
+  const row=rows.find(item=>Number(item.level)===level);
+  return row?.total_commission??0;
 }
 
 function renderReferral(rawData){
-  const data = unwrapReferral(rawData);
+  const data=unwrapReferral(rawData);
+  const reward=data.reward||{};
+  const code=data.referral_code||"";
+  const link=data.referral_link||"";
 
-  const totals = data.commission_totals ||
-    data.commissions_by_level ||
-    data.level_commissions ||
-    {};
+  $("referralCode").textContent=code||"Not available";
+  $("referralLink").textContent=link||"Referral link not available";
 
-  const reward = data.reward ||
-    data.reward_summary ||
-    data.rewards ||
-    {};
+  $("directReferralCount").textContent=String(data.total_direct_referrals??0);
+  $("refTotalCommission").textContent=money(data.total_commission);
+  $("refCommissionTotalStat").textContent=money(data.total_commission);
 
-  const code = data.referral_code ||
-    data.referralCode ||
-    data.code ||
-    "";
+  $("refLevel1").textContent=money(getLevelTotal(data,1))+" Points";
+  $("refLevel2").textContent=money(getLevelTotal(data,2))+" Points";
+  $("refLevel3").textContent=money(getLevelTotal(data,3))+" Points";
 
-  const link = data.referral_link ||
-    data.referralLink ||
-    data.invite_link ||
-    "";
+  $("refPendingReward").textContent=money(reward.pending_points);
+  $("refCreditedReward").textContent=money(reward.credited_points);
 
-  const totalCommission = data.total_commission ??
-    data.totalCommission ??
-    totals.total ??
-    totals.total_commission ??
-    0;
-
-  $("referralCode").textContent = code || "Not available";
-  $("referralLink").textContent = link || "Referral link not available";
-
-  /*
-   * IMPORTANT:
-   * API direct_referrals is an array of referral objects.
-   * Use total_direct_referrals for the numeric count.
-   */
-  const directCount = data.total_direct_referrals ??
-    data.direct_referral_count ??
-    data.directReferralsCount ??
-    data.referral_count ??
-    data.total_referrals ??
-    (Array.isArray(data.direct_referrals)
-      ? data.direct_referrals.length
-      : 0);
-
-  $("directReferralCount").textContent = String(directCount);
-
-  $("refTotalCommission").textContent = money(totalCommission);
-  $("refCommissionTotalStat").textContent = money(totalCommission);
-
-  $("refLevel1").textContent = money(getLevelTotal(data,1)) + " Points";
-  $("refLevel2").textContent = money(getLevelTotal(data,2)) + " Points";
-  $("refLevel3").textContent = money(getLevelTotal(data,3)) + " Points";
-
-  const pendingReward = reward.pending_points ??
-    reward.pending_reward ??
-    reward.pending ??
-    data.pending_reward ??
-    0;
-
-  const creditedReward = reward.credited_points ??
-    reward.credited_reward ??
-    reward.credited ??
-    data.credited_reward ??
-    0;
-
-  $("refPendingReward").textContent = money(pendingReward);
-  $("refCreditedReward").textContent = money(creditedReward);
-
-  if(Number(creditedReward) > 0){
-    $("refRewardStatus").textContent =
-      "Referral reward credited: " + money(creditedReward) + " Points.";
-    $("refRewardStatus").className = "reward-status credited";
+  if(Number(reward.credited_points)>0){
+    $("refRewardStatus").textContent="Credited rewards: "+money(reward.credited_points)+" Points.";
+    $("refRewardStatus").className="reward-status credited";
   }else{
-    $("refRewardStatus").textContent =
-      reward.message ||
-      "Reward pending qualification or recharge confirmation.";
-    $("refRewardStatus").className = "reward-status";
+    $("refRewardStatus").textContent=reward.message||"Rewards require a qualifying confirmed recharge.";
+    $("refRewardStatus").className="reward-status";
   }
 
-  const hasReferrer = data.referred_by !== null &&
-    data.referred_by !== undefined &&
-    data.referred_by !== "" &&
-    Number(data.referred_by) > 0;
+  const alreadyReferred=data.referred_by!==null&&data.referred_by!==undefined&&String(data.referred_by)!=="";
+  $("referralCodeInput").disabled=alreadyReferred;
+  $("applyReferralBtn").disabled=alreadyReferred;
+  $("referralCodeInput").placeholder=alreadyReferred?"Referral code already applied":"Enter referral code";
 
-  const alreadyReferred = Boolean(
-    data.has_referrer ??
-    data.referredBy ??
-    hasReferrer
-  );
-
-  $("referralCodeInput").disabled = alreadyReferred;
-  $("applyReferralBtn").disabled = alreadyReferred;
-
-  if(alreadyReferred){
-    $("referralCodeInput").placeholder = "Referral code already applied";
-  }else{
-    $("referralCodeInput").placeholder = "Enter referral code";
-  }
-
-  const history = data.commission_history ||
-    data.commissionHistory ||
-    data.history ||
-    data.commissions ||
-    [];
-
-  $("referralHistory").innerHTML =
-    Array.isArray(history) && history.length
-      ? history.map(item => `
-          <div class="history-card">
-            <div class="row">
-              <div>
-                <strong>Level ${esc(item.referral_level ?? item.level ?? "—")} Commission</strong>
-                <div class="utc-time">
-                  ${esc(item.source_username || item.source_user_id || "Referral")}
-                </div>
-                <div class="utc-time">
-                  ${esc(item.created_at ? dateUTC(item.created_at) : "")}
-                </div>
-              </div>
-              <strong>${money(item.commission_amount ?? item.amount ?? 0)} Points</strong>
-            </div>
-          </div>
-        `).join("")
-      : '<div class="empty">No commission records available yet.</div>';
+  const history=Array.isArray(data.commission_history)?data.commission_history:[];
+  $("referralHistory").innerHTML=history.length?history.map(item=>`
+    <div class="history-card">
+      <div class="row">
+        <div>
+          <strong>Level ${esc(item.referral_level??"—")} Commission</strong>
+          <div class="utc-time">Source user: ${esc(item.source_user_id??"—")}</div>
+          <div class="utc-time">${esc(item.created_at?dateUTC(item.created_at):"")}</div>
+          <div class="utc-time">Period ${esc(item.round_code??"—")}</div>
+        </div>
+        <strong>${money(item.commission_amount)} Points</strong>
+      </div>
+    </div>`).join("")
+    :'<div class="empty">No commission records available yet.</div>';
 }
 
 async function loadReferralData(){
-  if(!authed || referralLoading) return;
-
-  referralLoading = true;
-  $("refreshReferralBtn").disabled = true;
+  if(!authed||referralLoading)return;
+  referralLoading=true;
+  $("refreshReferralBtn").disabled=true;
 
   try{
-    const data = await api("referral_data");
+    const data=await api("referral_data");
     renderReferral(data);
   }catch(error){
-    $("referralHistory").innerHTML =
-      '<div class="empty">Could not load referral data: ' +
-      esc(error.message) + '</div>';
-
-    toast("Referral data: " + error.message);
+    $("referralHistory").innerHTML='<div class="empty">Could not load referral data: '+esc(error.message)+'</div>';
+    toast("Referral data: "+error.message);
   }finally{
-    referralLoading = false;
-    $("refreshReferralBtn").disabled = false;
+    referralLoading=false;
+    $("refreshReferralBtn").disabled=false;
   }
 }
 
-/* REFERRAL LINK COPY AND SHARE */
-
 async function copyReferralLink(){
-  const link = $("referralLink").textContent.trim();
-
-  if(!link || !link.startsWith("http")){
-    toast("Referral link is not available yet.");
+  const link=$("referralLink").textContent.trim();
+  if(!link.startsWith("https://t.me/")){
+    toast("Referral link is not available. Check TELEGRAM_BOT_USERNAME.");
     return;
   }
 
   try{
-    if(navigator.clipboard && window.isSecureContext){
+    if(navigator.clipboard&&window.isSecureContext){
       await navigator.clipboard.writeText(link);
     }else{
-      const textarea = document.createElement("textarea");
-      textarea.value = link;
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.appendChild(textarea);
-      textarea.select();
-
-      const copied = document.execCommand("copy");
-      textarea.remove();
-
-      if(!copied) throw new Error("Copy failed");
+      const area=document.createElement("textarea");
+      area.value=link;
+      area.style.position="fixed";
+      area.style.opacity="0";
+      document.body.appendChild(area);
+      area.select();
+      const copied=document.execCommand("copy");
+      area.remove();
+      if(!copied)throw new Error("Copy failed");
     }
-
     toast("Referral link copied!");
-  }catch(error){
-    toast("Could not copy link.");
+  }catch{
+    toast("Could not copy referral link.");
   }
 }
 
 async function shareReferralLink(){
-  const link = $("referralLink").textContent.trim();
-
-  if(!link || !link.startsWith("http")){
-    toast("Referral link is not available yet.");
+  const link=$("referralLink").textContent.trim();
+  if(!link.startsWith("https://t.me/")){
+    toast("Referral link is not available.");
     return;
   }
 
-  const shareUrl =
-    "https://t.me/share/url?url=" +
-    encodeURIComponent(link) +
-    "&text=" +
-    encodeURIComponent("Join me on Crypto Trader Pro!");
+  const shareUrl="https://t.me/share/url?url="+encodeURIComponent(link)+
+    "&text="+encodeURIComponent("Join me on Crypto Trader Pro!");
 
   try{
-    if(tg?.openTelegramLink){
-      tg.openTelegramLink(shareUrl);
-    }else if(navigator.share){
-      await navigator.share({
-        title:"Crypto Trader Pro",
-        url:link
-      });
-    }else{
-      await copyReferralLink();
-    }
+    if(tg?.openTelegramLink)tg.openTelegramLink(shareUrl);
+    else if(navigator.share)await navigator.share({title:"Crypto Trader Pro",url:link});
+    else await copyReferralLink();
   }catch(error){
-    if(error.name !== "AbortError"){
-      toast("Unable to share link.");
-    }
+    if(error.name!=="AbortError")toast("Unable to share link.");
   }
 }
-
-/* MANUAL REFERRAL CODE APPLICATION */
 
 async function applyReferralCode(){
-  if(!authed){
-    toast("Open the Mini App through Telegram first.");
-    return;
-  }
+  if(!authed){toast("Open the Mini App through Telegram first.");return;}
+  const code=$("referralCodeInput").value.trim();
+  if(!code){toast("Enter a referral code.");return;}
 
-  const code = $("referralCodeInput").value.trim();
-
-  if(!code){
-    toast("Enter a referral code.");
-    return;
-  }
-
-  $("applyReferralBtn").disabled = true;
-
+  $("applyReferralBtn").disabled=true;
   try{
-    const data = await api("apply_referral",{
-      referral_code:code,
-      code:code
-    });
-
-    if(data.success === false){
-      throw new Error(data.message || "Unable to apply referral code.");
-    }
-
-    $("referralCodeInput").value = "";
-    toast(data.message || "Referral code processed.");
-
+    const data=await api("apply_referral",{referral_code:code});
+    $("referralCodeInput").value="";
+    toast(data.message||"Referral code applied.");
     await loadReferralData();
   }catch(error){
-    toast(error.message || "Unable to apply referral code.");
+    toast(error.message||"Unable to apply referral code.");
   }finally{
-    $("applyReferralBtn").disabled = false;
+    $("applyReferralBtn").disabled=false;
   }
 }
-
-/* AUTOMATIC REFERRAL ATTRIBUTION */
 
 async function processStartParameter(){
-  if(!authed || !tg) return;
+  if(!authed||!tg)return;
 
   try{
-    const urlParams = new URLSearchParams(window.location.search);
+    const urlParams=new URLSearchParams(window.location.search);
+    const raw=(tg.initDataUnsafe&&tg.initDataUnsafe.start_param)||
+      tg.startParam||urlParams.get("ref")||urlParams.get("startapp")||"";
 
-    /*
-     * Supported sources:
-     * 1. Telegram Mini App start_param
-     * 2. Telegram WebApp startParam
-     * 3. ?ref=CODE forwarded by the Telegram bot
-     * 4. ?startapp=ref_CODE
-     */
-    const raw =
-      (tg.initDataUnsafe && tg.initDataUnsafe.start_param) ||
-      tg.startParam ||
-      urlParams.get("ref") ||
-      urlParams.get("startapp") ||
-      "";
+    if(!raw)return;
 
-    if(!raw) return;
+    // Telegram deep-link payload is commonly ref_CODE.
+    const match=String(raw).match(/^ref_([A-Za-z0-9_-]{1,80})$/i);
+    if(!match)return;
 
-    const match = String(raw).match(
-      /^(?:ref_)?([A-Za-z0-9_-]{1,80})$/i
-    );
+    const code=match[1];
+    const storageKey="ctp_referral_processed_"+code;
+    if(sessionStorage.getItem(storageKey)==="success")return;
 
-    if(!match) return;
-
-    const code = match[1].toUpperCase();
-    const storageKey = "ctp_referral_processed_" + code;
-
-    if(sessionStorage.getItem(storageKey) === "success"){
-      return;
-    }
-
-    const data = await api("apply_referral",{
-      referral_code:code,
-      code:code
-    });
-
-    if(data.success === true){
-      sessionStorage.setItem(storageKey,"success");
-
-      $("referralCodeInput").value = "";
-
-      toast(data.message || "Referral code applied successfully!");
-
-      await loadReferralData();
-    }else{
-      toast(data.message || "Referral code could not be applied.");
-    }
+    const data=await api("apply_referral",{referral_code:code});
+    sessionStorage.setItem(storageKey,"success");
+    toast(data.message||"Referral code processed.");
+    await loadReferralData();
   }catch(error){
-    console.warn("Referral attribution error:",error.message);
-    toast(error.message || "Unable to apply referral code.");
+    console.warn("Referral attribution:",error.message);
   }
 }
 
-/* RESULT POPUP */
+/* RESULT POPUP: only newly observed results, not every historical record */
 
 function showNextResult(){
-  if(resultPopupOpen || !resultPopupQueue.length) return;
+  if(resultPopupOpen||!resultPopupQueue.length||document.hidden)return;
 
-  const round = resultPopupQueue.shift();
-  const n = Number(round.result_number);
+  const item=resultPopupQueue.shift();
+  const n=Number(item.result_number);
 
-  if(!Number.isInteger(n) || n < 0 || n > 9){
+  if(!Number.isInteger(n)||n<0||n>9){
     showNextResult();
     return;
   }
 
-  resultPopupOpen = true;
-
-  $("resultPopupPeriod").textContent = "Period " + round.round_code;
-  $("resultPopupNumber").textContent = String(n);
-  $("resultPopupNumber").style.background = resultColour(n);
-  $("resultPopupColor").textContent = resultColorName(n);
-  $("resultPopupSize").textContent = n >= 5 ? "BIG" : "SMALL";
-
+  resultPopupOpen=true;
+  $("resultPopupPeriod").textContent="Period "+item.round_code;
+  $("resultPopupNumber").textContent=String(n);
+  $("resultPopupNumber").style.background=resultColour(n);
+  $("resultPopupColor").textContent=resultColorName(n);
+  $("resultPopupSize").textContent=resultSize(n);
   $("resultModal").classList.add("open");
 }
 
 function checkForNewResults(){
-  const settledRounds = rounds
-    .filter(round =>
-      round.result_number !== null &&
-      round.result_number !== undefined &&
-      round.ends_at
-    )
-    .sort((a,b) =>
-      new Date(a.ends_at).getTime() -
-      new Date(b.ends_at).getTime()
-    );
+  // The first successful load establishes a baseline; old history should not trigger popups.
+  const settled=rounds.filter(r=>r.result_number!==null&&r.result_number!==undefined&&r.ends_at);
+  const newest=settled.length
+    ?settled.reduce((a,b)=>new Date(a.ends_at)>new Date(b.ends_at)?a:b)
+    :null;
 
-  for(const round of settledRounds){
-    const endTime = new Date(round.ends_at).getTime();
-
-    if(
-      endTime > lastSeenResultEnd &&
-      endTime <= Date.now() + serverTimeOffset
-    ){
-      resultPopupQueue.push(round);
-    }
+  if(!lastResultSignature){
+    if(newest)lastResultSignature=String(newest.round_code)+"|"+String(newest.result_number);
+    return;
   }
 
-  if(settledRounds.length){
-    lastSeenResultEnd = Math.max(
-      lastSeenResultEnd,
-      ...settledRounds.map(round =>
-        new Date(round.ends_at).getTime()
-      )
-    );
+  if(newest){
+    const signature=String(newest.round_code)+"|"+String(newest.result_number);
+    if(signature!==lastResultSignature){
+      const endTime=new Date(newest.ends_at).getTime();
+      if(Number.isFinite(endTime)&&endTime<=serverNow()){
+        resultPopupQueue.push(newest);
+      }
+      lastResultSignature=signature;
+    }
   }
 
   showNextResult();
 }
 
-/* INITIALIZATION */
+/* PAGINATION */
+
+async function changeResultsPage(delta){
+  const target=resultsPage+delta;
+  if(target<1||target>resultsPagination.total_pages)return;
+  resultsPage=target;
+  await refreshAll();
+}
+
+async function changeTradesPage(delta){
+  const target=tradesPage+delta;
+  if(target<1||target>tradesPagination.total_pages)return;
+  tradesPage=target;
+  await refreshAll();
+}
+
+/* EVENTS AND STARTUP */
 
 function init(){
   renderNumbers("numberGrid");
   renderNumbers("gameNumberGrid");
 
-  document.querySelectorAll(".nav-btn").forEach(button => {
-    button.addEventListener("click",() => showPage(button.dataset.page));
+  document.querySelectorAll(".nav-btn").forEach(button=>{
+    button.addEventListener("click",()=>showPage(button.dataset.page));
   });
 
-  document.querySelectorAll("[data-page-go]").forEach(button => {
-    button.addEventListener("click",() => showPage(button.dataset.pageGo));
+  document.querySelectorAll("[data-page-go]").forEach(button=>{
+    button.addEventListener("click",()=>showPage(button.dataset.pageGo));
   });
 
-  $("headerProfile").addEventListener("click",() => showPage("profile"));
-
+  $("headerProfile").addEventListener("click",()=>showPage("profile"));
   $("refreshBtn").addEventListener("click",refreshAll);
   $("walletRefresh").addEventListener("click",refreshAll);
   $("authRetry").addEventListener("click",authenticate);
@@ -1483,75 +1096,79 @@ function init(){
   $("refreshReferralBtn").addEventListener("click",loadReferralData);
   $("applyReferralBtn").addEventListener("click",applyReferralCode);
 
-  $("resultPopupClose").addEventListener("click",() => {
+  $("homeResultsPrev").addEventListener("click",()=>changeResultsPage(-1));
+  $("resultsPrev").addEventListener("click",()=>changeResultsPage(-1));
+  $("homeResultsNext").addEventListener("click",()=>changeResultsPage(1));
+  $("resultsNext").addEventListener("click",()=>changeResultsPage(1));
+
+  $("homeTradesPrev").addEventListener("click",()=>changeTradesPage(-1));
+  $("tradesPrev").addEventListener("click",()=>changeTradesPage(-1));
+  $("homeTradesNext").addEventListener("click",()=>changeTradesPage(1));
+  $("tradesNext").addEventListener("click",()=>changeTradesPage(1));
+
+  $("resultPopupClose").addEventListener("click",()=>{
     $("resultModal").classList.remove("open");
-    resultPopupOpen = false;
+    resultPopupOpen=false;
     showNextResult();
   });
 
-  document.querySelectorAll("[data-bet]").forEach(button => {
-    button.addEventListener("click",() => openBet(button.dataset.bet));
+  document.querySelectorAll("[data-bet]").forEach(button=>{
+    button.addEventListener("click",()=>openBet(button.dataset.bet));
   });
 
-  document.querySelectorAll("[data-close]").forEach(button => {
-    button.addEventListener("click",() => {
-      $(button.dataset.close).classList.remove("open");
-    });
+  document.querySelectorAll("[data-close]").forEach(button=>{
+    button.addEventListener("click",()=>$(button.dataset.close).classList.remove("open"));
   });
 
-  document.querySelectorAll(".modal-backdrop").forEach(modal => {
-    modal.addEventListener("click",event => {
-      if(event.target === modal){
+  document.querySelectorAll(".modal-backdrop").forEach(modal=>{
+    modal.addEventListener("click",event=>{
+      if(event.target===modal){
         modal.classList.remove("open");
-
-        if(modal.id === "resultModal"){
-          resultPopupOpen = false;
+        if(modal.id==="resultModal"){
+          resultPopupOpen=false;
           showNextResult();
         }
       }
     });
   });
 
-  document.querySelectorAll("[data-amount]").forEach(button => {
-    button.addEventListener("click",() => {
-      $("betAmount").value = button.dataset.amount;
-      pendingBetRequest = null;
+  document.querySelectorAll("[data-amount]").forEach(button=>{
+    button.addEventListener("click",()=>{
+      $("betAmount").value=button.dataset.amount;
+      pendingBetRequest=null;
     });
   });
 
-  $("minusAmount").addEventListener("click",() => {
-    $("betAmount").value = Math.max(
-      0.01,
-      (Number($("betAmount").value) || 1) - 10
-    ).toFixed(2);
-
-    pendingBetRequest = null;
+  $("minusAmount").addEventListener("click",()=>{
+    $("betAmount").value=Math.max(0.01,(Number($("betAmount").value)||1)-10).toFixed(2);
+    pendingBetRequest=null;
   });
 
-  $("plusAmount").addEventListener("click",() => {
-    $("betAmount").value = Math.min(
-      1000,
-      (Number($("betAmount").value) || 1) + 10
-    ).toFixed(2);
-
-    pendingBetRequest = null;
+  $("plusAmount").addEventListener("click",()=>{
+    $("betAmount").value=Math.min(1000,(Number($("betAmount").value)||1)+10).toFixed(2);
+    pendingBetRequest=null;
   });
 
-  $("betAmount").addEventListener("input",() => {
-    pendingBetRequest = null;
+  $("betAmount").addEventListener("input",()=>pendingBetRequest=null);
+
+  document.addEventListener("visibilitychange",()=>{
+    pageIsVisible=!document.hidden;
+    if(pageIsVisible&&authed){
+      refreshAll();
+      showNextResult();
+    }
+  });
+
+  window.addEventListener("online",()=>{
+    if(authed)refreshAll();
   });
 
   authenticate();
-
   setInterval(updateRoundDisplay,1000);
-
-  setInterval(() => {
-    if(authed) refreshAll();
-  },3000);
+  setInterval(()=>{if(authed&&!document.hidden)refreshAll();},10000);
 }
 
 init();
-
 })();
 </script>
 </body>
