@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#f3f5fb">
 <title>Crypto Trader Pro</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <style>
 :root{--bg:#f3f5fb;--card:#fff;--text:#182238;--muted:#748097;--border:#e1e7f0;--primary:#2563eb;--green:#16a34a;--red:#dc2626;--violet:#8b5cf6}
 *{box-sizing:border-box}
@@ -73,13 +74,9 @@ label{font-weight:800;font-size:12px}
 .badge.pending{background:#facc15;color:#713f12}
 .badge.cancelled{background:#64748b;color:#fff}
 .badge.violet-badge{background:#8b5cf6;color:#fff}
-.pagination{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:13px}
-.pagination button{padding:10px 13px;border-radius:10px;background:#dbeafe;color:#1d4ed8;font-weight:900}
-.pagination button:disabled{background:#e2e8f0;color:#94a3b8}
-.page-info{font-size:12px;font-weight:800;color:#64748b;text-align:center}
 .modal-backdrop{display:none;position:fixed;inset:0;z-index:50;background:#0f172a88;align-items:center;justify-content:center;padding:15px}
 .modal-backdrop.open{display:flex}
-.modal{background:white;width:100%;max-width:430px;max-height:90%;overflow:auto;padding:19px;border-radius:17px}
+.modal{background:#fff;width:100%;max-width:430px;max-height:90%;overflow:auto;padding:19px;border-radius:17px}
 .modal-title{font-size:18px;font-weight:900}
 .close-btn{padding:9px 12px;border-radius:9px;background:#e9edf5}
 .amount-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:12px 0}
@@ -89,11 +86,21 @@ label{font-weight:800;font-size:12px}
 .amount-stepper input{margin:0;text-align:center}
 .toast{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:100px;width:max-content;max-width:90%;z-index:90;padding:13px 16px;border-radius:11px;background:#172033;color:#fff;text-align:center;line-height:1.5}
 .toast.show{display:block}
+
+/* Automatic result popup */
+.result-modal-number{width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:48px;font-weight:900;margin:20px auto;box-shadow:0 8px 24px #0f172a30;border:5px solid #fff}
+.result-modal-title{text-align:center;font-size:23px;font-weight:900}
+.result-modal-sub{text-align:center;color:#64748b;font-size:12px;line-height:1.7;overflow-wrap:anywhere}
+.result-modal-badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:14px 0}
+.result-modal-badges span{padding:8px 13px;border-radius:999px;background:#e0e7ff;color:#3730a3;font-size:11px;font-weight:900}
+.result-modal .primary-btn{margin-top:8px}
 @media(max-width:380px){.nav-btn{font-size:9px}.nav-icon{font-size:18px}.section{padding:0 10px}.balance-card{margin:10px}.card{padding:13px}.bottom-nav{gap:2px;padding:6px 3px}}
 </style>
 </head>
+
 <body>
 <div class="app">
+
 <header>
   <div>
     <div class="brand">CRYPTO <span>TRADER PRO</span></div>
@@ -112,39 +119,46 @@ label{font-weight:800;font-size:12px}
       <button class="action-btn" id="refreshBtn">↻ Refresh</button>
     </div>
   </div>
+
   <div class="section">
     <div class="timer-card">
-      <div class="row"><span class="muted small">Current Period</span><span class="muted small">3-minute round</span></div>
+      <div class="row">
+        <span class="muted small">Current Period</span>
+        <span class="muted small">3-minute round</span>
+      </div>
       <div class="period" id="periodId">Loading server round…</div>
       <div class="timer" id="timer">--:--</div>
       <span class="status" id="betStatus">CONNECTING</span>
       <div class="notice" id="serverNotice">Connecting to backend…</div>
     </div>
+
     <div class="card">
       <div class="section-title">🔢 Choose a Number</div>
       <div class="muted small">Select a number to open the test-bet window.</div>
       <div class="number-grid" id="numberGrid"></div>
+
       <div class="section-title">🎨 Choose a Colour</div>
       <div class="option-grid">
         <button class="option-btn red" data-bet="Red">🔴 Red</button>
         <button class="option-btn green" data-bet="Green">🟢 Green</button>
         <button class="option-btn violet" data-bet="Violet">🟣 Violet</button>
       </div>
+
       <div class="section-title">📊 Big / Small</div>
       <div class="big-small">
         <button class="orange" data-bet="Big">🟠 Big (5–9)</button>
         <button class="blue" data-bet="Small">🔵 Small (0–4)</button>
       </div>
     </div>
+
     <div class="card">
       <div class="section-title">🎯 Result History</div>
       <div id="homeParityRecords" class="empty">Loading…</div>
-      <div id="homeResultPagination"></div>
     </div>
+
     <div class="card">
       <div class="section-title">📋 Trade History</div>
       <div id="homeTradeRecords" class="empty">Loading…</div>
-      <div id="homeTradePagination"></div>
     </div>
   </div>
 </section>
@@ -152,7 +166,10 @@ label{font-weight:800;font-size:12px}
 <section class="page" id="page-game">
   <div class="section">
     <div class="section-title">🎮 Prediction Game</div>
-    <div class="card"><div class="muted small">Server wallet balance</div><strong id="gamePoints">—</strong></div>
+    <div class="card">
+      <div class="muted small">Server wallet balance</div>
+      <strong id="gamePoints">—</strong>
+    </div>
     <div class="timer-card">
       <div class="period" id="gamePeriod">Loading…</div>
       <div class="timer" id="gameTimer">--:--</div>
@@ -170,7 +187,7 @@ label{font-weight:800;font-size:12px}
         <button class="orange" data-bet="Big">🟠 Big</button>
         <button class="blue" data-bet="Small">🔵 Small</button>
       </div>
-      <div class="notice">Test credits only. Verify settlement before any live launch.</div>
+      <div class="notice">Testing only. Verify settlement before any live launch.</div>
     </div>
   </div>
 </section>
@@ -181,12 +198,10 @@ label{font-weight:800;font-size:12px}
     <div class="card">
       <div class="section-title">🎯 Result History</div>
       <div id="parityRecords" class="empty">Loading…</div>
-      <div id="resultPagination"></div>
     </div>
     <div class="card">
       <div class="section-title">📋 Trade History</div>
       <div id="tradeHistory" class="empty">Loading…</div>
-      <div id="tradePagination"></div>
     </div>
   </div>
 </section>
@@ -199,11 +214,6 @@ label{font-weight:800;font-size:12px}
       <div style="font-size:27px;font-weight:900;margin:9px 0"><span id="walletPoints">—</span> Points</div>
       <div class="notice">Deposit and withdrawal backend is not connected yet. Do not send cryptocurrency.</div>
       <button class="primary-btn" id="walletRefresh">Refresh Balance</button>
-    </div>
-    <div class="card">
-      <div class="section-title">💳 Wallet History</div>
-      <div id="walletHistory" class="empty">Loading…</div>
-      <div id="walletPagination"></div>
     </div>
   </div>
 </section>
@@ -245,6 +255,7 @@ label{font-weight:800;font-size:12px}
 </nav>
 </div>
 
+<!-- Bet amount modal -->
 <div class="modal-backdrop" id="betModal">
   <div class="modal">
     <div class="row">
@@ -268,6 +279,22 @@ label{font-weight:800;font-size:12px}
     <button class="primary-btn" id="confirmBet" style="margin-top:14px">Place Test Bet</button>
   </div>
 </div>
+
+<!-- Automatic result popup -->
+<div class="modal-backdrop" id="resultModal" role="dialog" aria-modal="true" aria-labelledby="resultPopupTitle">
+  <div class="modal result-modal">
+    <div class="result-modal-title" id="resultPopupTitle">🎉 ROUND RESULT</div>
+    <div class="result-modal-sub" id="resultPopupPeriod">Period —</div>
+    <div class="result-modal-number" id="resultPopupNumber">—</div>
+    <div class="result-modal-badges">
+      <span id="resultPopupColor">COLOR —</span>
+      <span id="resultPopupSize">—</span>
+    </div>
+    <div class="result-modal-sub">The result was received from the game server.</div>
+    <button class="primary-btn" id="resultPopupClose" type="button">CONTINUE</button>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -283,7 +310,6 @@ let user = null;
 let balance = null;
 let rounds = [];
 let bets = [];
-let walletTransactions = [];
 let currentRound = null;
 let currentBet = null;
 let pendingBetRequest = null;
@@ -292,18 +318,10 @@ let refreshing = false;
 let serverTimeOffset = 0;
 let lastServerSync = 0;
 
-const PAGE_SIZE = 10;
-const pages = {
-  results: 1,
-  trades: 1,
-  wallet: 1
-};
-
-const paginationState = {
-  results: {total: 0, totalPages: 1},
-  trades: {total: 0, totalPages: 1},
-  wallet: {total: 0, totalPages: 1}
-};
+/* Result popup state */
+let lastSeenResultEnd = 0;
+let resultPopupQueue = [];
+let resultPopupOpen = false;
 
 function toast(message){
   $("toast").textContent = message;
@@ -330,7 +348,6 @@ function money(value){
 }
 
 function dateUTC(value){
-  if(!value) return "";
   const d = new Date(value);
   if(Number.isNaN(d.getTime())) return "";
   return d.toLocaleString("en-GB",{
@@ -342,108 +359,103 @@ function dateUTC(value){
     minute:"2-digit",
     second:"2-digit",
     hourCycle:"h23"
-  })+" UTC";
+  }) + " UTC";
 }
 
 function showPage(name){
-  document.querySelectorAll(".page").forEach(p =>
-    p.classList.toggle("active",p.id==="page-"+name)
-  );
-  document.querySelectorAll(".nav-btn").forEach(b =>
-    b.classList.toggle("active",b.dataset.page===name)
-  );
-  if(name==="wallet") loadWalletHistory();
-  if(name==="records"){
-    loadResults();
-    loadTrades();
-  }
+  document.querySelectorAll(".page").forEach(page => {
+    page.classList.toggle("active",page.id === "page-" + name);
+  });
+  document.querySelectorAll(".nav-btn").forEach(button => {
+    button.classList.toggle("active",button.dataset.page === name);
+  });
 }
 
 function numClass(n){
-  if(n===0) return "num-zero";
-  if(n===5) return "num-five";
-  return n%2===0 ? "red" : "green";
+  return n === 0 ? "num-zero"
+    : n === 5 ? "num-five"
+    : n % 2 === 0 ? "red" : "green";
 }
 
 function renderNumbers(id){
   const box = $(id);
   box.innerHTML = "";
+
   for(let n=0;n<=9;n++){
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "number-btn "+numClass(n);
-    b.textContent = n;
-    b.onclick = () => openBet("Number",n);
-    box.appendChild(b);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "number-btn " + numClass(n);
+    button.textContent = n;
+    button.onclick = () => openBet("Number",n);
+    box.appendChild(button);
   }
 }
 
 function makeRequestId(){
-  if(window.crypto && typeof window.crypto.randomUUID==="function"){
+  if(window.crypto && typeof window.crypto.randomUUID === "function"){
     return window.crypto.randomUUID();
   }
+
   if(window.crypto && window.crypto.getRandomValues){
     const bytes = new Uint8Array(16);
     window.crypto.getRandomValues(bytes);
-    bytes[6] = (bytes[6]&15)|64;
-    bytes[8] = (bytes[8]&63)|128;
-    const h = Array.from(bytes,b=>b.toString(16).padStart(2,"0")).join("");
-    return h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20);
+    bytes[6] = (bytes[6] & 15) | 64;
+    bytes[8] = (bytes[8] & 63) | 128;
+
+    const h = Array.from(bytes,b => b.toString(16).padStart(2,"0")).join("");
+
+    return h.slice(0,8) + "-" +
+      h.slice(8,12) + "-" +
+      h.slice(12,16) + "-" +
+      h.slice(16,20) + "-" +
+      h.slice(20);
   }
-  throw new Error("Secure request IDs are not supported.");
+
+  throw new Error("Secure request IDs are not supported");
 }
 
 async function parseResponse(response){
   let data;
+
   try{
     data = await response.json();
   }catch{
     throw new Error("Backend returned an invalid response.");
   }
+
   if(!response.ok || !data.success){
     throw new Error(data.message || "Backend request failed.");
   }
+
   return data;
 }
 
 async function api(action,extra={}){
   if(!initData) throw new Error("Open the Mini App through Telegram.");
+
   const response = await fetch("/api/game",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     cache:"no-store",
     body:JSON.stringify({initData,action,...extra})
   });
+
   return parseResponse(response);
 }
 
-async function getRounds(page=pages.results){
-  const query = new URLSearchParams({
-    page:String(page),
-    page_size:String(PAGE_SIZE)
-  });
-  const response = await fetch("/api/game?"+query.toString(),{
+async function getRounds(){
+  const response = await fetch("/api/game",{
     method:"GET",
     cache:"no-store"
   });
-  return parseResponse(response);
-}
 
-function updateBalance(value){
-  balance = Number(value);
-  $("homePoints").textContent = money(balance);
-  $("gamePoints").textContent = money(balance);
-  $("walletPoints").textContent = money(balance);
-}
+  const data = await parseResponse(response);
 
-function setStatus(value){
-  ["betStatus","gameStatus"].forEach(id=>{
-    $(id).textContent = value;
-    $(id).classList.toggle(
-      "locked",
-      value.includes("LOCKED") || value.includes("ERROR")
-    );
-  });
+  return {
+    rounds:data.rounds || [],
+    currentRound:data.current_round || null,
+    serverTime:data.server_time || null
+  };
 }
 
 async function authenticate(){
@@ -471,230 +483,329 @@ async function authenticate(){
     const response = await fetch("/api/auth",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      cache:"no-store",
       body:JSON.stringify({initData})
     });
 
     const data = await parseResponse(response);
+
     authed = true;
     user = data.user;
 
     $("profileName").textContent = user.username
-      ? "@"+user.username
-      : "Telegram user "+user.telegram_id;
+      ? "@" + user.username
+      : "Telegram user " + user.telegram_id;
 
     $("profileStatus").textContent = "Telegram identity verified by server.";
 
     await refreshAll();
-  }catch(e){
+  }catch(error){
     authed = false;
-    $("profileStatus").textContent = e.message;
+    $("profileStatus").textContent = error.message;
     setStatus("BACKEND ERROR");
-    toast(e.message);
+    toast(error.message);
   }
 }
 
-/* 0 = Red + Violet, 5 = Green + Violet */
-function resultColorMarkup(n){
-  n = Number(n);
-  if(n===0){
-    return '<span class="badge loss">RED</span> <span class="badge violet-badge">VIOLET</span>';
-  }
-  if(n===5){
-    return '<span class="badge win">GREEN</span> <span class="badge violet-badge">VIOLET</span>';
-  }
-  return n%2===0
-    ? '<span class="badge loss">RED</span>'
-    : '<span class="badge win">GREEN</span>';
+function setStatus(value){
+  ["betStatus","gameStatus"].forEach(id => {
+    $(id).textContent = value;
+    $(id).classList.toggle(
+      "locked",
+      value.includes("LOCKED") || value.includes("ERROR")
+    );
+  });
 }
 
-function resultNumberClass(n){
-  n = Number(n);
-  if(n===0) return "num-zero";
-  if(n===5) return "num-five";
-  return n%2===0 ? "red" : "green";
+function updateBalance(value){
+  balance = Number(value);
+  $("homePoints").textContent = money(balance);
+  $("gamePoints").textContent = money(balance);
+  $("walletPoints").textContent = money(balance);
 }
 
-function paginationHTML(key){
-  const state = paginationState[key];
-  const page = pages[key];
-  const targetMap = {
-    results: ["resultPagination","homeResultPagination"],
-    trades: ["tradePagination","homeTradePagination"],
-    wallet: ["walletPagination"]
-  };
+function resultColour(n){
+  return n === 0 || n === 5
+    ? "#8b5cf6"
+    : n % 2 === 0
+      ? "#dc2626"
+      : "#16a34a";
+}
 
-  const html = `
-    <div class="pagination">
-      <button type="button" data-pager="${key}" data-dir="-1" ${page<=1?"disabled":""}>← Previous</button>
-      <span class="page-info">Page ${page} / ${state.totalPages}<br>${state.total} records</span>
-      <button type="button" data-pager="${key}" data-dir="1" ${page>=state.totalPages?"disabled":""}>Next →</button>
-    </div>`;
+function resultColorName(n){
+  return n === 0 || n === 5
+    ? "VIOLET"
+    : n % 2 === 0
+      ? "RED"
+      : "GREEN";
+}
 
-  for(const id of targetMap[key]){
-    if($(id)) $(id).innerHTML = html;
+/*
+ * The first successful fetch initializes the latest known result.
+ * This prevents old results from popping up when a user first opens the app.
+ * Later polls queue newly settled results and show them one at a time.
+ */
+function checkForNewResults(list){
+  const settled = (list || [])
+    .filter(round =>
+      round.result_number !== null &&
+      round.result_number !== undefined &&
+      Number.isFinite(new Date(round.ends_at).getTime())
+    )
+    .sort((a,b) => new Date(a.ends_at) - new Date(b.ends_at));
+
+  if(!settled.length) return;
+
+  if(lastSeenResultEnd === 0){
+    lastSeenResultEnd = Math.max(
+      ...settled.map(round => new Date(round.ends_at).getTime())
+    );
+    return;
+  }
+
+  const fresh = settled.filter(
+    round => new Date(round.ends_at).getTime() > lastSeenResultEnd
+  );
+
+  if(fresh.length){
+    lastSeenResultEnd = Math.max(
+      lastSeenResultEnd,
+      ...fresh.map(round => new Date(round.ends_at).getTime())
+    );
+
+    resultPopupQueue.push(...fresh);
+    showNextResultPopup();
+  }else{
+    lastSeenResultEnd = Math.max(
+      lastSeenResultEnd,
+      ...settled.map(round => new Date(round.ends_at).getTime())
+    );
+  }
+}
+
+function showNextResultPopup(){
+  if(resultPopupOpen || !resultPopupQueue.length) return;
+
+  const round = resultPopupQueue.shift();
+  const number = Number(round.result_number);
+
+  if(!Number.isInteger(number) || number < 0 || number > 9){
+    showNextResultPopup();
+    return;
+  }
+
+  resultPopupOpen = true;
+
+  $("resultPopupPeriod").textContent = "Period " + round.round_code;
+  $("resultPopupNumber").textContent = String(number);
+  $("resultPopupNumber").style.background = resultColour(number);
+  $("resultPopupColor").textContent = "🎨 " + resultColorName(number);
+
+  $("resultPopupSize").textContent = number >= 5
+    ? "📈 BIG (5–9)"
+    : "📉 SMALL (0–4)";
+
+  $("resultModal").classList.add("open");
+
+  if(tg && tg.HapticFeedback){
+    try{
+      tg.HapticFeedback.notificationOccurred("success");
+    }catch(_){}
+  }
+}
+
+function closeResultPopup(){
+  $("resultModal").classList.remove("open");
+  resultPopupOpen = false;
+
+  if(resultPopupQueue.length){
+    setTimeout(showNextResultPopup,250);
   }
 }
 
 function renderRounds(){
   const html = rounds.length
-    ? rounds.map(r=>{
-        const hasResult = r.result_number!==null && r.result_number!==undefined;
-        const n = hasResult ? Number(r.result_number) : null;
-        const resultMarkup = hasResult
-          ? resultColorMarkup(n)
-          : '<span class="badge pending">PENDING</span>';
-        const bigSmall = hasResult
-          ? (n>=5 ? "BIG" : "SMALL")
-          : "WAITING";
-        const numberMarkup = hasResult
-          ? `<span class="record-number ${resultNumberClass(n)}">${n}</span>`
-          : '<span class="record-number" style="background:#94a3b8">—</span>';
+    ? rounds.map(round => {
+        const hasResult =
+          round.result_number !== null &&
+          round.result_number !== undefined;
+
+        const n = hasResult ? Number(round.result_number) : "—";
+
+        const cls = hasResult
+          ? (n === 0 || n === 5
+              ? "violet-badge"
+              : n % 2 === 0
+                ? "loss"
+                : "win")
+          : "pending";
+
+        const color = hasResult ? resultColour(n) : "#94a3b8";
+        const bigSmall = hasResult ? (n >= 5 ? "BIG" : "SMALL") : "WAITING";
+        const colorName = hasResult ? resultColorName(n) : "PENDING";
 
         return `
           <div class="history-card">
             <div class="row">
               <div>
-                <strong>Period ${esc(r.round_code)}</strong>
-                <div class="utc-time">${esc(dateUTC(r.ends_at))}</div>
-                <div style="margin-top:7px">${resultMarkup}
-                  <span class="badge" style="background:#e0e7ff;color:#3730a3">${bigSmall}</span>
+                <strong>Period ${esc(round.round_code)}</strong>
+                <div class="utc-time">${esc(dateUTC(round.ends_at))}</div>
+                <div style="margin-top:7px">
+                  <span class="badge ${cls}">${esc(colorName)}</span>
+                  <span class="badge" style="background:#e0e7ff;color:#3730a3">${esc(bigSmall)}</span>
                 </div>
               </div>
-              ${numberMarkup}
+              <span class="record-number" style="background:${color}">${esc(n)}</span>
             </div>
             <div class="muted small" style="margin-top:8px">
-              Round status: ${esc(String(r.status||"").toUpperCase())}
+              Round status: ${esc(String(round.status || "").toUpperCase())}
             </div>
-          </div>`;
+          </div>
+        `;
       }).join("")
     : '<div class="empty">No server rounds found.</div>';
 
-  ["homeParityRecords","parityRecords"].forEach(id=>{
-    if($(id)) $(id).innerHTML = html;
+  ["homeParityRecords","parityRecords"].forEach(id => {
+    $(id).innerHTML = html;
   });
-
-  paginationHTML("results");
 }
 
 function statusClass(status){
-  status = String(status||"pending").toLowerCase();
-  if(status==="won"||status==="win") return "win";
-  if(status==="lost"||status==="loss") return "loss";
-  if(status==="cancelled") return "cancelled";
+  status = String(status || "pending").toLowerCase();
+
+  if(status === "won" || status === "win") return "win";
+  if(status === "lost" || status === "loss") return "loss";
+  if(status === "cancelled") return "cancelled";
+
   return "pending";
 }
 
 function renderBets(){
   const html = bets.length
-    ? bets.map(b=>{
-        const s = String(b.status||"pending").toLowerCase();
-        const cls = statusClass(s);
-        const statusText = s==="won" ? "WIN"
-          : s==="lost" ? "LOSS"
-          : s.toUpperCase();
-        const payout = Number(b.payout||0);
-        const hasResult = b.result_number!==null && b.result_number!==undefined;
+    ? bets.map(bet => {
+        const status = String(bet.status || "pending").toLowerCase();
+        const cls = statusClass(status);
+
+        const statusText = status === "won"
+          ? "WIN"
+          : status === "lost"
+            ? "LOSS"
+            : status.toUpperCase();
+
+        const payout = Number(bet.payout || 0);
+
+        const hasResult =
+          bet.result_number !== null &&
+          bet.result_number !== undefined;
+
         const resultText = hasResult
-          ? `Result: ${esc(b.result_number)}`
+          ? `Result: ${esc(bet.result_number)}`
           : "Result: waiting";
-        const choice = b.bet_type==="Number" && b.selection!==null && b.selection!==undefined
-          ? ` · ${esc(b.selection)}`
-          : "";
-        const period = b.round_code || ("ID "+b.round_id);
+
+        const choice =
+          bet.bet_type === "Number" &&
+          bet.selection !== null &&
+          bet.selection !== undefined
+            ? ` · ${esc(bet.selection)}`
+            : "";
+
+        const period = bet.round_code || ("ID " + bet.round_id);
 
         return `
           <div class="history-card ${cls}">
             <div class="row">
               <div>
-                <strong>${esc(b.bet_type)}${choice}</strong>
+                <strong>${esc(bet.bet_type)}${choice}</strong>
                 <div class="utc-time">Period ${esc(period)}</div>
-                <div class="utc-time">${esc(dateUTC(b.created_at))}</div>
+                <div class="utc-time">${esc(dateUTC(bet.created_at))}</div>
               </div>
               <span class="badge ${cls}">${esc(statusText)}</span>
             </div>
+
             <div class="row" style="margin-top:10px">
-              <span class="small">Stake <strong>${money(b.stake)}</strong></span>
+              <span class="small">Stake <strong>${money(bet.stake)}</strong></span>
               <span class="small">${resultText}</span>
             </div>
+
             <div class="row" style="margin-top:7px">
               <span class="muted small">Test points</span>
-              <strong style="color:${payout>0?"#15803d":s==="lost"?"#b91c1c":"#334155"}">
+              <strong style="color:${payout > 0 ? "#15803d" : status === "lost" ? "#b91c1c" : "#334155"}">
                 Payout: ${money(payout)}
               </strong>
             </div>
-          </div>`;
+          </div>
+        `;
       }).join("")
     : '<div class="empty">No bets recorded yet.</div>';
 
-  ["homeTradeRecords","tradeHistory"].forEach(id=>{
-    if($(id)) $(id).innerHTML = html;
+  ["homeTradeRecords","tradeHistory"].forEach(id => {
+    $(id).innerHTML = html;
   });
-
-  paginationHTML("trades");
-}
-
-function renderWalletHistory(){
-  const html = walletTransactions.length
-    ? walletTransactions.map(t=>{
-        const type = String(t.transaction_type||"transaction").toLowerCase();
-        const status = String(t.status||"pending").toLowerCase();
-        const positive = ["deposit","payout","refund"].includes(type);
-        const cls = status==="completed"||status==="confirmed" ? "win"
-          : status==="rejected"||status==="failed" ? "loss"
-          : "pending";
-        const sign = positive ? "+" : type==="withdrawal"||type==="bet" ? "−" : "";
-        const tx = t.tx_hash
-          ? `<div class="utc-time">TX: ${esc(String(t.tx_hash).slice(0,18))}…</div>`
-          : "";
-
-        return `
-          <div class="history-card ${cls}">
-            <div class="row">
-              <div>
-                <strong>${esc(type.replace(/_/g," ").toUpperCase())}</strong>
-                <div class="utc-time">${esc(dateUTC(t.created_at))}</div>
-                ${tx}
-              </div>
-              <span class="badge ${cls}">${esc(status.toUpperCase())}</span>
-            </div>
-            <div class="row" style="margin-top:10px">
-              <span class="muted small">${esc(t.network||"Test wallet")}</span>
-              <strong>${sign}${money(t.amount)} Points</strong>
-            </div>
-          </div>`;
-      }).join("")
-    : '<div class="empty">No wallet transactions found.</div>';
-
-  $("walletHistory").innerHTML = html;
-  paginationHTML("wallet");
 }
 
 function getCurrentOpenRound(){
-  const now = Date.now()+serverTimeOffset;
+  const now = Date.now() + serverTimeOffset;
 
-  const valid = r=>{
-    if(!r || r.status!=="open") return false;
-    const starts = new Date(r.starts_at).getTime();
-    const closes = new Date(r.betting_closes_at).getTime();
-    const ends = new Date(r.ends_at).getTime();
+  const valid = round => {
+    if(!round || round.status !== "open") return false;
+
+    const starts = new Date(round.starts_at).getTime();
+    const closes = new Date(round.betting_closes_at).getTime();
+    const ends = new Date(round.ends_at).getTime();
 
     return Number.isFinite(starts) &&
       Number.isFinite(closes) &&
       Number.isFinite(ends) &&
-      now>=starts &&
-      now<closes &&
-      now<ends;
+      now >= starts &&
+      now < closes &&
+      now < ends;
   };
 
   if(valid(currentRound)) return currentRound;
-  return rounds.find(valid)||null;
+
+  return rounds.find(valid) || null;
 }
 
-function updateBetButtons(enabled){
-  document.querySelectorAll("[data-bet],.number-btn").forEach(button=>{
-    button.disabled = !enabled;
-  });
+async function refreshAll(){
+  if(!authed || refreshing) return;
+
+  refreshing = true;
+
+  try{
+    const [roundData,balData,betData] = await Promise.all([
+      getRounds(),
+      api("balance"),
+      api("my_bets")
+    ]);
+
+    /* Detect newly settled rounds before updating the displayed history. */
+    checkForNewResults(roundData.rounds);
+
+    rounds = roundData.rounds;
+    currentRound = roundData.currentRound;
+    bets = betData.bets || [];
+
+    if(roundData.serverTime){
+      const serverMs = new Date(roundData.serverTime).getTime();
+
+      if(Number.isFinite(serverMs)){
+        serverTimeOffset = serverMs - Date.now();
+        lastServerSync = Date.now();
+      }
+    }
+
+    updateBalance(balData.balance);
+    renderRounds();
+    renderBets();
+    updateRoundDisplay();
+
+    $("serverNotice").textContent =
+      "Connected to backend. Betting closes 30 seconds before each round ends.";
+  }catch(error){
+    $("serverNotice").textContent = "Backend unavailable: " + error.message;
+    setStatus("BACKEND ERROR");
+  }finally{
+    refreshing = false;
+  }
 }
 
 function updateRoundDisplay(){
@@ -707,7 +818,6 @@ function updateRoundDisplay(){
     $("gameTimer").textContent = "--:--";
     setStatus("BETTING LOCKED");
     updateBetButtons(false);
-    $("confirmBet").disabled = true;
     return;
   }
 
@@ -715,166 +825,26 @@ function updateRoundDisplay(){
   $("gamePeriod").textContent = round.round_code;
 
   const closeAt = new Date(round.betting_closes_at).getTime();
-  const left = Math.max(0,Math.ceil((closeAt-(Date.now()+serverTimeOffset))/1000));
-  const txt = String(Math.floor(left/60)).padStart(2,"0")+":"+
-    String(left%60).padStart(2,"0");
+  const left = Math.max(
+    0,
+    Math.ceil((closeAt - (Date.now() + serverTimeOffset)) / 1000)
+  );
+
+  const txt =
+    String(Math.floor(left / 60)).padStart(2,"0") + ":" +
+    String(left % 60).padStart(2,"0");
 
   $("timer").textContent = txt;
   $("gameTimer").textContent = txt;
 
-  setStatus(left>0 ? "BETTING OPEN" : "BETTING LOCKED");
-  updateBetButtons(left>0 && authed);
-
-  if(currentBet && currentBet.roundCode!==round.round_code){
-    $("betModal").classList.remove("open");
-    currentBet = null;
-    pendingBetRequest = null;
-  }
+  setStatus(left > 0 ? "BETTING OPEN" : "BETTING LOCKED");
+  updateBetButtons(left > 0 && authed);
 }
 
-async function refreshAll(){
-  if(!authed || refreshing) return;
-  refreshing = true;
-
-  try{
-    const [roundData,balData,betData] = await Promise.all([
-      getRounds(pages.results),
-      api("balance"),
-      api("my_bets",{page:pages.trades,page_size:PAGE_SIZE})
-    ]);
-
-    rounds = roundData.rounds||[];
-    currentRound = roundData.current_round||null;
-    bets = betData.bets||[];
-
-    if(roundData.server_time){
-      const serverMs = new Date(roundData.server_time).getTime();
-      if(Number.isFinite(serverMs)){
-        serverTimeOffset = serverMs-Date.now();
-        lastServerSync = Date.now();
-      }
-    }
-
-    const rp = roundData.rounds_page||{};
-    paginationState.results.total = Number(rp.total||0);
-    paginationState.results.totalPages = Math.max(1,Number(rp.total_pages||1));
-
-    const bp = betData.pagination||{};
-    paginationState.trades.total = Number(bp.total||0);
-    paginationState.trades.totalPages = Math.max(1,Number(bp.total_pages||1));
-
-    if(pages.results>paginationState.results.totalPages){
-      pages.results = paginationState.results.totalPages;
-    }
-    if(pages.trades>paginationState.trades.totalPages){
-      pages.trades = paginationState.trades.totalPages;
-    }
-
-    updateBalance(balData.balance);
-    renderRounds();
-    renderBets();
-    updateRoundDisplay();
-
-    $("serverNotice").textContent =
-      "Connected to backend. Betting locks at the server's betting close time.";
-  }catch(e){
-    $("serverNotice").textContent = "Backend unavailable: "+e.message;
-    setStatus("BACKEND ERROR");
-    updateBetButtons(false);
-  }finally{
-    refreshing = false;
-  }
-}
-
-async function loadResults(){
-  if(!authed) return;
-
-  try{
-    const data = await getRounds(pages.results);
-    rounds = data.rounds||[];
-    currentRound = data.current_round||currentRound;
-
-    if(data.server_time){
-      const serverMs = new Date(data.server_time).getTime();
-      if(Number.isFinite(serverMs)){
-        serverTimeOffset = serverMs-Date.now();
-        lastServerSync = Date.now();
-      }
-    }
-
-    const p = data.rounds_page||{};
-    paginationState.results.total = Number(p.total||0);
-    paginationState.results.totalPages = Math.max(1,Number(p.total_pages||1));
-
-    if(pages.results>paginationState.results.totalPages){
-      pages.results = paginationState.results.totalPages;
-      return loadResults();
-    }
-
-    renderRounds();
-    updateRoundDisplay();
-  }catch(e){
-    $("parityRecords").innerHTML = `<div class="empty">${esc(e.message)}</div>`;
-  }
-}
-
-async function loadTrades(){
-  if(!authed) return;
-
-  try{
-    const data = await api("my_bets",{page:pages.trades,page_size:PAGE_SIZE});
-    bets = data.bets||[];
-
-    const p = data.pagination||{};
-    paginationState.trades.total = Number(p.total||0);
-    paginationState.trades.totalPages = Math.max(1,Number(p.total_pages||1));
-
-    if(pages.trades>paginationState.trades.totalPages){
-      pages.trades = paginationState.trades.totalPages;
-      return loadTrades();
-    }
-
-    renderBets();
-  }catch(e){
-    $("tradeHistory").innerHTML = `<div class="empty">${esc(e.message)}</div>`;
-  }
-}
-
-async function loadWalletHistory(){
-  if(!authed) return;
-
-  try{
-    const data = await api("wallet_history",{
-      page:pages.wallet,
-      page_size:PAGE_SIZE
-    });
-
-    walletTransactions = data.transactions||[];
-
-    const p = data.pagination||{};
-    paginationState.wallet.total = Number(p.total||0);
-    paginationState.wallet.totalPages = Math.max(1,Number(p.total_pages||1));
-
-    if(pages.wallet>paginationState.wallet.totalPages){
-      pages.wallet = paginationState.wallet.totalPages;
-      return loadWalletHistory();
-    }
-
-    renderWalletHistory();
-  }catch(e){
-    $("walletHistory").innerHTML = `<div class="empty">${esc(e.message)}</div>`;
-  }
-}
-
-async function changePage(key,direction){
-  const next = pages[key]+direction;
-  if(next<1 || next>paginationState[key].totalPages) return;
-
-  pages[key] = next;
-
-  if(key==="results") await loadResults();
-  if(key==="trades") await loadTrades();
-  if(key==="wallet") await loadWalletHistory();
+function updateBetButtons(enabled){
+  document.querySelectorAll("[data-bet],.number-btn").forEach(button => {
+    button.disabled = !enabled;
+  });
 }
 
 function openBet(type,selection=null){
@@ -891,15 +861,6 @@ function openBet(type,selection=null){
     return;
   }
 
-  const now = Date.now()+serverTimeOffset;
-  const closes = new Date(round.betting_closes_at).getTime();
-
-  if(now>=closes){
-    toast("Betting is locked for this round.");
-    refreshAll();
-    return;
-  }
-
   currentBet = {
     type,
     selection,
@@ -909,9 +870,9 @@ function openBet(type,selection=null){
   pendingBetRequest = null;
 
   $("betModalTitle").textContent =
-    "Bet on "+type+(selection===null?"":" "+selection);
+    "Bet on " + type + (selection === null ? "" : " " + selection);
 
-  $("betModalPeriod").textContent = "Server round: "+round.round_code;
+  $("betModalPeriod").textContent = "Server round: " + round.round_code;
   $("betAmount").value = "100";
   $("confirmBet").disabled = false;
   $("betModal").classList.add("open");
@@ -920,43 +881,18 @@ function openBet(type,selection=null){
 async function confirmBet(){
   if(!currentBet || !authed) return;
 
-  const round = getCurrentOpenRound();
-
-  if(!round || round.round_code!==currentBet.roundCode){
-    toast("This round has ended. Refresh and select the next round.");
-    $("betModal").classList.remove("open");
-    currentBet = null;
-    pendingBetRequest = null;
-    await refreshAll();
-    return;
-  }
-
-  const now = Date.now()+serverTimeOffset;
-  const closes = new Date(round.betting_closes_at).getTime();
-
-  if(now>=closes){
-    toast("Betting is locked. You cannot bet in the final part of this round.");
-    $("betModal").classList.remove("open");
-    currentBet = null;
-    pendingBetRequest = null;
-    await refreshAll();
-    return;
-  }
-
   const stake = Number($("betAmount").value);
 
-  if(
-    !Number.isFinite(stake) ||
-    stake<0.01 ||
-    stake>1000 ||
-    Math.round(stake*100)!==stake*100
-  ){
+  if(!Number.isFinite(stake) ||
+     stake < 0.01 ||
+     stake > 1000 ||
+     Math.round(stake * 100) !== stake * 100){
     toast("Enter an amount between 0.01 and 1000 test points.");
     return;
   }
 
-  const btn = $("confirmBet");
-  btn.disabled = true;
+  const button = $("confirmBet");
+  button.disabled = true;
 
   try{
     if(!pendingBetRequest){
@@ -964,18 +900,18 @@ async function confirmBet(){
         requestId:makeRequestId(),
         roundCode:currentBet.roundCode,
         betType:currentBet.type,
-        selection:currentBet.type==="Number"?currentBet.selection:null,
+        selection:currentBet.type === "Number" ? currentBet.selection : null,
         stake
       };
     }
 
-    const r = pendingBetRequest;
+    const request = pendingBetRequest;
 
     if(
-      r.roundCode!==currentBet.roundCode ||
-      r.betType!==currentBet.type ||
-      r.selection!==(currentBet.type==="Number"?currentBet.selection:null) ||
-      r.stake!==stake
+      request.roundCode !== currentBet.roundCode ||
+      request.betType !== currentBet.type ||
+      request.selection !== (currentBet.type === "Number" ? currentBet.selection : null) ||
+      request.stake !== stake
     ){
       pendingBetRequest = null;
       toast("Bet details changed. Please submit again.");
@@ -983,23 +919,22 @@ async function confirmBet(){
     }
 
     const result = await api("place_bet",{
-      round_code:r.roundCode,
-      bet_type:r.betType,
-      selection:r.selection,
-      stake:r.stake,
-      request_id:r.requestId
+      round_code:request.roundCode,
+      bet_type:request.betType,
+      selection:request.selection,
+      stake:request.stake,
+      request_id:request.requestId
     });
 
     pendingBetRequest = null;
     $("betModal").classList.remove("open");
-    toast(result.message||"Test bet accepted.");
 
+    toast(result.message || "Test bet accepted.");
     await refreshAll();
-    await loadTrades();
-  }catch(e){
-    toast(e.message||"Unable to place test bet. Retry without changing the details.");
+  }catch(error){
+    toast(error.message || "Unable to place test bet. Retry without changing the details.");
   }finally{
-    btn.disabled = false;
+    button.disabled = false;
   }
 }
 
@@ -1007,97 +942,82 @@ function init(){
   renderNumbers("numberGrid");
   renderNumbers("gameNumberGrid");
 
-  document.querySelectorAll(".nav-btn").forEach(b=>{
-    b.onclick = ()=>showPage(b.dataset.page);
+  document.querySelectorAll(".nav-btn").forEach(button => {
+    button.onclick = () => showPage(button.dataset.page);
   });
 
-  document.querySelectorAll("[data-page-go]").forEach(b=>{
-    b.onclick = ()=>showPage(b.dataset.pageGo);
+  document.querySelectorAll("[data-page-go]").forEach(button => {
+    button.onclick = () => showPage(button.dataset.pageGo);
   });
 
-  $("headerProfile").onclick = ()=>showPage("profile");
+  $("headerProfile").onclick = () => showPage("profile");
   $("refreshBtn").onclick = refreshAll;
-  $("walletRefresh").onclick = async ()=>{
-    await refreshAll();
-    await loadWalletHistory();
-  };
+  $("walletRefresh").onclick = refreshAll;
   $("authRetry").onclick = authenticate;
   $("confirmBet").onclick = confirmBet;
 
-  document.querySelectorAll("[data-bet]").forEach(b=>{
-    b.onclick = ()=>openBet(b.dataset.bet);
+  /* Result popup controls */
+  $("resultPopupClose").onclick = closeResultPopup;
+
+  $("resultModal").addEventListener("click",event => {
+    if(event.target === $("resultModal")){
+      closeResultPopup();
+    }
   });
 
-  document.querySelectorAll("[data-close]").forEach(b=>{
-    b.onclick = ()=>$(b.dataset.close).classList.remove("open");
+  document.querySelectorAll("[data-bet]").forEach(button => {
+    button.onclick = () => openBet(button.dataset.bet);
   });
 
-  document.querySelectorAll(".modal-backdrop").forEach(m=>{
-    m.addEventListener("click",e=>{
-      if(e.target===m) m.classList.remove("open");
+  document.querySelectorAll("[data-close]").forEach(button => {
+    button.onclick = () => $(button.dataset.close).classList.remove("open");
+  });
+
+  document.querySelectorAll(".modal-backdrop").forEach(modal => {
+    modal.addEventListener("click",event => {
+      if(event.target === modal){
+        modal.classList.remove("open");
+      }
     });
   });
 
-  document.querySelectorAll("[data-amount]").forEach(b=>{
-    b.onclick = ()=>{
-      $("betAmount").value = b.dataset.amount;
+  document.querySelectorAll("[data-amount]").forEach(button => {
+    button.onclick = () => {
+      $("betAmount").value = button.dataset.amount;
       pendingBetRequest = null;
     };
   });
 
-  $("minusAmount").onclick = ()=>{
+  $("minusAmount").onclick = () => {
     $("betAmount").value = Math.max(
-      0.01,(Number($("betAmount").value)||1)-10
+      0.01,
+      (Number($("betAmount").value) || 1) - 10
     ).toFixed(2);
+
     pendingBetRequest = null;
   };
 
-  $("plusAmount").onclick = ()=>{
+  $("plusAmount").onclick = () => {
     $("betAmount").value = Math.min(
-      1000,(Number($("betAmount").value)||1)+10
+      1000,
+      (Number($("betAmount").value) || 1) + 10
     ).toFixed(2);
+
     pendingBetRequest = null;
   };
 
-  $("betAmount").addEventListener("input",()=>{
+  $("betAmount").addEventListener("input",() => {
     pendingBetRequest = null;
-  });
-
-  document.addEventListener("click",e=>{
-    const button = e.target.closest("[data-pager]");
-    if(!button || button.disabled) return;
-
-    const key = button.dataset.pager;
-    const direction = Number(button.dataset.dir);
-    changePage(key,direction);
   });
 
   authenticate();
 
-  /* Countdown refreshes every second. */
-  setInterval(()=>{
-    updateRoundDisplay();
+  setInterval(updateRoundDisplay,1000);
 
-    /* Resync if local clock drifted or server time is stale. */
-    if(authed && Date.now()-lastServerSync>15000){
-      refreshAll();
-    }
-  },1000);
-
-  /*
-   * Poll the server frequently so the next server-created round
-   * appears automatically without manually refreshing Telegram.
-   */
-  setInterval(()=>{
+  /* Poll server for new results and wallet updates. */
+  setInterval(() => {
     if(authed) refreshAll();
-  },3000);
-
-  /*
-   * When the app returns to the foreground, refresh server data.
-   */
-  document.addEventListener("visibilitychange",()=>{
-    if(!document.hidden && authed) refreshAll();
-  });
+  },8000);
 }
 
 init();
