@@ -106,11 +106,6 @@ async function getUser(client, telegramUser) {
     [user.id]
   );
 
-  /*
-   * The database trigger normally creates referral_code.
-   * This fallback supports databases where the trigger
-   * was not installed or older users have no code.
-   */
   if (!user.referral_code) {
     for (let attempt = 0; attempt < 3; attempt++) {
       const code = crypto.randomBytes(8).toString("hex").toUpperCase();
@@ -255,6 +250,7 @@ async function getReferralData(client, userId) {
   );
 
   const botUsername = telegramBotUsername();
+
   const referralLink = botUsername && profile.referral_code
     ? `https://t.me/${botUsername}?start=ref_${encodeURIComponent(profile.referral_code)}`
     : null;
@@ -317,7 +313,7 @@ async function getReferralData(client, userId) {
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
-  // GET: public rounds and result history.
+  // GET: current round and settled result history.
   if (req.method === "GET") {
     const { page, pageSize, offset } = pageParams(req.query || {});
     let client;
@@ -329,8 +325,16 @@ module.exports = async function handler(req, res) {
         "SELECT NOW() AS server_time"
       );
 
+      /*
+       * RESULT HISTORY FIX:
+       * Only rounds whose result has been declared are returned.
+       * Pending, open, locked and future rounds are excluded.
+       */
       const countResult = await client.query(
-        "SELECT COUNT(*)::int AS total FROM public.game_rounds"
+        `SELECT COUNT(*)::int AS total
+         FROM public.game_rounds
+         WHERE status = 'settled'
+           AND result_number IS NOT NULL`
       );
 
       const roundsResult = await client.query(
@@ -338,11 +342,17 @@ module.exports = async function handler(req, res) {
                 betting_closes_at, ends_at,
                 result_number, created_at, settled_at
          FROM public.game_rounds
+         WHERE status = 'settled'
+           AND result_number IS NOT NULL
          ORDER BY starts_at DESC
          LIMIT $1 OFFSET $2`,
         [pageSize, offset]
       );
 
+      /*
+       * Current round remains separate from Result History.
+       * The game timer can still find the active round.
+       */
       const currentResult = await client.query(
         `SELECT id, round_code, status, starts_at,
                 betting_closes_at, ends_at
