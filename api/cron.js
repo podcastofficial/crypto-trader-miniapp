@@ -10,6 +10,11 @@ const pool = new Pool({
 
 const ROUND_SECONDS = 180;
 const BETTING_SECONDS = 150;
+
+// Keep several future rounds ready.
+const FUTURE_ROUNDS = 5;
+
+// Limit historical backfill and settlement workload.
 const MAX_ROUNDS_TO_CREATE = 100;
 const MAX_SETTLEMENT_ATTEMPTS = 20;
 
@@ -43,10 +48,7 @@ module.exports = async function handler(req, res) {
   const secret = process.env.CRON_SECRET;
   const authorization = req.headers.authorization || "";
 
-  if (
-    !secret ||
-    authorization !== `Bearer ${secret}`
-  ) {
+  if (!secret || authorization !== `Bearer ${secret}`) {
     return json(res, 401, {
       success: false,
       message: "Unauthorized",
@@ -61,8 +63,8 @@ module.exports = async function handler(req, res) {
     await client.query("BEGIN");
 
     /*
-     * Use database time as the source of truth.
-     * Round boundaries are aligned to UTC 3-minute slots.
+     * Use PostgreSQL time as the source of truth.
+     * All rounds align to UTC 3-minute boundaries.
      */
     const timeResult = await client.query(`
       SELECT
@@ -76,9 +78,13 @@ module.exports = async function handler(req, res) {
     const currentSlot = Number(timeResult.rows[0].slot_start);
 
     /*
-     * Backfill missing rounds from the most recent existing round.
-     * If there are no rounds yet, create the current slot.
+     * Create rounds through five future slots.
+     * This prevents the next round from waiting for
+     * the next cron execution to be inserted.
      */
+    const finalSlot =
+      currentSlot + FUTURE_ROUNDS * ROUND_SECONDS;
+
     const existingResult = await client.query(`
       SELECT
         FLOOR(
@@ -99,9 +105,6 @@ module.exports = async function handler(req, res) {
         lastSlot + ROUND_SECONDS
       );
 
-      /*
-       * Do not attempt an unbounded historical backfill.
-       */
       firstSlot = Math.max(
         firstSlot,
         currentSlot -
@@ -113,13 +116,15 @@ module.exports = async function handler(req, res) {
 
     for (
       let slot = firstSlot;
-      slot <= currentSlot;
+      slot <= finalSlot;
       slot += ROUND_SECONDS
     ) {
       const startsAt = new Date(slot * 1000);
+
       const bettingClosesAt = new Date(
         (slot + BETTING_SECONDS) * 1000
       );
+
       const endsAt = new Date(
         (slot + ROUND_SECONDS) * 1000
       );
@@ -127,24 +132,26 @@ module.exports = async function handler(req, res) {
       const roundCode = createRoundCode(startsAt);
 
       /*
-       * A missed slot is already locked or expired.
-       * Only the current slot may be open for betting.
+       * Future rounds must not be open before their
+       * actual start time. Expired slots remain locked.
        */
-      const status =
-        dbNow < bettingClosesAt &&
-        dbNow >= startsAt
-          ? "open"
-          : "locked";
+      let status = "locked";
+
+      if (
+        dbNow >= startsAt &&
+        dbNow < bettingClosesAt
+      ) {
+        status = "open";
+      }
 
       await client.query(
-        `INSERT INTO game_rounds
-          (
-            round_code,
-            status,
-            starts_at,
-            betting_closes_at,
-            ends_at
-          )
+        `INSERT INTO game_rounds (
+           round_code,
+           status,
+           starts_at,
+           betting_closes_at,
+           ends_at
+         )
          VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (round_code) DO NOTHING`,
         [
@@ -156,15 +163,24 @@ module.exports = async function handler(req, res) {
         ]
       );
 
-      /*
-       * Keep an existing round's state unchanged here.
-       * Settlement is handled by settle_expired_round().
-       */
       createdOrChecked++;
     }
 
     /*
-     * Lock any open rounds whose betting window has ended.
+     * Open the correct current round if it exists.
+     * Do not reopen a round whose betting window closed.
+     */
+    await client.query(
+      `UPDATE game_rounds
+       SET status = 'open'
+       WHERE starts_at <= NOW()
+         AND betting_closes_at > NOW()
+         AND ends_at > NOW()
+         AND status = 'locked'`
+    );
+
+    /*
+     * Lock rounds whose betting window has closed.
      */
     await client.query(
       `UPDATE game_rounds
@@ -180,9 +196,7 @@ module.exports = async function handler(req, res) {
     let settlementErrors = 0;
 
     /*
-     * The database settlement function should settle one
-     * expired round per call. Retry several times to process
-     * multiple expired rounds.
+     * Keep the existing database settlement function.
      */
     for (
       let i = 0;
@@ -225,10 +239,7 @@ module.exports = async function handler(req, res) {
       } catch (error) {
         await settleClient.query("ROLLBACK").catch(() => {});
 
-        console.error(
-          "Settlement error:",
-          error.message
-        );
+        console.error("Settlement error:", error.message);
 
         settlementErrors++;
         break;
@@ -238,7 +249,7 @@ module.exports = async function handler(req, res) {
     }
 
     /*
-     * Return the current round, including its server times.
+     * Read the active round using database time.
      */
     const currentResult = await pool.query(
       `SELECT
@@ -257,9 +268,20 @@ module.exports = async function handler(req, res) {
 
     const current = currentResult.rows[0] || null;
 
+    /*
+     * Return database time after the work has completed.
+     */
+    const finalTimeResult = await pool.query(
+      "SELECT NOW() AS server_time"
+    );
+
+    const serverTime = new Date(
+      finalTimeResult.rows[0].server_time
+    );
+
     return json(res, 200, {
       success: true,
-      server_time: dbNow.toISOString(),
+      server_time: serverTime.toISOString(),
       created_or_checked_rounds: createdOrChecked,
       settled_rounds: settled,
       settlement_errors: settlementErrors,
@@ -267,7 +289,7 @@ module.exports = async function handler(req, res) {
       betting_open: Boolean(
         current &&
         current.status === "open" &&
-        new Date(current.betting_closes_at) > new Date()
+        new Date(current.betting_closes_at) > serverTime
       ),
     });
   } catch (error) {
