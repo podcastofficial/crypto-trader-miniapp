@@ -1165,7 +1165,7 @@ function init(){
 
   authenticate();
   setInterval(updateRoundDisplay,1000);
-  setInterval(()=>{if(authed&&!document.hidden)refreshAll();},10000);
+  setInterval(()=>{if(authed&&!document.hidden)refreshAll();},3000);
 }
 
 init();
