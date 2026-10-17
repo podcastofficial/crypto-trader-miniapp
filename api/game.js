@@ -64,15 +64,19 @@ function verifyTelegramInitData(initData, botToken) {
     throw new Error("Invalid Telegram user information.");
   }
 
-  if (
-    !user ||
-    !Number.isSafeInteger(user.id) ||
-    user.id <= 0
-  ) {
+  if (!user || !Number.isSafeInteger(user.id) || user.id <= 0) {
     throw new Error("Telegram user information is missing.");
   }
 
   return user;
+}
+
+function getBody(req) {
+  if (req.body && typeof req.body === "object") {
+    return req.body;
+  }
+
+  return {};
 }
 
 module.exports = async function handler(req, res) {
@@ -99,7 +103,6 @@ module.exports = async function handler(req, res) {
   try {
     const sql = neon(databaseUrl);
 
-    // Public round-list endpoint. It exposes no private user data.
     if (req.method === "GET") {
       const rounds = await sql`
         SELECT
@@ -122,13 +125,13 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const body = req.body || {};
+    const body = getBody(req);
+
     const telegramUser = verifyTelegramInitData(
       body.initData,
       botToken
     );
 
-    // Resolve the authenticated Telegram identity on the server.
     const users = await sql`
       INSERT INTO users (telegram_id, username)
       VALUES (
@@ -146,7 +149,6 @@ module.exports = async function handler(req, res) {
       throw new Error("Unable to resolve your account.");
     }
 
-    // Create a wallet row if one does not already exist.
     await sql`
       INSERT INTO wallet_balances (user_id, balance)
       VALUES (${user.id}, 0)
@@ -200,11 +202,108 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === "place_bet") {
-      return res.status(501).json({
-        success: false,
-        message:
-          "Bet placement is temporarily disabled until atomic balance deduction and settlement safeguards are implemented."
-      });
+      const roundCode = body.round_code;
+      const betType = body.bet_type;
+      const stakeInput = body.stake;
+      const requestId = body.request_id;
+
+      if (
+        typeof roundCode !== "string" ||
+        !/^\d{12}$/.test(roundCode)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid round code."
+        });
+      }
+
+      if (
+        typeof stakeInput !== "number" &&
+        typeof stakeInput !== "string"
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid stake."
+        });
+      }
+
+      const stakeText = String(stakeInput);
+
+      if (!/^\d{1,4}(\.\d{1,2})?$/.test(stakeText)) {
+        return res.status(400).json({
+          success: false,
+          message: "Stake must have at most two decimal places."
+        });
+      }
+
+      const stake = Number(stakeText);
+
+      if (!Number.isFinite(stake) || stake <= 0 || stake > 1000) {
+        return res.status(400).json({
+          success: false,
+          message: "Stake must be between 0.01 and 1000 test credits."
+        });
+      }
+
+      const allowedTypes = [
+        "Number", "Red", "Green", "Violet", "Big", "Small"
+      ];
+
+      if (!allowedTypes.includes(betType)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid bet type."
+        });
+      }
+
+      let selection = null;
+
+      if (betType === "Number") {
+        if (
+          !Number.isInteger(body.selection) ||
+          body.selection < 0 ||
+          body.selection > 9
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: "Select a number from 0 to 9."
+          });
+        }
+
+        selection = body.selection;
+      }
+
+      if (
+        typeof requestId !== "string" ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "A valid UUID v4 request_id is required."
+        });
+      }
+
+      const results = await sql`
+        SELECT place_bet_atomic(
+          ${user.id}::bigint,
+          ${roundCode}::text,
+          ${betType}::text,
+          ${selection}::smallint,
+          ${stake}::numeric,
+          ${requestId}::uuid
+        ) AS result
+      `;
+
+      const result = results[0]?.result;
+
+      if (!result || result.success !== true) {
+        return res.status(400).json({
+          success: false,
+          message: result?.message || "Bet could not be placed."
+        });
+      }
+
+      return res.status(200).json(result);
     }
 
     return res.status(400).json({
