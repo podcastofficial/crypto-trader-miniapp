@@ -16,17 +16,10 @@ function json(res, status, data) {
 }
 
 function pageParams(input = {}) {
-  const page = Math.max(
-    1,
-    parseInt(input.page || "1", 10) || 1
-  );
-
+  const page = Math.max(1, parseInt(input.page || "1", 10) || 1);
   const pageSize = Math.min(
     10,
-    Math.max(
-      1,
-      parseInt(input.page_size || "10", 10) || 10
-    )
+    Math.max(1, parseInt(input.page_size || "10", 10) || 10)
   );
 
   return {
@@ -38,10 +31,7 @@ function pageParams(input = {}) {
 
 function verifyTelegramInitData(initData) {
   try {
-    if (
-      !initData ||
-      !process.env.TELEGRAM_BOT_TOKEN
-    ) {
+    if (!initData || !process.env.TELEGRAM_BOT_TOKEN) {
       return null;
     }
 
@@ -53,9 +43,7 @@ function verifyTelegramInitData(initData) {
       return null;
     }
 
-    if (
-      Math.abs(Date.now() / 1000 - authDate) > 3600
-    ) {
+    if (Math.abs(Date.now() / 1000 - authDate) > 3600) {
       return null;
     }
 
@@ -92,13 +80,9 @@ function verifyTelegramInitData(initData) {
 
     const user = JSON.parse(params.get("user") || "{}");
 
-    if (!user.id) {
-      return null;
-    }
-
-    return user;
+    return user.id ? user : null;
   } catch (error) {
-    console.error("Telegram verification failed:", error.message);
+    console.error("Telegram verification error:", error.message);
     return null;
   }
 }
@@ -110,10 +94,7 @@ async function getUser(client, telegramUser) {
      ON CONFLICT (telegram_id)
      DO UPDATE SET username = EXCLUDED.username
      RETURNING id, telegram_id, username`,
-    [
-      String(telegramUser.id),
-      telegramUser.username || null,
-    ]
+    [String(telegramUser.id), telegramUser.username || null]
   );
 
   const user = result.rows[0];
@@ -133,39 +114,23 @@ function validRequestId(value) {
     /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
-function validRoundCode(value) {
-  /*
-   * Current round codes use 14 digits:
-   * YYYYMMDDHHMMSS
-   *
-   * Example: 20261017120300
-   */
-  return typeof value === "string" &&
-    /^\d{14}$/.test(value);
-}
-
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
-  // ------------------------------------------
-  // GET: Round history and current server round
-  // ------------------------------------------
+  // GET: rounds, history and current round
   if (req.method === "GET") {
-    const { page, pageSize, offset } =
-      pageParams(req.query || {});
-
+    const { page, pageSize, offset } = pageParams(req.query || {});
     let client;
 
     try {
       client = await pool.connect();
 
-      const serverTimeResult = await client.query(
+      const timeResult = await client.query(
         "SELECT NOW() AS server_time"
       );
 
-      const totalResult = await client.query(
-        `SELECT COUNT(*)::int AS total
-         FROM game_rounds`
+      const countResult = await client.query(
+        "SELECT COUNT(*)::int AS total FROM game_rounds"
       );
 
       const roundsResult = await client.query(
@@ -179,57 +144,48 @@ module.exports = async function handler(req, res) {
       );
 
       /*
-       * Include an open round while it is accepting bets.
-       * The frontend countdown uses betting_closes_at.
+       * IMPORTANT:
+       * Return the current period even when it is locked.
+       * The frontend can display the countdown to the round end.
        */
       const currentResult = await client.query(
         `SELECT id, round_code, status, starts_at,
                 betting_closes_at, ends_at
          FROM game_rounds
-         WHERE status = 'open'
-           AND starts_at <= NOW()
-           AND betting_closes_at > NOW()
+         WHERE starts_at <= NOW()
            AND ends_at > NOW()
          ORDER BY starts_at DESC
          LIMIT 1`
       );
 
-      const total = Number(totalResult.rows[0].total);
+      const total = Number(countResult.rows[0].total);
 
       return json(res, 200, {
         success: true,
-        server_time: serverTimeResult.rows[0].server_time,
+        server_time: timeResult.rows[0].server_time,
         current_round: currentResult.rows[0] || null,
         rounds: roundsResult.rows,
         rounds_page: {
           page,
           page_size: pageSize,
           total,
-          total_pages: Math.max(
-            1,
-            Math.ceil(total / pageSize)
-          ),
+          total_pages: Math.max(1, Math.ceil(total / pageSize)),
           has_next: offset + pageSize < total,
           has_previous: page > 1,
         },
       });
     } catch (error) {
-      console.error("GET /api/game error:", error);
+      console.error("GET /api/game:", error);
 
       return json(res, 500, {
         success: false,
         message: "Unable to load game data.",
       });
     } finally {
-      if (client) {
-        client.release();
-      }
+      if (client) client.release();
     }
   }
 
-  // ------------------------------------------
-  // Only GET and POST are supported
-  // ------------------------------------------
   if (req.method !== "POST") {
     res.setHeader("Allow", "GET, POST");
 
@@ -239,13 +195,8 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  // ------------------------------------------
-  // Telegram authentication
-  // ------------------------------------------
   const body = req.body || {};
-  const telegramUser = verifyTelegramInitData(
-    body.initData
-  );
+  const telegramUser = verifyTelegramInitData(body.initData);
 
   if (!telegramUser) {
     return json(res, 401, {
@@ -266,9 +217,6 @@ module.exports = async function handler(req, res) {
     const user = await getUser(client, telegramUser);
     const action = String(body.action || "");
 
-    // ------------------------------------------
-    // BALANCE
-    // ------------------------------------------
     if (action === "balance") {
       const result = await client.query(
         `SELECT balance
@@ -282,18 +230,12 @@ module.exports = async function handler(req, res) {
 
       return json(res, 200, {
         success: true,
-        balance: result.rows[0]
-          ? result.rows[0].balance
-          : "0.00",
+        balance: result.rows[0]?.balance ?? "0.00",
       });
     }
 
-    // ------------------------------------------
-    // BET HISTORY
-    // ------------------------------------------
     if (action === "my_bets") {
-      const { page, pageSize, offset } =
-        pageParams(body);
+      const { page, pageSize, offset } = pageParams(body);
 
       const countResult = await client.query(
         `SELECT COUNT(*)::int AS total
@@ -326,22 +268,15 @@ module.exports = async function handler(req, res) {
           page,
           page_size: pageSize,
           total,
-          total_pages: Math.max(
-            1,
-            Math.ceil(total / pageSize)
-          ),
+          total_pages: Math.max(1, Math.ceil(total / pageSize)),
           has_next: offset + pageSize < total,
           has_previous: page > 1,
         },
       });
     }
 
-    // ------------------------------------------
-    // WALLET HISTORY
-    // ------------------------------------------
     if (action === "wallet_history") {
-      const { page, pageSize, offset } =
-        pageParams(body);
+      const { page, pageSize, offset } = pageParams(body);
 
       const countResult = await client.query(
         `SELECT COUNT(*)::int AS total
@@ -372,19 +307,13 @@ module.exports = async function handler(req, res) {
           page,
           page_size: pageSize,
           total,
-          total_pages: Math.max(
-            1,
-            Math.ceil(total / pageSize)
-          ),
+          total_pages: Math.max(1, Math.ceil(total / pageSize)),
           has_next: offset + pageSize < total,
           has_previous: page > 1,
         },
       });
     }
 
-    // ------------------------------------------
-    // PLACE BET
-    // ------------------------------------------
     if (action === "place_bet") {
       const roundCode = String(body.round_code || "");
       const betType = String(body.bet_type || "");
@@ -392,17 +321,12 @@ module.exports = async function handler(req, res) {
       const stake = Number(body.stake);
 
       const selection =
-        body.selection === null ||
-        body.selection === undefined
+        body.selection === null || body.selection === undefined
           ? null
           : Number(body.selection);
 
-      /*
-       * FIX:
-       * Accept the 14-digit round code format
-       * used by the current frontend/database.
-       */
-      if (!validRoundCode(roundCode)) {
+      // Current round-code format: YYYYMMDDHHMMSS (14 digits)
+      if (!/^\d{14}$/.test(roundCode)) {
         await client.query("ROLLBACK");
         transactionStarted = false;
 
@@ -448,18 +372,9 @@ module.exports = async function handler(req, res) {
       }
 
       if (
-        (
-          betType === "Number" &&
-          (
-            !Number.isInteger(selection) ||
-            selection < 0 ||
-            selection > 9
-          )
-        ) ||
-        (
-          betType !== "Number" &&
-          selection !== null
-        )
+        (betType === "Number" &&
+          (!Number.isInteger(selection) || selection < 0 || selection > 9)) ||
+        (betType !== "Number" && selection !== null)
       ) {
         await client.query("ROLLBACK");
         transactionStarted = false;
@@ -471,12 +386,8 @@ module.exports = async function handler(req, res) {
       }
 
       /*
-       * The database function must independently verify:
-       * - that the round exists;
-       * - that betting is still open;
-       * - that the user has enough balance;
-       * - that the request ID has not already been used;
-       * - that the stake deduction and bet insert are atomic.
+       * The database function remains the final authority:
+       * it must reject bets after betting_closes_at.
        */
       const result = await client.query(
         `SELECT place_bet_atomic(
@@ -498,26 +409,17 @@ module.exports = async function handler(req, res) {
       );
 
       const data = result.rows[0].result;
-
-      const success =
-        data &&
-        (
-          data.success === true ||
-          data.success === "true"
-        );
+      const success = data?.success === true ||
+        data?.success === "true";
 
       if (!success) {
         await client.query("ROLLBACK");
         transactionStarted = false;
 
         return json(res, 400, {
-          ...(data && typeof data === "object"
-            ? data
-            : {}),
+          ...(data && typeof data === "object" ? data : {}),
           success: false,
-          message:
-            data?.message ||
-            "Bet could not be placed.",
+          message: data?.message || "Bet could not be placed.",
         });
       }
 
@@ -527,9 +429,6 @@ module.exports = async function handler(req, res) {
       return json(res, 200, data);
     }
 
-    // ------------------------------------------
-    // UNKNOWN ACTION
-    // ------------------------------------------
     await client.query("ROLLBACK");
     transactionStarted = false;
 
@@ -537,28 +436,18 @@ module.exports = async function handler(req, res) {
       success: false,
       message: "Unknown action.",
     });
-
   } catch (error) {
     if (client && transactionStarted) {
-      try {
-        await client.query("ROLLBACK");
-      } catch (rollbackError) {
-        console.error(
-          "Transaction rollback error:",
-          rollbackError.message
-        );
-      }
+      await client.query("ROLLBACK").catch(() => {});
     }
 
-    console.error("POST /api/game error:", error);
+    console.error("POST /api/game:", error);
 
     return json(res, 500, {
       success: false,
       message: "Game request failed. Please try again.",
     });
   } finally {
-    if (client) {
-      client.release();
-    }
+    if (client) client.release();
   }
 };
