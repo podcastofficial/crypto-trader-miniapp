@@ -30,10 +30,43 @@ module.exports = async function handler(req, res) {
 
   try {
     const sql = neon(databaseUrl);
-
-    // Use UTC 3-minute round boundaries.
     const now = new Date();
-    const nowMs = now.getTime();
+
+    // 1. Lock rounds whose betting period has ended.
+    await sql`
+      UPDATE game_rounds
+      SET status = 'locked'
+      WHERE status = 'open'
+        AND betting_closes_at <= ${now.toISOString()}
+        AND ends_at > ${now.toISOString()}
+    `;
+
+    // 2. Settle expired rounds, up to 20 per cron execution.
+    const settlements = [];
+
+    for (let i = 0; i < 20; i++) {
+      const rows = await sql`
+        SELECT settle_expired_round() AS settlement
+      `;
+
+      const settlement = rows[0]?.settlement;
+
+      if (
+        !settlement ||
+        settlement.message === "No expired unsettled round"
+      ) {
+        break;
+      }
+
+      if (settlement.success !== true) {
+        throw new Error("Round settlement failed");
+      }
+
+      settlements.push(settlement);
+    }
+
+    // 3. Calculate the current UTC 3-minute round.
+    const nowMs = Date.now();
     const periodMs = 180000;
     const bettingMs = 150000;
 
@@ -49,72 +82,56 @@ module.exports = async function handler(req, res) {
       .replace(/[-:T.Z]/g, "")
       .slice(0, 12);
 
-    // First, lock any expired open rounds.
+    // 4. Create the current round if it does not exist.
+    const initialStatus =
+      nowMs < startMs + bettingMs ? "open" : "locked";
+
     await sql`
-      UPDATE game_rounds
-      SET status = 'locked'
-      WHERE status = 'open'
-        AND betting_closes_at <= ${now.toISOString()}
+      INSERT INTO game_rounds (
+        round_code,
+        status,
+        starts_at,
+        betting_closes_at,
+        ends_at
+      )
+      VALUES (
+        ${roundCode},
+        ${initialStatus},
+        ${startsAt.toISOString()},
+        ${closesAt.toISOString()},
+        ${endsAt.toISOString()}
+      )
+      ON CONFLICT (round_code)
+      DO NOTHING
     `;
 
-    // Create the current round only if it does not already exist.
-    const existing = await sql`
-      SELECT id, round_code, status, starts_at,
-             betting_closes_at, ends_at
+    // 5. Fetch the current round.
+    const currentRounds = await sql`
+      SELECT
+        id,
+        round_code,
+        status,
+        starts_at,
+        betting_closes_at,
+        ends_at,
+        result_number,
+        settled_at
       FROM game_rounds
       WHERE round_code = ${roundCode}
       LIMIT 1
     `;
 
-    let round;
-
-    if (existing.length > 0) {
-      round = existing[0];
-    } else {
-      const initialStatus =
-        nowMs < startMs + bettingMs ? "open" : "locked";
-
-      const created = await sql`
-        INSERT INTO game_rounds (
-          round_code,
-          status,
-          starts_at,
-          betting_closes_at,
-          ends_at
-        )
-        VALUES (
-          ${roundCode},
-          ${initialStatus},
-          ${startsAt.toISOString()},
-          ${closesAt.toISOString()},
-          ${endsAt.toISOString()}
-        )
-        ON CONFLICT (round_code)
-        DO NOTHING
-        RETURNING id, round_code, status, starts_at,
-                  betting_closes_at, ends_at
-      `;
-
-      if (created.length > 0) {
-        round = created[0];
-      } else {
-        const fetched = await sql`
-          SELECT id, round_code, status, starts_at,
-                 betting_closes_at, ends_at
-          FROM game_rounds
-          WHERE round_code = ${roundCode}
-          LIMIT 1
-        `;
-
-        round = fetched[0];
-      }
+    if (currentRounds.length === 0) {
+      throw new Error("Current round could not be loaded");
     }
 
     return res.status(200).json({
       success: true,
-      message: "Round schedule checked",
+      message: "Round schedule and settlement checked",
       server_time: now.toISOString(),
-      round
+      settlements_processed: settlements.length,
+      settlements,
+      round: currentRounds[0]
     });
 
   } catch (error) {
@@ -122,7 +139,7 @@ module.exports = async function handler(req, res) {
 
     return res.status(500).json({
       success: false,
-      message: "Unable to update round schedule"
+      message: "Unable to update rounds or settle expired rounds"
     });
   }
 };
