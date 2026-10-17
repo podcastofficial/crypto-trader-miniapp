@@ -30,58 +30,99 @@ module.exports = async function handler(req, res) {
 
   try {
     const sql = neon(databaseUrl);
-    const now = new Date();
 
-    // Align round start to a UTC 3-minute boundary.
+    // Use UTC 3-minute round boundaries.
+    const now = new Date();
+    const nowMs = now.getTime();
+    const periodMs = 180000;
+    const bettingMs = 150000;
+
     const startMs =
-      Math.floor(now.getTime() / 180000) * 180000;
+      Math.floor(nowMs / periodMs) * periodMs;
 
     const startsAt = new Date(startMs);
-    const closesAt = new Date(startMs + 150000);
-    const endsAt = new Date(startMs + 180000);
+    const closesAt = new Date(startMs + bettingMs);
+    const endsAt = new Date(startMs + periodMs);
 
     const roundCode = startsAt
       .toISOString()
       .replace(/[-:T.Z]/g, "")
       .slice(0, 12);
 
-    const rows = await sql`
-      INSERT INTO game_rounds (
-        round_code,
-        status,
-        starts_at,
-        betting_closes_at,
-        ends_at
-      )
-      VALUES (
-        ${roundCode},
-        ${now.getTime() < startMs + 150000 ? "open" : "locked"},
-        ${startsAt.toISOString()},
-        ${closesAt.toISOString()},
-        ${endsAt.toISOString()}
-      )
-      ON CONFLICT (round_code)
-      DO UPDATE SET round_code = EXCLUDED.round_code
-      RETURNING
-        id,
-        round_code,
-        status,
-        starts_at,
-        betting_closes_at,
-        ends_at
+    // First, lock any expired open rounds.
+    await sql`
+      UPDATE game_rounds
+      SET status = 'locked'
+      WHERE status = 'open'
+        AND betting_closes_at <= ${now.toISOString()}
     `;
+
+    // Create the current round only if it does not already exist.
+    const existing = await sql`
+      SELECT id, round_code, status, starts_at,
+             betting_closes_at, ends_at
+      FROM game_rounds
+      WHERE round_code = ${roundCode}
+      LIMIT 1
+    `;
+
+    let round;
+
+    if (existing.length > 0) {
+      round = existing[0];
+    } else {
+      const initialStatus =
+        nowMs < startMs + bettingMs ? "open" : "locked";
+
+      const created = await sql`
+        INSERT INTO game_rounds (
+          round_code,
+          status,
+          starts_at,
+          betting_closes_at,
+          ends_at
+        )
+        VALUES (
+          ${roundCode},
+          ${initialStatus},
+          ${startsAt.toISOString()},
+          ${closesAt.toISOString()},
+          ${endsAt.toISOString()}
+        )
+        ON CONFLICT (round_code)
+        DO NOTHING
+        RETURNING id, round_code, status, starts_at,
+                  betting_closes_at, ends_at
+      `;
+
+      if (created.length > 0) {
+        round = created[0];
+      } else {
+        const fetched = await sql`
+          SELECT id, round_code, status, starts_at,
+                 betting_closes_at, ends_at
+          FROM game_rounds
+          WHERE round_code = ${roundCode}
+          LIMIT 1
+        `;
+
+        round = fetched[0];
+      }
+    }
 
     return res.status(200).json({
       success: true,
-      message: "Round created or already exists",
-      round: rows[0]
+      message: "Round schedule checked",
+      server_time: now.toISOString(),
+      round
     });
+
   } catch (error) {
     console.error("Cron error:", error.message);
 
     return res.status(500).json({
       success: false,
-      message: "Unable to create round"
+      message: "Unable to update round schedule"
     });
   }
 };
