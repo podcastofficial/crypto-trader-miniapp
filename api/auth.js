@@ -12,10 +12,10 @@ module.exports = async function handler(req, res) {
 
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
 
-  if (!botToken) {
+  if (!botToken || !process.env.DATABASE_URL) {
     return res.status(500).json({
       success: false,
-      message: "Telegram authentication is not configured"
+      message: "Server configuration missing"
     });
   }
 
@@ -68,21 +68,22 @@ module.exports = async function handler(req, res) {
     ) {
       return res.status(401).json({
         success: false,
-        message: "Telegram signature verification failed"
+        message: "Telegram verification failed"
       });
     }
 
     const authDate = Number(params.get("auth_date"));
-    const currentTime = Math.floor(Date.now() / 1000);
+    const now = Math.floor(Date.now() / 1000);
 
     if (
       !Number.isFinite(authDate) ||
-      authDate > currentTime + 30 ||
-      currentTime - authDate > 3600
+      authDate <= 0 ||
+      authDate > now + 30 ||
+      now - authDate > 3600
     ) {
       return res.status(401).json({
         success: false,
-        message: "Telegram session expired. Reopen the app."
+        message: "Session expired. Reopen Telegram Mini App."
       });
     }
 
@@ -94,20 +95,36 @@ module.exports = async function handler(req, res) {
       user = null;
     }
 
-    if (!user || !Number.isSafeInteger(user.id) || user.id <= 0) {
+    if (
+      !user ||
+      !Number.isSafeInteger(user.id) ||
+      user.id <= 0
+    ) {
       return res.status(401).json({
         success: false,
-        message: "Telegram user data is invalid"
+        message: "Invalid Telegram user"
       });
     }
 
+    const sql = require("@neondatabase/serverless").neon(
+      process.env.DATABASE_URL
+    );
+
+    const users = await sql`
+      INSERT INTO users (telegram_id, username)
+      VALUES (
+        ${user.id},
+        ${user.username || null}
+      )
+      ON CONFLICT (telegram_id)
+      DO UPDATE SET username = EXCLUDED.username
+      RETURNING id, telegram_id, username
+    `;
+
     return res.status(200).json({
       success: true,
-      user: {
-        id: user.id,
-        username: user.username || null,
-        first_name: user.first_name || null
-      }
+      message: "Telegram user verified",
+      user: users[0]
     });
   } catch (error) {
     console.error("Auth API error:", error.message);
