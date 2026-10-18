@@ -35,12 +35,9 @@ function sendJson(res, status, body) {
 function authorized(req) {
   const secret = process.env.CRON_SECRET;
 
-  if (!secret) {
-    return false;
-  }
-
-  return (
-    (req.headers.authorization || "") === `Bearer ${secret}`
+  return Boolean(
+    secret &&
+    req.headers.authorization === `Bearer ${secret}`
   );
 }
 
@@ -64,19 +61,23 @@ module.exports = async function handler(req, res) {
   let client;
 
   try {
-    const db = getPool();
-    client = await db.connect();
+    client = await getPool().connect();
 
-    // Calculate the current 180-second round slot.
-    const timeResult = await client.query(
-      `
+    await client.query("BEGIN");
+
+    // Serializes concurrent cron requests.
+    await client.query(
+      "SELECT pg_advisory_xact_lock($1::bigint)",
+      [739184205]
+    );
+
+    const timeResult = await client.query(`
       SELECT
         NOW() AS db_now,
-        FLOOR(EXTRACT(EPOCH FROM NOW()) / $1) * $1
-          AS current_slot
-      `,
-      [ROUND_SECONDS]
-    );
+        FLOOR(
+          EXTRACT(EPOCH FROM NOW()) / $1
+        ) * $1 AS current_slot
+    `, [ROUND_SECONDS]);
 
     const dbNow = new Date(timeResult.rows[0].db_now);
     const currentSlot = Number(timeResult.rows[0].current_slot);
@@ -88,10 +89,9 @@ module.exports = async function handler(req, res) {
     const finalSlot =
       currentSlot + FUTURE_ROUNDS * ROUND_SECONDS;
 
-    // Find the latest round already stored in the database.
     const latestResult = await client.query(`
       SELECT starts_at
-      FROM game_rounds
+      FROM public.game_rounds
       ORDER BY starts_at DESC
       LIMIT 1
     `);
@@ -99,9 +99,8 @@ module.exports = async function handler(req, res) {
     let firstSlot = currentSlot;
 
     if (latestResult.rows.length > 0) {
-      const latestStartMs = new Date(
-        latestResult.rows[0].starts_at
-      ).getTime();
+      const latestStartMs =
+        new Date(latestResult.rows[0].starts_at).getTime();
 
       if (Number.isFinite(latestStartMs)) {
         const latestSlot =
@@ -120,8 +119,7 @@ module.exports = async function handler(req, res) {
 
     let roundsCreated = 0;
 
-    // Create all missing rounds up to the future-round buffer.
-    // No fixed maximum number of rounds is imposed.
+    // No fixed maximum round creation limit.
     for (
       let slot = firstSlot;
       slot <= finalSlot;
@@ -157,9 +155,8 @@ module.exports = async function handler(req, res) {
         String(startsAt.getUTCSeconds()).padStart(2, "0")
       ].join("");
 
-      const insertResult = await client.query(
-        `
-        INSERT INTO game_rounds (
+      const inserted = await client.query(`
+        INSERT INTO public.game_rounds (
           round_code,
           status,
           starts_at,
@@ -169,24 +166,19 @@ module.exports = async function handler(req, res) {
         VALUES ($1, $2, $3, $4, $5)
         ON CONFLICT (round_code) DO NOTHING
         RETURNING id
-        `,
-        [
-          roundCode,
-          status,
-          startsAt,
-          bettingClosesAt,
-          endsAt
-        ]
-      );
+      `, [
+        roundCode,
+        status,
+        startsAt,
+        bettingClosesAt,
+        endsAt
+      ]);
 
-      if (insertResult.rowCount > 0) {
-        roundsCreated++;
-      }
+      roundsCreated += inserted.rowCount;
     }
 
-    // Reopen eligible future rounds.
-    const futureRoundsResult = await client.query(`
-      UPDATE game_rounds
+    const futureOpened = await client.query(`
+      UPDATE public.game_rounds
       SET status = 'open'
       WHERE status = 'locked'
         AND starts_at > NOW()
@@ -197,9 +189,8 @@ module.exports = async function handler(req, res) {
       RETURNING id
     `);
 
-    // Reopen the current round if betting is still allowed.
-    const openCurrentResult = await client.query(`
-      UPDATE game_rounds
+    const currentOpened = await client.query(`
+      UPDATE public.game_rounds
       SET status = 'open'
       WHERE status = 'locked'
         AND starts_at <= NOW()
@@ -210,9 +201,8 @@ module.exports = async function handler(req, res) {
       RETURNING id
     `);
 
-    // Lock rounds when their betting window closes.
-    const lockedResult = await client.query(`
-      UPDATE game_rounds
+    const locked = await client.query(`
+      UPDATE public.game_rounds
       SET status = 'locked'
       WHERE status = 'open'
         AND betting_closes_at <= NOW()
@@ -222,7 +212,6 @@ module.exports = async function handler(req, res) {
       RETURNING id
     `);
 
-    // Settle rounds eligible under the current SQL function.
     let settledCount = 0;
 
     for (
@@ -230,19 +219,16 @@ module.exports = async function handler(req, res) {
       attempt < MAX_SETTLEMENT_ATTEMPTS;
       attempt++
     ) {
-      const settlementResult = await client.query(`
-        SELECT settle_expired_round() AS settled_round
+      const settlement = await client.query(`
+        SELECT public.settle_expired_round() AS settled_round
       `);
 
-      const settledRound =
-        settlementResult.rows[0]?.settled_round;
+      const result = settlement.rows[0]?.settled_round;
 
-      // The SQL function returns no round_code when
-      // there is no eligible round to settle.
       if (
-        !settledRound ||
-        typeof settledRound !== "object" ||
-        !settledRound.round_code
+        !result ||
+        typeof result !== "object" ||
+        !result.round_code
       ) {
         break;
       }
@@ -250,7 +236,6 @@ module.exports = async function handler(req, res) {
       settledCount++;
     }
 
-    // Fetch the round currently in progress.
     const currentResult = await client.query(`
       SELECT
         id,
@@ -258,9 +243,8 @@ module.exports = async function handler(req, res) {
         status,
         starts_at,
         betting_closes_at,
-        ends_at,
-        result_number
-      FROM game_rounds
+        ends_at
+      FROM public.game_rounds
       WHERE starts_at <= NOW()
         AND ends_at > NOW()
       ORDER BY starts_at DESC
@@ -271,20 +255,26 @@ module.exports = async function handler(req, res) {
       SELECT NOW() AS server_time
     `);
 
+    await client.query("COMMIT");
+
     return sendJson(res, 200, {
       success: true,
       server_time: serverTimeResult.rows[0].server_time,
       current_round: currentResult.rows[0] || null,
       rounds_created: roundsCreated,
-      future_rounds_opened: futureRoundsResult.rowCount,
-      current_rounds_opened: openCurrentResult.rowCount,
-      rounds_locked: lockedResult.rowCount,
+      future_rounds_opened: futureOpened.rowCount,
+      current_rounds_opened: currentOpened.rowCount,
+      rounds_locked: locked.rowCount,
       rounds_settled: settledCount,
       round_duration_seconds: ROUND_SECONDS,
       betting_duration_seconds: BETTING_SECONDS
     });
 
   } catch (error) {
+    if (client) {
+      await client.query("ROLLBACK").catch(() => {});
+    }
+
     console.error("Cron error:", error);
 
     return sendJson(res, 500, {
