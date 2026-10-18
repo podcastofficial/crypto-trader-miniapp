@@ -3,31 +3,18 @@
 const crypto = require("crypto");
 const { Pool } = require("pg");
 
-let pool;
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL?.includes("localhost")
+    ? false
+    : { rejectUnauthorized: false },
+  max: 3,
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 5000,
+});
 
-function getPool() {
-  if (!pool) {
-    if (!process.env.DATABASE_URL) {
-      throw new Error("DATABASE_URL is missing");
-    }
-
-    pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false },
-      max: 3,
-      idleTimeoutMillis: 10000,
-      connectionTimeoutMillis: 10000
-    });
-  }
-
-  return pool;
-}
-
-function sendJson(res, status, data) {
-  res.statusCode = status;
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store");
-  res.end(JSON.stringify(data));
+function send(res, status, data) {
+  return res.status(status).json(data);
 }
 
 function verifyTelegramInitData(initData) {
@@ -37,134 +24,160 @@ function verifyTelegramInitData(initData) {
     return null;
   }
 
+  if (initData.length > 10000) return null;
+
+  let params;
+
   try {
-    const params = new URLSearchParams(initData);
-    const hash = params.get("hash");
-
-    if (!hash || !/^[a-f0-9]{64}$/i.test(hash)) {
-      return null;
-    }
-
-    params.delete("hash");
-
-    const entries = [...params.entries()].sort(([a], [b]) =>
-      a.localeCompare(b)
-    );
-
-    const dataCheckString = entries
-      .map(([key, value]) => `${key}=${value}`)
-      .join("\n");
-
-    const secretKey = crypto
-      .createHmac("sha256", "WebAppData")
-      .update(token)
-      .digest();
-
-    const expectedHash = crypto
-      .createHmac("sha256", secretKey)
-      .update(dataCheckString)
-      .digest();
-
-    const actualHash = Buffer.from(hash, "hex");
-
-    if (
-      actualHash.length !== expectedHash.length ||
-      !crypto.timingSafeEqual(actualHash, expectedHash)
-    ) {
-      return null;
-    }
-
-    const authDate = Number(params.get("auth_date"));
-    const now = Math.floor(Date.now() / 1000);
-
-    if (
-      !Number.isFinite(authDate) ||
-      authDate > now + 30 ||
-      now - authDate > 3600
-    ) {
-      return null;
-    }
-
-    const userJson = params.get("user");
-    if (!userJson) return null;
-
-    const user = JSON.parse(userJson);
-
-    if (!user.id || !Number.isSafeInteger(Number(user.id))) {
-      return null;
-    }
-
-    return user;
+    params = new URLSearchParams(initData);
   } catch {
     return null;
   }
+
+  const receivedHash = params.get("hash");
+  const authDate = Number(params.get("auth_date"));
+  const userText = params.get("user");
+
+  if (
+    !receivedHash ||
+    !/^[a-f0-9]{64}$/i.test(receivedHash) ||
+    !Number.isSafeInteger(authDate) ||
+    !userText
+  ) {
+    return null;
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+
+  if (authDate > now + 30 || now - authDate > 3600) {
+    return null;
+  }
+
+  let telegramUser;
+
+  try {
+    telegramUser = JSON.parse(userText);
+  } catch {
+    return null;
+  }
+
+  if (
+    !telegramUser ||
+    !Number.isSafeInteger(Number(telegramUser.id)) ||
+    Number(telegramUser.id) <= 0
+  ) {
+    return null;
+  }
+
+  params.delete("hash");
+
+  const dataCheckString = [...params.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}=${value}`)
+    .join("\n");
+
+  const secretKey = crypto
+    .createHmac("sha256", "WebAppData")
+    .update(token)
+    .digest();
+
+  const calculatedHash = crypto
+    .createHmac("sha256", secretKey)
+    .update(dataCheckString)
+    .digest();
+
+  const receivedBuffer = Buffer.from(receivedHash, "hex");
+
+  if (
+    receivedBuffer.length !== calculatedHash.length ||
+    !crypto.timingSafeEqual(calculatedHash, receivedBuffer)
+  ) {
+    return null;
+  }
+
+  return telegramUser;
 }
 
-function parseAmount(value) {
-  const text = String(value ?? "").trim();
+function validAmount(value) {
+  const str = String(value ?? "");
 
-  if (!/^\d{1,8}(\.\d{1,8})?$/.test(text)) {
-    return null;
+  if (!/^\d{1,5}(\.\d{1,8})?$/.test(str)) {
+    return false;
   }
 
-  const amount = Number(text);
+  const amount = Number(str);
 
-  if (!Number.isFinite(amount) || amount <= 0) {
-    return null;
-  }
+  return Number.isFinite(amount) && amount >= 1 && amount <= 10000;
+}
 
-  return amount;
+function validBep20Address(address) {
+  return typeof address === "string" &&
+    /^0x[a-fA-F0-9]{40}$/.test(address);
 }
 
 module.exports = async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store");
+
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
 
-    return sendJson(res, 405, {
+    return send(res, 405, {
       success: false,
-      message: "Method not allowed."
+      message: "Method not allowed.",
     });
   }
 
-  const body = req.body || {};
+  const body =
+    req.body && typeof req.body === "object" ? req.body : {};
+
   const telegramUser = verifyTelegramInitData(body.initData);
 
   if (!telegramUser) {
-    return sendJson(res, 401, {
+    return send(res, 401, {
       success: false,
-      message: "Telegram authentication failed. Reopen the Mini App."
+      message: "Telegram authentication failed. Reopen the Mini App.",
     });
   }
 
   const action = String(body.action || "");
+  const telegramId = String(telegramUser.id);
 
   let client;
 
   try {
-    const db = getPool();
+    client = await pool.connect();
 
-    const userResult = await db.query(
-      `SELECT id
+    const userResult = await client.query(
+      `SELECT id, telegram_id
        FROM public.users
        WHERE telegram_id = $1
        LIMIT 1`,
-      [String(telegramUser.id)]
+      [telegramId]
     );
 
-    if (!userResult.rows.length) {
-      return sendJson(res, 403, {
+    if (userResult.rowCount !== 1) {
+      return send(res, 404, {
         success: false,
-        message: "User not found. Open the main game first."
+        message: "User not found. Authenticate through the main app first.",
       });
     }
 
     const userId = userResult.rows[0].id;
 
+    // WALLET HISTORY
     if (action === "history") {
-      const history = await db.query(
+      const balanceResult = await client.query(
+        `SELECT balance
+         FROM public.real_wallet_balances
+         WHERE user_id = $1`,
+        [userId]
+      );
+
+      const historyResult = await client.query(
         `SELECT id, transaction_type, amount, status,
                 network, tx_hash, destination_address,
-                admin_note, created_at, updated_at
+                admin_note, created_at, updated_at,
+                reviewed_at
          FROM public.real_wallet_ledger
          WHERE user_id = $1
          ORDER BY created_at DESC
@@ -172,77 +185,157 @@ module.exports = async function handler(req, res) {
         [userId]
       );
 
-      const wallet = await db.query(
-        `SELECT balance
-         FROM public.real_wallet_balances
-         WHERE user_id = $1`,
-        [userId]
-      );
-
-      return sendJson(res, 200, {
+      return send(res, 200, {
         success: true,
-        balance: wallet.rows[0]?.balance || "0",
-        transactions: history.rows
+        balance: balanceResult.rows[0]?.balance || "0",
+        transactions: historyResult.rows,
       });
     }
 
+    // CREATE DEPOSIT REQUEST
     if (action === "deposit_request") {
-      const amount = parseAmount(body.amount);
-
-      if (amount === null || amount < 1 || amount > 10000) {
-        return sendJson(res, 400, {
+      if (!validAmount(body.amount)) {
+        return send(res, 400, {
           success: false,
-          message: "Deposit amount must be between 1 and 10000 USDT."
+          message: "Enter an amount between 1 and 10000 USDT.",
         });
       }
 
-      return sendJson(res, 503, {
-        success: false,
-        message:
-          "Automatic deposit requests are not enabled yet. Blockchain verification must be configured first."
-      });
+      const depositAddress =
+        process.env.USDT_BEP20_DEPOSIT_ADDRESS;
+
+      if (!validBep20Address(depositAddress)) {
+        return send(res, 503, {
+          success: false,
+          message: "Deposit address is not configured correctly.",
+        });
+      }
+
+      await client.query("BEGIN");
+
+      try {
+        // Lock this user's active deposit requests to reduce races.
+        await client.query(
+          `SELECT pg_advisory_xact_lock($1::bigint)`,
+          [String(userId)]
+        );
+
+        const existing = await client.query(
+          `SELECT id, amount, status, network,
+                  destination_address, request_expires_at
+           FROM public.real_wallet_ledger
+           WHERE user_id = $1
+             AND transaction_type = 'deposit'
+             AND status = 'pending'
+             AND request_expires_at > NOW()
+           ORDER BY created_at DESC
+           LIMIT 1`,
+          [userId]
+        );
+
+        if (existing.rowCount > 0) {
+          await client.query("COMMIT");
+
+          return send(res, 200, {
+            success: true,
+            message: "You already have an active deposit request.",
+            deposit: existing.rows[0],
+          });
+        }
+
+        const baseAmount = Number(body.amount);
+
+        // Unique 4-decimal request amount.
+        // Blockchain scanner must match this exact amount.
+        const suffix = crypto.randomInt(1, 9999) / 10000;
+        const uniqueAmount = (baseAmount + suffix).toFixed(4);
+
+        // Prevent a collision with another active deposit request.
+        const collision = await client.query(
+          `SELECT id
+           FROM public.real_wallet_ledger
+           WHERE transaction_type = 'deposit'
+             AND status = 'pending'
+             AND request_expires_at > NOW()
+             AND amount = $1
+           LIMIT 1`,
+          [uniqueAmount]
+        );
+
+        if (collision.rowCount > 0) {
+          await client.query("ROLLBACK");
+
+          return send(res, 409, {
+            success: false,
+            message:
+              "A matching deposit amount is already reserved. Please try again.",
+          });
+        }
+
+        const result = await client.query(
+          `INSERT INTO public.real_wallet_ledger
+             (user_id, transaction_type, amount, status,
+              network, destination_address, request_expires_at)
+           VALUES
+             ($1, 'deposit', $2, 'pending',
+              'BEP20', $3, NOW() + INTERVAL '30 minutes')
+           RETURNING id, amount, status, network,
+                     destination_address, request_expires_at`,
+          [userId, uniqueAmount, depositAddress]
+        );
+
+        await client.query("COMMIT");
+
+        return send(res, 201, {
+          success: true,
+          message:
+            "Deposit request created. Automatic crediting is not enabled yet.",
+          deposit: result.rows[0],
+        });
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      }
     }
 
+    // WITHDRAWALS REMAIN DISABLED UNTIL SAFE RESERVATION
+    // AND AUTHENTICATED ADMIN REVIEW ARE IMPLEMENTED.
     if (action === "withdraw_request") {
-      const amount = parseAmount(body.amount);
-      const address = String(body.address || "").trim();
-
-      if (amount === null || amount < 1 || amount > 10000) {
-        return sendJson(res, 400, {
+      if (!validAmount(body.amount)) {
+        return send(res, 400, {
           success: false,
-          message: "Withdrawal amount must be between 1 and 10000 USDT."
+          message: "Enter an amount between 1 and 10000 USDT.",
         });
       }
 
-      if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-        return sendJson(res, 400, {
+      if (!validBep20Address(body.address)) {
+        return send(res, 400, {
           success: false,
-          message: "Enter a valid BEP-20 wallet address."
+          message: "Enter a valid BEP-20 wallet address.",
         });
       }
 
-      return sendJson(res, 503, {
+      return send(res, 503, {
         success: false,
         message:
-          "Withdrawals are disabled until balance reservation and secure admin approval are deployed."
+          "Withdrawals are disabled until balance reservation and secure admin approval are implemented.",
       });
     }
 
-    return sendJson(res, 400, {
+    return send(res, 400, {
       success: false,
-      message: "Unknown wallet action."
+      message: "Unknown wallet action.",
     });
   } catch (error) {
-    console.error(
-      "Wallet API error:",
-      error.code || error.name || "Error"
-    );
+    console.error("Wallet API error:", error.message);
 
-    return sendJson(res, 500, {
+    return send(res, 500, {
       success: false,
-      message: "Wallet service temporarily unavailable."
+      message: "Wallet service temporarily unavailable.",
     });
   } finally {
-    if (client) client.release();
+    if (client) {
+      client.release();
+    }
   }
 };
