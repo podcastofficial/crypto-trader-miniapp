@@ -145,8 +145,12 @@ async function getUser(client, telegramUser) {
 }
 
 function validRequestId(value) {
-  return typeof value === "string" &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+  return (
+    typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      value
+    )
+  );
 }
 
 function telegramBotUsername() {
@@ -251,9 +255,12 @@ async function getReferralData(client, userId) {
 
   const botUsername = telegramBotUsername();
 
-  const referralLink = botUsername && profile.referral_code
-    ? `https://t.me/${botUsername}?start=ref_${encodeURIComponent(profile.referral_code)}`
-    : null;
+  const referralLink =
+    botUsername && profile.referral_code
+      ? `https://t.me/${botUsername}?start=ref_${encodeURIComponent(
+          profile.referral_code
+        )}`
+      : null;
 
   const levels = [1, 2, 3].map((level) => {
     const row = commissionTotals.rows.find(
@@ -298,7 +305,8 @@ async function getReferralData(client, userId) {
         credited_points: String(
           rewardSummary.rows[0]?.credited_points || "0.00"
         ),
-        message: "Rewards require a confirmed qualifying recharge. Recharge is not enabled yet.",
+        message:
+          "Rewards require a confirmed qualifying recharge. Recharge is not enabled yet.",
       },
       wallet_balance: String(walletResult.rows[0]?.balance ?? "0.00"),
       direct_referrals: directReferrals.rows.map((row) => ({
@@ -313,7 +321,7 @@ async function getReferralData(client, userId) {
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
-  // GET: current round and settled result history.
+  // GET: current round and results that are safe to display.
   if (req.method === "GET") {
     const { page, pageSize, offset } = pageParams(req.query || {});
     let client;
@@ -325,16 +333,13 @@ module.exports = async function handler(req, res) {
         "SELECT NOW() AS server_time"
       );
 
-      /*
-       * RESULT HISTORY FIX:
-       * Only rounds whose result has been declared are returned.
-       * Pending, open, locked and future rounds are excluded.
-       */
+      // Only expose results after the round's scheduled end time.
       const countResult = await client.query(
         `SELECT COUNT(*)::int AS total
          FROM public.game_rounds
          WHERE status = 'settled'
-           AND result_number IS NOT NULL`
+           AND result_number IS NOT NULL
+           AND ends_at <= NOW()`
       );
 
       const roundsResult = await client.query(
@@ -344,15 +349,12 @@ module.exports = async function handler(req, res) {
          FROM public.game_rounds
          WHERE status = 'settled'
            AND result_number IS NOT NULL
+           AND ends_at <= NOW()
          ORDER BY starts_at DESC
          LIMIT $1 OFFSET $2`,
         [pageSize, offset]
       );
 
-      /*
-       * Current round remains separate from Result History.
-       * The game timer can still find the active round.
-       */
       const currentResult = await client.query(
         `SELECT id, round_code, status, starts_at,
                 betting_closes_at, ends_at
@@ -449,12 +451,35 @@ module.exports = async function handler(req, res) {
         [user.id]
       );
 
+      // Hide the result and settlement information until the round ends.
       const result = await client.query(
-        `SELECT b.id, b.bet_type, b.selection, b.stake,
-                b.fee, b.status, b.payout, b.created_at,
-                b.settled_at, r.round_code, r.result_number
+        `SELECT
+           b.id,
+           b.bet_type,
+           b.selection,
+           b.stake,
+           b.fee,
+           CASE
+             WHEN r.ends_at <= NOW() THEN b.status
+             ELSE 'pending'
+           END AS status,
+           CASE
+             WHEN r.ends_at <= NOW() THEN b.payout
+             ELSE 0
+           END AS payout,
+           b.created_at,
+           CASE
+             WHEN r.ends_at <= NOW() THEN b.settled_at
+             ELSE NULL
+           END AS settled_at,
+           r.round_code,
+           CASE
+             WHEN r.ends_at <= NOW() THEN r.result_number
+             ELSE NULL
+           END AS result_number
          FROM public.bets b
-         JOIN public.game_rounds r ON r.id = b.round_id
+         JOIN public.game_rounds r
+           ON r.id = b.round_id
          WHERE b.user_id = $1
          ORDER BY b.id DESC
          LIMIT $2 OFFSET $3`,
@@ -658,7 +683,8 @@ module.exports = async function handler(req, res) {
 
         return json(res, 400, {
           success: false,
-          message: "Stake must be between 0.01 and 1000, maximum 2 decimals.",
+          message:
+            "Stake must be between 0.01 and 1000, maximum 2 decimals.",
         });
       }
 
@@ -674,7 +700,9 @@ module.exports = async function handler(req, res) {
 
       if (
         (betType === "Number" &&
-          (!Number.isInteger(selection) || selection < 0 || selection > 9)) ||
+          (!Number.isInteger(selection) ||
+            selection < 0 ||
+            selection > 9)) ||
         (betType !== "Number" && selection !== null)
       ) {
         await client.query("ROLLBACK");
@@ -706,8 +734,8 @@ module.exports = async function handler(req, res) {
       );
 
       const data = result.rows[0].result;
-      const success = data?.success === true ||
-        data?.success === "true";
+      const success =
+        data?.success === true || data?.success === "true";
 
       if (!success) {
         await client.query("ROLLBACK");
