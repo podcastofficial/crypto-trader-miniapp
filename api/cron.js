@@ -65,19 +65,22 @@ module.exports = async function handler(req, res) {
 
     await client.query("BEGIN");
 
-    // Prevent concurrent cron requests from processing together.
+    // Serialize cron executions.
     await client.query(
       "SELECT pg_advisory_xact_lock($1::bigint)",
       [739184205]
     );
 
-    const timeResult = await client.query(`
-      SELECT
-        NOW() AS db_now,
-        FLOOR(
-          EXTRACT(EPOCH FROM NOW()) / $1
-        ) * $1 AS current_slot
-    `, [ROUND_SECONDS]);
+    const timeResult = await client.query(
+      `
+        SELECT
+          NOW() AS db_now,
+          FLOOR(
+            EXTRACT(EPOCH FROM NOW()) / $1
+          ) * $1 AS current_slot
+      `,
+      [ROUND_SECONDS]
+    );
 
     const dbNow = new Date(timeResult.rows[0].db_now);
     const currentSlot = Number(timeResult.rows[0].current_slot);
@@ -103,9 +106,9 @@ module.exports = async function handler(req, res) {
         new Date(latestResult.rows[0].starts_at).getTime();
 
       if (Number.isFinite(latestStartMs)) {
-        const latestSlot = Math.floor(
-          latestStartMs / 1000 / ROUND_SECONDS
-        ) * ROUND_SECONDS;
+        const latestSlot =
+          Math.floor(latestStartMs / 1000 / ROUND_SECONDS) *
+          ROUND_SECONDS;
 
         firstSlot = Math.min(
           currentSlot,
@@ -118,7 +121,7 @@ module.exports = async function handler(req, res) {
 
     let roundsCreated = 0;
 
-    // Create missing rounds without a fixed historical creation cap.
+    // Create missing rounds.
     for (
       let slot = firstSlot;
       slot <= finalSlot;
@@ -154,29 +157,32 @@ module.exports = async function handler(req, res) {
         String(startsAt.getUTCSeconds()).padStart(2, "0")
       ].join("");
 
-      const inserted = await client.query(`
-        INSERT INTO public.game_rounds (
-          round_code,
+      const inserted = await client.query(
+        `
+          INSERT INTO public.game_rounds (
+            round_code,
+            status,
+            starts_at,
+            betting_closes_at,
+            ends_at
+          )
+          VALUES ($1, $2, $3, $4, $5)
+          ON CONFLICT (round_code) DO NOTHING
+          RETURNING id
+        `,
+        [
+          roundCode,
           status,
-          starts_at,
-          betting_closes_at,
-          ends_at
-        )
-        VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (round_code) DO NOTHING
-        RETURNING id
-      `, [
-        roundCode,
-        status,
-        startsAt,
-        bettingClosesAt,
-        endsAt
-      ]);
+          startsAt,
+          bettingClosesAt,
+          endsAt
+        ]
+      );
 
       roundsCreated += inserted.rowCount;
     }
 
-    // Reopen future rounds that were incorrectly locked.
+    // Reopen future rounds only if no result has been calculated.
     const futureOpened = await client.query(`
       UPDATE public.game_rounds
       SET status = 'open'
@@ -189,7 +195,7 @@ module.exports = async function handler(req, res) {
       RETURNING id
     `);
 
-    // Open the current round only while its betting window is active.
+    // Reopen the current round only during its betting window.
     const currentOpened = await client.query(`
       UPDATE public.game_rounds
       SET status = 'open'
@@ -202,7 +208,7 @@ module.exports = async function handler(req, res) {
       RETURNING id
     `);
 
-    // Lock rounds when the betting window closes.
+    // Lock betting when the betting window closes.
     const locked = await client.query(`
       UPDATE public.game_rounds
       SET status = 'locked'
@@ -214,9 +220,10 @@ module.exports = async function handler(req, res) {
       RETURNING id
     `);
 
-    // Settle eligible rounds, including older unsettled rounds.
-    let settledCount = 0;
+    let resultsCalculated = 0;
+    let payoutsReleased = 0;
 
+    // The database function handles calculation and release separately.
     for (
       let attempt = 0;
       attempt < MAX_SETTLEMENT_ATTEMPTS;
@@ -236,7 +243,15 @@ module.exports = async function handler(req, res) {
         break;
       }
 
-      settledCount++;
+      if (result.phase === "result_calculated") {
+        resultsCalculated++;
+      } else if (result.phase === "payout_released") {
+        payoutsReleased++;
+      } else {
+        throw new Error(
+          `Unexpected settlement phase: ${result.phase || "missing"}`
+        );
+      }
     }
 
     const currentResult = await client.query(`
@@ -268,11 +283,11 @@ module.exports = async function handler(req, res) {
       future_rounds_opened: futureOpened.rowCount,
       current_rounds_opened: currentOpened.rowCount,
       rounds_locked: locked.rowCount,
-      rounds_settled: settledCount,
+      results_calculated: resultsCalculated,
+      payouts_released: payoutsReleased,
       round_duration_seconds: ROUND_SECONDS,
       betting_duration_seconds: BETTING_SECONDS
     });
-
   } catch (error) {
     if (client) {
       await client.query("ROLLBACK").catch(() => {});
@@ -284,7 +299,6 @@ module.exports = async function handler(req, res) {
       success: false,
       message: "Cron execution failed"
     });
-
   } finally {
     if (client) {
       client.release();
