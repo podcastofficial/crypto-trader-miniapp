@@ -5,6 +5,8 @@ const COOKIE_NAME = "admin_session";
 const SESSION_SECONDS = 2 * 60 * 60;
 const MAX_FAILS_PER_IP = 5;
 const MAX_FAILS_GLOBAL = 20;
+const EXPORT_MAX = 5000;
+const LARGE_STAKE = 500;
 
 const TX_TYPES = ["deposit", "withdrawal", "bet", "payout", "refund"];
 const TX_STATUSES = [
@@ -135,13 +137,13 @@ function parseBody(req) {
   return {};
 }
 
-function pageParams(body) {
+function pageParams(body, maxSize = 50) {
   const page = Math.min(
     100000,
     Math.max(1, parseInt(body.page, 10) || 1)
   );
   const size = Math.min(
-    50,
+    maxSize,
     Math.max(1, parseInt(body.page_size, 10) || 20)
   );
   return { page, size, offset: (page - 1) * size };
@@ -180,6 +182,14 @@ function userSearch(q, params) {
   );
 }
 
+function csvCell(v) {
+  if (v === null || v === undefined) return "";
+  let s = v instanceof Date ? v.toISOString() : String(v);
+  // Prevent spreadsheet formula injection.
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
 async function audit(client, admin, action, targetType, targetId, outcome, ip) {
   await client.query(
     `INSERT INTO public.admin_audit_log
@@ -189,7 +199,7 @@ async function audit(client, admin, action, targetType, targetId, outcome, ip) {
   );
 }
 
-// ---------- Actions ----------
+// ---------- Login ----------
 
 async function login(client, req, res, cfg, body) {
   const ip = clientIp(req);
@@ -255,6 +265,8 @@ async function login(client, req, res, cfg, body) {
 
   return send(res, 200, { success: true, username: cfg.username });
 }
+
+// ---------- Dashboard and rounds ----------
 
 async function dashboard(client) {
   const totals = await client.query(`
@@ -375,8 +387,10 @@ async function rounds(client, body) {
   };
 }
 
-async function users(client, body) {
-  const { page, size, offset } = pageParams(body);
+// ---------- Lists (also used by CSV export) ----------
+
+async function users(client, body, maxSize = 50) {
+  const { page, size, offset } = pageParams(body, maxSize);
   const params = [];
   const where = userSearch(cleanQuery(body), params);
 
@@ -439,8 +453,8 @@ async function wallets(client, body) {
   };
 }
 
-async function transactions(client, body) {
-  const { page, size, offset } = pageParams(body);
+async function transactions(client, body, maxSize = 50) {
+  const { page, size, offset } = pageParams(body, maxSize);
   const conds = [];
   const params = [];
 
@@ -482,8 +496,8 @@ async function transactions(client, body) {
   };
 }
 
-async function bets(client, body) {
-  const { page, size, offset } = pageParams(body);
+async function bets(client, body, maxSize = 50) {
+  const { page, size, offset } = pageParams(body, maxSize);
   const conds = [];
   const params = [];
 
@@ -559,6 +573,461 @@ async function auditLog(client, body) {
   };
 }
 
+// ---------- Analytics (read-only) ----------
+
+async function analytics(client) {
+  const daily = await client.query(`
+    WITH days AS (
+      SELECT ((NOW() AT TIME ZONE 'UTC')::date - g) AS day
+      FROM generate_series(0, 13) AS g
+    ),
+    bet_day AS (
+      SELECT (r.starts_at AT TIME ZONE 'UTC')::date AS day,
+             COUNT(*) AS bets,
+             COALESCE(SUM(b.stake), 0) AS stake,
+             COALESCE(SUM(b.payout), 0) AS payout,
+             COUNT(DISTINCT b.user_id) AS active_users
+      FROM public.bets b
+      JOIN public.game_rounds r ON r.id = b.round_id
+      WHERE r.ends_at <= NOW()
+        AND (r.starts_at AT TIME ZONE 'UTC')::date
+              >= (NOW() AT TIME ZONE 'UTC')::date - 13
+      GROUP BY 1
+    ),
+    comm_day AS (
+      SELECT (created_at AT TIME ZONE 'UTC')::date AS day,
+             COALESCE(SUM(commission_amount), 0) AS commissions
+      FROM public.referral_commissions
+      WHERE (created_at AT TIME ZONE 'UTC')::date
+              >= (NOW() AT TIME ZONE 'UTC')::date - 13
+      GROUP BY 1
+    ),
+    user_day AS (
+      SELECT (created_at AT TIME ZONE 'UTC')::date AS day,
+             COUNT(*) AS new_users
+      FROM public.users
+      WHERE (created_at AT TIME ZONE 'UTC')::date
+              >= (NOW() AT TIME ZONE 'UTC')::date - 13
+      GROUP BY 1
+    )
+    SELECT
+      d.day::text AS day,
+      COALESCE(b.bets, 0)::int AS bets,
+      COALESCE(b.stake, 0)::text AS stake,
+      COALESCE(b.payout, 0)::text AS payout,
+      (COALESCE(b.stake, 0) - COALESCE(b.payout, 0)
+        - COALESCE(c.commissions, 0))::text AS net,
+      COALESCE(b.active_users, 0)::int AS active_users,
+      COALESCE(u.new_users, 0)::int AS new_users
+    FROM days d
+    LEFT JOIN bet_day b ON b.day = d.day
+    LEFT JOIN comm_day c ON c.day = d.day
+    LEFT JOIN user_day u ON u.day = d.day
+    ORDER BY d.day
+  `);
+
+  const resultRows = await client.query(`
+    SELECT result_number, COUNT(*)::int AS count
+    FROM public.game_rounds
+    WHERE status = 'settled'
+      AND result_number IS NOT NULL
+      AND ends_at <= NOW()
+    GROUP BY result_number
+    ORDER BY result_number
+  `);
+
+  const counts = Array(10).fill(0);
+  for (const row of resultRows.rows) {
+    const n = Number(row.result_number);
+    if (n >= 0 && n <= 9) counts[n] = Number(row.count);
+  }
+  const totalRounds = counts.reduce((a, b) => a + b, 0);
+  let chi = null;
+  let verdict = "Not enough data (need at least 50 settled rounds).";
+
+  if (totalRounds >= 50) {
+    const expected = totalRounds / 10;
+    chi = counts.reduce(
+      (sum, c) => sum + ((c - expected) ** 2) / expected,
+      0
+    );
+    if (chi > 21.67) {
+      verdict = "Strong deviation from a uniform draw. Investigate.";
+    } else if (chi > 16.92) {
+      verdict = "Possible deviation (p < 0.05). Keep watching.";
+    } else {
+      verdict = "Consistent with a fair, uniform draw.";
+    }
+  }
+
+  const topUsers = await client.query(`
+    SELECT u.id, u.username, COUNT(*)::int AS bets,
+           SUM(b.stake)::text AS stake,
+           SUM(b.payout)::text AS payout,
+           (SUM(b.payout) - SUM(b.stake))::text AS user_net
+    FROM public.bets b
+    JOIN public.game_rounds r ON r.id = b.round_id
+    JOIN public.users u ON u.id = b.user_id
+    WHERE r.ends_at <= NOW()
+    GROUP BY u.id, u.username
+    ORDER BY SUM(b.stake) DESC
+    LIMIT 10
+  `);
+
+  const largeStakes = await client.query(
+    `SELECT b.id, b.user_id, r.round_code, b.bet_type,
+            b.stake::text AS stake, b.created_at
+     FROM public.bets b
+     JOIN public.game_rounds r ON r.id = b.round_id
+     WHERE b.stake >= $1::numeric
+       AND b.created_at > NOW() - INTERVAL '7 days'
+     ORDER BY b.created_at DESC
+     LIMIT 10`,
+    [String(LARGE_STAKE)]
+  );
+
+  const highReturn = await client.query(`
+    SELECT b.user_id, COUNT(*)::int AS bets,
+           SUM(b.stake)::text AS stake,
+           SUM(b.payout)::text AS payout,
+           ROUND(SUM(b.payout) / NULLIF(SUM(b.stake), 0) * 100, 1)::text
+             AS return_percent
+    FROM public.bets b
+    JOIN public.game_rounds r ON r.id = b.round_id
+    WHERE r.ends_at <= NOW() AND b.status IN ('won', 'lost')
+    GROUP BY b.user_id
+    HAVING COUNT(*) >= 20 AND SUM(b.payout) > SUM(b.stake) * 1.3
+    ORDER BY SUM(b.payout) - SUM(b.stake) DESC
+    LIMIT 10
+  `);
+
+  return {
+    success: true,
+    daily: daily.rows,
+    fairness: {
+      total_rounds: totalRounds,
+      counts,
+      chi_square: chi === null ? null : Number(chi.toFixed(2)),
+      verdict
+    },
+    top_users: topUsers.rows,
+    large_stake_threshold: LARGE_STAKE,
+    large_stakes: largeStakes.rows,
+    high_return_users: highReturn.rows
+  };
+}
+
+async function reconcile(client) {
+  const totals = await client.query(`
+    WITH t AS (
+      SELECT
+        (SELECT COALESCE(SUM(balance), 0)
+           FROM public.wallet_balances) AS wallet_total,
+        (SELECT COALESCE(SUM(
+           CASE WHEN transaction_type IN ('deposit', 'payout', 'refund')
+                THEN amount ELSE -amount END), 0)
+           FROM public.transactions
+           WHERE status IN ('completed', 'confirmed')) AS ledger_net,
+        (SELECT COALESCE(SUM(commission_amount), 0)
+           FROM public.referral_commissions) AS commissions,
+        (SELECT COALESCE(SUM(stake), 0) FROM public.bets) AS bets_stake,
+        (SELECT COALESCE(SUM(amount), 0) FROM public.transactions
+           WHERE transaction_type = 'bet'
+             AND status = 'completed') AS bet_tx,
+        (SELECT COALESCE(SUM(payout), 0) FROM public.bets) AS bets_payout,
+        (SELECT COALESCE(SUM(amount), 0) FROM public.transactions
+           WHERE transaction_type = 'payout'
+             AND status = 'completed') AS payout_tx,
+        (SELECT COUNT(*) FROM public.bets) AS bet_count,
+        (SELECT COUNT(*) FROM public.transactions
+           WHERE transaction_type = 'bet') AS bet_tx_count,
+        (SELECT COUNT(*) FROM public.bets WHERE payout > 0) AS paid_bets,
+        (SELECT COUNT(*) FROM public.transactions
+           WHERE transaction_type = 'payout') AS payout_tx_count
+    )
+    SELECT
+      wallet_total::text,
+      ledger_net::text,
+      commissions::text,
+      (wallet_total - ledger_net - commissions)::text AS unrecorded,
+      bets_stake::text, bet_tx::text,
+      (bets_stake - bet_tx)::text AS stake_diff,
+      bets_payout::text, payout_tx::text,
+      (bets_payout - payout_tx)::text AS payout_diff,
+      (bet_count - bet_tx_count)::int AS bet_count_diff,
+      (paid_bets - payout_tx_count)::int AS payout_count_diff
+    FROM t
+  `);
+
+  const mismatches = await client.query(`
+    SELECT u.id, u.username,
+           w.balance::text AS balance,
+           (COALESCE(l.net, 0) + COALESCE(c.comm, 0))::text AS expected,
+           (w.balance - (COALESCE(l.net, 0) + COALESCE(c.comm, 0)))::text
+             AS diff
+    FROM public.users u
+    JOIN public.wallet_balances w ON w.user_id = u.id
+    LEFT JOIN (
+      SELECT user_id,
+             SUM(CASE WHEN transaction_type IN ('deposit', 'payout', 'refund')
+                      THEN amount ELSE -amount END) AS net
+      FROM public.transactions
+      WHERE status IN ('completed', 'confirmed')
+      GROUP BY user_id
+    ) l ON l.user_id = u.id
+    LEFT JOIN (
+      SELECT referrer_user_id, SUM(commission_amount) AS comm
+      FROM public.referral_commissions
+      GROUP BY referrer_user_id
+    ) c ON c.referrer_user_id = u.id
+    WHERE w.balance <> COALESCE(l.net, 0) + COALESCE(c.comm, 0)
+    ORDER BY ABS(w.balance - (COALESCE(l.net, 0) + COALESCE(c.comm, 0))) DESC
+    LIMIT 20
+  `);
+
+  const t = totals.rows[0];
+  const clean =
+    Number(t.unrecorded) === 0 &&
+    Number(t.stake_diff) === 0 &&
+    Number(t.payout_diff) === 0 &&
+    t.bet_count_diff === 0 &&
+    t.payout_count_diff === 0;
+
+  return {
+    success: true,
+    clean,
+    totals: t,
+    mismatches: mismatches.rows
+  };
+}
+
+// ---------- User detail, search, export ----------
+
+async function userDetail(client, body) {
+  const id = String(body.user_id || "");
+  if (!/^\d{1,15}$/.test(id)) {
+    return { success: false, message: "Invalid user ID." };
+  }
+
+  const profile = await client.query(
+    `SELECT u.id, u.telegram_id::text AS telegram_id, u.username,
+            u.created_at, u.referral_code, u.referred_by,
+            ru.username AS referrer_username,
+            COALESCE(w.balance, 0)::text AS balance,
+            w.updated_at AS balance_updated_at
+     FROM public.users u
+     LEFT JOIN public.wallet_balances w ON w.user_id = u.id
+     LEFT JOIN public.users ru ON ru.id = u.referred_by
+     WHERE u.id = $1::bigint`,
+    [id]
+  );
+
+  if (!profile.rows.length) {
+    return { success: false, message: "User not found." };
+  }
+
+  const stats = await client.query(
+    `SELECT COUNT(*)::int AS bets,
+            COALESCE(SUM(b.stake), 0)::text AS stake,
+            COALESCE(SUM(b.payout), 0)::text AS payout,
+            COUNT(*) FILTER (WHERE b.status = 'won')::int AS wins,
+            COUNT(*) FILTER (WHERE b.status = 'lost')::int AS losses
+     FROM public.bets b
+     JOIN public.game_rounds r ON r.id = b.round_id
+     WHERE b.user_id = $1::bigint AND r.ends_at <= NOW()`,
+    [id]
+  );
+
+  const recentBets = await client.query(
+    `SELECT b.id, r.round_code, b.bet_type, b.selection,
+            b.stake::text AS stake, b.fee::text AS fee,
+            CASE WHEN r.ends_at <= NOW() THEN b.status ELSE 'pending' END
+              AS status,
+            CASE WHEN r.ends_at <= NOW() THEN r.result_number END
+              AS result_number,
+            (CASE WHEN r.ends_at <= NOW() THEN b.payout ELSE 0 END)::text
+              AS payout,
+            b.created_at
+     FROM public.bets b
+     JOIN public.game_rounds r ON r.id = b.round_id
+     WHERE b.user_id = $1::bigint
+     ORDER BY b.id DESC
+     LIMIT 20`,
+    [id]
+  );
+
+  const recentTx = await client.query(
+    `SELECT id, transaction_type, amount::text AS amount, status,
+            network, tx_hash, created_at
+     FROM public.transactions
+     WHERE user_id = $1::bigint
+     ORDER BY id DESC
+     LIMIT 20`,
+    [id]
+  );
+
+  const tree = await client.query(
+    `WITH RECURSIVE tree AS (
+       SELECT id, username, referred_by, created_at, 1 AS level
+       FROM public.users
+       WHERE referred_by = $1::bigint
+       UNION ALL
+       SELECT u.id, u.username, u.referred_by, u.created_at, t.level + 1
+       FROM public.users u
+       JOIN tree t ON u.referred_by = t.id
+       WHERE t.level < 3
+     )
+     SELECT id, username, referred_by, created_at, level
+     FROM tree
+     ORDER BY level, id
+     LIMIT 200`,
+    [id]
+  );
+
+  const earned = await client.query(
+    `SELECT referral_level, COUNT(*)::int AS count,
+            COALESCE(SUM(commission_amount), 0)::text AS total
+     FROM public.referral_commissions
+     WHERE referrer_user_id = $1::bigint
+     GROUP BY referral_level
+     ORDER BY referral_level`,
+    [id]
+  );
+
+  const generated = await client.query(
+    `SELECT COALESCE(SUM(commission_amount), 0)::text AS total
+     FROM public.referral_commissions
+     WHERE source_user_id = $1::bigint`,
+    [id]
+  );
+
+  return {
+    success: true,
+    profile: profile.rows[0],
+    stats: stats.rows[0],
+    recent_bets: recentBets.rows,
+    recent_transactions: recentTx.rows,
+    referral_tree: tree.rows,
+    commissions_earned: earned.rows,
+    commissions_generated: generated.rows[0].total
+  };
+}
+
+async function search(client, body) {
+  const q = cleanQuery(body);
+  if (!q) {
+    return { success: true, users: [], rounds: [], bets: [] };
+  }
+
+  const params = [];
+  const where = userSearch(q, params);
+  const usersRes = await client.query(
+    `SELECT u.id, u.telegram_id::text AS telegram_id, u.username,
+            COALESCE(w.balance, 0)::text AS balance
+     FROM public.users u
+     LEFT JOIN public.wallet_balances w ON w.user_id = u.id
+     WHERE ${where}
+     ORDER BY u.id DESC
+     LIMIT 10`,
+    params
+  );
+
+  let roundRows = [];
+  if (/^\d{6,14}$/.test(q)) {
+    const r = await client.query(
+      `SELECT round_code, status, starts_at, ends_at
+       FROM public.game_rounds
+       WHERE round_code LIKE $1
+       ORDER BY starts_at DESC
+       LIMIT 5`,
+      [q + "%"]
+    );
+    roundRows = r.rows;
+  }
+
+  let betRows = [];
+  if (/^\d{1,15}$/.test(q)) {
+    const b = await client.query(
+      `SELECT b.id, b.user_id, r.round_code, b.bet_type,
+              b.stake::text AS stake,
+              CASE WHEN r.ends_at <= NOW() THEN b.status ELSE 'pending' END
+                AS status
+       FROM public.bets b
+       JOIN public.game_rounds r ON r.id = b.round_id
+       WHERE b.id = $1::bigint`,
+      [q]
+    );
+    betRows = b.rows;
+  }
+
+  return {
+    success: true,
+    users: usersRes.rows,
+    rounds: roundRows,
+    bets: betRows
+  };
+}
+
+const EXPORT_KINDS = {
+  users: {
+    fn: users,
+    key: "users",
+    cols: [
+      "id", "telegram_id", "username", "balance", "referral_count",
+      "referred_by", "referral_code", "created_at"
+    ]
+  },
+  bets: {
+    fn: bets,
+    key: "bets",
+    cols: [
+      "id", "user_id", "round_code", "bet_type", "selection", "stake",
+      "fee", "status", "result_number", "payout", "created_at",
+      "settled_at"
+    ]
+  },
+  transactions: {
+    fn: transactions,
+    key: "transactions",
+    cols: [
+      "id", "user_id", "transaction_type", "amount", "status",
+      "network", "tx_hash", "created_at", "updated_at"
+    ]
+  }
+};
+
+async function exportData(client, body, adminName, ip) {
+  const kind = String(body.kind || "");
+  if (!Object.prototype.hasOwnProperty.call(EXPORT_KINDS, kind)) {
+    return { success: false, message: "Unknown export type." };
+  }
+
+  const spec = EXPORT_KINDS[kind];
+  const data = await spec.fn(
+    client,
+    { ...body, page: 1, page_size: EXPORT_MAX },
+    EXPORT_MAX
+  );
+  const rows = data[spec.key];
+
+  const lines = [spec.cols.join(",")];
+  for (const row of rows) {
+    lines.push(spec.cols.map((c) => csvCell(row[c])).join(","));
+  }
+
+  await audit(
+    client, adminName, "export", kind, `${rows.length} rows`, "success", ip
+  );
+
+  return {
+    success: true,
+    csv: lines.join("\r\n"),
+    row_count: rows.length,
+    total: data.pagination.total,
+    truncated: data.pagination.total > rows.length
+  };
+}
+
 // ---------- Handler ----------
 
 module.exports = async function handler(req, res) {
@@ -583,20 +1052,9 @@ module.exports = async function handler(req, res) {
 
   const cfg = getConfig();
   if (!cfg) {
-    // TEMPORARY diagnostic: shows only which setting is missing/short.
-    // No values are ever shown. Remove after setup works.
-    const problems = [];
-    const u = process.env.ADMIN_USERNAME;
-    const p = process.env.ADMIN_PASSWORD;
-    const s = process.env.ADMIN_SESSION_SECRET;
-    if (!u) problems.push("ADMIN_USERNAME missing");
-    if (!p) problems.push("ADMIN_PASSWORD missing");
-    else if (p.length < 12) problems.push("ADMIN_PASSWORD too short (min 12)");
-    if (!s) problems.push("ADMIN_SESSION_SECRET missing");
-    else if (s.length < 32) problems.push("ADMIN_SESSION_SECRET too short (min 32)");
     return send(res, 503, {
       success: false,
-      message: "Admin is not configured: " + problems.join(", ")
+      message: "Admin is not configured."
     });
   }
 
@@ -631,19 +1089,25 @@ module.exports = async function handler(req, res) {
 
     const handlers = {
       dashboard: () => dashboard(client),
+      analytics: () => analytics(client),
+      reconcile: () => reconcile(client),
       users: () => users(client, body),
       wallets: () => wallets(client, body),
       transactions: () => transactions(client, body),
       rounds: () => rounds(client, body),
       bets: () => bets(client, body),
-      audit: () => auditLog(client, body)
+      audit: () => auditLog(client, body),
+      user_detail: () => userDetail(client, body),
+      search: () => search(client, body),
+      export: () => exportData(client, body, session.u, clientIp(req))
     };
 
     if (!Object.prototype.hasOwnProperty.call(handlers, action)) {
       return send(res, 400, { success: false, message: "Unknown action." });
     }
 
-    return send(res, 200, await handlers[action]());
+    const out = await handlers[action]();
+    return send(res, out && out.success === false ? 400 : 200, out);
   } catch (error) {
     console.error("Admin API error:", error.code || "", error.message);
 
