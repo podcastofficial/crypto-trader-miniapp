@@ -1,470 +1,1555 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Admin Panel</title>
+<meta name="theme-color" content="#07111f">
+<title>Crypto Trader Pro Admin</title>
+
 <style>
-:root{--bg:#0f1419;--card:#1a212b;--line:#2a3441;--text:#e6edf3;--muted:#8b98a7;--accent:#3b82f6;--ok:#22c55e;--bad:#ef4444;--warn:#f59e0b}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-header{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--card);border-bottom:1px solid var(--line)}
-header h1{font-size:16px;margin:0}
-nav{display:flex;gap:6px;overflow-x:auto;padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--line)}
-nav button{flex:none}
-.searchbar{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line)}
-.searchbar input{flex:1}
-main{padding:12px;max-width:1100px;margin:0 auto}
-button{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px;cursor:pointer}
-button.on,button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-button:disabled{opacity:.5}
-input,select{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:14px;min-width:0}
-.login{max-width:360px;margin:12vh auto;padding:20px;background:var(--card);border:1px solid var(--line);border-radius:12px}
-.login h2{margin:0 0 14px}
-.login input{width:100%;margin-bottom:10px}
-.login button{width:100%}
-.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
-.filters input{flex:1 1 140px}
-.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
-@media(min-width:700px){.cards{grid-template-columns:repeat(4,1fr)}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px}
-.card .l{color:var(--muted);font-size:12px}
-.card .v{font-size:18px;font-weight:600;word-break:break-all}
-.card .s{color:var(--muted);font-size:11px}
-h3{margin:16px 0 8px;font-size:15px}
-.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
-table{border-collapse:collapse;width:100%;font-size:12px}
-th,td{padding:7px 9px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--line)}
-th{background:var(--card);color:var(--muted);font-weight:600}
-tr:last-child td{border-bottom:0}
-.pager{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px}
-.muted{color:var(--muted)}
-.note{background:#1d2a3d;border:1px solid #2c4468;border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:13px}
-.note.warn{background:#3a2c0d;border-color:#6b4f12}
-.note.good{background:#10301f;border-color:#1d5a37}
-.err{color:var(--bad)}
-.b{padding:2px 7px;border-radius:10px;font-size:11px;background:var(--line)}
-.b.won,.b.settled,.b.completed,.b.confirmed,.b.success{background:#143d27;color:var(--ok)}
-.b.lost,.b.failed,.b.rejected,.b.failure,.b.denied{background:#431a1a;color:var(--bad)}
-.b.pending,.b.open,.b.locked{background:#44330e;color:var(--warn)}
-.lnk{color:#7db3ff;text-decoration:underline}
-.chartbox{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px}
-.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);padding:4px 6px}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-.hide{display:none}
+:root {
+  color-scheme: dark;
+  --bg: #07111f;
+  --surface: #0b1728;
+  --line: #1e3857;
+  --text: #e8f2ff;
+  --muted: #91a8c4;
+  --blue: #268cff;
+  --cyan: #55d6ff;
+  --green: #35e0a1;
+  --red: #ff647c;
+  --amber: #ffc766;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(ellipse at 80% -10%, #15365a 0, transparent 40%),
+    var(--bg);
+  color: var(--text);
+  font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+button, input, select {
+  font: inherit;
+}
+
+button {
+  background: #11243b;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--cyan);
+}
+
+button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+button.primary,
+nav button.active {
+  background: linear-gradient(135deg, #1678ee, #2aa8ff);
+  border-color: #359cff;
+  color: white;
+}
+
+input, select {
+  background: #081525;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  min-width: 0;
+}
+
+input:focus, select:focus {
+  outline: 1px solid var(--cyan);
+}
+
+.hide {
+  display: none !important;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.err {
+  color: var(--red);
+}
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  background: #07111fee;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(145deg, #187cff, #55d6ff);
+  color: #04101e;
+  font-weight: 900;
+}
+
+.brand h1 {
+  font-size: 14px;
+  margin: 0;
+}
+
+.brand p {
+  font-size: 10px;
+  color: var(--muted);
+  margin: 2px 0 0;
+}
+
+.head-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  max-width: 1600px;
+  margin: auto;
+  min-height: calc(100vh - 64px);
+}
+
+aside {
+  padding: 16px 10px;
+  border-right: 1px solid var(--line);
+  background: #081423aa;
+}
+
+nav {
+  display: grid;
+  gap: 5px;
+}
+
+nav button {
+  text-align: left;
+  background: transparent;
+  border-color: transparent;
+  color: #a9bdd5;
+}
+
+nav button.active {
+  background: #12345a;
+  border-color: #1f5e9a;
+  color: white;
+  box-shadow: inset 3px 0 var(--cyan);
+}
+
+main {
+  padding: clamp(14px, 3vw, 28px);
+  min-width: 0;
+}
+
+.pagehead {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.pagehead h2 {
+  font-size: 23px;
+  margin: 0;
+}
+
+.pagehead p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 4px 0;
+}
+
+.search {
+  display: flex;
+  gap: 8px;
+  max-width: 620px;
+  margin-bottom: 18px;
+}
+
+.search input {
+  flex: 1;
+  width: 100%;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.card {
+  background: linear-gradient(145deg, #12243a, #0d1b2c);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  min-width: 0;
+}
+
+.card .l {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.card .v {
+  font-size: clamp(17px, 2vw, 23px);
+  font-weight: 750;
+  margin-top: 7px;
+  overflow-wrap: anywhere;
+}
+
+.card .s {
+  font-size: 11px;
+  color: #7593b5;
+  margin-top: 4px;
+}
+
+h3 {
+  font-size: 14px;
+  margin: 22px 0 10px;
+}
+
+.note {
+  background: #102b49;
+  border: 1px solid #205080;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 10px 0;
+  font-size: 12px;
+}
+
+.note.warn {
+  background: #342710;
+  border-color: #6d521c;
+}
+
+.note.good {
+  background: #0d302b;
+  border-color: #1c6656;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.filters input,
+.filters select {
+  flex: 1 1 140px;
+}
+
+.wrap {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #091625;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12px;
+}
+
+th, td {
+  padding: 10px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid #1a3049;
+}
+
+th {
+  background: #11233a;
+  color: #9fb8d4;
+}
+
+tr:hover td {
+  background: #10213a;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+.pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.badge {
+  display: inline-block;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 10px;
+  background: #14263b;
+}
+
+.badge.won,
+.badge.settled,
+.badge.completed,
+.badge.confirmed,
+.badge.success {
+  color: var(--green);
+  background: #0c3028;
+}
+
+.badge.lost,
+.badge.failed,
+.badge.rejected,
+.badge.denied {
+  color: var(--red);
+  background: #351827;
+}
+
+.badge.pending,
+.badge.open,
+.badge.locked {
+  color: var(--amber);
+  background: #302710;
+}
+
+.lnk {
+  color: #70caff;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.login-wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background:
+    radial-gradient(ellipse at 50% 10%, #123a66 0, transparent 45%),
+    var(--bg);
+}
+
+.login {
+  width: min(410px, 100%);
+  padding: 25px;
+  background: linear-gradient(145deg, #10223a, #0a1727);
+  border: 1px solid #245080;
+  border-radius: 20px;
+}
+
+.login h2 {
+  margin: 0;
+}
+
+.login p {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.login input {
+  width: 100%;
+  margin: 6px 0 12px;
+}
+
+.login button {
+  width: 100%;
+}
+
+.small {
+  font-size: 11px;
+}
+
+.legend {
+  color: var(--muted);
+  font-size: 11px;
+  padding-top: 8px;
+}
+
+.chartbox {
+  background: #0a1829;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.empty {
+  padding: 18px;
+  text-align: center;
+  color: var(--muted);
+}
+
+@media(max-width:900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  aside {
+    position: sticky;
+    top: 62px;
+    z-index: 8;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 7px;
+    background: #07111ff2;
+  }
+
+  nav {
+    display: flex;
+    overflow: auto;
+  }
+
+  nav button {
+    white-space: nowrap;
+    font-size: 12px;
+  }
+
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media(max-width:480px) {
+  header {
+    padding: 10px;
+  }
+
+  .brand p {
+    display: none;
+  }
+
+  .brand h1 {
+    font-size: 12px;
+  }
+
+  .head-actions button {
+    padding: 8px;
+  }
+
+  .pagehead h2 {
+    font-size: 20px;
+  }
+
+  .cards {
+    gap: 8px;
+  }
+
+  .card {
+    padding: 11px;
+  }
+
+  .card .v {
+    font-size: 17px;
+  }
+}
 </style>
 </head>
+
 <body>
 
-<div id="loginView" class="hide">
+<div id="loginView" class="login-wrap hide">
   <div class="login">
-    <h2>Admin Login</h2>
-    <form id="loginForm" autocomplete="on">
-      <input id="u" type="text" placeholder="Username" autocomplete="username" required>
-      <input id="p" type="password" placeholder="Password" autocomplete="current-password" required>
-      <button class="primary" type="submit" id="loginBtn">Log in</button>
+    <div class="logo">CT</div>
+    <h2>Admin Console</h2>
+    <p>Crypto Trader Pro · Secure administrator access</p>
+
+    <form id="loginForm">
+      <label>Username</label>
+      <input id="u" autocomplete="username" required maxlength="200">
+
+      <label>Password</label>
+      <input id="p" type="password" autocomplete="current-password"
+             required maxlength="200">
+
+      <button id="loginBtn" class="primary">Sign in securely</button>
     </form>
+
     <p id="loginMsg" class="err"></p>
+    <div class="small muted">Protected admin area · Keep credentials private</div>
   </div>
 </div>
 
 <div id="appView" class="hide">
   <header>
-    <h1>Crypto Trader Pro Admin</h1>
-    <button id="logoutBtn">Log out</button>
+    <div class="brand">
+      <div class="logo">CT</div>
+      <div>
+        <h1>CRYPTO TRADER PRO</h1>
+        <p>ADMIN CONTROL CENTER</p>
+      </div>
+    </div>
+
+    <div class="head-actions">
+      <button id="refreshBtn">↻ Refresh</button>
+      <button id="logoutBtn">Log out</button>
+    </div>
   </header>
-  <nav id="nav"></nav>
-  <div class="searchbar">
-    <input id="gs" placeholder="Search user ID, Telegram ID, username, round code, bet ID">
-    <button id="gsBtn" class="primary">Go</button>
+
+  <div class="layout">
+    <aside>
+      <nav id="nav"></nav>
+    </aside>
+
+    <main>
+      <div class="pagehead">
+        <div>
+          <h2 id="pageTitle">Dashboard</h2>
+          <p id="pageSubtitle">Operations and system health</p>
+        </div>
+        <span id="lastUpdated" class="muted small"></span>
+      </div>
+
+      <div class="search">
+        <input id="gs"
+          placeholder="Search user ID, Telegram ID, username, round or bet">
+        <button id="gsBtn" class="primary">Search</button>
+      </div>
+
+      <div id="content"></div>
+    </main>
   </div>
-  <main id="content"></main>
 </div>
 
 <script>
-const $ = (s) => document.querySelector(s);
-const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const dt = (v) => (v ? esc(new Date(v).toLocaleString()) : "-");
-const badge = (v) => `<span class="b ${esc(v)}">${esc(v)}</span>`;
-const yn = (v) => (v ? "Yes" : "No");
-const uid = (v) => (v === null || v === undefined || v === "") ? "-" : `<a href="#" class="lnk" data-user="${esc(v)}">${esc(v)}</a>`;
-const rcode = (v) => v ? `<a href="#" class="lnk" data-round="${esc(v)}">${esc(v)}</a>` : "-";
+"use strict";
+
+const $ = s => document.querySelector(s);
+
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+}[c]));
+
+const dt = v => v ? esc(new Date(v).toLocaleString()) : "-";
+
+const badge = v =>
+  `<span class="badge ${esc(v)}">${esc(v)}</span>`;
+
+const yn = v => v ? "Yes" : "No";
+
+const uid = v => v == null || v === ""
+  ? "-"
+  : `<a href="#" class="lnk" data-user="${esc(v)}">${esc(v)}</a>`;
+
+const rcode = v => v
+  ? `<a href="#" class="lnk" data-round="${esc(v)}">${esc(v)}</a>`
+  : "-";
+
+const fmt = v =>
+  Number(v || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
+
+const TX_STATUS = [
+  "pending", "confirmed", "rejected", "completed", "failed"
+];
+
+const NO_WORKFLOW =
+  "Read-only: deposit/withdrawal approval workflow is not implemented in the backend.";
+
+const TX_COLS = [
+  ["id", "ID"],
+  ["user_id", "User ID", uid],
+  ["transaction_type", "Type"],
+  ["amount", "Amount"],
+  ["status", "Status", badge],
+  ["network", "Network"],
+  ["tx_hash", "Tx hash"],
+  ["created_at", "Created", dt],
+  ["updated_at", "Updated", dt]
+];
+
+const VIEWS = {
+  dashboard: {
+    label: "Dashboard",
+    icon: "▦",
+    subtitle: "Operational overview"
+  },
+
+  analytics: {
+    label: "Analytics",
+    icon: "⌁",
+    subtitle: "Activity and result distribution"
+  },
+
+  reconcile: {
+    label: "Reconcile",
+    icon: "⇄",
+    subtitle: "Read-only wallet and ledger checks"
+  },
+
+  users: {
+    label: "Users",
+    icon: "♙",
+    subtitle: "Profiles and referrals",
+    action: "users",
+    key: "users",
+    exportKind: "users",
+    filters: [
+      { name: "q", ph: "Telegram ID or username" }
+    ],
+    cols: [
+      ["id", "ID", uid],
+      ["telegram_id", "Telegram ID"],
+      ["username", "Username"],
+      ["balance", "Balance"],
+      ["referral_count", "Referrals"],
+      ["referred_by", "Referred by", uid],
+      ["referral_code", "Referral code"],
+      ["created_at", "Registered", dt]
+    ]
+  },
+
+  wallets: {
+    label: "Wallets",
+    icon: "◈",
+    subtitle: "Read-only balances",
+    action: "wallets",
+    key: "wallets",
+    note: "Read-only. Wallet balances cannot be changed here.",
+    filters: [
+      { name: "q", ph: "Telegram ID or username" }
+    ],
+    cols: [
+      ["user_id", "User ID", uid],
+      ["telegram_id", "Telegram ID"],
+      ["username", "Username"],
+      ["balance", "Balance"],
+      ["updated_at", "Updated", dt]
+    ]
+  },
+
+  transactions: {
+    label: "Transactions",
+    icon: "⇅",
+    subtitle: "Recorded wallet ledger",
+    action: "transactions",
+    key: "transactions",
+    exportKind: "transactions",
+    note: "Read-only transaction history.",
+    filters: [
+      { name: "user_id", ph: "User ID" },
+      { name: "status", ph: "Any status", opts: TX_STATUS }
+    ],
+    cols: TX_COLS
+  },
+
+  deposits: {
+    label: "Deposits",
+    icon: "↓",
+    subtitle: "Recorded deposits",
+    action: "transactions",
+    key: "transactions",
+    exportKind: "transactions",
+    fixed: { type: "deposit" },
+    note: NO_WORKFLOW,
+    filters: [
+      { name: "user_id", ph: "User ID" },
+      { name: "status", ph: "Any status", opts: TX_STATUS }
+    ],
+    cols: TX_COLS
+  },
+
+  withdrawals: {
+    label: "Withdrawals",
+    icon: "↑",
+    subtitle: "Recorded withdrawals",
+    action: "transactions",
+    key: "transactions",
+    exportKind: "transactions",
+    fixed: { type: "withdrawal" },
+    note: NO_WORKFLOW,
+    filters: [
+      { name: "user_id", ph: "User ID" },
+      { name: "status", ph: "Any status", opts: TX_STATUS }
+    ],
+    cols: TX_COLS
+  },
+
+  rounds: {
+    label: "Game Rounds",
+    icon: "◷",
+    subtitle: "Round timing and settlement",
+    action: "rounds",
+    key: "rounds",
+    note: "Results are displayed only after round end time. Results cannot be changed here.",
+    cols: [
+      ["round_code", "Round", rcode],
+      ["status", "Status", badge],
+      ["starts_at", "Starts", dt],
+      ["betting_closes_at", "Betting closes", dt],
+      ["ends_at", "Ends", dt],
+      ["result_number", "Result"],
+      ["bet_count", "Bets"],
+      ["total_stake", "Stake"],
+      ["total_payout", "Payout"],
+      ["pending_bets", "Pending bets"],
+      ["payout_complete", "Payout complete", yn]
+    ]
+  },
+
+  bets: {
+    label: "Bets",
+    icon: "◉",
+    subtitle: "Bet records and outcomes",
+    action: "bets",
+    key: "bets",
+    exportKind: "bets",
+    filters: [
+      { name: "round_code", ph: "Round code (14 digits)" },
+      { name: "user_id", ph: "User ID" },
+      {
+        name: "status",
+        ph: "Any status",
+        opts: ["pending", "won", "lost", "cancelled"]
+      }
+    ],
+    cols: [
+      ["id", "ID"],
+      ["user_id", "User ID", uid],
+      ["round_code", "Round", rcode],
+      ["bet_type", "Type"],
+      ["selection", "Selection"],
+      ["stake", "Stake"],
+      ["fee", "Fee"],
+      ["status", "Status", badge],
+      ["result_number", "Result"],
+      ["payout", "Payout"],
+      ["created_at", "Created", dt],
+      ["settled_at", "Settled", dt]
+    ]
+  },
+
+  audit: {
+    label: "Audit Logs",
+    icon: "≡",
+    subtitle: "Admin actions and outcomes",
+    action: "audit",
+    key: "entries",
+    cols: [
+      ["id", "ID"],
+      ["created_at", "Time", dt],
+      ["admin_username", "Admin"],
+      ["action", "Action"],
+      ["target_type", "Target type"],
+      ["target_id", "Target ID"],
+      ["outcome", "Outcome", badge],
+      ["ip", "IP"]
+    ]
+  }
+};
+
+let cur = "dashboard";
+let page = 1;
+let filters = {};
 
 async function api(body) {
   const r = await fetch("/api/admin", {
     method: "POST",
     credentials: "same-origin",
-    headers: { "Content-Type": "application/json", "X-Admin-Request": "1" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Admin-Request": "1"
+    },
     body: JSON.stringify(body)
   });
-  let data = {};
-  try { data = await r.json(); } catch (e) {}
+
+  let d = {};
+  try {
+    d = await r.json();
+  } catch {}
+
   if (r.status === 401 && body.action !== "login") {
     showLogin("Session expired. Please log in again.");
-    throw new Error("auth");
+    throw Error("auth");
   }
-  if (!r.ok) throw new Error(data.message || "Request failed");
-  return data;
-}
 
-const TX_STATUS = ["pending", "confirmed", "rejected", "completed", "failed"];
-const NO_WORKFLOW = "Deposit/withdrawal request and approval workflow is not implemented in the backend. This page only lists recorded transactions of this type (read-only).";
+  if (!r.ok) {
+    throw Error(d.message || "Request failed");
+  }
 
-const TX_COLS = [["id","ID"],["user_id","User ID",uid],["transaction_type","Type"],["amount","Amount"],["status","Status",badge],["network","Network"],["tx_hash","Tx hash"],["created_at","Created",dt],["updated_at","Updated",dt]];
-
-const VIEWS = {
-  dashboard: { label: "Dashboard" },
-  analytics: { label: "Analytics" },
-  reconcile: { label: "Reconcile" },
-  users: { label: "Users", action: "users", key: "users", exportKind: "users",
-    filters: [{ name: "q", ph: "Telegram ID or username" }],
-    cols: [["id","ID",uid],["telegram_id","Telegram ID"],["username","Username"],["balance","Balance"],["referral_count","Referrals"],["referred_by","Referred by",uid],["referral_code","Referral code"],["created_at","Registered",dt]] },
-  wallets: { label: "Wallets", action: "wallets", key: "wallets",
-    note: "Read-only. Balances cannot be changed from this panel.",
-    filters: [{ name: "q", ph: "Telegram ID or username" }],
-    cols: [["user_id","User ID",uid],["telegram_id","Telegram ID"],["username","Username"],["balance","Balance"],["updated_at","Updated",dt]] },
-  transactions: { label: "Transactions", action: "transactions", key: "transactions", exportKind: "transactions",
-    note: "Read-only wallet transaction history.",
-    filters: [{ name: "user_id", ph: "User ID" }, { name: "status", ph: "Any status", opts: TX_STATUS }],
-    cols: TX_COLS },
-  deposits: { label: "Deposits", action: "transactions", key: "transactions", exportKind: "transactions", fixed: { type: "deposit" }, note: NO_WORKFLOW,
-    filters: [{ name: "user_id", ph: "User ID" }, { name: "status", ph: "Any status", opts: TX_STATUS }],
-    cols: TX_COLS },
-  withdrawals: { label: "Withdrawals", action: "transactions", key: "transactions", exportKind: "transactions", fixed: { type: "withdrawal" }, note: NO_WORKFLOW,
-    filters: [{ name: "user_id", ph: "User ID" }, { name: "status", ph: "Any status", opts: TX_STATUS }],
-    cols: TX_COLS },
-  rounds: { label: "Rounds", action: "rounds", key: "rounds",
-    note: "Results are hidden until the round end time. Results cannot be changed from this panel.",
-    cols: [["round_code","Round",rcode],["status","Status",badge],["starts_at","Starts",dt],["betting_closes_at","Betting closes",dt],["ends_at","Ends",dt],["result_number","Result"],["bet_count","Bets"],["total_stake","Stake"],["total_payout","Payout"],["pending_bets","Pending bets"],["payout_complete","Payout complete",yn]] },
-  bets: { label: "Bets", action: "bets", key: "bets", exportKind: "bets",
-    filters: [{ name: "round_code", ph: "Round code (14 digits)" }, { name: "user_id", ph: "User ID" }, { name: "status", ph: "Any status", opts: ["pending", "won", "lost", "cancelled"] }],
-    cols: [["id","ID"],["user_id","User ID",uid],["round_code","Round",rcode],["bet_type","Type"],["selection","Selection"],["stake","Stake"],["fee","Fee"],["status","Status",badge],["result_number","Result"],["payout","Payout"],["created_at","Created",dt],["settled_at","Settled",dt]] },
-  audit: { label: "Audit Log", action: "audit", key: "entries",
-    cols: [["id","ID"],["created_at","Time",dt],["admin_username","Admin"],["action","Action"],["target_type","Target type"],["target_id","Target ID"],["outcome","Outcome",badge],["ip","IP"]] }
-};
-
-let cur = "dashboard", page = 1, filters = {};
-
-function table(rows, cols) {
-  if (!rows || !rows.length) return '<p class="muted">No records.</p>';
-  const head = cols.map((c) => `<th>${esc(c[1])}</th>`).join("");
-  const body = rows.map((row) => "<tr>" + cols.map((c) => {
-    const v = row[c[0]];
-    return `<td>${c[2] ? c[2](v, row) : (v === null || v === undefined || v === "" ? "-" : esc(v))}</td>`;
-  }).join("") + "</tr>").join("");
-  return `<div class="wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+  return d;
 }
 
 function card(label, value, sub) {
-  return `<div class="card"><div class="l">${esc(label)}</div><div class="v">${esc(value)}</div>${sub ? `<div class="s">${esc(sub)}</div>` : ""}</div>`;
+  return `
+    <div class="card">
+      <div class="l">${esc(label)}</div>
+      <div class="v">${esc(value ?? "-")}</div>
+      ${sub ? `<div class="s">${esc(sub)}</div>` : ""}
+    </div>`;
 }
 
-/* ---------- Charts (plain SVG, no external library) ---------- */
-function fmt(v) {
-  const n = Number(v), a = Math.abs(n);
-  return a >= 1000 ? (n / 1000).toFixed(1) + "k" : n.toFixed(0);
+function table(rows, cols) {
+  if (!rows || !rows.length) {
+    return '<div class="empty">No records found.</div>';
+  }
+
+  return `
+    <div class="wrap">
+      <table>
+        <thead>
+          <tr>${cols.map(c => `<th>${esc(c[1])}</th>`).join("")}</tr>
+        </thead>
+        <tbody>
+          ${rows.map(row =>
+            "<tr>" + cols.map(c => {
+              const value = row[c[0]];
+              return `<td>${
+                c[2]
+                  ? c[2](value, row)
+                  : (value == null || value === "" ? "-" : esc(value))
+              }</td>`;
+            }).join("") + "</tr>"
+          ).join("")}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function sec(title, body) {
+  return `<h3>${esc(title)}</h3>${body}`;
 }
 
 function chart(title, labels, series, colors, names) {
-  const W = 340, H = 170, pl = 38, pr = 6, pt = 10, pb = 22;
+  const W = 600, H = 190, pl = 38, pr = 8, pt = 12, pb = 25;
   const all = series.flat().map(Number);
-  let max = Math.max(0, ...all), min = Math.min(0, ...all);
+  let max = Math.max(1, ...all);
+  let min = Math.min(0, ...all);
+
   if (max === min) max = min + 1;
-  const iw = W - pl - pr, ih = H - pt - pb;
-  const y = (v) => pt + ih * (max - v) / (max - min);
-  const n = labels.length, gw = iw / n;
-  const bw = Math.max(2, (gw - 3) / series.length);
-  let g = `<line x1="${pl}" x2="${W - pr}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" stroke="#2a3441"/>`;
-  g += `<text x="${pl - 4}" y="${pt + 8}" text-anchor="end" fill="#8b98a7" font-size="9">${esc(fmt(max))}</text>`;
-  g += `<text x="${pl - 4}" y="${pt + ih}" text-anchor="end" fill="#8b98a7" font-size="9">${esc(fmt(min))}</text>`;
+
+  const iw = W - pl - pr;
+  const ih = H - pt - pb;
+  const n = Math.max(1, labels.length);
+  const gw = iw / n;
+  const bw = Math.max(3, (gw - 4) / series.length);
+  const y = v => pt + ih * (max - v) / (max - min);
+
+  let g = "";
+
+  for (let j = 0; j < 4; j++) {
+    const val = min + (max - min) * j / 3;
+    const yy = y(val);
+
+    g += `
+      <line x1="${pl}" x2="${W-pr}" y1="${yy}" y2="${yy}" stroke="#1e3857"/>
+      <text x="${pl-5}" y="${yy+3}" text-anchor="end"
+        fill="#91a8c4" font-size="9">${esc(Math.round(val))}</text>`;
+  }
+
   series.forEach((s, si) => s.forEach((v, i) => {
-    const val = Number(v);
-    const x = pl + i * gw + 1.5 + si * bw;
-    const y0 = y(0), y1 = y(val);
-    const col = typeof colors[si] === "function" ? colors[si](val) : colors[si];
-    g += `<rect x="${x.toFixed(1)}" y="${Math.min(y0, y1).toFixed(1)}" width="${(bw - 1).toFixed(1)}" height="${Math.max(1, Math.abs(y1 - y0)).toFixed(1)}" fill="${col}"/>`;
+    const yy = y(Number(v) || 0);
+    const zero = y(0);
+    const x = pl + i * gw + 2 + si * bw;
+
+    g += `
+      <rect x="${x}" y="${Math.min(yy, zero)}"
+        width="${Math.max(2, bw-2)}"
+        height="${Math.max(1, Math.abs(zero-yy))}"
+        rx="2" fill="${colors[si]}"/>`;
   }));
-  labels.forEach((l, i) => {
-    if (i % 2 === 0) g += `<text x="${(pl + i * gw + gw / 2).toFixed(1)}" y="${H - 8}" text-anchor="middle" fill="#8b98a7" font-size="9">${esc(l)}</text>`;
+
+  labels.forEach((label, i) => {
+    if (i % 2 === 0) {
+      g += `
+        <text x="${pl+i*gw+gw/2}" y="${H-7}"
+          text-anchor="middle" fill="#91a8c4" font-size="9">
+          ${esc(label)}
+        </text>`;
+    }
   });
-  const legend = names.map((nm, i) => {
-    const c = typeof colors[i] === "function" ? "#22c55e" : colors[i];
-    return `<span><i style="background:${c}"></i>${esc(nm)}</span>`;
-  }).join("");
-  return `<h3>${esc(title)}</h3><div class="chartbox"><svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg><div class="legend">${legend}</div></div>`;
+
+  return `
+    <div class="chartbox">
+      <b>${esc(title)}</b>
+      <svg viewBox="0 0 ${W} ${H}" width="100%">${g}</svg>
+      <div class="legend">
+        ${names.map((name, i) => `
+          <span style="margin-right:12px">
+            <i style="display:inline-block;width:8px;height:8px;
+              background:${colors[i]};margin-right:5px"></i>
+            ${esc(name)}
+          </span>`).join("")}
+      </div>
+    </div>`;
 }
 
-/* ---------- Views ---------- */
 function renderDash(d) {
-  const t = d.totals, h = d.health;
+  const t = d.totals || {};
+  const h = d.health || {};
+
   const cards = [
-    card("Registered users", t.users),
-    card("Total bets", t.bets),
-    card("Total stake", t.total_stake),
-    card("Platform fees", t.total_fees),
-    card("Total payouts", t.total_payouts),
-    card("Referral commissions", t.total_commissions),
-    card("Wallet balances (sum)", t.total_wallet_balance),
-    card("Deposits", t.total_deposits, t.deposit_count + " record(s)"),
-    card("Withdrawals", t.total_withdrawals, t.withdrawal_count + " record(s)")
+    card("Registered users", fmt(t.users)),
+    card("Total bets", fmt(t.bets)),
+    card("Total stake", fmt(t.total_stake)),
+    card("Platform fees", fmt(t.total_fees)),
+    card("Total payouts", fmt(t.total_payouts)),
+    card("Referral commissions", fmt(t.total_commissions)),
+    card("Wallet balances", fmt(t.total_wallet_balance)),
+    card("Deposits", fmt(t.total_deposits), fmt(t.deposit_count) + " records"),
+    card("Withdrawals", fmt(t.total_withdrawals), fmt(t.withdrawal_count) + " records")
   ].join("");
+
   const health = [
-    card("API / database", h.database_ok ? "OK" : "Problem"),
-    card("Cron / settlement", h.cron_ok ? "Healthy" : "Check"),
-    card("Overdue rounds", h.overdue_rounds),
-    card("Old pending bets", h.old_pending_bets),
-    card("Last settled", h.last_settled_at ? new Date(h.last_settled_at).toLocaleTimeString() : "-"),
-    card("Latest round start", h.latest_round_start ? new Date(h.latest_round_start).toLocaleTimeString() : "-")
+    card("Database", h.database_ok ? "Connected" : "Check"),
+    card("Cron / settlement", h.cron_ok ? "Healthy" : "Investigate"),
+    card("Overdue rounds", fmt(h.overdue_rounds)),
+    card("Old pending bets", fmt(h.old_pending_bets)),
+    card("Last settled", h.last_settled_at
+      ? new Date(h.last_settled_at).toLocaleString() : "-"),
+    card("Latest round", h.latest_round_start
+      ? new Date(h.latest_round_start).toLocaleString() : "-")
   ].join("");
-  const statuses = d.round_statuses.map((s) => `${esc(s.status)}: ${esc(s.count)}`).join(" · ");
+
+  const statuses = (d.round_statuses || [])
+    .map(x => `${esc(x.status)}: ${esc(x.count)}`).join(" · ");
+
   $("#content").innerHTML =
-    `<div class="note">Deposit and withdrawal totals only count recorded transactions. No deposit/withdrawal workflow exists in the backend.</div>` +
-    `<div class="cards">${cards}</div>` +
-    `<h3>Health</h3><div class="cards">${health}</div>` +
-    `<h3>Rounds by status</h3><p class="muted">${statuses || "-"}</p>` +
-    `<h3>Recent rounds</h3>` + table(d.recent_rounds, VIEWS.rounds.cols);
+    '<div class="note">Read-only monitoring. Deposit/withdrawal totals represent recorded transactions; approval workflows are not implemented here.</div>' +
+    '<div class="cards">' + cards + '</div>' +
+    sec("System health", '<div class="cards">' + health + '</div>') +
+    sec("Rounds by status", '<div class="panel">' + (statuses || "-") + '</div>') +
+    sec("Recent rounds", table(d.recent_rounds, VIEWS.rounds.cols));
 }
 
 function renderAnalytics(d) {
-  const days = d.daily;
-  const labels = days.map((x) => x.day.slice(5));
-  const sign = (v) => (v >= 0 ? "#22c55e" : "#ef4444");
-  const f = d.fairness;
-  const exp = f.total_rounds / 10;
-  const fairRows = f.counts.map((c, i) => ({
+  const a = d.daily || [];
+  const f = d.fairness || {
+    counts: Array(10).fill(0),
+    total_rounds: 0,
+    verdict: "No data"
+  };
+
+  const labels = a.map(x => String(x.day || "").slice(5));
+
+  const fair = (f.counts || []).map((count, i) => ({
     number: i,
-    count: c,
-    share: f.total_rounds ? (c / f.total_rounds * 100).toFixed(1) + "%" : "-",
-    diff: f.total_rounds ? (c - exp >= 0 ? "+" : "") + (c - exp).toFixed(1) : "-"
+    count,
+    share: f.total_rounds
+      ? (count / f.total_rounds * 100).toFixed(1) + "%"
+      : "-",
+    diff: f.total_rounds
+      ? ((count - f.total_rounds / 10) >= 0 ? "+" : "") +
+        (count - f.total_rounds / 10).toFixed(1)
+      : "-"
   }));
-  const fairCls = f.verdict.startsWith("Consistent") ? "good" : (f.verdict.startsWith("Not enough") ? "" : "warn");
 
   $("#content").innerHTML =
-    `<div class="note">All figures use UTC days and only rounds that have ended. Net = stake − payouts − referral commissions.</div>` +
-    chart("Daily stake vs payouts (last 14 days)", labels, [days.map((x) => x.stake), days.map((x) => x.payout)], ["#3b82f6", "#f59e0b"], ["Stake", "Payouts"]) +
-    chart("Daily net platform result", labels, [days.map((x) => x.net)], [sign], ["Net (green = profit, red = loss)"]) +
-    chart("Users per day", labels, [days.map((x) => x.active_users), days.map((x) => x.new_users)], ["#a78bfa", "#22c55e"], ["Active users", "New users"]) +
-    `<h3>Daily numbers</h3>` + table(days.slice().reverse(), [["day","Day (UTC)"],["bets","Bets"],["stake","Stake"],["payout","Payouts"],["net","Net"],["active_users","Active users"],["new_users","New users"]]) +
-    `<h3>Result fairness check</h3>` +
-    `<div class="note ${fairCls}">${esc(f.verdict)}${f.chi_square !== null ? " (chi-square " + esc(f.chi_square) + ", 9 degrees of freedom; 16.9 ≈ 5% and 21.7 ≈ 1% limits)" : ""}. ${esc(f.total_rounds)} settled rounds. This is a statistical check, not proof either way.</div>` +
-    table(fairRows, [["number","Result"],["count","Times drawn"],["share","Share (expected 10%)"],["diff","Vs expected"]]) +
-    `<h3>Top users by stake</h3>` + table(d.top_users, [["id","User ID",uid],["username","Username"],["bets","Bets"],["stake","Stake"],["payout","Payout"],["user_net","User net"]]) +
-    `<h3>Large stakes (≥ ${esc(d.large_stake_threshold)}, last 7 days)</h3>` + table(d.large_stakes, [["id","Bet ID"],["user_id","User ID",uid],["round_code","Round",rcode],["bet_type","Type"],["stake","Stake"],["created_at","Created",dt]]) +
-    `<h3>Users with high returns (20+ bets, return over 130%)</h3>` + table(d.high_return_users, [["user_id","User ID",uid],["bets","Bets"],["stake","Stake"],["payout","Payout"],["return_percent","Return %"]]);
+    '<div class="note">UTC daily figures. Net is an operational indicator, not audited accounting profit. Statistical tests do not prove fairness.</div>' +
+
+    chart(
+      "Daily stake vs payouts · 14 days",
+      labels,
+      [a.map(x => +x.stake), a.map(x => +x.payout)],
+      ["#268cff", "#ffc766"],
+      ["Stake", "Payouts"]
+    ) +
+
+    chart(
+      "Daily net indicator",
+      labels,
+      [a.map(x => +x.net)],
+      ["#35e0a1"],
+      ["Net indicator"]
+    ) +
+
+    chart(
+      "Users per day",
+      labels,
+      [a.map(x => +x.active_users), a.map(x => +x.new_users)],
+      ["#55d6ff", "#a78bfa"],
+      ["Active users", "New users"]
+    ) +
+
+    sec("Daily metrics", table(a.slice().reverse(), [
+      ["day", "Day (UTC)"],
+      ["bets", "Bets"],
+      ["stake", "Stake"],
+      ["payout", "Payouts"],
+      ["net", "Net"],
+      ["active_users", "Active users"],
+      ["new_users", "New users"]
+    ])) +
+
+    sec("Result distribution",
+      `<div class="note ${
+        String(f.verdict).startsWith("Consistent")
+          ? "good"
+          : String(f.verdict).startsWith("Not enough") ? "" : "warn"
+      }">${esc(f.verdict)} · ${esc(f.total_rounds || 0)} settled rounds. Statistical indicator only.</div>` +
+      table(fair, [
+        ["number", "Result"],
+        ["count", "Count"],
+        ["share", "Share"],
+        ["diff", "Vs expected"]
+      ])
+    ) +
+
+    sec("Top users by stake", table(d.top_users, [
+      ["id", "User ID", uid],
+      ["username", "Username"],
+      ["bets", "Bets"],
+      ["stake", "Stake"],
+      ["payout", "Payout"],
+      ["user_net", "User net"]
+    ])) +
+
+    sec("Large stakes", table(d.large_stakes, [
+      ["id", "Bet ID"],
+      ["user_id", "User ID", uid],
+      ["round_code", "Round", rcode],
+      ["bet_type", "Type"],
+      ["stake", "Stake"],
+      ["created_at", "Created", dt]
+    ])) +
+
+    sec("High-return users", table(d.high_return_users, [
+      ["user_id", "User ID", uid],
+      ["bets", "Bets"],
+      ["stake", "Stake"],
+      ["payout", "Payout"],
+      ["return_percent", "Return %"]
+    ]));
 }
 
 function renderReconcile(d) {
-  const t = d.totals;
-  const status = d.clean
-    ? `<div class="note good">All checks match.</div>`
-    : `<div class="note warn">Mismatch found. The wallet total does not equal the transaction ledger plus referral commissions, or counts differ. Credits added directly in the database (for example test balances) show up here as unrecorded.</div>`;
+  const t = d.totals || {};
+
   const rows = [
-    { check: "Wallet balances (sum)", a: t.wallet_total, b: "-", diff: "-" },
-    { check: "Ledger net + commissions vs wallets (unrecorded)", a: t.wallet_total, b: (Number(t.ledger_net) + Number(t.commissions)).toFixed(2), diff: t.unrecorded },
-    { check: "Bet stakes vs bet transactions", a: t.bets_stake, b: t.bet_tx, diff: t.stake_diff },
-    { check: "Bet payouts vs payout transactions", a: t.bets_payout, b: t.payout_tx, diff: t.payout_diff },
-    { check: "Bet rows vs bet transaction rows (count)", a: "-", b: "-", diff: t.bet_count_diff },
-    { check: "Paid bets vs payout transaction rows (count)", a: "-", b: "-", diff: t.payout_count_diff }
+    {check: "Wallet total", a: t.wallet_total, b: "-", diff: "-"},
+    {
+      check: "Ledger net + commissions",
+      a: t.wallet_total,
+      b: (Number(t.ledger_net) + Number(t.commissions)).toFixed(2),
+      diff: t.unrecorded
+    },
+    {
+      check: "Bet stakes vs bet transactions",
+      a: t.bets_stake, b: t.bet_tx, diff: t.stake_diff
+    },
+    {
+      check: "Bet payouts vs payout transactions",
+      a: t.bets_payout, b: t.payout_tx, diff: t.payout_diff
+    },
+    {
+      check: "Bet rows vs bet transaction rows",
+      a: "-", b: "-", diff: t.bet_count_diff
+    },
+    {
+      check: "Paid bets vs payout transaction rows",
+      a: "-", b: "-", diff: t.payout_count_diff
+    }
   ];
+
   $("#content").innerHTML =
-    status +
-    `<div class="cards">${card("Wallet total", t.wallet_total)}${card("Ledger net", t.ledger_net, "deposits + payouts + refunds − bets − withdrawals")}${card("Commissions", t.commissions, "credited without a transaction row")}${card("Unrecorded credits", t.unrecorded)}</div>` +
-    `<h3>Checks</h3>` + table(rows, [["check","Check"],["a","Value A"],["b","Value B"],["diff","Difference"]]) +
-    `<h3>Users whose balance differs from the ledger</h3>` + table(d.mismatches, [["id","User ID",uid],["username","Username"],["balance","Balance"],["expected","Expected from ledger"],["diff","Difference"]]) +
-    `<p class="muted">Read-only. Pending withdrawals (if they ever exist) are not treated specially.</p>`;
+    `<div class="note ${d.clean ? "good" : "warn"}">${
+      d.clean
+        ? "Configured checks match."
+        : "Mismatch detected. Review ledger rules before taking action; do not adjust balances based on this report alone."
+    }</div>` +
+
+    '<div class="cards">' +
+      card("Wallet total", t.wallet_total) +
+      card("Ledger net", t.ledger_net) +
+      card("Commissions", t.commissions) +
+      card("Unrecorded difference", t.unrecorded) +
+    '</div>' +
+
+    sec("Reconciliation checks", table(rows, [
+      ["check", "Check"],
+      ["a", "Value A"],
+      ["b", "Value B"],
+      ["diff", "Difference"]
+    ])) +
+
+    sec("Users with balance differences", table(d.mismatches, [
+      ["id", "User ID", uid],
+      ["username", "Username"],
+      ["balance", "Balance"],
+      ["expected", "Expected"],
+      ["diff", "Difference"]
+    ]));
 }
 
 function renderUser(d) {
-  const p = d.profile, s = d.stats;
-  const tree = d.referral_tree;
-  const lv = (n) => tree.filter((x) => x.level === n).length;
-  const earned = d.commissions_earned.map((x) => ({ level: x.referral_level, count: x.count, total: x.total }));
+  const p = d.profile || {};
+  const s = d.stats || {};
+  const tree = d.referral_tree || [];
+  const lv = n => tree.filter(x => +x.level === n).length;
+
   $("#content").innerHTML =
-    `<div class="row"><button id="backBtn">← Back</button><span class="muted">User ${esc(p.id)}</span></div>` +
-    `<div class="cards">${card("Username", p.username || "-")}${card("Telegram ID", p.telegram_id || "-")}${card("Wallet balance", p.balance, p.balance_updated_at ? "updated " + new Date(p.balance_updated_at).toLocaleString() : "")}${card("Registered", p.created_at ? new Date(p.created_at).toLocaleDateString() : "-")}</div>` +
-    `<div class="cards">${card("Bets (ended rounds)", s.bets)}${card("Total stake", s.stake)}${card("Total payouts", s.payout)}${card("Won / Lost", s.wins + " / " + s.losses)}</div>` +
-    `<div class="cards">${card("Referral code", p.referral_code || "-")}${card("Referred by", p.referred_by ? (p.referrer_username || "user") + " (#" + p.referred_by + ")" : "-")}${card("Referrals L1 / L2 / L3", lv(1) + " / " + lv(2) + " / " + lv(3))}${card("Commissions generated", d.commissions_generated, "by this user's bets")}</div>` +
-    `<h3>Referral tree (up to 3 levels)</h3>` + table(tree, [["level","Level"],["id","User ID",uid],["username","Username"],["referred_by","Parent",uid],["created_at","Registered",dt]]) +
-    `<h3>Commissions earned</h3>` + table(earned, [["level","Level"],["count","Count"],["total","Total"]]) +
-    `<h3>Recent bets (20)</h3>` + table(d.recent_bets, [["id","ID"],["round_code","Round",rcode],["bet_type","Type"],["selection","Selection"],["stake","Stake"],["fee","Fee"],["status","Status",badge],["result_number","Result"],["payout","Payout"],["created_at","Created",dt]]) +
-    `<h3>Recent transactions (20)</h3>` + table(d.recent_transactions, [["id","ID"],["transaction_type","Type"],["amount","Amount"],["status","Status",badge],["network","Network"],["tx_hash","Tx hash"],["created_at","Created",dt]]);
+    `<div class="row"><button id="backBtn">← Back</button>
+      <span class="muted">User #${esc(p.id)}</span></div>` +
+
+    '<div class="cards">' +
+      card("Username", p.username || "-") +
+      card("Telegram ID", p.telegram_id || "-") +
+      card("Balance", p.balance) +
+      card("Registered", p.created_at
+        ? new Date(p.created_at).toLocaleDateString() : "-") +
+    '</div>' +
+
+    '<div class="cards">' +
+      card("Bets", s.bets) +
+      card("Total stake", s.stake) +
+      card("Payouts", s.payout) +
+      card("Won / lost", `${s.wins || 0} / ${s.losses || 0}`) +
+    '</div>' +
+
+    '<div class="cards">' +
+      card("Referral code", p.referral_code || "-") +
+      card("Referred by", p.referred_by || "-") +
+      card("Referrals L1/L2/L3", `${lv(1)}/${lv(2)}/${lv(3)}`) +
+      card("Commissions generated", d.commissions_generated) +
+    '</div>' +
+
+    sec("Referral tree", table(tree, [
+      ["level", "Level"],
+      ["id", "User ID", uid],
+      ["username", "Username"],
+      ["referred_by", "Parent", uid],
+      ["created_at", "Registered", dt]
+    ])) +
+
+    sec("Commissions earned", table(d.commissions_earned, [
+      ["referral_level", "Level"],
+      ["count", "Count"],
+      ["total", "Total"]
+    ])) +
+
+    sec("Recent bets", table(d.recent_bets, [
+      ["id", "ID"],
+      ["round_code", "Round", rcode],
+      ["bet_type", "Type"],
+      ["selection", "Selection"],
+      ["stake", "Stake"],
+      ["fee", "Fee"],
+      ["status", "Status", badge],
+      ["result_number", "Result"],
+      ["payout", "Payout"],
+      ["created_at", "Created", dt]
+    ])) +
+
+    sec("Recent transactions", table(d.recent_transactions, [
+      ["id", "ID"],
+      ["transaction_type", "Type"],
+      ["amount", "Amount"],
+      ["status", "Status", badge],
+      ["network", "Network"],
+      ["tx_hash", "Tx hash"],
+      ["created_at", "Created", dt]
+    ]));
+
   $("#backBtn").onclick = load;
 }
 
 function renderSearch(d, q) {
   $("#content").innerHTML =
-    `<div class="row"><button id="backBtn">← Back</button><span class="muted">Results for "${esc(q)}"</span></div>` +
-    `<h3>Users</h3>` + table(d.users, [["id","User ID",uid],["telegram_id","Telegram ID"],["username","Username"],["balance","Balance"]]) +
-    (d.rounds.length ? `<h3>Rounds</h3>` + table(d.rounds, [["round_code","Round",rcode],["status","Status",badge],["starts_at","Starts",dt],["ends_at","Ends",dt]]) : "") +
-    (d.bets.length ? `<h3>Bet</h3>` + table(d.bets, [["id","Bet ID"],["user_id","User ID",uid],["round_code","Round",rcode],["bet_type","Type"],["stake","Stake"],["status","Status",badge]]) : "");
+    `<div class="row"><button id="backBtn">← Back</button>
+      <span class="muted">Results: ${esc(q)}</span></div>` +
+
+    sec("Users", table(d.users, [
+      ["id", "User ID", uid],
+      ["telegram_id", "Telegram ID"],
+      ["username", "Username"],
+      ["balance", "Balance"]
+    ])) +
+
+    ((d.rounds || []).length
+      ? sec("Rounds", table(d.rounds, [
+          ["round_code", "Round", rcode],
+          ["status", "Status", badge],
+          ["starts_at", "Starts", dt],
+          ["ends_at", "Ends", dt]
+        ]))
+      : "") +
+
+    ((d.bets || []).length
+      ? sec("Bet", table(d.bets, [
+          ["id", "Bet ID"],
+          ["user_id", "User ID", uid],
+          ["round_code", "Round", rcode],
+          ["bet_type", "Type"],
+          ["stake", "Stake"],
+          ["status", "Status", badge]
+        ]))
+      : "");
+
   $("#backBtn").onclick = load;
 }
 
 function filterBar(v) {
   if (!v.filters) return "";
-  const items = v.filters.map((f) => {
-    const val = esc(filters[f.name] || "");
-    if (f.opts) {
-      return `<select data-f="${esc(f.name)}"><option value="">${esc(f.ph)}</option>` +
-        f.opts.map((o) => `<option value="${esc(o)}"${filters[f.name] === o ? " selected" : ""}>${esc(o)}</option>`).join("") + "</select>";
-    }
-    return `<input data-f="${esc(f.name)}" placeholder="${esc(f.ph)}" value="${val}">`;
-  }).join("");
-  const exp = v.exportKind ? `<button id="exportBtn">Export CSV</button>` : "";
-  return `<div class="filters">${items}<button class="primary" id="applyBtn">Search</button>${exp}</div><p id="exportMsg" class="muted"></p>`;
+
+  const items = v.filters.map(f => f.opts
+    ? `<select data-f="${esc(f.name)}">
+        <option value="">${esc(f.ph)}</option>
+        ${f.opts.map(o =>
+          `<option value="${esc(o)}"${
+            filters[f.name] === o ? " selected" : ""
+          }>${esc(o)}</option>`
+        ).join("")}
+       </select>`
+    : `<input data-f="${esc(f.name)}"
+        placeholder="${esc(f.ph)}"
+        value="${esc(filters[f.name] || "")}">`
+  ).join("");
+
+  return `
+    <div class="filters">
+      ${items}
+      <button id="applyBtn" class="primary">Apply</button>
+      <button id="resetBtn">Reset</button>
+      ${v.exportKind ? '<button id="exportBtn">Export CSV</button>' : ""}
+    </div>
+    <p id="exportMsg" class="muted small"></p>`;
 }
 
 function downloadCsv(name, text) {
-  const blob = new Blob(["\ufeff" + text], { type: "text/csv;charset=utf-8" });
+  const blob = new Blob(["\ufeff" + text], {
+    type: "text/csv;charset=utf-8"
+  });
+
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = name;
   document.body.appendChild(a);
   a.click();
   a.remove();
+
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 
 async function load() {
-  const v = VIEWS[cur], box = $("#content");
-  box.innerHTML = '<p class="muted">Loading…</p>';
+  const v = VIEWS[cur];
+  const box = $("#content");
+
+  $("#pageTitle").textContent = v.label;
+  $("#pageSubtitle").textContent = v.subtitle || "Admin records";
+  box.innerHTML = '<div class="panel muted">Loading…</div>';
+
   try {
-    if (cur === "dashboard") { renderDash(await api({ action: "dashboard" })); return; }
-    if (cur === "analytics") { renderAnalytics(await api({ action: "analytics" })); return; }
-    if (cur === "reconcile") { renderReconcile(await api({ action: "reconcile" })); return; }
-    const data = await api({ action: v.action, page, page_size: 20, ...(v.fixed || {}), ...filters });
-    const p = data.pagination;
+    if (cur === "dashboard") {
+      renderDash(await api({action: "dashboard"}));
+      updated();
+      return;
+    }
+
+    if (cur === "analytics") {
+      renderAnalytics(await api({action: "analytics"}));
+      updated();
+      return;
+    }
+
+    if (cur === "reconcile") {
+      renderReconcile(await api({action: "reconcile"}));
+      updated();
+      return;
+    }
+
+    const d = await api({
+      action: v.action,
+      page,
+      page_size: 20,
+      ...(v.fixed || {}),
+      ...filters
+    });
+
+    const p = d.pagination || {
+      page: 1,
+      total_pages: 1,
+      total: 0,
+      has_previous: false,
+      has_next: false
+    };
+
     box.innerHTML =
       (v.note ? `<div class="note">${esc(v.note)}</div>` : "") +
       filterBar(v) +
-      table(data[v.key], v.cols) +
-      `<div class="pager"><button id="prevBtn"${p.has_previous ? "" : " disabled"}>Previous</button>` +
-      `<span class="muted">Page ${esc(p.page)} of ${esc(p.total_pages)} · ${esc(p.total)} total</span>` +
-      `<button id="nextBtn"${p.has_next ? "" : " disabled"}>Next</button></div>`;
-    const a = $("#applyBtn");
-    if (a) a.onclick = () => {
-      filters = {};
-      document.querySelectorAll("[data-f]").forEach((el) => { if (el.value.trim()) filters[el.dataset.f] = el.value.trim(); });
-      page = 1;
-      load();
-    };
+      table(d[v.key], v.cols) +
+      `<div class="pager">
+        <button id="prevBtn"${p.has_previous ? "" : " disabled"}>
+          ← Previous
+        </button>
+        <span class="muted small">
+          Page ${esc(p.page)} of ${esc(p.total_pages)} ·
+          ${esc(p.total)} records
+        </span>
+        <button id="nextBtn"${p.has_next ? "" : " disabled"}>
+          Next →
+        </button>
+      </div>`;
+
+    const apply = $("#applyBtn");
+
+    if (apply) {
+      apply.onclick = () => {
+        filters = {};
+
+        document.querySelectorAll("[data-f]").forEach(el => {
+          if (el.value.trim()) {
+            filters[el.dataset.f] = el.value.trim();
+          }
+        });
+
+        page = 1;
+        load();
+      };
+    }
+
+    const reset = $("#resetBtn");
+
+    if (reset) {
+      reset.onclick = () => {
+        filters = {};
+        page = 1;
+        load();
+      };
+    }
+
     const ex = $("#exportBtn");
-    if (ex) ex.onclick = async () => {
-      ex.disabled = true;
-      $("#exportMsg").textContent = "Preparing export…";
-      try {
-        const d = await api({ action: "export", kind: v.exportKind, ...(v.fixed || {}), ...filters });
-        downloadCsv(`${v.exportKind}-${new Date().toISOString().slice(0, 10)}.csv`, d.csv);
-        $("#exportMsg").textContent = d.row_count + " row(s) exported" + (d.truncated ? " (limited to the first " + d.row_count + " of " + d.total + ")" : "") + ".";
-      } catch (e) {
-        if (e.message !== "auth") $("#exportMsg").textContent = e.message;
-      } finally {
-        ex.disabled = false;
+
+    if (ex) {
+      ex.onclick = async () => {
+        ex.disabled = true;
+        $("#exportMsg").textContent = "Preparing export…";
+
+        try {
+          const x = await api({
+            action: "export",
+            kind: v.exportKind,
+            ...(v.fixed || {}),
+            ...filters
+          });
+
+          downloadCsv(
+            `${v.exportKind}-${new Date().toISOString().slice(0, 10)}.csv`,
+            x.csv
+          );
+
+          $("#exportMsg").textContent =
+            `${x.row_count} rows exported` +
+            (x.truncated ? " (server limit applied)" : "") + ".";
+        } catch (e) {
+          if (e.message !== "auth") {
+            $("#exportMsg").textContent = e.message;
+          }
+        } finally {
+          ex.disabled = false;
+        }
+      };
+    }
+
+    $("#prevBtn").onclick = () => {
+      if (page > 1) {
+        page--;
+        load();
       }
     };
-    $("#prevBtn").onclick = () => { page--; load(); };
-    $("#nextBtn").onclick = () => { page++; load(); };
+
+    $("#nextBtn").onclick = () => {
+      if (p.has_next) {
+        page++;
+        load();
+      }
+    };
+
+    updated();
+
   } catch (e) {
-    if (e.message !== "auth") box.innerHTML = `<p class="err">${esc(e.message)}</p>`;
+    if (e.message !== "auth") {
+      box.innerHTML = `<div class="note warn">${esc(e.message)}</div>`;
+    }
   }
 }
 
+function updated() {
+  $("#lastUpdated").textContent =
+    "Updated " + new Date().toLocaleTimeString();
+}
+
+function buildNav() {
+  $("#nav").innerHTML = Object.keys(VIEWS).map(k => `
+    <button data-v="${k}" class="${k === cur ? "active" : ""}">
+      ${esc(VIEWS[k].icon)} &nbsp; ${esc(VIEWS[k].label)}
+    </button>
+  `).join("");
+
+  document.querySelectorAll("#nav [data-v]").forEach(b => {
+    b.onclick = () => {
+      cur = b.dataset.v;
+      page = 1;
+      filters = {};
+      buildNav();
+      load();
+    };
+  });
+}
+
 async function openUser(id) {
-  const box = $("#content");
   if (!/^\d{1,15}$/.test(String(id))) return;
-  box.innerHTML = '<p class="muted">Loading…</p>';
+
+  $("#content").innerHTML =
+    '<div class="panel muted">Loading user…</div>';
+
   try {
-    renderUser(await api({ action: "user_detail", user_id: String(id) }));
-    window.scrollTo(0, 0);
+    renderUser(await api({
+      action: "user_detail",
+      user_id: String(id)
+    }));
   } catch (e) {
     if (e.message !== "auth") {
-      box.innerHTML = `<p class="err">${esc(e.message)}</p><button id="backBtn">← Back</button>`;
-      $("#backBtn").onclick = load;
+      $("#content").innerHTML =
+        `<div class="note warn">${esc(e.message)}</div>` +
+        '<button id="backBtn">Back</button>';
     }
+
+    if ($("#backBtn")) $("#backBtn").onclick = load;
   }
 }
 
 async function runSearch() {
   const q = $("#gs").value.trim();
   if (!q) return;
-  const box = $("#content");
-  box.innerHTML = '<p class="muted">Searching…</p>';
+
+  $("#content").innerHTML =
+    '<div class="panel muted">Searching…</div>';
+
   try {
-    renderSearch(await api({ action: "search", q }), q);
+    renderSearch(await api({action: "search", q}), q);
   } catch (e) {
-    if (e.message !== "auth") box.innerHTML = `<p class="err">${esc(e.message)}</p>`;
+    if (e.message !== "auth") {
+      $("#content").innerHTML =
+        `<div class="note warn">${esc(e.message)}</div>`;
+    }
   }
 }
 
-function buildNav() {
-  $("#nav").innerHTML = Object.keys(VIEWS).map((k) =>
-    `<button data-v="${k}" class="${k === cur ? "on" : ""}">${esc(VIEWS[k].label)}</button>`).join("");
-  document.querySelectorAll("#nav button").forEach((b) => {
-    b.onclick = () => { cur = b.dataset.v; page = 1; filters = {}; buildNav(); load(); };
-  });
-}
-
-$("#content").addEventListener("click", (e) => {
-  const a = e.target.closest("[data-user],[data-round]");
-  if (!a) return;
-  e.preventDefault();
-  if (a.dataset.user) {
-    openUser(a.dataset.user);
-  } else if (a.dataset.round) {
-    cur = "bets"; page = 1; filters = { round_code: a.dataset.round };
-    buildNav();
-    load();
-  }
-});
-
-$("#gsBtn").onclick = runSearch;
-$("#gs").addEventListener("keydown", (e) => { if (e.key === "Enter") runSearch(); });
-
-function showLogin(msg) {
+function showLogin(message) {
   $("#appView").classList.add("hide");
   $("#loginView").classList.remove("hide");
-  $("#loginMsg").textContent = msg || "";
+  $("#loginMsg").textContent = message || "";
   $("#p").value = "";
 }
 
 function showApp() {
   $("#loginView").classList.add("hide");
   $("#appView").classList.remove("hide");
-  cur = "dashboard"; page = 1; filters = {};
+
+  cur = "dashboard";
+  page = 1;
+  filters = {};
+
   buildNav();
   load();
 }
 
-$("#loginForm").addEventListener("submit", async (e) => {
+$("#content").addEventListener("click", e => {
+  const a = e.target.closest("[data-user],[data-round]");
+  if (!a) return;
+
   e.preventDefault();
+
+  if (a.dataset.user) {
+    openUser(a.dataset.user);
+  } else {
+    cur = "bets";
+    page = 1;
+    filters = {round_code: a.dataset.round};
+    buildNav();
+    load();
+  }
+});
+
+$("#gsBtn").onclick = runSearch;
+
+$("#gs").addEventListener("keydown", e => {
+  if (e.key === "Enter") runSearch();
+});
+
+$("#refreshBtn").onclick = load;
+
+$("#loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+
   const btn = $("#loginBtn");
   btn.disabled = true;
   $("#loginMsg").textContent = "";
+
   try {
-    await api({ action: "login", username: $("#u").value, password: $("#p").value });
+    await api({
+      action: "login",
+      username: $("#u").value,
+      password: $("#p").value
+    });
+
     showApp();
-  } catch (err) {
-    $("#loginMsg").textContent = err.message === "auth" ? "" : err.message;
+  } catch (x) {
+    $("#loginMsg").textContent = x.message === "auth" ? "" : x.message;
   } finally {
     btn.disabled = false;
   }
 });
 
 $("#logoutBtn").onclick = async () => {
-  try { await api({ action: "logout" }); } catch (e) {}
+  try {
+    await api({action: "logout"});
+  } catch {}
+
   showLogin("");
 };
 
 (async () => {
   try {
-    await api({ action: "me" });
+    await api({action: "me"});
     showApp();
-  } catch (e) {
+  } catch {
     showLogin("");
   }
 })();
 </script>
+
 </body>
 </html>
