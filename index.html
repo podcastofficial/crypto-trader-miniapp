@@ -3,107 +3,710 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f3f5fb">
+<meta name="theme-color" content="#0b0b0c">
 <title>Crypto Trader Pro</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
-:root{
-  --bg:#f3f5fb;--card:#fff;--text:#182238;--muted:#748097;
-  --border:#e1e7f0;--primary:#2563eb;--green:#16a34a;
-  --red:#dc2626;--violet:#8b5cf6
+:root {
+  --bg:#0b0b0c;
+  --card:#151516;
+  --text:#f5f5f5;
+  --muted:#a1a1aa;
+  --border:#29292c;
+  --primary:#facc15;
+  --green:#22c55e;
+  --red:#ef3038;
+  --violet:#a855f7;
 }
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:14px Arial,Helvetica,sans-serif}
-button,input{font:inherit}
-button{border:0;cursor:pointer}
-button:disabled{opacity:.45;cursor:not-allowed}
-.app{max-width:600px;margin:auto;min-height:100vh;padding-bottom:105px}
-header{background:#fff;padding:15px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border)}
-.brand{font-size:18px;font-weight:900}
-.brand span{color:var(--primary)}
-.icon-btn{background:#eef2ff;border-radius:11px;padding:10px}
-.page{display:none}
-.page.active{display:block}
-.section{padding:0 14px;margin-bottom:15px}
-.section-title{font-size:17px;font-weight:900;margin:7px 0 13px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:13px;overflow-wrap:anywhere}
-.muted{color:var(--muted)}
-.small{font-size:12px}
-.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.balance-card{margin:15px;padding:21px;border-radius:19px;background:linear-gradient(135deg,#1d4ed8,#4f46e5);color:#fff}
-.balance-label{font-size:12px;opacity:.9}
-.balance-value{font-size:27px;font-weight:900;margin:9px 0}
-.balance-sub{font-size:12px;opacity:.9}
-.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
-.action-btn{padding:13px 8px;background:#fff;color:#1d4ed8;border-radius:11px;font-weight:800}
-.timer-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:17px;margin-bottom:13px;text-align:center}
-.period{font-size:12px;color:var(--muted);overflow-wrap:anywhere;margin-top:8px}
-.timer{font-size:32px;font-weight:900;margin:10px 0;font-variant-numeric:tabular-nums}
-.status{display:inline-block;padding:7px 12px;border-radius:20px;background:#dcfce7;color:#15803d;font-weight:800;font-size:11px}
-.status.locked{background:#fee2e2;color:#b91c1c}
-.notice{background:#fff7ed;color:#9a3412;padding:12px;border-radius:11px;font-size:12px;line-height:1.7;margin-top:12px;overflow-wrap:anywhere}
-.number-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:15px 0}
-.number-btn{min-width:0;min-height:49px;border-radius:12px;color:#fff;font-size:18px;font-weight:900}
-.red{background:#dc2626}.green{background:#16a34a}.violet{background:#8b5cf6}
-.orange{background:#f59e0b}.blue{background:#0ea5e9}
-.num-zero{background:linear-gradient(135deg,#dc2626 0 50%,#8b5cf6 50%)}
-.num-five{background:linear-gradient(135deg,#16a34a 0 50%,#8b5cf6 50%)}
-.option-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:13px 0}
-.option-btn{min-height:46px;padding:8px 4px;border-radius:11px;color:#fff;font-weight:800}
-.big-small{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.big-small button{min-height:47px;border-radius:11px;color:#fff;font-weight:900}
-.primary-btn{width:100%;padding:14px;border-radius:11px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;font-weight:900;min-height:46px}
-.secondary-btn{width:100%;padding:12px;border-radius:11px;background:#e8efff;color:#1d4ed8;font-weight:900;min-height:44px}
-.bottom-nav{position:fixed;bottom:calc(8px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:calc(100% - 12px);max-width:588px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;background:rgba(255,255,255,.98);border:1px solid var(--border);border-radius:15px;padding:7px 5px;z-index:20;box-shadow:0 3px 14px #0f172a18}
-.nav-btn{min-width:0;min-height:53px;padding:5px 2px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#f1f5f9;color:#475569;font-size:10px;font-weight:900}
-.nav-icon{display:block;font-size:20px;line-height:1.2}
-.nav-btn.active{background:#dbeafe;color:#1d4ed8;box-shadow:inset 0 -3px 0 #2563eb}
-input{display:block;width:100%;min-width:0;padding:13px;margin:7px 0 13px;border:1px solid #d8e0ec;border-radius:10px;background:#fff;color:var(--text)}
-label{font-weight:800;font-size:12px}
-.utc-time{font-size:11px;color:#64748b;margin-top:5px;line-height:1.6}
-.empty{text-align:center;padding:20px 7px;color:var(--muted);line-height:1.7}
-.history-card{border-radius:13px;padding:12px;margin:9px 0;border:1px solid #dbe4f0;background:linear-gradient(135deg,#fff,#f8fafc)}
-.history-card.win{border-color:#86efac;background:linear-gradient(135deg,#f0fdf4,#dcfce7)}
-.history-card.loss{border-color:#fca5a5;background:linear-gradient(135deg,#fff1f2,#fee2e2)}
-.badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.3px}
-.badge.win{background:#16a34a;color:#fff}.badge.loss{background:#dc2626;color:#fff}
-.badge.pending{background:#facc15;color:#713f12}.badge.cancelled{background:#64748b;color:#fff}
-.modal-backdrop{display:none;position:fixed;inset:0;z-index:50;background:#0f172a88;align-items:center;justify-content:center;padding:15px}
-.modal-backdrop.open{display:flex}
-.modal{background:white;width:100%;max-width:430px;max-height:90%;overflow:auto;padding:19px;border-radius:17px}
-.modal-title{font-size:18px;font-weight:900}
-.close-btn{padding:9px 12px;border-radius:9px;background:#e9edf5}
-.amount-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:12px 0}
-.amount-presets button{background:#ede9fe;color:#6d28d9;padding:12px 3px;border-radius:9px;font-weight:900}
-.amount-stepper{display:grid;grid-template-columns:45px minmax(0,1fr) 45px;gap:8px}
-.amount-stepper button{border-radius:9px;background:#e2e8f0;font-size:21px}
-.amount-stepper input{margin:0;text-align:center}
-.toast{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:100px;width:max-content;max-width:90%;z-index:90;padding:13px 16px;border-radius:11px;background:#172033;color:#fff;text-align:center;line-height:1.5}
-.toast.show{display:block}
-.referral-hero{padding:20px;border-radius:17px;background:linear-gradient(135deg,#1e40af,#7c3aed);color:white;margin-bottom:13px}
-.hero-label{font-size:12px;opacity:.9}.hero-value{font-size:28px;font-weight:900;margin:9px 0}
-.hero-sub{font-size:12px;line-height:1.6;opacity:.95}
-.referral-link-box{background:#f1f5f9;border:1px dashed #94a3b8;padding:12px;border-radius:10px;overflow-wrap:anywhere;word-break:break-word;font-size:12px;line-height:1.7;margin:10px 0}
-.referral-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}
-.referral-stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.referral-stat{padding:13px;border:1px solid var(--border);border-radius:12px;background:#f8fafc}
-.stat-label{font-size:11px;color:var(--muted);line-height:1.5}
-.stat-value{font-size:20px;font-weight:900;margin-top:7px;overflow-wrap:anywhere}
-.level-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid var(--border)}
-.level-row:last-child{border-bottom:0}
-.level-title{font-weight:900}.level-rate{font-size:12px;color:#2563eb;font-weight:900}
-.reward-status{padding:10px 12px;border-radius:10px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:800;line-height:1.7}
-.reward-status.credited{background:#dcfce7;color:#166534}
-.pagination{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px}
-.pagination button{background:#e8efff;color:#1d4ed8;border-radius:9px;padding:10px 12px;font-weight:800}
-.pagination span{font-size:11px;color:var(--muted);text-align:center}
-@media(max-width:380px){.nav-btn{font-size:9px}.nav-icon{font-size:18px}.section{padding:0 10px}.balance-card{margin:10px}.card{padding:13px}.bottom-nav{gap:2px;padding:6px 3px}}
+
+* {
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body {
+  margin:0;
+  min-height:100%;
+  background:#0b0b0c;
+  color:var(--text);
+  color-scheme:dark;
+  font:14px Arial,Helvetica,sans-serif;
+}
+
+body {
+  background:radial-gradient(ellipse at top,#19171b 0,#0b0b0c 46%);
+}
+
+button,input {
+  font:inherit;
+}
+
+button {
+  border:0;
+  cursor:pointer;
+}
+
+button:disabled {
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.app {
+  max-width:600px;
+  margin:auto;
+  min-height:100vh;
+  padding-bottom:calc(115px + env(safe-area-inset-bottom));
+  background:transparent;
+}
+
+header {
+  background:#141415;
+  border-bottom:1px solid #29292c;
+  color:#f5f5f5;
+  padding:15px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.brand {
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:-.3px;
+}
+
+.brand span {
+  color:#facc15;
+}
+
+.icon-btn {
+  background:#29292c;
+  color:#facc15;
+  border:1px solid #3a3830;
+  border-radius:11px;
+  padding:10px;
+}
+
+.page {
+  display:none;
+  color:#f5f5f5;
+}
+
+.page.active {
+  display:block;
+}
+
+.section {
+  padding:0 14px;
+  margin-bottom:15px;
+}
+
+.section-title {
+  font-size:17px;
+  font-weight:900;
+  margin:7px 0 13px;
+  color:#fafafa;
+  letter-spacing:.1px;
+}
+
+.card,
+.timer-card {
+  background:#151516;
+  border:1px solid #303034;
+  border-radius:16px;
+  padding:16px;
+  margin-bottom:13px;
+  box-shadow:0 8px 24px #0005;
+  color:#f5f5f5;
+  overflow-wrap:anywhere;
+}
+
+.muted,
+.period,
+.utc-time {
+  color:#a1a1aa;
+}
+
+.small {
+  font-size:12px;
+}
+
+.row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+/* WALLET */
+
+.balance-card {
+  margin:15px;
+  padding:21px;
+  border-radius:19px;
+  background:linear-gradient(135deg,#191919,#242018);
+  border:1px solid #4a3e18;
+  box-shadow:0 8px 28px #0006;
+  color:#fff;
+}
+
+.balance-label {
+  color:#d4d4d8;
+  font-size:12px;
+}
+
+.balance-value {
+  color:#facc15;
+  font-size:27px;
+  font-weight:900;
+  margin:9px 0;
+  overflow-wrap:anywhere;
+}
+
+.balance-sub {
+  color:#bdbdc3;
+  font-size:12px;
+}
+
+.actions {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin-top:16px;
+}
+
+.action-btn {
+  padding:13px 8px;
+  background:#facc15;
+  color:#171717;
+  border:1px solid #eab308;
+  border-radius:11px;
+  font-weight:800;
+}
+
+.action-btn + .action-btn {
+  background:#292929;
+  color:#facc15;
+  border-color:#444;
+}
+
+/* TIMER */
+
+.timer-card {
+  text-align:center;
+  padding:18px 16px;
+}
+
+.timer-card .row {
+  color:#d4d4d8;
+}
+
+.period {
+  font-size:12px;
+  overflow-wrap:anywhere;
+  margin-top:8px;
+}
+
+.timer {
+  width:108px;
+  height:108px;
+  margin:16px auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:4px solid #333338;
+  border-right-color:#facc15;
+  border-top-color:#facc15;
+  border-radius:50%;
+  font-size:29px;
+  color:#fff;
+  box-shadow:0 0 0 5px #facc150a;
+  font-variant-numeric:tabular-nums;
+}
+
+.status {
+  display:inline-block;
+  padding:7px 12px;
+  border-radius:20px;
+  background:#173b27;
+  color:#4ade80;
+  border:1px solid #245b39;
+  font-weight:800;
+  font-size:11px;
+}
+
+.status.locked {
+  background:#351b1d;
+  color:#fca5a5;
+  border-color:#6d292d;
+}
+
+.notice {
+  background:#201d14;
+  color:#e9d7a0;
+  border:1px solid #51421a;
+  padding:12px;
+  border-radius:11px;
+  font-size:12px;
+  line-height:1.7;
+  margin-top:12px;
+  overflow-wrap:anywhere;
+}
+
+/* NUMBER GRID */
+
+.number-grid {
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:9px;
+  margin:15px 0;
+}
+
+.number-btn {
+  min-width:0;
+  min-height:48px;
+  border-radius:12px;
+  background:#202023;
+  border:1px solid #38383d;
+  color:#f5f5f5;
+  font-size:18px;
+  font-weight:900;
+  box-shadow:inset 0 1px #ffffff08;
+}
+
+.number-btn.red {
+  background:#202023;
+  border-color:#3d292b;
+}
+
+.number-btn.green {
+  background:#202023;
+  border-color:#254331;
+}
+
+.number-btn.violet {
+  background:#202023;
+  border-color:#3d2b50;
+}
+
+.number-btn.num-zero {
+  background:linear-gradient(135deg,#202023 0 50%,#33203d 50%);
+  border-color:#493052;
+}
+
+.number-btn.num-five {
+  background:linear-gradient(135deg,#202023 0 50%,#33203d 50%);
+  border-color:#493052;
+}
+
+/* COLOUR OPTIONS */
+
+.option-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;
+  margin:13px 0;
+}
+
+.option-btn {
+  min-height:48px;
+  padding:8px 4px;
+  border-radius:11px;
+  color:#fff;
+  font-weight:900;
+  box-shadow:0 3px 12px #0005;
+}
+
+.option-btn.red {
+  background:#e32932;
+  color:white;
+}
+
+.option-btn.green {
+  background:#20b85a;
+  color:#071b0e;
+}
+
+.option-btn.violet {
+  background:#a34df2;
+  color:white;
+}
+
+/* BIG / SMALL */
+
+.big-small {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+
+.big-small button {
+  border:1px solid #3a3a40;
+  min-height:48px;
+  border-radius:11px;
+  font-weight:900;
+}
+
+.big-small .orange {
+  background:#1d1b15;
+  color:#facc15;
+  border-color:#51421a;
+}
+
+.big-small .blue {
+  background:#171d28;
+  color:#93c5fd;
+  border-color:#293d5a;
+}
+
+.primary-btn {
+  width:100%;
+  padding:14px;
+  border-radius:11px;
+  background:#facc15;
+  color:#171717;
+  font-weight:900;
+  min-height:46px;
+  box-shadow:0 5px 16px #facc151c;
+}
+
+/* INPUTS */
+
+input {
+  display:block;
+  width:100%;
+  min-width:0;
+  padding:13px;
+  margin:7px 0 13px;
+  border:1px solid #3a3a40;
+  border-radius:10px;
+  background:#202023;
+  color:#fff;
+}
+
+label {
+  font-weight:800;
+  font-size:12px;
+}
+
+.utc-time {
+  font-size:11px;
+  margin-top:5px;
+  line-height:1.6;
+}
+
+/* HISTORY */
+
+.record-row,
+.history-card {
+  padding:12px;
+  margin:9px 0;
+  border:1px solid #303034;
+  border-radius:13px;
+  background:#19191b;
+  color:#f5f5f5;
+}
+
+.history-card.win {
+  border-color:#245b39;
+  background:#14231a;
+}
+
+.history-card.loss {
+  border-color:#6d292d;
+  background:#291719;
+}
+
+.history-card.pending {
+  border-color:#6b5518;
+  background:#282315;
+}
+
+.history-card.cancelled {
+  border-color:#3a3a40;
+  background:#202023;
+}
+
+.record-number {
+  width:38px;
+  height:38px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  color:#fff;
+  font-weight:900;
+  flex-shrink:0;
+  box-shadow:0 3px 12px #0008;
+}
+
+.empty {
+  text-align:center;
+  padding:20px 7px;
+  color:#a1a1aa;
+  line-height:1.7;
+}
+
+.badge {
+  display:inline-block;
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.3px;
+}
+
+.badge.win {
+  background:#16a34a;
+  color:#fff;
+}
+
+.badge.loss {
+  background:#dc2626;
+  color:#fff;
+}
+
+.badge.pending {
+  background:#facc15;
+  color:#171717;
+}
+
+.badge.cancelled {
+  background:#64748b;
+  color:#fff;
+}
+
+.badge.violet-badge {
+  background:#a855f7;
+  color:white;
+}
+
+/* BOTTOM NAVIGATION */
+
+.bottom-nav {
+  position:fixed;
+  bottom:calc(8px + env(safe-area-inset-bottom));
+  left:50%;
+  transform:translateX(-50%);
+  width:calc(100% - 12px);
+  max-width:588px;
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:4px;
+  background:rgba(20,20,21,.97);
+  border:1px solid #303034;
+  border-radius:15px;
+  padding:7px 5px;
+  z-index:20;
+  box-shadow:0 8px 28px #000a;
+  backdrop-filter:blur(16px);
+}
+
+.nav-btn {
+  min-width:0;
+  min-height:53px;
+  padding:5px 2px;
+  border-radius:11px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  background:#202023;
+  color:#b4b4bc;
+  border:1px solid #2d2d31;
+  font-size:10px;
+  font-weight:900;
+}
+
+.nav-icon {
+  display:block;
+  font-size:20px;
+  line-height:1.2;
+}
+
+.nav-btn.active {
+  background:#302911;
+  color:#facc15;
+  box-shadow:inset 0 -3px 0 #facc15;
+  border-color:#51421a;
+}
+
+/* BET MODAL */
+
+.modal-backdrop {
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:50;
+  background:#000b;
+  backdrop-filter:blur(5px);
+  align-items:center;
+  justify-content:center;
+  padding:15px;
+}
+
+.modal-backdrop.open {
+  display:flex;
+}
+
+.modal {
+  background:#171719;
+  color:#f5f5f5;
+  border:1px solid #38383d;
+  box-shadow:0 20px 70px #000b;
+  width:100%;
+  max-width:430px;
+  max-height:90%;
+  overflow:auto;
+  padding:19px;
+  border-radius:17px;
+}
+
+.modal-title {
+  font-size:18px;
+  font-weight:900;
+}
+
+.close-btn {
+  padding:9px 12px;
+  border-radius:9px;
+  background:#29292c;
+  color:#f5f5f5;
+}
+
+.amount-presets {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px;
+  margin:12px 0;
+}
+
+.amount-presets button {
+  background:#302911;
+  color:#facc15;
+  border:1px solid #51421a;
+  padding:12px 3px;
+  border-radius:9px;
+  font-weight:900;
+}
+
+.amount-stepper {
+  display:grid;
+  grid-template-columns:45px minmax(0,1fr) 45px;
+  gap:8px;
+}
+
+.amount-stepper button {
+  border-radius:9px;
+  background:#29292c;
+  color:#facc15;
+  font-size:21px;
+}
+
+.amount-stepper input {
+  margin:0;
+  text-align:center;
+}
+
+.toast {
+  display:none;
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%);
+  bottom:100px;
+  width:max-content;
+  max-width:90%;
+  z-index:90;
+  padding:13px 16px;
+  border-radius:11px;
+  background:#facc15;
+  color:#171717;
+  font-weight:800;
+  box-shadow:0 8px 25px #0008;
+  text-align:center;
+  line-height:1.5;
+}
+
+.toast.show {
+  display:block;
+}
+
+/* RESULT POPUP */
+
+.result-modal-number {
+  width:100px;
+  height:100px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-size:48px;
+  font-weight:900;
+  margin:20px auto;
+  box-shadow:0 8px 24px #0008;
+  border:5px solid #ffffff;
+}
+
+.result-modal-title {
+  text-align:center;
+  font-size:23px;
+  font-weight:900;
+}
+
+.result-modal-sub {
+  text-align:center;
+  color:#a1a1aa;
+  font-size:12px;
+  line-height:1.7;
+  overflow-wrap:anywhere;
+}
+
+.result-modal-badges {
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:14px 0;
+}
+
+.result-modal-badges span {
+  padding:8px 13px;
+  border-radius:999px;
+  background:#302911;
+  color:#facc15;
+  font-size:11px;
+  font-weight:900;
+}
+
+.result-modal .primary-btn {
+  margin-top:8px;
+}
+
+/* MOBILE RESPONSIVE */
+
+@media(max-width:380px) {
+  .nav-btn {font-size:9px}
+  .nav-icon {font-size:18px}
+  .section {padding:0 10px}
+  .balance-card {margin:10px}
+  .card {padding:13px}
+  .bottom-nav {gap:2px;padding:6px 3px}
+  .timer {width:96px;height:96px;font-size:26px}
+  .option-grid {gap:7px}
+  .option-btn {font-size:12px}
+  .number-grid {gap:7px}
+  .number-btn {min-height:45px}
+}
 </style>
 </head>
 
 <body>
 <div class="app">
+
 <header>
   <div>
     <div class="brand">CRYPTO <span>TRADER PRO</span></div>
@@ -112,10 +715,14 @@ label{font-weight:800;font-size:12px}
   <button class="icon-btn" id="headerProfile" type="button">👤</button>
 </header>
 
+<!-- HOME -->
 <section class="page active" id="page-home">
+
   <div class="balance-card">
     <div class="balance-label">BACKEND WALLET BALANCE</div>
-    <div class="balance-value"><span id="homePoints">—</span> Points</div>
+    <div class="balance-value">
+      <span id="homePoints">—</span> Points
+    </div>
     <div class="balance-sub">Server database · Test credits only</div>
     <div class="actions">
       <button class="action-btn" data-page-go="wallet">💰 Wallet</button>
@@ -125,7 +732,10 @@ label{font-weight:800;font-size:12px}
 
   <div class="section">
     <div class="timer-card">
-      <div class="row"><span class="muted small">Current Period</span><span class="muted small">3-minute round</span></div>
+      <div class="row">
+        <span class="muted small">Current Period</span>
+        <span class="muted small">3-minute round</span>
+      </div>
       <div class="period" id="periodId">Loading server round…</div>
       <div class="timer" id="timer">--:--</div>
       <span class="status" id="betStatus">CONNECTING</span>
@@ -136,12 +746,14 @@ label{font-weight:800;font-size:12px}
       <div class="section-title">🔢 Choose a Number</div>
       <div class="muted small">Select a number to open the test-bet window.</div>
       <div class="number-grid" id="numberGrid"></div>
+
       <div class="section-title">🎨 Choose a Colour</div>
       <div class="option-grid">
         <button class="option-btn red" data-bet="Red">🔴 Red</button>
         <button class="option-btn green" data-bet="Green">🟢 Green</button>
         <button class="option-btn violet" data-bet="Violet">🟣 Violet</button>
       </div>
+
       <div class="section-title">📊 Big / Small</div>
       <div class="big-small">
         <button class="orange" data-bet="Big">🟠 Big (5–9)</button>
@@ -152,154 +764,113 @@ label{font-weight:800;font-size:12px}
     <div class="card">
       <div class="section-title">🎯 Result History</div>
       <div id="homeParityRecords" class="empty">Loading…</div>
-      <div class="pagination">
-        <button id="homeResultsPrev">← Previous</button>
-        <span id="homeResultsPage">Page 1</span>
-        <button id="homeResultsNext">Next →</button>
-      </div>
     </div>
 
     <div class="card">
       <div class="section-title">📋 Trade History</div>
       <div id="homeTradeRecords" class="empty">Loading…</div>
-      <div class="pagination">
-        <button id="homeTradesPrev">← Previous</button>
-        <span id="homeTradesPage">Page 1</span>
-        <button id="homeTradesNext">Next →</button>
-      </div>
     </div>
   </div>
 </section>
 
+<!-- GAME -->
 <section class="page" id="page-game">
   <div class="section">
     <div class="section-title">🎮 Prediction Game</div>
-    <div class="card"><div class="muted small">Server wallet balance</div><strong id="gamePoints">—</strong></div>
+
+    <div class="card">
+      <div class="muted small">Server wallet balance</div>
+      <strong id="gamePoints">—</strong>
+    </div>
+
     <div class="timer-card">
       <div class="period" id="gamePeriod">Loading…</div>
       <div class="timer" id="gameTimer">--:--</div>
       <span class="status" id="gameStatus">CONNECTING</span>
     </div>
+
     <div class="card">
       <div class="section-title">Select Your Prediction</div>
       <div class="number-grid" id="gameNumberGrid"></div>
+
       <div class="option-grid">
         <button class="option-btn red" data-bet="Red">🔴 Red</button>
         <button class="option-btn green" data-bet="Green">🟢 Green</button>
         <button class="option-btn violet" data-bet="Violet">🟣 Violet</button>
       </div>
+
       <div class="big-small">
         <button class="orange" data-bet="Big">🟠 Big</button>
         <button class="blue" data-bet="Small">🔵 Small</button>
       </div>
+
       <div class="notice">Testing only. Verify settlement before any live launch.</div>
     </div>
   </div>
 </section>
 
+<!-- RECORDS -->
 <section class="page" id="page-records">
   <div class="section">
     <div class="section-title">📊 Records</div>
+
     <div class="card">
       <div class="section-title">🎯 Result History</div>
       <div id="parityRecords" class="empty">Loading…</div>
-      <div class="pagination">
-        <button id="resultsPrev">← Previous</button>
-        <span id="resultsPage">Page 1</span>
-        <button id="resultsNext">Next →</button>
-      </div>
     </div>
+
     <div class="card">
       <div class="section-title">📋 Trade History</div>
       <div id="tradeHistory" class="empty">Loading…</div>
-      <div class="pagination">
-        <button id="tradesPrev">← Previous</button>
-        <span id="tradesPage">Page 1</span>
-        <button id="tradesNext">Next →</button>
-      </div>
     </div>
   </div>
 </section>
 
+<!-- WALLET -->
 <section class="page" id="page-wallet">
   <div class="section">
     <div class="section-title">💰 Wallet</div>
+
     <div class="card">
       <div class="muted small">Database test-credit balance</div>
-      <div style="font-size:27px;font-weight:900;margin:9px 0"><span id="walletPoints">—</span> Points</div>
-      <div class="notice">Deposit and withdrawal backend is not connected yet. Do not send cryptocurrency.</div>
+      <div style="font-size:27px;font-weight:900;margin:9px 0">
+        <span id="walletPoints">—</span> Points
+      </div>
+
+      <div class="notice">
+        Deposit and withdrawal backend is not connected yet.
+        Do not send cryptocurrency.
+      </div>
+
       <button class="primary-btn" id="walletRefresh">Refresh Balance</button>
     </div>
   </div>
 </section>
 
+<!-- REFERRAL -->
 <section class="page" id="page-referral">
   <div class="section">
     <div class="section-title">👥 Referral Program</div>
-    <div class="referral-hero">
-      <div class="hero-label">TOTAL REFERRAL COMMISSIONS</div>
-      <div class="hero-value"><span id="refTotalCommission">—</span> Points</div>
-      <div class="hero-sub">Commission totals are loaded from the server.</div>
-    </div>
 
     <div class="card">
-      <div class="section-title">🔗 Your Referral Link</div>
-      <div class="referral-link-box" id="referralLink">Loading referral link…</div>
-      <div class="row"><span class="muted small">Referral code</span><strong id="referralCode">—</strong></div>
-      <div class="referral-actions">
-        <button class="primary-btn" id="copyReferralBtn">📋 Copy Link</button>
-        <button class="secondary-btn" id="shareReferralBtn">📲 Share Link</button>
-      </div>
-      <button class="secondary-btn" id="refreshReferralBtn" style="margin-top:10px">↻ Refresh Referral Data</button>
-    </div>
-
-    <div class="card">
-      <div class="section-title">📊 Referral Overview</div>
-      <div class="referral-stat-grid">
-        <div class="referral-stat"><div class="stat-label">Direct Referrals</div><div class="stat-value" id="directReferralCount">—</div></div>
-        <div class="referral-stat"><div class="stat-label">Total Commission</div><div class="stat-value" id="refCommissionTotalStat">—</div></div>
-        <div class="referral-stat"><div class="stat-label">Pending Reward</div><div class="stat-value" id="refPendingReward">—</div></div>
-        <div class="referral-stat"><div class="stat-label">Credited Reward</div><div class="stat-value" id="refCreditedReward">—</div></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">💰 Commission Levels</div>
-      <div class="level-row"><div><div class="level-title">Level 1</div><div class="muted small">Direct referrals</div></div><div style="text-align:right"><div class="level-rate">15%</div><strong id="refLevel1">— Points</strong></div></div>
-      <div class="level-row"><div><div class="level-title">Level 2</div><div class="muted small">Second level</div></div><div style="text-align:right"><div class="level-rate">10%</div><strong id="refLevel2">— Points</strong></div></div>
-      <div class="level-row"><div><div class="level-title">Level 3</div><div class="muted small">Third level</div></div><div style="text-align:right"><div class="level-rate">5%</div><strong id="refLevel3">— Points</strong></div></div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">🎁 Referral Reward</div>
-      <p class="muted small">100 Points reward requires a qualifying confirmed recharge of at least 100 Points. Recharge is not connected yet, so rewards may remain pending.</p>
-      <div id="refRewardStatus" class="reward-status">Loading reward status…</div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">🎟️ Apply Referral Code</div>
-      <p class="muted small">Referral attribution cannot be changed after it is set.</p>
-      <label for="referralCodeInput">Referral Code</label>
-      <input id="referralCodeInput" type="text" maxlength="80" placeholder="Enter referral code" autocomplete="off">
-      <button class="primary-btn" id="applyReferralBtn">Apply Referral Code</button>
-    </div>
-
-    <div class="card">
-      <div class="section-title">📋 Commission History</div>
-      <div id="referralHistory" class="empty">Loading commission history…</div>
+      <h3>Referral features not connected</h3>
+      <p class="muted">Referral attribution and rewards require backend implementation.</p>
     </div>
   </div>
 </section>
 
+<!-- PROFILE -->
 <section class="page" id="page-profile">
   <div class="section">
     <div class="section-title">👤 Profile & Settings</div>
+
     <div class="card">
       <div class="muted small">Telegram account</div>
       <strong id="profileName">Checking Telegram…</strong>
       <p class="muted small" id="profileStatus">Authenticating with Telegram</p>
       <button class="primary-btn" id="authRetry">Retry Authentication</button>
     </div>
+
     <div class="card">
       <div class="section-title">About</div>
       <p>Server-controlled rounds and test-credit wallet.</p>
@@ -308,41 +879,78 @@ label{font-weight:800;font-size:12px}
   </div>
 </section>
 
+<!-- NAVIGATION -->
 <nav class="bottom-nav" aria-label="Main navigation">
-  <button class="nav-btn active" data-page="home"><span class="nav-icon">🏠</span><span>Home</span></button>
-  <button class="nav-btn" data-page="game"><span class="nav-icon">🎮</span><span>Game</span></button>
-  <button class="nav-btn" data-page="records"><span class="nav-icon">📊</span><span>Records</span></button>
-  <button class="nav-btn" data-page="wallet"><span class="nav-icon">💰</span><span>Wallet</span></button>
-  <button class="nav-btn" data-page="referral"><span class="nav-icon">🎁</span><span>Referral</span></button>
-  <button class="nav-btn" data-page="profile"><span class="nav-icon">👤</span><span>Profile</span></button>
+  <button class="nav-btn active" data-page="home">
+    <span class="nav-icon">🏠</span><span>Home</span>
+  </button>
+  <button class="nav-btn" data-page="game">
+    <span class="nav-icon">🎮</span><span>Game</span>
+  </button>
+  <button class="nav-btn" data-page="records">
+    <span class="nav-icon">📊</span><span>Records</span>
+  </button>
+  <button class="nav-btn" data-page="wallet">
+    <span class="nav-icon">💰</span><span>Wallet</span>
+  </button>
+  <button class="nav-btn" data-page="referral">
+    <span class="nav-icon">🎁</span><span>Referral</span>
+  </button>
+  <button class="nav-btn" data-page="profile">
+    <span class="nav-icon">👤</span><span>Profile</span>
+  </button>
 </nav>
+
 </div>
 
+<!-- BET MODAL -->
 <div class="modal-backdrop" id="betModal">
   <div class="modal">
-    <div class="row"><div class="modal-title" id="betModalTitle">Place Test Bet</div><button class="close-btn" data-close="betModal">✕</button></div>
-    <p class="muted small" id="betModalPeriod"></p>
-    <label for="betAmount">Bet Amount (Test Points)</label>
-    <div class="amount-presets">
-      <button data-amount="10">10</button><button data-amount="50">50</button><button data-amount="100">100</button><button data-amount="500">500</button>
+    <div class="row">
+      <div class="modal-title" id="betModalTitle">Place Test Bet</div>
+      <button class="close-btn" data-close="betModal">✕</button>
     </div>
+
+    <p class="muted small" id="betModalPeriod"></p>
+
+    <label for="betAmount">Bet Amount (Test Points)</label>
+
+    <div class="amount-presets">
+      <button data-amount="10">10</button>
+      <button data-amount="50">50</button>
+      <button data-amount="100">100</button>
+      <button data-amount="500">500</button>
+    </div>
+
     <div class="amount-stepper">
       <button id="minusAmount">−</button>
       <input id="betAmount" type="number" min="0.01" max="1000" step="0.01" value="100">
       <button id="plusAmount">+</button>
     </div>
+
     <div class="notice">Test credits only. A bet deducts test credits.</div>
-    <button class="primary-btn" id="confirmBet" style="margin-top:14px">Place Test Bet</button>
+
+    <button class="primary-btn" id="confirmBet" style="margin-top:14px">
+      Place Test Bet
+    </button>
   </div>
 </div>
 
-<div class="modal-backdrop" id="resultModal" role="dialog" aria-modal="true">
-  <div class="modal">
-    <div style="text-align:center;font-size:23px;font-weight:900">🎉 ROUND RESULT</div>
-    <div class="muted small" id="resultPopupPeriod" style="text-align:center;margin-top:8px">Period —</div>
-    <div id="resultPopupNumber" style="width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:48px;font-weight:900;margin:20px auto">—</div>
-    <div class="row" style="justify-content:center"><strong id="resultPopupColor">COLOR —</strong><strong id="resultPopupSize">—</strong></div>
-    <button class="primary-btn" id="resultPopupClose" style="margin-top:18px">CONTINUE</button>
+<!-- RESULT POPUP -->
+<div class="modal-backdrop" id="resultModal" role="dialog" aria-modal="true" aria-labelledby="resultPopupTitle">
+  <div class="modal result-modal">
+    <div class="result-modal-title" id="resultPopupTitle">🎉 ROUND RESULT</div>
+    <div class="result-modal-sub" id="resultPopupPeriod">Period —</div>
+    <div class="result-modal-number" id="resultPopupNumber">—</div>
+
+    <div class="result-modal-badges">
+      <span id="resultPopupColor">COLOR —</span>
+      <span id="resultPopupSize">—</span>
+    </div>
+
+    <div class="result-modal-sub">The result was received from the game server.</div>
+
+    <button class="primary-btn" id="resultPopupClose" type="button">CONTINUE</button>
   </div>
 </div>
 
@@ -354,11 +962,11 @@ label{font-weight:800;font-size:12px}
 
 const $ = id => document.getElementById(id);
 const tg = window.Telegram && window.Telegram.WebApp;
-const PAGE_SIZE = 10;
 
 let initData = "";
 let authed = false;
 let user = null;
+let balance = null;
 let rounds = [];
 let bets = [];
 let currentRound = null;
@@ -366,27 +974,31 @@ let currentBet = null;
 let pendingBetRequest = null;
 let toastTimer = null;
 let refreshing = false;
-let referralLoading = false;
 let serverTimeOffset = 0;
-let resultsPage = 1;
-let tradesPage = 1;
-let resultsPagination = {page:1,total_pages:1,has_next:false,has_previous:false};
-let tradesPagination = {page:1,total_pages:1,has_next:false,has_previous:false};
-let lastResultSignature = "";
+let lastServerSync = 0;
+let lastSeenResultEnd = 0;
 let resultPopupQueue = [];
 let resultPopupOpen = false;
-let pageIsVisible = !document.hidden;
+let audioContext = null;
+let audioUnlocked = false;
+let lastTickSecond = -1;
+let previousBettingOpen = null;
+let lastDisplayedRoundCode = "";
 
 function toast(message){
-  $("toast").textContent = String(message || "");
+  $("toast").textContent = message;
   $("toast").classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>$("toast").classList.remove("show"),3500);
+  toastTimer = setTimeout(() => $("toast").classList.remove("show"),3500);
 }
 
 function esc(value){
-  return String(value ?? "").replace(/[&<>"']/g,c=>({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  return String(value ?? "").replace(/[&<>"']/g,c => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
   }[c]));
 }
 
@@ -400,374 +1012,713 @@ function money(value){
 function dateUTC(value){
   const d = new Date(value);
   if(Number.isNaN(d.getTime())) return "";
-  return d.toLocaleString("en-GB",{
-    timeZone:"UTC",day:"2-digit",month:"2-digit",year:"numeric",
-    hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"
-  })+" UTC";
-}
 
-function serverNow(){
-  return Date.now()+serverTimeOffset;
+  return d.toLocaleString("en-GB",{
+    timeZone:"UTC",
+    day:"2-digit",
+    month:"2-digit",
+    year:"numeric",
+    hour:"2-digit",
+    minute:"2-digit",
+    second:"2-digit",
+    hourCycle:"h23"
+  }) + " UTC";
 }
 
 function showPage(name){
-  document.querySelectorAll(".page").forEach(page=>{
-    page.classList.toggle("active",page.id==="page-"+name);
-  });
-  document.querySelectorAll(".nav-btn").forEach(button=>{
-    button.classList.toggle("active",button.dataset.page===name);
+  document.querySelectorAll(".page").forEach(page => {
+    page.classList.toggle("active",page.id === "page-" + name);
   });
 
-  if(name==="referral"&&authed) loadReferralData();
-  if(name==="records"&&authed) refreshHistories();
+  document.querySelectorAll(".nav-btn").forEach(button => {
+    button.classList.toggle("active",button.dataset.page === name);
+  });
 }
 
 function numClass(n){
-  return n===0?"num-zero":n===5?"num-five":n%2===0?"red":"green";
+  return n === 0 ? "num-zero" :
+         n === 5 ? "num-five" :
+         n % 2 === 0 ? "red" : "green";
 }
 
 function renderNumbers(id){
-  const box=$(id);
-  if(!box)return;
-  box.replaceChildren();
+  const box = $(id);
+  box.innerHTML = "";
 
   for(let n=0;n<=9;n++){
-    const button=document.createElement("button");
-    button.type="button";
-    button.className="number-btn "+numClass(n);
-    button.textContent=String(n);
-    button.dataset.numberButton="true";
-    button.addEventListener("click",()=>openBet("Number",n));
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "number-btn " + numClass(n);
+    button.textContent = n;
+    button.onclick = () => openBet("Number",n);
     box.appendChild(button);
   }
 }
 
 function makeRequestId(){
-  if(!window.crypto?.randomUUID) throw new Error("Secure request IDs are not supported.");
-  return window.crypto.randomUUID();
+  if(window.crypto && typeof window.crypto.randomUUID === "function"){
+    return window.crypto.randomUUID();
+  }
+
+  if(window.crypto && window.crypto.getRandomValues){
+    const bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 15) | 64;
+    bytes[8] = (bytes[8] & 63) | 128;
+
+    const h = Array.from(bytes,b => b.toString(16).padStart(2,"0")).join("");
+
+    return h.slice(0,8) + "-" +
+           h.slice(8,12) + "-" +
+           h.slice(12,16) + "-" +
+           h.slice(16,20) + "-" +
+           h.slice(20);
+  }
+
+  throw new Error("Secure request IDs are not supported");
 }
 
 async function parseResponse(response){
   let data;
-  try{data=await response.json();}
-  catch{throw new Error("Backend returned invalid JSON.");}
-  if(!response.ok||data.success===false){
-    throw new Error(data.message||"Backend request failed.");
+
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error("Backend returned an invalid response.");
   }
+
+  if(!response.ok || !data.success){
+    throw new Error(data.message || "Backend request failed.");
+  }
+
   return data;
 }
 
-async function api(action,extra={}){
-  if(!initData) throw new Error("Open the Mini App inside Telegram.");
-  const response=await fetch("/api/game",{
+async function api(action,extra = {}){
+  if(!initData){
+    throw new Error("Open the Mini App through Telegram.");
+  }
+
+  const response = await fetch("/api/game",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     cache:"no-store",
     body:JSON.stringify({initData,action,...extra})
   });
+
   return parseResponse(response);
 }
 
-async function getRounds(page=resultsPage){
-  const response=await fetch(
-    "/api/game?page="+encodeURIComponent(page)+"&page_size="+PAGE_SIZE,
-    {cache:"no-store"}
-  );
-  return parseResponse(response);
+async function getRounds(){
+  const response = await fetch("/api/game",{
+    method:"GET",
+    cache:"no-store"
+  });
+
+  const data = await parseResponse(response);
+
+  return {
+    rounds:data.rounds || [],
+    currentRound:data.current_round || null,
+    serverTime:data.server_time || null
+  };
+}
+
+async function authenticate(){
+  try {
+    if(!tg){
+      authed = false;
+      $("profileName").textContent = "Not opened in Telegram";
+      $("profileStatus").textContent = "Open the Mini App inside Telegram to authenticate.";
+      setStatus("TELEGRAM REQUIRED");
+      return;
+    }
+
+    tg.ready();
+    tg.expand();
+
+    initData = tg.initData || "";
+
+    if(!initData){
+      authed = false;
+      $("profileName").textContent = "Telegram initData missing";
+      $("profileStatus").textContent = "Open the official Telegram Mini App.";
+      setStatus("AUTH REQUIRED");
+      return;
+    }
+
+    const response = await fetch("/api/auth",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({initData})
+    });
+
+    const data = await parseResponse(response);
+
+    authed = true;
+    user = data.user;
+
+    $("profileName").textContent = user.username
+      ? "@" + user.username
+      : "Telegram user " + user.telegram_id;
+
+    $("profileStatus").textContent = "Telegram identity verified by server.";
+
+    await refreshAll();
+
+  } catch(error) {
+    authed = false;
+    $("profileStatus").textContent = error.message;
+    setStatus("BACKEND ERROR");
+    toast(error.message);
+  }
 }
 
 function setStatus(value){
-  ["betStatus","gameStatus"].forEach(id=>{
-    $(id).textContent=value;
-    $(id).classList.toggle("locked",value.includes("LOCKED")||value.includes("ERROR")||value.includes("REQUIRED"));
+  ["betStatus","gameStatus"].forEach(id => {
+    $(id).textContent = value;
+    $(id).classList.toggle(
+      "locked",
+      value.includes("LOCKED") || value.includes("ERROR")
+    );
   });
 }
 
 function updateBalance(value){
-  ["homePoints","gamePoints","walletPoints"].forEach(id=>$(id).textContent=money(value));
+  balance = Number(value);
+
+  $("homePoints").textContent = money(balance);
+  $("gamePoints").textContent = money(balance);
+  $("walletPoints").textContent = money(balance);
 }
 
 function resultColour(n){
-  return n===0||n===5?"#8b5cf6":n%2===0?"#dc2626":"#16a34a";
+  return n === 0 || n === 5
+    ? "#a855f7"
+    : n % 2 === 0
+      ? "#dc2626"
+      : "#16a34a";
 }
 
 function resultColorName(n){
-  return n===0||n===5?"VIOLET":n%2===0?"RED":"GREEN";
+  return n === 0 || n === 5
+    ? "VIOLET"
+    : n % 2 === 0
+      ? "RED"
+      : "GREEN";
 }
 
-function resultSize(n){
-  return n>=5?"BIG":"SMALL";
+/* SOUND */
+
+function unlockAudio(){
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return;
+
+    if(!audioContext) audioContext = new AC();
+
+    if(audioContext.state === "suspended"){
+      audioContext.resume();
+    }
+
+    audioUnlocked = true;
+  } catch(_) {}
 }
 
-function resultCard(round){
-  const hasResult=round.result_number!==null&&round.result_number!==undefined;
-  const n=hasResult?Number(round.result_number):"—";
-  const colour=hasResult?resultColour(n):"#94a3b8";
-  const name=hasResult?resultColorName(n):"PENDING";
-  const size=hasResult?resultSize(n):"WAITING";
+function playTone(freq=700,duration=.09,type="sine",volume=.045,delay=0){
+  if(!audioUnlocked || !audioContext) return;
 
-  return `<div class="history-card">
-    <div class="row">
-      <div>
-        <strong>Period ${esc(round.round_code)}</strong>
-        <div class="utc-time">${esc(dateUTC(round.ends_at))}</div>
-        <div style="margin-top:7px">
-          <span class="badge ${hasResult?"win":"pending"}">${name}</span>
-          <span class="badge pending">${size}</span>
-        </div>
-      </div>
-      <span class="number-btn" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:${colour}">${esc(n)}</span>
-    </div>
-    <div class="muted small" style="margin-top:8px">Status: ${esc(String(round.status||"").toUpperCase())}</div>
-  </div>`;
+  try {
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const start = audioContext.currentTime + delay;
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq,start);
+
+    gain.gain.setValueAtTime(.0001,start);
+    gain.gain.exponentialRampToValueAtTime(volume,start+.012);
+    gain.gain.exponentialRampToValueAtTime(.0001,start+duration);
+
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+
+    osc.start(start);
+    osc.stop(start+duration+.02);
+  } catch(_) {}
+}
+
+function playBetSound(){
+  playTone(880,.09,"sine",.06);
+  playTone(1175,.12,"sine",.05,.09);
+}
+
+function playTickSound(){
+  playTone(950,.045,"square",.018);
+}
+
+function playLockSound(){
+  playTone(620,.13,"triangle",.06);
+  playTone(420,.2,"triangle",.05,.13);
+}
+
+function playResultSound(){
+  playTone(660,.12,"sine",.06);
+  playTone(880,.12,"sine",.06,.13);
+  playTone(1175,.2,"sine",.06,.26);
+}
+
+/* RESULT HISTORY */
+
+function checkForNewResults(list){
+  const settled = (list || [])
+    .filter(r =>
+      r.result_number !== null &&
+      r.result_number !== undefined &&
+      Number.isFinite(new Date(r.ends_at).getTime())
+    )
+    .sort((a,b) => new Date(a.ends_at) - new Date(b.ends_at));
+
+  if(!settled.length) return;
+
+  if(lastSeenResultEnd === 0){
+    lastSeenResultEnd = Math.max(
+      ...settled.map(r => new Date(r.ends_at).getTime())
+    );
+    return;
+  }
+
+  const fresh = settled.filter(
+    r => new Date(r.ends_at).getTime() > lastSeenResultEnd
+  );
+
+  if(fresh.length){
+    lastSeenResultEnd = Math.max(
+      lastSeenResultEnd,
+      ...fresh.map(r => new Date(r.ends_at).getTime())
+    );
+
+    resultPopupQueue.push(...fresh);
+    showNextResultPopup();
+  } else {
+    lastSeenResultEnd = Math.max(
+      lastSeenResultEnd,
+      ...settled.map(r => new Date(r.ends_at).getTime())
+    );
+  }
+}
+
+function showNextResultPopup(){
+  if(resultPopupOpen || !resultPopupQueue.length) return;
+
+  const round = resultPopupQueue.shift();
+  const n = Number(round.result_number);
+
+  if(!Number.isInteger(n) || n < 0 || n > 9){
+    showNextResultPopup();
+    return;
+  }
+
+  resultPopupOpen = true;
+
+  $("resultPopupPeriod").textContent = "Period " + round.round_code;
+  $("resultPopupNumber").textContent = String(n);
+  $("resultPopupNumber").style.background = resultColour(n);
+
+  $("resultPopupColor").textContent = "🎨 " + resultColorName(n);
+
+  $("resultPopupSize").textContent = n >= 5
+    ? "📈 BIG (5–9)"
+    : "📉 SMALL (0–4)";
+
+  $("resultModal").classList.add("open");
+
+  playResultSound();
+
+  if(tg && tg.HapticFeedback){
+    try {
+      tg.HapticFeedback.notificationOccurred("success");
+    } catch(_) {}
+  }
+}
+
+function closeResultPopup(){
+  $("resultModal").classList.remove("open");
+  resultPopupOpen = false;
+
+  if(resultPopupQueue.length){
+    setTimeout(showNextResultPopup,250);
+  }
 }
 
 function renderRounds(){
-  const html=rounds.length
-    ?rounds.map(resultCard).join("")
-    :'<div class="empty">No settled results found on this page.</div>';
+  const html = rounds.length
+    ? rounds.map(r => {
+        const hasResult = r.result_number !== null &&
+                          r.result_number !== undefined;
 
-  $("homeParityRecords").innerHTML=html;
-  $("parityRecords").innerHTML=html;
+        const n = hasResult ? Number(r.result_number) : "—";
 
-  const p=resultsPagination;
-  $("homeResultsPage").textContent=`Page ${p.page} of ${p.total_pages}`;
-  $("resultsPage").textContent=`Page ${p.page} of ${p.total_pages}`;
-  $("homeResultsPrev").disabled=$("resultsPrev").disabled=!p.has_previous;
-  $("homeResultsNext").disabled=$("resultsNext").disabled=!p.has_next;
-  checkForNewResults();
-}
+        const cls = hasResult
+          ? (n === 0 || n === 5
+              ? "violet-badge"
+              : n % 2 === 0
+                ? "loss"
+                : "win")
+          : "pending";
 
-function betCard(b){
-  const status=String(b.status||"pending").toLowerCase();
-  const cls=status==="won"?"win":status==="lost"?"loss":status==="cancelled"?"cancelled":"pending";
-  const choice=b.bet_type==="Number"&&b.selection!==null&&b.selection!==undefined
-    ?` · ${esc(b.selection)}`:"";
+        const color = hasResult ? resultColour(n) : "#94a3b8";
 
-  return `<div class="history-card ${cls==="cancelled"?"":cls}">
-    <div class="row">
-      <div>
-        <strong>${esc(b.bet_type)}${choice}</strong>
-        <div class="utc-time">Period ${esc(b.round_code||b.round_id||"—")}</div>
-        <div class="utc-time">${esc(dateUTC(b.created_at))}</div>
-      </div>
-      <span class="badge ${cls}">${esc(status.toUpperCase())}</span>
-    </div>
-    <div class="row" style="margin-top:9px">
-      <span>Stake ${money(b.stake)}</span>
-      <strong>Payout: ${money(b.payout||0)}</strong>
-    </div>
-    ${b.settled_at?`<div class="utc-time">Settled: ${esc(dateUTC(b.settled_at))}</div>`:""}
-  </div>`;
-}
+        const bigSmall = hasResult
+          ? (n >= 5 ? "BIG" : "SMALL")
+          : "WAITING";
 
-function renderBets(){
-  const html=bets.length
-    ?bets.map(betCard).join("")
-    :'<div class="empty">No bets recorded on this page.</div>';
+        const colorName = hasResult
+          ? resultColorName(n)
+          : "PENDING";
 
-  $("homeTradeRecords").innerHTML=html;
-  $("tradeHistory").innerHTML=html;
+        return `
+          <div class="history-card">
+            <div class="row">
+              <div>
+                <strong>Period ${esc(r.round_code)}</strong>
+                <div class="utc-time">${esc(dateUTC(r.ends_at))}</div>
 
-  const p=tradesPagination;
-  $("homeTradesPage").textContent=`Page ${p.page} of ${p.total_pages}`;
-  $("tradesPage").textContent=`Page ${p.page} of ${p.total_pages}`;
-  $("homeTradesPrev").disabled=$("tradesPrev").disabled=!p.has_previous;
-  $("homeTradesNext").disabled=$("tradesNext").disabled=!p.has_next;
-}
+                <div style="margin-top:7px">
+                  <span class="badge ${cls}">
+                    ${esc(hasResult ? colorName : "PENDING")}
+                  </span>
 
-function activeRound(){
-  const now=serverNow();
-  const valid=round=>round&&
-    Number.isFinite(new Date(round.starts_at).getTime())&&
-    Number.isFinite(new Date(round.ends_at).getTime())&&
-    now>=new Date(round.starts_at).getTime()&&
-    now<new Date(round.ends_at).getTime();
+                  <span class="badge"
+                    style="background:#302911;color:#facc15">
+                    ${esc(bigSmall)}
+                  </span>
+                </div>
+              </div>
 
-  return valid(currentRound)?currentRound:rounds.find(valid)||null;
-}
+              <span class="record-number" style="background:${color}">
+                ${esc(n)}
+              </span>
+            </div>
 
-function bettingOpen(round){
-  const now=serverNow();
-  if(!round||round.status!=="open")return false;
+            <div class="muted small" style="margin-top:8px">
+              Round status: ${esc(String(r.status || "").toUpperCase())}
+            </div>
+          </div>
+        `;
+      }).join("")
+    : '<div class="empty">No server rounds found.</div>';
 
-  const start=new Date(round.starts_at).getTime();
-  const close=new Date(round.betting_closes_at).getTime();
-  const end=new Date(round.ends_at).getTime();
-
-  return Number.isFinite(start)&&Number.isFinite(close)&&Number.isFinite(end)&&
-    now>=start&&now<close&&now<end;
-}
-
-function updateRoundDisplay(){
-  const round=activeRound();
-
-  if(!round){
-    $("periodId").textContent="Waiting for next server round…";
-    $("gamePeriod").textContent="Waiting for next server round…";
-    $("timer").textContent="--:--";
-    $("gameTimer").textContent="--:--";
-    setStatus("BETTING LOCKED");
-    document.querySelectorAll("[data-bet],[data-number-button]").forEach(b=>b.disabled=true);
-    return;
-  }
-
-  $("periodId").textContent=round.round_code;
-  $("gamePeriod").textContent=round.round_code;
-
-  // Timer displays time remaining in the full 180-second round.
-  const left=Math.max(0,Math.ceil((new Date(round.ends_at).getTime()-serverNow())/1000));
-  const time=String(Math.floor(left/60)).padStart(2,"0")+":"+String(left%60).padStart(2,"0");
-
-  $("timer").textContent=time;
-  $("gameTimer").textContent=time;
-
-  const open=bettingOpen(round);
-  setStatus(open?"BETTING OPEN":"BETTING LOCKED");
-  document.querySelectorAll("[data-bet],[data-number-button]").forEach(button=>{
-    button.disabled=!open||!authed;
+  ["homeParityRecords","parityRecords"].forEach(id => {
+    $(id).innerHTML = html;
   });
 }
 
-function updatePaginationFromResponse(data){
-  const p=data.rounds_page||{};
-  resultsPagination={
-    page:Number(p.page||resultsPage),
-    total_pages:Number(p.total_pages||1),
-    has_next:Boolean(p.has_next),
-    has_previous:Boolean(p.has_previous)
-  };
-  resultsPage=resultsPagination.page;
+function statusClass(status){
+  status = String(status || "pending").toLowerCase();
+
+  if(status === "won" || status === "win") return "win";
+  if(status === "lost" || status === "loss") return "loss";
+  if(status === "cancelled") return "cancelled";
+
+  return "pending";
 }
 
-async function refreshHistories(){
-  if(!authed)return;
+function renderBets(){
+  const html = bets.length
+    ? bets.map(b => {
+        const s = String(b.status || "pending").toLowerCase();
+        const cls = statusClass(s);
 
-  try{
-    const [roundData,betData]=await Promise.all([
-      getRounds(resultsPage),
-      api("my_bets",{page:tradesPage,page_size:PAGE_SIZE})
-    ]);
+        const statusText = s === "won"
+          ? "WIN"
+          : s === "lost"
+            ? "LOSS"
+            : s.toUpperCase();
 
-    rounds=Array.isArray(roundData.rounds)?roundData.rounds:[];
-    updatePaginationFromResponse(roundData);
+        const payout = Number(b.payout || 0);
 
-    const serverMs=new Date(roundData.server_time).getTime();
-    if(Number.isFinite(serverMs))serverTimeOffset=serverMs-Date.now();
+        const hasResult = b.result_number !== null &&
+                          b.result_number !== undefined;
 
-    bets=Array.isArray(betData.bets)?betData.bets:[];
-    const bp=betData.pagination||{};
-    tradesPagination={
-      page:Number(bp.page||tradesPage),
-      total_pages:Number(bp.total_pages||1),
-      has_next:Boolean(bp.has_next),
-      has_previous:Boolean(bp.has_previous)
-    };
-    tradesPage=tradesPagination.page;
+        const resultText = hasResult
+          ? `Result: ${esc(b.result_number)}`
+          : "Result: waiting";
 
-    renderRounds();
-    renderBets();
-    updateRoundDisplay();
-  }catch(error){
-    toast("History: "+error.message);
-  }
+        const choice = b.bet_type === "Number" &&
+                       b.selection !== null &&
+                       b.selection !== undefined
+          ? ` · ${esc(b.selection)}`
+          : "";
+
+        const period = b.round_code || ("ID " + b.round_id);
+
+        return `
+          <div class="history-card ${cls}">
+            <div class="row">
+              <div>
+                <strong>${esc(b.bet_type)}${choice}</strong>
+                <div class="utc-time">Period ${esc(period)}</div>
+                <div class="utc-time">${esc(dateUTC(b.created_at))}</div>
+              </div>
+
+              <span class="badge ${cls}">${esc(statusText)}</span>
+            </div>
+
+            <div class="row" style="margin-top:10px">
+              <span class="small">
+                Stake <strong>${money(b.stake)}</strong>
+              </span>
+              <span class="small">${resultText}</span>
+            </div>
+
+            <div class="row" style="margin-top:7px">
+              <span class="muted small">Test points</span>
+              <strong style="color:${
+                payout > 0 ? "#22c55e" :
+                s === "lost" ? "#ef4444" : "#f5f5f5"
+              }">
+                Payout: ${money(payout)}
+              </strong>
+            </div>
+          </div>
+        `;
+      }).join("")
+    : '<div class="empty">No bets recorded yet.</div>';
+
+  ["homeTradeRecords","tradeHistory"].forEach(id => {
+    $(id).innerHTML = html;
+  });
+}
+
+/* ROUND CONTROL */
+
+function getActiveRound(){
+  const now = Date.now() + serverTimeOffset;
+
+  const valid = r => {
+    if(!r) return false;
+
+    const starts = new Date(r.starts_at).getTime();
+    const ends = new Date(r.ends_at).getTime();
+
+    return Number.isFinite(starts) &&
+           Number.isFinite(ends) &&
+           now >= starts &&
+           now < ends;
+  };
+
+  if(valid(currentRound)) return currentRound;
+
+  return rounds.find(valid) || null;
+}
+
+function isBettingOpen(round){
+  if(!round || round.status !== "open") return false;
+
+  const now = Date.now() + serverTimeOffset;
+  const starts = new Date(round.starts_at).getTime();
+  const closes = new Date(round.betting_closes_at).getTime();
+  const ends = new Date(round.ends_at).getTime();
+
+  return Number.isFinite(starts) &&
+         Number.isFinite(closes) &&
+         Number.isFinite(ends) &&
+         now >= starts &&
+         now < closes &&
+         now < ends;
 }
 
 async function refreshAll(){
-  if(!authed||refreshing)return;
-  refreshing=true;
+  if(!authed || refreshing) return;
 
-  try{
-    const [roundData,balanceData,betData]=await Promise.all([
-      getRounds(resultsPage),
+  refreshing = true;
+
+  try {
+    const [roundData,balData,betData] = await Promise.all([
+      getRounds(),
       api("balance"),
-      api("my_bets",{page:tradesPage,page_size:PAGE_SIZE})
+      api("my_bets")
     ]);
 
-    rounds=Array.isArray(roundData.rounds)?roundData.rounds:[];
-    currentRound=roundData.current_round||null;
-    updatePaginationFromResponse(roundData);
+    checkForNewResults(roundData.rounds);
 
-    const serverMs=new Date(roundData.server_time).getTime();
-    if(Number.isFinite(serverMs))serverTimeOffset=serverMs-Date.now();
+    rounds = roundData.rounds;
+    currentRound = roundData.currentRound;
+    bets = betData.bets || [];
 
-    bets=Array.isArray(betData.bets)?betData.bets:[];
-    const bp=betData.pagination||{};
-    tradesPagination={
-      page:Number(bp.page||tradesPage),
-      total_pages:Number(bp.total_pages||1),
-      has_next:Boolean(bp.has_next),
-      has_previous:Boolean(bp.has_previous)
-    };
-    tradesPage=tradesPagination.page;
+    if(roundData.serverTime){
+      const serverMs = new Date(roundData.serverTime).getTime();
 
-    updateBalance(balanceData.balance);
+      if(Number.isFinite(serverMs)){
+        serverTimeOffset = serverMs - Date.now();
+        lastServerSync = Date.now();
+      }
+    }
+
+    updateBalance(balData.balance);
     renderRounds();
     renderBets();
     updateRoundDisplay();
 
-    $("serverNotice").textContent=
-      "Connected. Round duration: 180 seconds. Betting closes 30 seconds before round end.";
-  }catch(error){
-    $("serverNotice").textContent="Backend unavailable: "+error.message;
+    $("serverNotice").textContent =
+      "Connected to backend. Betting closes 30 seconds before each round ends.";
+
+  } catch(error) {
+    $("serverNotice").textContent = "Backend unavailable: " + error.message;
     setStatus("BACKEND ERROR");
-  }finally{
-    refreshing=false;
+  } finally {
+    refreshing = false;
   }
 }
 
-function openBet(type,selection=null){
-  if(!authed){toast("Authenticate through Telegram first.");return;}
+function updateRoundDisplay(){
+  const round = getActiveRound();
 
-  const round=activeRound();
-  if(!bettingOpen(round)){
-    toast("Betting is locked. Wait for the next round.");
+  if(!round){
+    $("periodId").textContent = "Waiting for next server round…";
+    $("gamePeriod").textContent = "Waiting for next server round…";
+    $("timer").textContent = "--:--";
+    $("gameTimer").textContent = "--:--";
+
+    setStatus("BETTING LOCKED");
+    updateBetButtons(false);
+
+    previousBettingOpen = false;
+    lastTickSecond = -1;
+
     return;
   }
 
-  currentBet={type,selection,roundCode:round.round_code};
-  pendingBetRequest=null;
+  $("periodId").textContent = round.round_code;
+  $("gamePeriod").textContent = round.round_code;
 
-  $("betModalTitle").textContent="Bet on "+type+(selection===null?"":" "+selection);
-  $("betModalPeriod").textContent="Server round: "+round.round_code;
-  $("betAmount").value="100";
-  $("confirmBet").disabled=false;
+  const now = Date.now() + serverTimeOffset;
+  const endsAt = new Date(round.ends_at).getTime();
+  const left = Math.max(0,Math.ceil((endsAt-now)/1000));
+
+  const bettingOpen = isBettingOpen(round);
+
+  const txt = String(Math.floor(left/60)).padStart(2,"0") +
+              ":" +
+              String(left%60).padStart(2,"0");
+
+  $("timer").textContent = txt;
+  $("gameTimer").textContent = txt;
+
+  setStatus(bettingOpen ? "BETTING OPEN" : "BETTING LOCKED");
+
+  updateBetButtons(bettingOpen && authed);
+
+  if(previousBettingOpen === true && !bettingOpen){
+    playLockSound();
+  }
+
+  previousBettingOpen = bettingOpen;
+
+  if(left <= 30 && left > 0 && left !== lastTickSecond){
+    playTickSound();
+    lastTickSecond = left;
+  } else if(left > 30 || left === 0){
+    lastTickSecond = -1;
+  }
+
+  if(lastDisplayedRoundCode !== round.round_code){
+    lastDisplayedRoundCode = round.round_code;
+    lastTickSecond = -1;
+    previousBettingOpen = bettingOpen;
+  }
+}
+
+function updateBetButtons(enabled){
+  document.querySelectorAll("[data-bet],.number-btn").forEach(button => {
+    button.disabled = !enabled;
+  });
+}
+
+/* BETTING */
+
+function openBet(type,selection=null){
+  if(!authed){
+    toast("Authenticate through Telegram first.");
+    return;
+  }
+
+  const round = getActiveRound();
+
+  if(!isBettingOpen(round)){
+    toast("Betting is locked. Wait for the next round.");
+    refreshAll();
+    return;
+  }
+
+  currentBet = {
+    type,
+    selection,
+    roundCode:round.round_code
+  };
+
+  pendingBetRequest = null;
+
+  $("betModalTitle").textContent =
+    "Bet on " + type + (selection === null ? "" : " " + selection);
+
+  $("betModalPeriod").textContent =
+    "Server round: " + round.round_code;
+
+  $("betAmount").value = "100";
+  $("confirmBet").disabled = false;
+
   $("betModal").classList.add("open");
 }
 
 async function confirmBet(){
-  if(!currentBet||!authed)return;
+  if(!currentBet || !authed) return;
 
-  const stake=Number($("betAmount").value);
-  if(!Number.isFinite(stake)||stake<0.01||stake>1000||Math.round(stake*100)!==stake*100){
-    toast("Enter an amount between 0.01 and 1000 test points, with up to 2 decimals.");
+  const stake = Number($("betAmount").value);
+
+  if(
+    !Number.isFinite(stake) ||
+    stake < 0.01 ||
+    stake > 1000 ||
+    Math.round(stake*100) !== stake*100
+  ){
+    toast("Enter an amount between 0.01 and 1000 test points.");
     return;
   }
 
-  // Recheck the current server round immediately before sending.
-  const round=activeRound();
-  if(!bettingOpen(round)||round.round_code!==currentBet.roundCode){
-    toast("This round is no longer accepting bets.");
-    $("betModal").classList.remove("open");
-    await refreshAll();
-    return;
-  }
+  const btn = $("confirmBet");
+  btn.disabled = true;
 
-  $("confirmBet").disabled=true;
-
-  try{
+  try {
     if(!pendingBetRequest){
-      pendingBetRequest={
+      pendingBetRequest = {
         requestId:makeRequestId(),
         roundCode:currentBet.roundCode,
         betType:currentBet.type,
-        selection:currentBet.type==="Number"?currentBet.selection:null,
+        selection:currentBet.type === "Number"
+          ? currentBet.selection
+          : null,
         stake
       };
     }
 
-    const r=pendingBetRequest;
-    const result=await api("place_bet",{
+    const r = pendingBetRequest;
+
+    if(
+      r.roundCode !== currentBet.roundCode ||
+      r.betType !== currentBet.type ||
+      r.selection !== (
+        currentBet.type === "Number" ? currentBet.selection : null
+      ) ||
+      r.stake !== stake
+    ){
+      pendingBetRequest = null;
+      toast("Bet details changed. Please submit again.");
+      return;
+    }
+
+    const result = await api("place_bet",{
       round_code:r.roundCode,
       bet_type:r.betType,
       selection:r.selection,
@@ -775,400 +1726,113 @@ async function confirmBet(){
       request_id:r.requestId
     });
 
-    pendingBetRequest=null;
+    pendingBetRequest = null;
+
     $("betModal").classList.remove("open");
-    toast(result.message||"Test bet accepted.");
+
+    playBetSound();
+
+    toast(result.message || "Test bet accepted.");
+
     await refreshAll();
-  }catch(error){
-    // Keep request ID if request outcome is uncertain; a retry must be idempotent.
-    toast(error.message||"Unable to place test bet.");
-  }finally{
-    $("confirmBet").disabled=false;
+
+  } catch(error) {
+    toast(error.message ||
+      "Unable to place test bet. Retry without changing the details.");
+  } finally {
+    btn.disabled = false;
   }
 }
 
-/* TELEGRAM AUTH */
-
-async function authenticate(){
-  if(!tg){
-    $("profileName").textContent="Not opened in Telegram";
-    $("profileStatus").textContent="Open this Mini App inside Telegram.";
-    setStatus("TELEGRAM REQUIRED");
-    return;
-  }
-
-  try{
-    tg.ready();
-    tg.expand();
-    initData=tg.initData||"";
-
-    if(!initData){
-      $("profileName").textContent="Telegram initData missing";
-      $("profileStatus").textContent="Open the official Telegram Mini App.";
-      setStatus("AUTH REQUIRED");
-      return;
-    }
-
-    const response=await fetch("/api/auth",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      cache:"no-store",
-      body:JSON.stringify({initData})
-    });
-    const data=await parseResponse(response);
-
-    authed=true;
-    user=data.user||null;
-
-    // api/auth.js returns the internal database ID in user.id and Telegram ID in user.telegram_id.
-    $("profileName").textContent=user?.username
-      ?"@"+user.username
-      :"Telegram user "+(user?.telegram_id||"");
-
-    $("profileStatus").textContent="Telegram identity verified by server.";
-    await refreshAll();
-    await processStartParameter();
-  }catch(error){
-    authed=false;
-    $("profileStatus").textContent=error.message;
-    setStatus("BACKEND ERROR");
-    toast(error.message);
-  }
-}
-
-/* REFERRAL */
-
-function unwrapReferral(data){
-  if(data?.referral&&typeof data.referral==="object")return data.referral;
-  if(data?.data&&typeof data.data==="object")return data.data;
-  return data||{};
-}
-
-function getLevelTotal(data,level){
-  const rows=Array.isArray(data.commission_levels)?data.commission_levels:[];
-  const row=rows.find(item=>Number(item.level)===level);
-  return row?.total_commission??0;
-}
-
-function renderReferral(rawData){
-  const data=unwrapReferral(rawData);
-  const reward=data.reward||{};
-  const code=data.referral_code||"";
-  const link=data.referral_link||"";
-
-  $("referralCode").textContent=code||"Not available";
-  $("referralLink").textContent=link||"Referral link not available";
-
-  $("directReferralCount").textContent=String(data.total_direct_referrals??0);
-  $("refTotalCommission").textContent=money(data.total_commission);
-  $("refCommissionTotalStat").textContent=money(data.total_commission);
-
-  $("refLevel1").textContent=money(getLevelTotal(data,1))+" Points";
-  $("refLevel2").textContent=money(getLevelTotal(data,2))+" Points";
-  $("refLevel3").textContent=money(getLevelTotal(data,3))+" Points";
-
-  $("refPendingReward").textContent=money(reward.pending_points);
-  $("refCreditedReward").textContent=money(reward.credited_points);
-
-  if(Number(reward.credited_points)>0){
-    $("refRewardStatus").textContent="Credited rewards: "+money(reward.credited_points)+" Points.";
-    $("refRewardStatus").className="reward-status credited";
-  }else{
-    $("refRewardStatus").textContent=reward.message||"Rewards require a qualifying confirmed recharge.";
-    $("refRewardStatus").className="reward-status";
-  }
-
-  const alreadyReferred=data.referred_by!==null&&data.referred_by!==undefined&&String(data.referred_by)!=="";
-  $("referralCodeInput").disabled=alreadyReferred;
-  $("applyReferralBtn").disabled=alreadyReferred;
-  $("referralCodeInput").placeholder=alreadyReferred?"Referral code already applied":"Enter referral code";
-
-  const history=Array.isArray(data.commission_history)?data.commission_history:[];
-  $("referralHistory").innerHTML=history.length?history.map(item=>`
-    <div class="history-card">
-      <div class="row">
-        <div>
-          <strong>Level ${esc(item.referral_level??"—")} Commission</strong>
-          <div class="utc-time">Source user: ${esc(item.source_user_id??"—")}</div>
-          <div class="utc-time">${esc(item.created_at?dateUTC(item.created_at):"")}</div>
-          <div class="utc-time">Period ${esc(item.round_code??"—")}</div>
-        </div>
-        <strong>${money(item.commission_amount)} Points</strong>
-      </div>
-    </div>`).join("")
-    :'<div class="empty">No commission records available yet.</div>';
-}
-
-async function loadReferralData(){
-  if(!authed||referralLoading)return;
-  referralLoading=true;
-  $("refreshReferralBtn").disabled=true;
-
-  try{
-    const data=await api("referral_data");
-    renderReferral(data);
-  }catch(error){
-    $("referralHistory").innerHTML='<div class="empty">Could not load referral data: '+esc(error.message)+'</div>';
-    toast("Referral data: "+error.message);
-  }finally{
-    referralLoading=false;
-    $("refreshReferralBtn").disabled=false;
-  }
-}
-
-async function copyReferralLink(){
-  const link=$("referralLink").textContent.trim();
-  if(!link.startsWith("https://t.me/")){
-    toast("Referral link is not available. Check TELEGRAM_BOT_USERNAME.");
-    return;
-  }
-
-  try{
-    if(navigator.clipboard&&window.isSecureContext){
-      await navigator.clipboard.writeText(link);
-    }else{
-      const area=document.createElement("textarea");
-      area.value=link;
-      area.style.position="fixed";
-      area.style.opacity="0";
-      document.body.appendChild(area);
-      area.select();
-      const copied=document.execCommand("copy");
-      area.remove();
-      if(!copied)throw new Error("Copy failed");
-    }
-    toast("Referral link copied!");
-  }catch{
-    toast("Could not copy referral link.");
-  }
-}
-
-async function shareReferralLink(){
-  const link=$("referralLink").textContent.trim();
-  if(!link.startsWith("https://t.me/")){
-    toast("Referral link is not available.");
-    return;
-  }
-
-  const shareUrl="https://t.me/share/url?url="+encodeURIComponent(link)+
-    "&text="+encodeURIComponent("Join me on Crypto Trader Pro!");
-
-  try{
-    if(tg?.openTelegramLink)tg.openTelegramLink(shareUrl);
-    else if(navigator.share)await navigator.share({title:"Crypto Trader Pro",url:link});
-    else await copyReferralLink();
-  }catch(error){
-    if(error.name!=="AbortError")toast("Unable to share link.");
-  }
-}
-
-async function applyReferralCode(){
-  if(!authed){toast("Open the Mini App through Telegram first.");return;}
-  const code=$("referralCodeInput").value.trim();
-  if(!code){toast("Enter a referral code.");return;}
-
-  $("applyReferralBtn").disabled=true;
-  try{
-    const data=await api("apply_referral",{referral_code:code});
-    $("referralCodeInput").value="";
-    toast(data.message||"Referral code applied.");
-    await loadReferralData();
-  }catch(error){
-    toast(error.message||"Unable to apply referral code.");
-  }finally{
-    $("applyReferralBtn").disabled=false;
-  }
-}
-
-async function processStartParameter(){
-  if(!authed||!tg)return;
-
-  try{
-    const urlParams=new URLSearchParams(window.location.search);
-    const raw=(tg.initDataUnsafe&&tg.initDataUnsafe.start_param)||
-      tg.startParam||urlParams.get("ref")||urlParams.get("startapp")||"";
-
-    if(!raw)return;
-
-    // Telegram deep-link payload is commonly ref_CODE.
-    const match=String(raw).match(/^ref_([A-Za-z0-9_-]{1,80})$/i);
-    if(!match)return;
-
-    const code=match[1];
-    const storageKey="ctp_referral_processed_"+code;
-    if(sessionStorage.getItem(storageKey)==="success")return;
-
-    const data=await api("apply_referral",{referral_code:code});
-    sessionStorage.setItem(storageKey,"success");
-    toast(data.message||"Referral code processed.");
-    await loadReferralData();
-  }catch(error){
-    console.warn("Referral attribution:",error.message);
-  }
-}
-
-/* RESULT POPUP: only newly observed results, not every historical record */
-
-function showNextResult(){
-  if(resultPopupOpen||!resultPopupQueue.length||document.hidden)return;
-
-  const item=resultPopupQueue.shift();
-  const n=Number(item.result_number);
-
-  if(!Number.isInteger(n)||n<0||n>9){
-    showNextResult();
-    return;
-  }
-
-  resultPopupOpen=true;
-  $("resultPopupPeriod").textContent="Period "+item.round_code;
-  $("resultPopupNumber").textContent=String(n);
-  $("resultPopupNumber").style.background=resultColour(n);
-  $("resultPopupColor").textContent=resultColorName(n);
-  $("resultPopupSize").textContent=resultSize(n);
-  $("resultModal").classList.add("open");
-}
-
-function checkForNewResults(){
-  // The first successful load establishes a baseline; old history should not trigger popups.
-  const settled=rounds.filter(r=>r.result_number!==null&&r.result_number!==undefined&&r.ends_at);
-  const newest=settled.length
-    ?settled.reduce((a,b)=>new Date(a.ends_at)>new Date(b.ends_at)?a:b)
-    :null;
-
-  if(!lastResultSignature){
-    if(newest)lastResultSignature=String(newest.round_code)+"|"+String(newest.result_number);
-    return;
-  }
-
-  if(newest){
-    const signature=String(newest.round_code)+"|"+String(newest.result_number);
-    if(signature!==lastResultSignature){
-      const endTime=new Date(newest.ends_at).getTime();
-      if(Number.isFinite(endTime)&&endTime<=serverNow()){
-        resultPopupQueue.push(newest);
-      }
-      lastResultSignature=signature;
-    }
-  }
-
-  showNextResult();
-}
-
-/* PAGINATION */
-
-async function changeResultsPage(delta){
-  const target=resultsPage+delta;
-  if(target<1||target>resultsPagination.total_pages)return;
-  resultsPage=target;
-  await refreshAll();
-}
-
-async function changeTradesPage(delta){
-  const target=tradesPage+delta;
-  if(target<1||target>tradesPagination.total_pages)return;
-  tradesPage=target;
-  await refreshAll();
-}
-
-/* EVENTS AND STARTUP */
+/* INITIALIZATION */
 
 function init(){
+  document.addEventListener("pointerdown",unlockAudio,{passive:true});
+  document.addEventListener("keydown",unlockAudio);
+
   renderNumbers("numberGrid");
   renderNumbers("gameNumberGrid");
 
-  document.querySelectorAll(".nav-btn").forEach(button=>{
-    button.addEventListener("click",()=>showPage(button.dataset.page));
+  document.querySelectorAll(".nav-btn").forEach(button => {
+    button.onclick = () => showPage(button.dataset.page);
   });
 
-  document.querySelectorAll("[data-page-go]").forEach(button=>{
-    button.addEventListener("click",()=>showPage(button.dataset.pageGo));
+  document.querySelectorAll("[data-page-go]").forEach(button => {
+    button.onclick = () => showPage(button.dataset.pageGo);
   });
 
-  $("headerProfile").addEventListener("click",()=>showPage("profile"));
-  $("refreshBtn").addEventListener("click",refreshAll);
-  $("walletRefresh").addEventListener("click",refreshAll);
-  $("authRetry").addEventListener("click",authenticate);
-  $("confirmBet").addEventListener("click",confirmBet);
+  $("headerProfile").onclick = () => showPage("profile");
 
-  $("copyReferralBtn").addEventListener("click",copyReferralLink);
-  $("shareReferralBtn").addEventListener("click",shareReferralLink);
-  $("refreshReferralBtn").addEventListener("click",loadReferralData);
-  $("applyReferralBtn").addEventListener("click",applyReferralCode);
+  $("refreshBtn").onclick = refreshAll;
+  $("walletRefresh").onclick = refreshAll;
+  $("authRetry").onclick = authenticate;
+  $("confirmBet").onclick = confirmBet;
+  $("resultPopupClose").onclick = closeResultPopup;
 
-  $("homeResultsPrev").addEventListener("click",()=>changeResultsPage(-1));
-  $("resultsPrev").addEventListener("click",()=>changeResultsPage(-1));
-  $("homeResultsNext").addEventListener("click",()=>changeResultsPage(1));
-  $("resultsNext").addEventListener("click",()=>changeResultsPage(1));
-
-  $("homeTradesPrev").addEventListener("click",()=>changeTradesPage(-1));
-  $("tradesPrev").addEventListener("click",()=>changeTradesPage(-1));
-  $("homeTradesNext").addEventListener("click",()=>changeTradesPage(1));
-  $("tradesNext").addEventListener("click",()=>changeTradesPage(1));
-
-  $("resultPopupClose").addEventListener("click",()=>{
-    $("resultModal").classList.remove("open");
-    resultPopupOpen=false;
-    showNextResult();
+  $("resultModal").addEventListener("click",event => {
+    if(event.target === $("resultModal")){
+      closeResultPopup();
+    }
   });
 
-  document.querySelectorAll("[data-bet]").forEach(button=>{
-    button.addEventListener("click",()=>openBet(button.dataset.bet));
+  document.querySelectorAll("[data-bet]").forEach(button => {
+    button.onclick = () => openBet(button.dataset.bet);
   });
 
-  document.querySelectorAll("[data-close]").forEach(button=>{
-    button.addEventListener("click",()=>$(button.dataset.close).classList.remove("open"));
+  document.querySelectorAll("[data-close]").forEach(button => {
+    button.onclick = () => {
+      $(button.dataset.close).classList.remove("open");
+    };
   });
 
-  document.querySelectorAll(".modal-backdrop").forEach(modal=>{
-    modal.addEventListener("click",event=>{
-      if(event.target===modal){
+  document.querySelectorAll(".modal-backdrop").forEach(modal => {
+    modal.addEventListener("click",event => {
+      if(event.target === modal){
         modal.classList.remove("open");
-        if(modal.id==="resultModal"){
-          resultPopupOpen=false;
-          showNextResult();
-        }
       }
     });
   });
 
-  document.querySelectorAll("[data-amount]").forEach(button=>{
-    button.addEventListener("click",()=>{
-      $("betAmount").value=button.dataset.amount;
-      pendingBetRequest=null;
-    });
+  document.querySelectorAll("[data-amount]").forEach(button => {
+    button.onclick = () => {
+      $("betAmount").value = button.dataset.amount;
+      pendingBetRequest = null;
+    };
   });
 
-  $("minusAmount").addEventListener("click",()=>{
-    $("betAmount").value=Math.max(0.01,(Number($("betAmount").value)||1)-10).toFixed(2);
-    pendingBetRequest=null;
-  });
+  $("minusAmount").onclick = () => {
+    $("betAmount").value = Math.max(
+      0.01,
+      (Number($("betAmount").value) || 1) - 10
+    ).toFixed(2);
 
-  $("plusAmount").addEventListener("click",()=>{
-    $("betAmount").value=Math.min(1000,(Number($("betAmount").value)||1)+10).toFixed(2);
-    pendingBetRequest=null;
-  });
+    pendingBetRequest = null;
+  };
 
-  $("betAmount").addEventListener("input",()=>pendingBetRequest=null);
+  $("plusAmount").onclick = () => {
+    $("betAmount").value = Math.min(
+      1000,
+      (Number($("betAmount").value) || 1) + 10
+    ).toFixed(2);
 
-  document.addEventListener("visibilitychange",()=>{
-    pageIsVisible=!document.hidden;
-    if(pageIsVisible&&authed){
-      refreshAll();
-      showNextResult();
-    }
-  });
+    pendingBetRequest = null;
+  };
 
-  window.addEventListener("online",()=>{
-    if(authed)refreshAll();
+  $("betAmount").addEventListener("input",() => {
+    pendingBetRequest = null;
   });
 
   authenticate();
+
   setInterval(updateRoundDisplay,1000);
-  setInterval(()=>{if(authed&&!document.hidden)refreshAll();},3000);
+
+  setInterval(() => {
+    if(authed) refreshAll();
+  },2500);
 }
 
 init();
+
 })();
 </script>
 </body>
