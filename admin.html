@@ -4,221 +4,189 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="theme-color" content="#07111f">
-<title>Crypto Trader Pro Admin</title>
+<meta name="theme-color" content="#090909">
+<title>Crypto Trader Pro | Admin</title>
 
 <style>
 :root {
   color-scheme: dark;
-  --bg: #07111f;
-  --card: #0e1c2e;
-  --card2: #12243a;
-  --line: #203954;
-  --text: #e8f2ff;
-  --muted: #91a8c4;
-  --blue: #268cff;
-  --cyan: #55d6ff;
-  --green: #35e0a1;
-  --red: #ff647c;
-  --amber: #ffc766;
+  --bg: #090909;
+  --panel: #121212;
+  --panel2: #191919;
+  --line: #303030;
+  --text: #f5f5f5;
+  --muted: #999;
+  --yellow: #f5c518;
+  --green: #35dc88;
+  --red: #ff5263;
+  --violet: #a78bfa;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
-html {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  overflow-x: hidden;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
-body {
+html, body {
   margin: 0;
   width: 100%;
-  max-width: 100%;
-  min-width: 0;
+  min-height: 100%;
   overflow-x: hidden;
-  background:
-    radial-gradient(ellipse at 80% 0%, #15365a 0, transparent 38%),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
-  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 14px/1.5 system-ui, sans-serif;
 }
 
-button, input, select {
-  font: inherit;
-  max-width: 100%;
-}
+button, input, select { font: inherit; }
 
 button {
-  background: var(--card2);
-  color: var(--text);
   border: 1px solid var(--line);
   border-radius: 9px;
-  padding: 9px 12px;
+  padding: 10px 13px;
+  background: var(--panel2);
+  color: var(--text);
   cursor: pointer;
   touch-action: manipulation;
 }
 
-button:hover {
-  border-color: var(--cyan);
-}
+button:hover { border-color: var(--yellow); }
+button:disabled { opacity: .45; cursor: not-allowed; }
 
-button:disabled {
-  opacity: .45;
-  cursor: not-allowed;
-}
-
-button.primary,
-nav button.active {
-  background: linear-gradient(135deg, #1678ee, #2aa8ff);
-  border-color: var(--blue);
-  color: white;
+button.primary {
+  background: var(--yellow);
+  color: #111;
+  border-color: var(--yellow);
+  font-weight: 800;
 }
 
 input, select {
-  background: #081525;
-  color: var(--text);
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  padding: 10px;
+  width: 100%;
   min-width: 0;
+  padding: 11px;
+  background: #0c0c0c;
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 9px;
 }
 
-input:focus, select:focus {
-  outline: 1px solid var(--cyan);
-}
-
-.hide {
-  display: none !important;
-}
-
-.muted {
-  color: var(--muted);
-}
-
-.err {
-  color: var(--red);
-}
+.hide { display: none !important; }
+.muted { color: var(--muted); }
+.err { color: var(--red); }
+.small { font-size: 11px; }
+.good-text { color: var(--green); }
+.bad-text { color: var(--red); }
 
 header {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 30;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
+  justify-content: space-between;
   gap: 10px;
-  padding: 12px 16px;
-  background: #07111ff5;
-  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+  padding: 12px 15px;
+  background: #0a0a0af5;
+  border-bottom: 1px solid #383018;
   backdrop-filter: blur(12px);
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 9px;
-  min-width: 0;
+  gap: 10px;
 }
 
 .logo {
-  flex: 0 0 38px;
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
   display: grid;
   place-items: center;
-  border-radius: 11px;
-  background: linear-gradient(145deg, #187cff, #55d6ff);
-  color: #04101e;
-  font-weight: 900;
+  border-radius: 12px;
+  background: var(--yellow);
+  color: #111;
+  font-size: 17px;
+  font-weight: 950;
 }
 
 .brand h1 {
   margin: 0;
   font-size: 14px;
+  letter-spacing: .5px;
 }
 
 .brand p {
   margin: 2px 0 0;
+  color: var(--yellow);
   font-size: 10px;
-  color: var(--muted);
+  letter-spacing: 1.5px;
 }
 
 .head-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-#appView {
-  width: 100%;
-  min-width: 0;
+  gap: 7px;
 }
 
 .layout {
   display: grid;
-  grid-template-columns: 205px minmax(0, 1fr);
-  width: 100%;
-  max-width: 1600px;
-  margin: 0 auto;
-  min-height: calc(100vh - 62px);
+  grid-template-columns: 215px minmax(0, 1fr);
+  max-width: 1650px;
+  min-height: calc(100vh - 65px);
+  margin: auto;
 }
 
 aside {
   min-width: 0;
-  padding: 12px 8px;
-  background: #081423cc;
+  padding: 12px 9px;
   border-right: 1px solid var(--line);
+  background: #0d0d0d;
+}
+
+.nav-label {
+  margin: 12px 10px 7px;
+  color: #777;
+  font-size: 10px;
+  letter-spacing: 1.5px;
 }
 
 nav {
   display: grid;
   gap: 5px;
-  width: 100%;
-  min-width: 0;
 }
 
 nav button {
   text-align: left;
   background: transparent;
   border-color: transparent;
-  color: #a9bdd5;
-  min-width: 0;
+  color: #aaa;
 }
 
 nav button.active {
-  background: #12345a;
-  border-color: #1f5e9a;
-  box-shadow: inset 3px 0 var(--cyan);
+  background: #30280d;
+  border-color: #66551a;
+  color: var(--yellow);
+  box-shadow: inset 3px 0 var(--yellow);
 }
 
 main {
   min-width: 0;
-  width: 100%;
-  padding: clamp(12px, 2.5vw, 26px);
+  padding: 22px;
 }
 
 .pagehead {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 15px;
 }
 
 .pagehead h2 {
   margin: 0;
-  font-size: 23px;
+  font-size: 24px;
 }
 
 .pagehead p {
-  margin: 4px 0;
+  margin: 4px 0 0;
   color: var(--muted);
   font-size: 12px;
 }
@@ -226,15 +194,11 @@ main {
 .search {
   display: flex;
   gap: 8px;
-  width: 100%;
-  max-width: 680px;
-  margin-bottom: 16px;
+  margin: 16px 0;
+  max-width: 720px;
 }
 
-.search input {
-  flex: 1 1 auto;
-  width: 100%;
-}
+.search input { flex: 1; }
 
 .cards {
   display: grid;
@@ -245,168 +209,154 @@ main {
 
 .card {
   min-width: 0;
-  overflow-wrap: anywhere;
-  background: linear-gradient(145deg, #12243a, #0d1b2c);
+  padding: 15px;
   border: 1px solid var(--line);
-  border-radius: 13px;
-  padding: 13px;
-}
-
-.card .l {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.card .v {
-  font-size: clamp(16px, 2vw, 23px);
-  font-weight: 750;
-  margin-top: 6px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #191919, #101010);
   overflow-wrap: anywhere;
 }
 
-.card .s {
-  color: #7593b5;
+.card .label {
+  color: var(--muted);
   font-size: 11px;
-  margin-top: 4px;
+}
+
+.card .value {
+  margin-top: 7px;
+  color: var(--yellow);
+  font-size: clamp(17px, 2vw, 25px);
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.card .sub {
+  margin-top: 5px;
+  color: #888;
+  font-size: 11px;
 }
 
 h3 {
-  font-size: 14px;
-  margin: 21px 0 10px;
+  margin: 24px 0 10px;
+  font-size: 15px;
 }
 
 .note {
-  background: #102b49;
-  border: 1px solid #205080;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid #51441c;
   border-radius: 10px;
-  padding: 10px 12px;
-  margin: 10px 0;
+  background: #211c0d;
+  color: #e9d99c;
   font-size: 12px;
   overflow-wrap: anywhere;
 }
 
-.note.warn {
-  background: #342710;
-  border-color: #6d521c;
+.note.good {
+  border-color: #24583d;
+  background: #102419;
+  color: var(--green);
 }
 
-.note.good {
-  background: #0d302b;
-  border-color: #1c6656;
+.note.bad {
+  border-color: #65303a;
+  background: #271216;
+  color: #ffabb4;
 }
 
 .filters {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  width: 100%;
   margin: 12px 0;
 }
 
-.filters input,
-.filters select {
+.filters input, .filters select {
   flex: 1 1 140px;
+  width: auto;
 }
 
 .wrap {
   width: 100%;
-  max-width: 100%;
-  min-width: 0;
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--line);
   border-radius: 11px;
-  background: #091625;
+  background: #0d0d0d;
+  -webkit-overflow-scrolling: touch;
 }
 
 table {
-  border-collapse: collapse;
   width: 100%;
+  border-collapse: collapse;
   font-size: 12px;
 }
 
 th, td {
-  padding: 9px 10px;
+  padding: 10px;
   text-align: left;
   white-space: nowrap;
-  border-bottom: 1px solid #1a3049;
+  border-bottom: 1px solid #282828;
 }
 
 th {
-  background: #11233a;
-  color: #9fb8d4;
+  background: #1a1a1a;
+  color: var(--yellow);
+  font-weight: 750;
 }
 
-tr:hover td {
-  background: #10213a;
-}
-
-tr:last-child td {
-  border-bottom: 0;
-}
-
-.pager {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-}
+tr:hover td { background: #181818; }
+tr:last-child td { border-bottom: 0; }
 
 .badge {
   display: inline-block;
-  border: 1px solid var(--line);
-  border-radius: 999px;
   padding: 3px 8px;
+  border: 1px solid #444;
+  border-radius: 99px;
+  background: #222;
   font-size: 10px;
-  background: #14263b;
 }
 
-.badge.won,
-.badge.settled,
-.badge.completed,
-.badge.confirmed,
-.badge.success {
+.badge.won, .badge.settled, .badge.completed,
+.badge.confirmed, .badge.success {
   color: var(--green);
-  background: #0c3028;
+  border-color: #24583d;
+  background: #102419;
 }
 
-.badge.lost,
-.badge.failed,
-.badge.rejected,
+.badge.lost, .badge.failed, .badge.rejected,
 .badge.denied {
   color: var(--red);
-  background: #351827;
+  border-color: #65303a;
+  background: #271216;
 }
 
-.badge.pending,
-.badge.open,
-.badge.locked {
-  color: var(--amber);
-  background: #302710;
+.badge.pending, .badge.open, .badge.locked {
+  color: var(--yellow);
+  border-color: #51441c;
+  background: #211c0d;
 }
 
-.lnk {
-  color: #70caff;
+.link {
+  color: var(--yellow);
+  text-decoration: none;
 }
+
+.link:hover { text-decoration: underline; }
 
 .panel {
-  min-width: 0;
-  background: var(--card);
+  padding: 14px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 12px;
+  background: var(--panel);
+  overflow-wrap: anywhere;
 }
 
 .chartbox {
-  min-width: 0;
-  overflow: hidden;
-  background: #0a1829;
+  margin-bottom: 12px;
+  padding: 14px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 12px;
+  background: var(--panel);
+  overflow: hidden;
 }
 
 .chartbox svg {
@@ -415,16 +365,19 @@ tr:last-child td {
   height: auto;
 }
 
-.legend {
+.empty {
+  padding: 22px;
   color: var(--muted);
-  font-size: 11px;
-  padding-top: 8px;
+  text-align: center;
 }
 
-.empty {
-  padding: 18px;
-  text-align: center;
-  color: var(--muted);
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .login-wrap {
@@ -433,165 +386,70 @@ tr:last-child td {
   display: grid;
   place-items: center;
   padding: 18px;
-  background:
-    radial-gradient(ellipse at 50% 10%, #123a66 0, transparent 45%),
-    var(--bg);
+  background: radial-gradient(ellipse at top, #30280d, transparent 55%), #090909;
 }
 
 .login {
   width: 100%;
   max-width: 410px;
-  padding: 24px;
-  background: linear-gradient(145deg, #10223a, #0a1727);
-  border: 1px solid #245080;
+  padding: 25px;
+  border: 1px solid #66551a;
   border-radius: 18px;
+  background: #121212;
+  box-shadow: 0 20px 80px #0009;
 }
 
-.login h2 {
-  margin: 12px 0 0;
-}
+.login h2 { margin: 15px 0 4px; }
+.login p { color: var(--muted); font-size: 12px; }
+.login label { display: block; margin-top: 12px; }
+.login input { margin-top: 6px; }
+.login button { width: 100%; margin-top: 16px; }
 
-.login p {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.login input {
-  display: block;
-  width: 100%;
-  margin: 6px 0 13px;
-}
-
-.login button {
-  width: 100%;
-}
-
-.small {
-  font-size: 11px;
-}
-
-@media (max-width: 900px) {
-  .layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
+@media(max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
 
   aside {
     position: sticky;
-    top: 61px;
-    z-index: 15;
-    width: 100%;
+    top: 62px;
+    z-index: 20;
     padding: 6px;
     border-right: 0;
     border-bottom: 1px solid var(--line);
     overflow: hidden;
-    background: #07111ff5;
   }
 
   nav {
     display: flex;
-    flex-wrap: nowrap;
     overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
+    gap: 5px;
   }
 
   nav button {
     flex: 0 0 auto;
     white-space: nowrap;
     font-size: 12px;
-    padding: 9px 11px;
   }
 
-  main {
-    width: 100%;
-    padding: 14px;
-  }
-
-  .cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  .nav-label { display: none; }
+  main { padding: 14px; }
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-@media (max-width: 480px) {
-  header {
-    padding: 9px 10px;
-    gap: 7px;
-  }
-
-  .brand h1 {
-    font-size: 12px;
-  }
-
-  .brand p {
-    display: none;
-  }
-
-  .logo {
-    flex-basis: 32px;
-    width: 32px;
-    height: 32px;
-  }
-
-  .head-actions {
-    gap: 5px;
-  }
-
-  .head-actions button {
-    font-size: 11px;
-    padding: 7px 8px;
-  }
-
-  aside {
-    top: 51px;
-  }
-
-  main {
-    padding: 10px;
-  }
-
-  .pagehead h2 {
-    font-size: 19px;
-  }
-
-  .cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 7px;
-  }
-
-  .card {
-    padding: 10px;
-  }
-
-  .card .v {
-    font-size: 16px;
-  }
-
-  .search {
-    gap: 6px;
-  }
-
-  .search button {
-    padding: 8px 10px;
-  }
-
-  .search input {
-    font-size: 13px;
-  }
-
-  .login {
-    padding: 19px;
-  }
+@media(max-width: 480px) {
+  header { padding: 9px; }
+  .brand h1 { font-size: 12px; }
+  .brand p { font-size: 9px; }
+  .logo { width: 34px; height: 34px; flex-basis: 34px; }
+  .head-actions button { padding: 8px; font-size: 11px; }
+  main { padding: 10px; }
+  .pagehead h2 { font-size: 20px; }
+  .card { padding: 11px; }
+  .card .value { font-size: 16px; }
+  .search button { padding: 8px; }
 }
 
-@media (max-width: 340px) {
-  .cards {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .head-actions button {
-    padding: 6px;
-  }
+@media(max-width: 340px) {
+  .cards { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -599,28 +457,25 @@ tr:last-child td {
 <body>
 
 <div id="loginView" class="login-wrap hide">
-  <div class="login">
+  <form id="loginForm" class="login">
     <div class="logo">CT</div>
     <h2>Admin Console</h2>
-    <p>Crypto Trader Pro · Administrator access</p>
+    <p>Crypto Trader Pro · Secure administrator access</p>
 
-    <form id="loginForm">
-      <label for="u">Username</label>
-      <input id="u" type="text" autocomplete="username"
-             maxlength="200" required>
+    <label for="username">Username</label>
+    <input id="username" autocomplete="username" maxlength="200" required>
 
-      <label for="p">Password</label>
-      <input id="p" type="password" autocomplete="current-password"
-             maxlength="200" required>
+    <label for="password">Password</label>
+    <input id="password" type="password"
+           autocomplete="current-password" maxlength="200" required>
 
-      <button id="loginBtn" class="primary" type="submit">
-        Sign in securely
-      </button>
-    </form>
+    <button id="loginBtn" class="primary" type="submit">
+      SIGN IN SECURELY
+    </button>
 
-    <p id="loginMsg" class="err"></p>
-    <div class="small muted">Keep your administrator credentials private.</div>
-  </div>
+    <p id="loginMsg" class="err" role="alert"></p>
+    <p class="small">Keep your administrator credentials private.</p>
+  </form>
 </div>
 
 <div id="appView" class="hide">
@@ -641,6 +496,7 @@ tr:last-child td {
 
   <div class="layout">
     <aside>
+      <div class="nav-label">MANAGEMENT</div>
       <nav id="nav" aria-label="Admin navigation"></nav>
     </aside>
 
@@ -648,16 +504,16 @@ tr:last-child td {
       <div class="pagehead">
         <div>
           <h2 id="pageTitle">Dashboard</h2>
-          <p id="pageSubtitle">Operational overview</p>
+          <p id="pageSubtitle">System overview</p>
         </div>
         <span id="lastUpdated" class="muted small"></span>
       </div>
 
       <div class="search">
-        <input id="gs"
-          aria-label="Global search"
-          placeholder="Search user, Telegram ID, round or bet">
-        <button id="gsBtn" class="primary" type="button">Search</button>
+        <input id="globalSearch"
+               aria-label="Global search"
+               placeholder="Search user, Telegram ID, round or bet">
+        <button id="searchBtn" class="primary" type="button">Search</button>
       </div>
 
       <div id="content"></div>
@@ -668,47 +524,51 @@ tr:last-child td {
 <script>
 "use strict";
 
-const $ = s => document.querySelector(s);
+const $ = selector => document.querySelector(selector);
 
-const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({
+const esc = value => String(value ?? "").replace(/[&<>"']/g, ch => ({
   "&": "&amp;",
   "<": "&lt;",
   ">": "&gt;",
   '"': "&quot;",
   "'": "&#39;"
-}[c]));
+}[ch]));
 
-const dt = v => v ? esc(new Date(v).toLocaleString()) : "-";
-
-const badge = v =>
-  `<span class="badge ${esc(v)}">${esc(v)}</span>`;
-
-const yn = v => v ? "Yes" : "No";
-
-const uid = v => v == null || v === ""
-  ? "-"
-  : `<a href="#" class="lnk" data-user="${esc(v)}">${esc(v)}</a>`;
-
-const rcode = v => v
-  ? `<a href="#" class="lnk" data-round="${esc(v)}">${esc(v)}</a>`
-  : "-";
-
-const fmt = v => Number(v || 0).toLocaleString(undefined, {
+const fmt = value => Number(value || 0).toLocaleString(undefined, {
   maximumFractionDigits: 2
 });
 
-const TX_STATUS = [
+const dt = value => {
+  if (!value) return "-";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "-" : esc(date.toLocaleString());
+};
+
+const badge = value =>
+  `<span class="badge ${esc(value)}">${esc(value)}</span>`;
+
+const yn = value => value ? "Yes" : "No";
+
+const userLink = value => value == null || value === ""
+  ? "-"
+  : `<a href="#" class="link" data-user="${esc(value)}">${esc(value)}</a>`;
+
+const roundLink = value => value
+  ? `<a href="#" class="link" data-round="${esc(value)}">${esc(value)}</a>`
+  : "-";
+
+const transactionStatuses = [
   "pending", "confirmed", "rejected", "completed", "failed"
 ];
 
-const TX_COLS = [
+const transactionColumns = [
   ["id", "ID"],
-  ["user_id", "User ID", uid],
+  ["user_id", "User ID", userLink],
   ["transaction_type", "Type"],
   ["amount", "Amount"],
   ["status", "Status", badge],
   ["network", "Network"],
-  ["tx_hash", "Tx hash"],
+  ["tx_hash", "Transaction hash"],
   ["created_at", "Created", dt],
   ["updated_at", "Updated", dt]
 ];
@@ -717,62 +577,53 @@ const VIEWS = {
   dashboard: {
     label: "Dashboard",
     icon: "▦",
-    subtitle: "System overview"
+    subtitle: "Live system overview"
   },
-
   analytics: {
     label: "Analytics",
     icon: "⌁",
     subtitle: "Activity and result distribution"
   },
-
   reconcile: {
     label: "Reconcile",
     icon: "⇄",
     subtitle: "Wallet and ledger checks"
   },
-
   users: {
     label: "Users",
     icon: "♙",
-    subtitle: "User profiles and referrals",
+    subtitle: "Profiles and referrals",
     action: "users",
     key: "users",
     exportKind: "users",
-    filters: [
-      {name: "q", ph: "Telegram ID or username"}
-    ],
+    filters: [{name: "q", placeholder: "Telegram ID or username"}],
     cols: [
-      ["id", "ID", uid],
+      ["id", "User ID", userLink],
       ["telegram_id", "Telegram ID"],
       ["username", "Username"],
       ["balance", "Balance"],
       ["referral_count", "Referrals"],
-      ["referred_by", "Referred by", uid],
+      ["referred_by", "Referred by", userLink],
       ["referral_code", "Referral code"],
       ["created_at", "Registered", dt]
     ]
   },
-
   wallets: {
     label: "Wallets",
     icon: "◈",
     subtitle: "Read-only wallet balances",
     action: "wallets",
     key: "wallets",
-    note: "Read-only. This panel cannot modify wallet balances.",
-    filters: [
-      {name: "q", ph: "Telegram ID or username"}
-    ],
+    note: "Read-only wallet monitoring. No balance modifications are available.",
+    filters: [{name: "q", placeholder: "Telegram ID or username"}],
     cols: [
-      ["user_id", "User ID", uid],
+      ["user_id", "User ID", userLink],
       ["telegram_id", "Telegram ID"],
       ["username", "Username"],
       ["balance", "Balance"],
       ["updated_at", "Updated", dt]
     ]
   },
-
   transactions: {
     label: "Transactions",
     icon: "⇅",
@@ -780,14 +631,12 @@ const VIEWS = {
     action: "transactions",
     key: "transactions",
     exportKind: "transactions",
-    note: "Read-only transaction history.",
     filters: [
-      {name: "user_id", ph: "User ID"},
-      {name: "status", ph: "Any status", opts: TX_STATUS}
+      {name: "user_id", placeholder: "User ID"},
+      {name: "status", placeholder: "Any status", options: transactionStatuses}
     ],
-    cols: TX_COLS
+    cols: transactionColumns
   },
-
   deposits: {
     label: "Deposits",
     icon: "↓",
@@ -796,14 +645,13 @@ const VIEWS = {
     key: "transactions",
     exportKind: "transactions",
     fixed: {type: "deposit"},
-    note: "Read-only. Deposit approval workflow is not implemented.",
+    note: "Read-only. Deposit approval is not implemented by this interface.",
     filters: [
-      {name: "user_id", ph: "User ID"},
-      {name: "status", ph: "Any status", opts: TX_STATUS}
+      {name: "user_id", placeholder: "User ID"},
+      {name: "status", placeholder: "Any status", options: transactionStatuses}
     ],
-    cols: TX_COLS
+    cols: transactionColumns
   },
-
   withdrawals: {
     label: "Withdrawals",
     icon: "↑",
@@ -812,23 +660,22 @@ const VIEWS = {
     key: "transactions",
     exportKind: "transactions",
     fixed: {type: "withdrawal"},
-    note: "Read-only. Withdrawal approval workflow is not implemented.",
+    note: "Read-only. Withdrawal approval is not implemented by this interface.",
     filters: [
-      {name: "user_id", ph: "User ID"},
-      {name: "status", ph: "Any status", opts: TX_STATUS}
+      {name: "user_id", placeholder: "User ID"},
+      {name: "status", placeholder: "Any status", options: transactionStatuses}
     ],
-    cols: TX_COLS
+    cols: transactionColumns
   },
-
   rounds: {
     label: "Game Rounds",
     icon: "◷",
     subtitle: "Round timing and settlement",
     action: "rounds",
     key: "rounds",
-    note: "Results cannot be changed from this panel.",
+    note: "Round results are read-only.",
     cols: [
-      ["round_code", "Round", rcode],
+      ["round_code", "Round", roundLink],
       ["status", "Status", badge],
       ["starts_at", "Starts", dt],
       ["betting_closes_at", "Betting closes", dt],
@@ -841,7 +688,6 @@ const VIEWS = {
       ["payout_complete", "Payout complete", yn]
     ]
   },
-
   bets: {
     label: "Bets",
     icon: "◉",
@@ -850,18 +696,18 @@ const VIEWS = {
     key: "bets",
     exportKind: "bets",
     filters: [
-      {name: "round_code", ph: "Round code"},
-      {name: "user_id", ph: "User ID"},
+      {name: "round_code", placeholder: "Round code"},
+      {name: "user_id", placeholder: "User ID"},
       {
         name: "status",
-        ph: "Any status",
-        opts: ["pending", "won", "lost", "cancelled"]
+        placeholder: "Any status",
+        options: ["pending", "won", "lost", "cancelled"]
       }
     ],
     cols: [
-      ["id", "ID"],
-      ["user_id", "User ID", uid],
-      ["round_code", "Round", rcode],
+      ["id", "Bet ID"],
+      ["user_id", "User ID", userLink],
+      ["round_code", "Round", roundLink],
       ["bet_type", "Type"],
       ["selection", "Selection"],
       ["stake", "Stake"],
@@ -873,11 +719,10 @@ const VIEWS = {
       ["settled_at", "Settled", dt]
     ]
   },
-
   audit: {
     label: "Audit Logs",
     icon: "≡",
-    subtitle: "Admin activity history",
+    subtitle: "Administrator activity history",
     action: "audit",
     key: "entries",
     cols: [
@@ -885,7 +730,7 @@ const VIEWS = {
       ["created_at", "Time", dt],
       ["admin_username", "Admin"],
       ["action", "Action"],
-      ["target_type", "Target type"],
+      ["target_type", "Target"],
       ["target_id", "Target ID"],
       ["outcome", "Outcome", badge],
       ["ip", "IP"]
@@ -893,12 +738,13 @@ const VIEWS = {
   }
 };
 
-let cur = "dashboard";
-let page = 1;
-let filters = {};
+let currentView = "dashboard";
+let currentPage = 1;
+let activeFilters = {};
+let requestSequence = 0;
 
 async function api(body) {
-  const r = await fetch("/api/admin", {
+  const response = await fetch("/api/admin", {
     method: "POST",
     credentials: "same-origin",
     headers: {
@@ -911,57 +757,27 @@ async function api(body) {
   let data = {};
 
   try {
-    data = await r.json();
+    data = await response.json();
   } catch {}
 
-  if (r.status === 401 && body.action !== "login") {
+  if (response.status === 401 && body.action !== "login") {
     showLogin("Session expired. Please log in again.");
-    throw Error("auth");
+    throw new Error("auth");
   }
 
-  if (!r.ok) {
-    throw Error(data.message || "Request failed");
+  if (!response.ok) {
+    throw new Error(data.message || "Request failed.");
   }
 
   return data;
 }
 
-function card(label, value, sub) {
+function card(label, value, subtitle = "") {
   return `
     <div class="card">
-      <div class="l">${esc(label)}</div>
-      <div class="v">${esc(value ?? "-")}</div>
-      ${sub ? `<div class="s">${esc(sub)}</div>` : ""}
-    </div>`;
-}
-
-function table(rows, cols) {
-  if (!rows || !rows.length) {
-    return '<div class="empty">No records found.</div>';
-  }
-
-  return `
-    <div class="wrap">
-      <table>
-        <thead>
-          <tr>${cols.map(c => `<th>${esc(c[1])}</th>`).join("")}</tr>
-        </thead>
-        <tbody>
-          ${rows.map(row =>
-            "<tr>" + cols.map(c => {
-              const value = row[c[0]];
-
-              return `<td>${
-                c[2]
-                  ? c[2](value, row)
-                  : value == null || value === ""
-                    ? "-"
-                    : esc(value)
-              }</td>`;
-            }).join("") + "</tr>"
-          ).join("")}
-        </tbody>
-      </table>
+      <div class="label">${esc(label)}</div>
+      <div class="value">${esc(value ?? "-")}</div>
+      ${subtitle ? `<div class="sub">${esc(subtitle)}</div>` : ""}
     </div>`;
 }
 
@@ -969,168 +785,196 @@ function section(title, content) {
   return `<h3>${esc(title)}</h3>${content}`;
 }
 
-function chart(title, labels, series, colors, names) {
-  const W = 600;
-  const H = 190;
-  const pl = 42;
-  const pr = 8;
-  const pt = 12;
-  const pb = 25;
-
-  const all = series.flat().map(Number);
-  let max = Math.max(1, ...all);
-  let min = Math.min(0, ...all);
-
-  if (max === min) max = min + 1;
-
-  const iw = W - pl - pr;
-  const ih = H - pt - pb;
-  const n = Math.max(1, labels.length);
-  const gw = iw / n;
-  const bw = Math.max(3, (gw - 4) / series.length);
-
-  const y = v => pt + ih * (max - v) / (max - min);
-  let g = "";
-
-  for (let j = 0; j < 4; j++) {
-    const value = min + (max - min) * j / 3;
-    const yy = y(value);
-
-    g += `
-      <line x1="${pl}" x2="${W-pr}" y1="${yy}" y2="${yy}"
-        stroke="#203954"/>
-      <text x="${pl-5}" y="${yy+3}" text-anchor="end"
-        fill="#91a8c4" font-size="9">${esc(Math.round(value))}</text>`;
+function renderTable(rows, columns) {
+  if (!Array.isArray(rows) || !rows.length) {
+    return '<div class="empty">No records found.</div>';
   }
 
-  series.forEach((s, si) => s.forEach((v, i) => {
-    const yy = y(Number(v) || 0);
-    const zero = y(0);
-    const x = pl + i * gw + 2 + si * bw;
+  return `
+    <div class="wrap">
+      <table>
+        <thead>
+          <tr>${columns.map(col => `<th>${esc(col[1])}</th>`).join("")}</tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr>
+              ${columns.map(col => {
+                const value = row[col[0]];
+                const rendered = col[2]
+                  ? col[2](value, row)
+                  : value == null || value === ""
+                    ? "-"
+                    : esc(value);
 
-    g += `
-      <rect x="${x}" y="${Math.min(yy, zero)}"
-        width="${Math.max(2, bw-2)}"
-        height="${Math.max(1, Math.abs(zero-yy))}"
-        rx="2" fill="${colors[si]}"/>`;
-  }));
+                return `<td>${rendered}</td>`;
+              }).join("")}
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>`;
+}
 
-  labels.forEach((label, i) => {
-    if (i % 2 === 0) {
-      g += `
-        <text x="${pl+i*gw+gw/2}" y="${H-7}"
-          text-anchor="middle" fill="#91a8c4" font-size="9">
-          ${esc(label)}
-        </text>`;
+function renderDashboard(data) {
+  const totals = data.totals || {};
+  const health = data.health || {};
+
+  const metricCards = [
+    card("Registered users", fmt(totals.users)),
+    card("Total bets", fmt(totals.bets)),
+    card("Total stake", fmt(totals.total_stake)),
+    card("Platform fees", fmt(totals.total_fees)),
+    card("Total payouts", fmt(totals.total_payouts)),
+    card("Referral commissions", fmt(totals.total_commissions)),
+    card("Wallet balances", fmt(totals.total_wallet_balance)),
+    card("Deposits", fmt(totals.total_deposits), `${fmt(totals.deposit_count)} records`),
+    card("Withdrawals", fmt(totals.total_withdrawals), `${fmt(totals.withdrawal_count)} records`)
+  ].join("");
+
+  const healthCards = [
+    card("Database", health.database_ok ? "Connected" : "Check"),
+    card("Cron / settlement", health.cron_ok ? "Healthy" : "Investigate"),
+    card("Overdue rounds", fmt(health.overdue_rounds)),
+    card("Old pending bets", fmt(health.old_pending_bets)),
+    card("Last settled", health.last_settled_at ? dt(health.last_settled_at) : "-"),
+    card("Latest round", health.latest_round_start ? dt(health.latest_round_start) : "-")
+  ].join("");
+
+  const statuses = (data.round_statuses || [])
+    .map(item => `${esc(item.status)}: ${esc(item.count)}`)
+    .join(" · ");
+
+  $("#content").innerHTML =
+    '<div class="note">Monitoring mode enabled. Financial actions are read-only.</div>' +
+    `<div class="cards">${metricCards}</div>` +
+    section("System Health", `<div class="cards">${healthCards}</div>`) +
+    section("Rounds by Status", `<div class="panel">${statuses || "No round data"}</div>`) +
+    section("Recent Game Rounds", renderTable(data.recent_rounds, VIEWS.rounds.cols));
+}
+
+function renderChart(title, labels, series, colors, names) {
+  const width = 600;
+  const height = 190;
+  const left = 45;
+  const right = 10;
+  const top = 15;
+  const bottom = 27;
+
+  const allValues = series.flat().map(value => Number(value) || 0);
+  const maxValue = Math.max(1, ...allValues);
+  const minValue = Math.min(0, ...allValues);
+
+  const plotWidth = width - left - right;
+  const plotHeight = height - top - bottom;
+  const count = Math.max(1, labels.length);
+  const groupWidth = plotWidth / count;
+  const barWidth = Math.max(3, (groupWidth - 5) / Math.max(1, series.length));
+
+  const y = value => top + plotHeight * (maxValue - value) /
+    (maxValue - minValue);
+
+  let svg = "";
+
+  for (let i = 0; i < 4; i++) {
+    const value = minValue + (maxValue - minValue) * i / 3;
+    const yy = y(value);
+
+    svg += `
+      <line x1="${left}" x2="${width-right}" y1="${yy}" y2="${yy}"
+        stroke="#303030"/>
+      <text x="${left-5}" y="${yy+3}" text-anchor="end"
+        fill="#999" font-size="9">${esc(Math.round(value))}</text>`;
+  }
+
+  series.forEach((values, seriesIndex) => {
+    values.forEach((value, index) => {
+      const yy = y(Number(value) || 0);
+      const zero = y(0);
+      const x = left + index * groupWidth + 2 + seriesIndex * barWidth;
+
+      svg += `
+        <rect x="${x}" y="${Math.min(yy, zero)}"
+          width="${Math.max(2, barWidth-2)}"
+          height="${Math.max(1, Math.abs(zero-yy))}"
+          rx="2" fill="${colors[seriesIndex]}"/>`;
+    });
+  });
+
+  labels.forEach((label, index) => {
+    if (index % 2 === 0) {
+      svg += `
+        <text x="${left+index*groupWidth+groupWidth/2}"
+          y="${height-7}" text-anchor="middle"
+          fill="#999" font-size="9">${esc(label)}</text>`;
     }
   });
 
   return `
     <div class="chartbox">
       <b>${esc(title)}</b>
-      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}">
-        ${g}
-      </svg>
-      <div class="legend">
-        ${names.map((name, i) => `
-          <span style="margin-right:12px">
-            <i style="display:inline-block;width:8px;height:8px;
-              background:${colors[i]};margin-right:5px"></i>
+      <svg viewBox="0 0 ${width} ${height}" role="img"
+        aria-label="${esc(title)}">${svg}</svg>
+      <div class="muted small">
+        ${names.map((name, index) =>
+          `<span style="margin-right:12px">
+            <span style="color:${colors[index]}">■</span>
             ${esc(name)}
-          </span>`).join("")}
+          </span>`
+        ).join("")}
       </div>
     </div>`;
 }
 
-function renderDash(d) {
-  const t = d.totals || {};
-  const h = d.health || {};
-
-  const cards = [
-    card("Registered users", fmt(t.users)),
-    card("Total bets", fmt(t.bets)),
-    card("Total stake", fmt(t.total_stake)),
-    card("Platform fees", fmt(t.total_fees)),
-    card("Total payouts", fmt(t.total_payouts)),
-    card("Referral commissions", fmt(t.total_commissions)),
-    card("Wallet balances", fmt(t.total_wallet_balance)),
-    card("Deposits", fmt(t.total_deposits), fmt(t.deposit_count) + " records"),
-    card("Withdrawals", fmt(t.total_withdrawals), fmt(t.withdrawal_count) + " records")
-  ].join("");
-
-  const health = [
-    card("Database", h.database_ok ? "Connected" : "Check"),
-    card("Cron / settlement", h.cron_ok ? "Healthy" : "Investigate"),
-    card("Overdue rounds", fmt(h.overdue_rounds)),
-    card("Old pending bets", fmt(h.old_pending_bets)),
-    card("Last settled", h.last_settled_at
-      ? new Date(h.last_settled_at).toLocaleString() : "-"),
-    card("Latest round", h.latest_round_start
-      ? new Date(h.latest_round_start).toLocaleString() : "-")
-  ].join("");
-
-  const statuses = (d.round_statuses || [])
-    .map(x => `${esc(x.status)}: ${esc(x.count)}`).join(" · ");
-
-  $("#content").innerHTML =
-    '<div class="note">Read-only monitoring. Deposit and withdrawal approval workflows are not implemented.</div>' +
-    `<div class="cards">${cards}</div>` +
-    section("System health", `<div class="cards">${health}</div>`) +
-    section("Rounds by status", `<div class="panel">${statuses || "-"}</div>`) +
-    section("Recent rounds", table(d.recent_rounds, VIEWS.rounds.cols));
-}
-
-function renderAnalytics(d) {
-  const a = d.daily || [];
-
-  const f = d.fairness || {
+function renderAnalytics(data) {
+  const daily = data.daily || [];
+  const fairness = data.fairness || {
     counts: Array(10).fill(0),
     total_rounds: 0,
     verdict: "No data"
   };
 
-  const labels = a.map(x => String(x.day || "").slice(5));
+  const labels = daily.map(item => String(item.day || "").slice(5));
 
-  const fair = (f.counts || []).map((count, i) => ({
-    number: i,
+  const distribution = (fairness.counts || []).map((count, number) => ({
+    number,
     count,
-    share: f.total_rounds
-      ? (count / f.total_rounds * 100).toFixed(1) + "%"
+    share: fairness.total_rounds
+      ? `${(count / fairness.total_rounds * 100).toFixed(1)}%`
       : "-",
-    diff: f.total_rounds
-      ? ((count - f.total_rounds / 10) >= 0 ? "+" : "") +
-        (count - f.total_rounds / 10).toFixed(1)
+    diff: fairness.total_rounds
+      ? Number(count - fairness.total_rounds / 10).toFixed(1)
       : "-"
   }));
 
   $("#content").innerHTML =
-    '<div class="note">Daily metrics use UTC. Statistical checks are indicators, not proof of fairness.</div>' +
+    '<div class="note">Statistical indicators do not prove that a game is fair or unfair.</div>' +
 
-    chart(
-      "Daily stake vs payouts · 14 days",
+    renderChart(
+      "Daily Stake vs Payouts",
       labels,
-      [a.map(x => +x.stake), a.map(x => +x.payout)],
-      ["#268cff", "#ffc766"],
+      [daily.map(x => +x.stake), daily.map(x => +x.payout)],
+      ["#f5c518", "#35dc88"],
       ["Stake", "Payouts"]
     ) +
 
-    chart(
-      "Daily net indicator",
+    renderChart(
+      "Daily Net Indicator",
       labels,
-      [a.map(x => +x.net)],
-      ["#35e0a1"],
+      [daily.map(x => +x.net)],
+      ["#a78bfa"],
       ["Net indicator"]
     ) +
 
-    chart(
-      "Users per day",
+    renderChart(
+      "Users Per Day",
       labels,
-      [a.map(x => +x.active_users), a.map(x => +x.new_users)],
-      ["#55d6ff", "#a78bfa"],
+      [daily.map(x => +x.active_users), daily.map(x => +x.new_users)],
+      ["#f5c518", "#35dc88"],
       ["Active users", "New users"]
     ) +
 
-    section("Daily metrics", table(a.slice().reverse(), [
+    section("Daily Metrics", renderTable(daily.slice().reverse(), [
       ["day", "Day (UTC)"],
       ["bets", "Bets"],
       ["stake", "Stake"],
@@ -1140,13 +984,9 @@ function renderAnalytics(d) {
       ["new_users", "New users"]
     ])) +
 
-    section("Result distribution",
-      `<div class="note ${
-        String(f.verdict).startsWith("Consistent")
-          ? "good"
-          : String(f.verdict).startsWith("Not enough") ? "" : "warn"
-      }">${esc(f.verdict)} · ${esc(f.total_rounds || 0)} rounds. Statistical indicator only.</div>` +
-      table(fair, [
+    section("Result Distribution",
+      `<div class="note">${esc(fairness.verdict)} · ${esc(fairness.total_rounds || 0)} rounds</div>` +
+      renderTable(distribution, [
         ["number", "Result"],
         ["count", "Count"],
         ["share", "Share"],
@@ -1154,8 +994,8 @@ function renderAnalytics(d) {
       ])
     ) +
 
-    section("Top users by stake", table(d.top_users, [
-      ["id", "User ID", uid],
+    section("Top Users by Stake", renderTable(data.top_users, [
+      ["id", "User ID", userLink],
       ["username", "Username"],
       ["bets", "Bets"],
       ["stake", "Stake"],
@@ -1163,17 +1003,17 @@ function renderAnalytics(d) {
       ["user_net", "User net"]
     ])) +
 
-    section("Large stakes", table(d.large_stakes, [
+    section("Large Stakes", renderTable(data.large_stakes, [
       ["id", "Bet ID"],
-      ["user_id", "User ID", uid],
-      ["round_code", "Round", rcode],
+      ["user_id", "User ID", userLink],
+      ["round_code", "Round", roundLink],
       ["bet_type", "Type"],
       ["stake", "Stake"],
       ["created_at", "Created", dt]
     ])) +
 
-    section("High-return users", table(d.high_return_users, [
-      ["user_id", "User ID", uid],
+    section("High-Return Users", renderTable(data.high_return_users, [
+      ["user_id", "User ID", userLink],
       ["bets", "Bets"],
       ["stake", "Stake"],
       ["payout", "Payout"],
@@ -1181,58 +1021,54 @@ function renderAnalytics(d) {
     ]));
 }
 
-function renderReconcile(d) {
-  const t = d.totals || {};
+function renderReconcile(data) {
+  const totals = data.totals || {};
 
   const rows = [
-    {check: "Wallet total", a: t.wallet_total, b: "-", diff: "-"},
+    {check: "Wallet total", a: totals.wallet_total, b: "-", diff: "-"},
     {
       check: "Ledger net + commissions",
-      a: t.wallet_total,
-      b: (Number(t.ledger_net) + Number(t.commissions)).toFixed(2),
-      diff: t.unrecorded
+      a: totals.wallet_total,
+      b: Number(totals.ledger_net || 0) + Number(totals.commissions || 0),
+      diff: totals.unrecorded
     },
     {
-      check: "Bet stakes vs bet transactions",
-      a: t.bets_stake, b: t.bet_tx, diff: t.stake_diff
+      check: "Bet stakes vs transactions",
+      a: totals.bets_stake,
+      b: totals.bet_tx,
+      diff: totals.stake_diff
     },
     {
-      check: "Bet payouts vs payout transactions",
-      a: t.bets_payout, b: t.payout_tx, diff: t.payout_diff
-    },
-    {
-      check: "Bet rows vs bet transaction rows",
-      a: "-", b: "-", diff: t.bet_count_diff
-    },
-    {
-      check: "Paid bets vs payout transaction rows",
-      a: "-", b: "-", diff: t.payout_count_diff
+      check: "Bet payouts vs transactions",
+      a: totals.bets_payout,
+      b: totals.payout_tx,
+      diff: totals.payout_diff
     }
   ];
 
   $("#content").innerHTML =
-    `<div class="note ${d.clean ? "good" : "warn"}">${
-      d.clean
+    `<div class="note ${data.clean ? "good" : "bad"}">${
+      data.clean
         ? "Configured reconciliation checks match."
-        : "Mismatch detected. Investigate the ledger before taking any action."
+        : "Mismatch detected or reconciliation is not configured. Investigate before taking action."
     }</div>` +
 
     `<div class="cards">
-      ${card("Wallet total", t.wallet_total)}
-      ${card("Ledger net", t.ledger_net)}
-      ${card("Commissions", t.commissions)}
-      ${card("Unrecorded difference", t.unrecorded)}
+      ${card("Wallet total", totals.wallet_total)}
+      ${card("Ledger net", totals.ledger_net)}
+      ${card("Commissions", totals.commissions)}
+      ${card("Difference", totals.unrecorded)}
     </div>` +
 
-    section("Reconciliation checks", table(rows, [
+    section("Reconciliation Checks", renderTable(rows, [
       ["check", "Check"],
       ["a", "Value A"],
       ["b", "Value B"],
       ["diff", "Difference"]
     ])) +
 
-    section("Users with balance differences", table(d.mismatches, [
-      ["id", "User ID", uid],
+    section("Users with Balance Differences", renderTable(data.mismatches, [
+      ["id", "User ID", userLink],
       ["username", "Username"],
       ["balance", "Balance"],
       ["expected", "Expected"],
@@ -1240,56 +1076,55 @@ function renderReconcile(d) {
     ]));
 }
 
-function renderUser(d) {
-  const p = d.profile || {};
-  const s = d.stats || {};
-  const tree = d.referral_tree || [];
+function renderUser(data) {
+  const profile = data.profile || {};
+  const stats = data.stats || {};
+  const tree = data.referral_tree || [];
 
-  const lv = n => tree.filter(x => +x.level === n).length;
+  const levelCount = level =>
+    tree.filter(user => Number(user.level) === level).length;
 
   $("#content").innerHTML =
-    `<div class="row"><button id="backBtn">← Back</button>
-      <span class="muted">User #${esc(p.id)}</span></div>` +
+    '<button id="backBtn">← Back</button>' +
 
     `<div class="cards">
-      ${card("Username", p.username || "-")}
-      ${card("Telegram ID", p.telegram_id || "-")}
-      ${card("Balance", p.balance)}
-      ${card("Registered", p.created_at
-        ? new Date(p.created_at).toLocaleDateString() : "-")}
+      ${card("Username", profile.username || "-")}
+      ${card("Telegram ID", profile.telegram_id || "-")}
+      ${card("Balance", profile.balance)}
+      ${card("Registered", profile.created_at ? dt(profile.created_at) : "-")}
     </div>` +
 
     `<div class="cards">
-      ${card("Bets", s.bets)}
-      ${card("Total stake", s.stake)}
-      ${card("Payouts", s.payout)}
-      ${card("Won / lost", `${s.wins || 0} / ${s.losses || 0}`)}
+      ${card("Bets", stats.bets)}
+      ${card("Total Stake", stats.stake)}
+      ${card("Payouts", stats.payout)}
+      ${card("Won / Lost", `${stats.wins || 0} / ${stats.losses || 0}`)}
     </div>` +
 
     `<div class="cards">
-      ${card("Referral code", p.referral_code || "-")}
-      ${card("Referred by", p.referred_by || "-")}
-      ${card("Referrals L1/L2/L3", `${lv(1)}/${lv(2)}/${lv(3)}`)}
-      ${card("Commissions generated", d.commissions_generated)}
+      ${card("Referral Code", profile.referral_code || "-")}
+      ${card("Referred By", profile.referred_by || "-")}
+      ${card("Referrals L1/L2/L3", `${levelCount(1)}/${levelCount(2)}/${levelCount(3)}`)}
+      ${card("Commissions Generated", data.commissions_generated)}
     </div>` +
 
-    section("Referral tree", table(tree, [
+    section("Referral Tree", renderTable(tree, [
       ["level", "Level"],
-      ["id", "User ID", uid],
+      ["id", "User ID", userLink],
       ["username", "Username"],
-      ["referred_by", "Parent", uid],
+      ["referred_by", "Parent", userLink],
       ["created_at", "Registered", dt]
     ])) +
 
-    section("Commissions earned", table(d.commissions_earned, [
+    section("Commissions Earned", renderTable(data.commissions_earned, [
       ["referral_level", "Level"],
       ["count", "Count"],
       ["total", "Total"]
     ])) +
 
-    section("Recent bets", table(d.recent_bets, [
+    section("Recent Bets", renderTable(data.recent_bets, [
       ["id", "ID"],
-      ["round_code", "Round", rcode],
+      ["round_code", "Round", roundLink],
       ["bet_type", "Type"],
       ["selection", "Selection"],
       ["stake", "Stake"],
@@ -1300,139 +1135,144 @@ function renderUser(d) {
       ["created_at", "Created", dt]
     ])) +
 
-    section("Recent transactions", table(d.recent_transactions, [
+    section("Recent Transactions", renderTable(data.recent_transactions, [
       ["id", "ID"],
       ["transaction_type", "Type"],
       ["amount", "Amount"],
       ["status", "Status", badge],
       ["network", "Network"],
-      ["tx_hash", "Tx hash"],
+      ["tx_hash", "Transaction hash"],
       ["created_at", "Created", dt]
     ]));
 
   $("#backBtn").onclick = load;
 }
 
-function renderSearch(d, q) {
+function renderSearch(data, query) {
   $("#content").innerHTML =
-    `<div class="row"><button id="backBtn">← Back</button>
-      <span class="muted">Results: ${esc(q)}</span></div>` +
-
-    section("Users", table(d.users, [
-      ["id", "User ID", uid],
+    `<div class="note">Search results for: ${esc(query)}</div>` +
+    section("Users", renderTable(data.users, [
+      ["id", "User ID", userLink],
       ["telegram_id", "Telegram ID"],
       ["username", "Username"],
       ["balance", "Balance"]
     ])) +
 
-    ((d.rounds || []).length
-      ? section("Rounds", table(d.rounds, [
-          ["round_code", "Round", rcode],
+    ((data.rounds || []).length
+      ? section("Rounds", renderTable(data.rounds, [
+          ["round_code", "Round", roundLink],
           ["status", "Status", badge],
           ["starts_at", "Starts", dt],
           ["ends_at", "Ends", dt]
         ]))
       : "") +
 
-    ((d.bets || []).length
-      ? section("Bet", table(d.bets, [
+    ((data.bets || []).length
+      ? section("Bets", renderTable(data.bets, [
           ["id", "Bet ID"],
-          ["user_id", "User ID", uid],
-          ["round_code", "Round", rcode],
+          ["user_id", "User ID", userLink],
+          ["round_code", "Round", roundLink],
           ["bet_type", "Type"],
           ["stake", "Stake"],
           ["status", "Status", badge]
         ]))
       : "");
-
-  $("#backBtn").onclick = load;
 }
 
-function filterBar(v) {
-  if (!v.filters) return "";
+function filterBar(view) {
+  if (!view.filters) return "";
 
-  const items = v.filters.map(f => {
-    if (f.opts) {
+  const inputs = view.filters.map(filter => {
+    if (filter.options) {
       return `
-        <select data-f="${esc(f.name)}">
-          <option value="">${esc(f.ph)}</option>
-          ${f.opts.map(o =>
-            `<option value="${esc(o)}"${
-              filters[f.name] === o ? " selected" : ""
-            }>${esc(o)}</option>`
-          ).join("")}
+        <select data-filter="${esc(filter.name)}">
+          <option value="">${esc(filter.placeholder)}</option>
+          ${filter.options.map(option => `
+            <option value="${esc(option)}"
+              ${activeFilters[filter.name] === option ? "selected" : ""}>
+              ${esc(option)}
+            </option>
+          `).join("")}
         </select>`;
     }
 
     return `
-      <input data-f="${esc(f.name)}"
-        placeholder="${esc(f.ph)}"
-        value="${esc(filters[f.name] || "")}">`;
+      <input data-filter="${esc(filter.name)}"
+        placeholder="${esc(filter.placeholder)}"
+        value="${esc(activeFilters[filter.name] || "")}">`;
   }).join("");
 
   return `
     <div class="filters">
-      ${items}
+      ${inputs}
       <button id="applyBtn" class="primary">Apply</button>
       <button id="resetBtn">Reset</button>
-      ${v.exportKind ? '<button id="exportBtn">Export CSV</button>' : ""}
+      ${view.exportKind ? '<button id="exportBtn">Export CSV</button>' : ""}
     </div>
     <p id="exportMsg" class="muted small"></p>`;
 }
 
-function downloadCsv(name, text) {
-  const blob = new Blob(["\ufeff" + text], {
+function downloadCsv(filename, csv) {
+  const blob = new Blob(["\ufeff" + csv], {
     type: "text/csv;charset=utf-8"
   });
 
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
+  const link = document.createElement("a");
 
-  a.href = url;
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
 
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
 async function load() {
-  const v = VIEWS[cur];
-  const box = $("#content");
+  const sequence = ++requestSequence;
+  const view = VIEWS[currentView];
 
-  $("#pageTitle").textContent = v.label;
-  $("#pageSubtitle").textContent = v.subtitle || "Admin records";
-  box.innerHTML = '<div class="panel muted">Loading…</div>';
+  $("#pageTitle").textContent = view.label;
+  $("#pageSubtitle").textContent = view.subtitle || "Admin records";
+  $("#content").innerHTML = '<div class="panel muted">Loading data…</div>';
 
   try {
-    if (cur === "dashboard") {
-      renderDash(await api({action: "dashboard"}));
-      updated();
+    if (currentView === "dashboard") {
+      const data = await api({action: "dashboard"});
+      if (sequence !== requestSequence) return;
+      renderDashboard(data);
+      updateTime();
       return;
     }
 
-    if (cur === "analytics") {
-      renderAnalytics(await api({action: "analytics"}));
-      updated();
+    if (currentView === "analytics") {
+      const data = await api({action: "analytics"});
+      if (sequence !== requestSequence) return;
+      renderAnalytics(data);
+      updateTime();
       return;
     }
 
-    if (cur === "reconcile") {
-      renderReconcile(await api({action: "reconcile"}));
-      updated();
+    if (currentView === "reconcile") {
+      const data = await api({action: "reconcile"});
+      if (sequence !== requestSequence) return;
+      renderReconcile(data);
+      updateTime();
       return;
     }
 
-    const d = await api({
-      action: v.action,
-      page,
+    const data = await api({
+      action: view.action,
+      page: currentPage,
       page_size: 20,
-      ...(v.fixed || {}),
-      ...filters
+      ...(view.fixed || {}),
+      ...activeFilters
     });
 
-    const p = d.pagination || {
+    if (sequence !== requestSequence) return;
+
+    const pagination = data.pagination || {
       page: 1,
       total_pages: 1,
       total: 0,
@@ -1440,125 +1280,122 @@ async function load() {
       has_next: false
     };
 
-    box.innerHTML =
-      (v.note ? `<div class="note">${esc(v.note)}</div>` : "") +
-      filterBar(v) +
-      table(d[v.key], v.cols) +
+    $("#content").innerHTML =
+      (view.note ? `<div class="note">${esc(view.note)}</div>` : "") +
+      filterBar(view) +
+      renderTable(data[view.key], view.cols) +
       `<div class="pager">
-        <button id="prevBtn"${p.has_previous ? "" : " disabled"}>
-          ← Previous
-        </button>
+        <button id="prevBtn" ${pagination.has_previous ? "" : "disabled"}>← Previous</button>
         <span class="muted small">
-          Page ${esc(p.page)} of ${esc(p.total_pages)} ·
-          ${esc(p.total)} records
+          Page ${esc(pagination.page)} of ${esc(pagination.total_pages)}
+          · ${esc(pagination.total)} records
         </span>
-        <button id="nextBtn"${p.has_next ? "" : " disabled"}>
-          Next →
-        </button>
+        <button id="nextBtn" ${pagination.has_next ? "" : "disabled"}>Next →</button>
       </div>`;
 
-    const apply = $("#applyBtn");
+    const applyButton = $("#applyBtn");
 
-    if (apply) {
-      apply.onclick = () => {
-        filters = {};
+    if (applyButton) {
+      applyButton.onclick = () => {
+        activeFilters = {};
 
-        document.querySelectorAll("[data-f]").forEach(el => {
-          if (el.value.trim()) {
-            filters[el.dataset.f] = el.value.trim();
+        document.querySelectorAll("[data-filter]").forEach(element => {
+          if (element.value.trim()) {
+            activeFilters[element.dataset.filter] = element.value.trim();
           }
         });
 
-        page = 1;
+        currentPage = 1;
         load();
       };
     }
 
-    const reset = $("#resetBtn");
+    const resetButton = $("#resetBtn");
 
-    if (reset) {
-      reset.onclick = () => {
-        filters = {};
-        page = 1;
+    if (resetButton) {
+      resetButton.onclick = () => {
+        activeFilters = {};
+        currentPage = 1;
         load();
       };
     }
 
-    const ex = $("#exportBtn");
+    const exportButton = $("#exportBtn");
 
-    if (ex) {
-      ex.onclick = async () => {
-        ex.disabled = true;
-        $("#exportMsg").textContent = "Preparing export…";
+    if (exportButton) {
+      exportButton.onclick = async () => {
+        exportButton.disabled = true;
+        $("#exportMsg").textContent = "Preparing CSV…";
 
         try {
           const result = await api({
             action: "export",
-            kind: v.exportKind,
-            ...(v.fixed || {}),
-            ...filters
+            kind: view.exportKind,
+            ...(view.fixed || {}),
+            ...activeFilters
           });
 
           downloadCsv(
-            `${v.exportKind}-${new Date().toISOString().slice(0, 10)}.csv`,
-            result.csv
+            `${view.exportKind}-${new Date().toISOString().slice(0, 10)}.csv`,
+            result.csv || ""
           );
 
           $("#exportMsg").textContent =
-            `${result.row_count} rows exported` +
-            (result.truncated ? " (server limit applied)" : "") + ".";
-        } catch (e) {
-          if (e.message !== "auth") {
-            $("#exportMsg").textContent = e.message;
+            `${result.row_count || 0} records exported` +
+            (result.truncated ? " (server limit applied)." : ".");
+        } catch (error) {
+          if (error.message !== "auth") {
+            $("#exportMsg").textContent = error.message;
           }
         } finally {
-          ex.disabled = false;
+          exportButton.disabled = false;
         }
       };
     }
 
     $("#prevBtn").onclick = () => {
-      if (page > 1) {
-        page--;
+      if (currentPage > 1) {
+        currentPage--;
         load();
       }
     };
 
     $("#nextBtn").onclick = () => {
-      if (p.has_next) {
-        page++;
+      if (pagination.has_next) {
+        currentPage++;
         load();
       }
     };
 
-    updated();
+    updateTime();
 
-  } catch (e) {
-    if (e.message !== "auth") {
-      box.innerHTML = `<div class="note warn">${esc(e.message)}</div>`;
+  } catch (error) {
+    if (error.message !== "auth" && sequence === requestSequence) {
+      $("#content").innerHTML =
+        `<div class="note bad">${esc(error.message)}</div>`;
     }
   }
 }
 
-function updated() {
+function updateTime() {
   $("#lastUpdated").textContent =
     "Updated " + new Date().toLocaleTimeString();
 }
 
-function buildNav() {
-  $("#nav").innerHTML = Object.keys(VIEWS).map(k => `
-    <button type="button" data-v="${k}"
-      class="${k === cur ? "active" : ""}">
-      ${esc(VIEWS[k].icon)} &nbsp; ${esc(VIEWS[k].label)}
+function buildNavigation() {
+  $("#nav").innerHTML = Object.entries(VIEWS).map(([key, view]) => `
+    <button type="button" data-view="${esc(key)}"
+      class="${key === currentView ? "active" : ""}">
+      ${esc(view.icon)} &nbsp; ${esc(view.label)}
     </button>
   `).join("");
 
-  document.querySelectorAll("#nav [data-v]").forEach(b => {
-    b.onclick = () => {
-      cur = b.dataset.v;
-      page = 1;
-      filters = {};
-      buildNav();
+  document.querySelectorAll("#nav [data-view]").forEach(button => {
+    button.onclick = () => {
+      currentView = button.dataset.view;
+      currentPage = 1;
+      activeFilters = {};
+      buildNavigation();
       load();
     };
   });
@@ -1567,18 +1404,20 @@ function buildNav() {
 async function openUser(id) {
   if (!/^\d{1,15}$/.test(String(id))) return;
 
-  $("#content").innerHTML =
-    '<div class="panel muted">Loading user…</div>';
+  $("#content").innerHTML = '<div class="panel muted">Loading user…</div>';
 
   try {
-    renderUser(await api({
+    const data = await api({
       action: "user_detail",
       user_id: String(id)
-    }));
-  } catch (e) {
-    if (e.message !== "auth") {
+    });
+
+    renderUser(data);
+    updateTime();
+  } catch (error) {
+    if (error.message !== "auth") {
       $("#content").innerHTML =
-        `<div class="note warn">${esc(e.message)}</div>` +
+        `<div class="note bad">${esc(error.message)}</div>` +
         '<button id="backBtn">Back</button>';
 
       $("#backBtn").onclick = load;
@@ -1587,78 +1426,81 @@ async function openUser(id) {
 }
 
 async function runSearch() {
-  const q = $("#gs").value.trim();
-  if (!q) return;
+  const query = $("#globalSearch").value.trim();
+  if (!query) return;
 
-  $("#content").innerHTML =
-    '<div class="panel muted">Searching…</div>';
+  $("#content").innerHTML = '<div class="panel muted">Searching…</div>';
 
   try {
-    renderSearch(await api({action: "search", q}), q);
-  } catch (e) {
-    if (e.message !== "auth") {
+    const data = await api({action: "search", q: query});
+    renderSearch(data, query);
+    updateTime();
+  } catch (error) {
+    if (error.message !== "auth") {
       $("#content").innerHTML =
-        `<div class="note warn">${esc(e.message)}</div>`;
+        `<div class="note bad">${esc(error.message)}</div>`;
     }
   }
 }
 
-function showLogin(message) {
+function showLogin(message = "") {
   $("#appView").classList.add("hide");
   $("#loginView").classList.remove("hide");
-  $("#loginMsg").textContent = message || "";
-  $("#p").value = "";
+  $("#loginMsg").textContent = message;
+  $("#password").value = "";
 }
 
 function showApp() {
   $("#loginView").classList.add("hide");
   $("#appView").classList.remove("hide");
 
-  cur = "dashboard";
-  page = 1;
-  filters = {};
+  currentView = "dashboard";
+  currentPage = 1;
+  activeFilters = {};
 
-  buildNav();
+  buildNavigation();
   load();
 }
 
-$("#content").addEventListener("click", e => {
-  const a = e.target.closest("[data-user],[data-round]");
-  if (!a) return;
+$("#content").addEventListener("click", event => {
+  const target = event.target.closest("[data-user],[data-round]");
+  if (!target) return;
 
-  e.preventDefault();
+  event.preventDefault();
 
-  if (a.dataset.user) {
-    openUser(a.dataset.user);
-  } else {
-    cur = "bets";
-    page = 1;
-    filters = {round_code: a.dataset.round};
-    buildNav();
-    load();
+  if (target.dataset.user) {
+    openUser(target.dataset.user);
+    return;
   }
+
+  currentView = "bets";
+  currentPage = 1;
+  activeFilters = {round_code: target.dataset.round};
+
+  buildNavigation();
+  load();
 });
 
-$("#gsBtn").onclick = runSearch;
+$("#searchBtn").onclick = runSearch;
 
-$("#gs").addEventListener("keydown", e => {
-  if (e.key === "Enter") runSearch();
+$("#globalSearch").addEventListener("keydown", event => {
+  if (event.key === "Enter") runSearch();
 });
 
 $("#refreshBtn").onclick = load;
 
-$("#loginForm").addEventListener("submit", async e => {
-  e.preventDefault();
+$("#loginForm").addEventListener("submit", async event => {
+  event.preventDefault();
 
-  const btn = $("#loginBtn");
-  btn.disabled = true;
+  const button = $("#loginBtn");
+  button.disabled = true;
   $("#loginMsg").textContent = "";
 
   try {
     await api({
       action: "login",
-      username: $("#u").value,
-      password: $("#p").value
+      username: $("#username").value,
+      password: $("#password").value
     });
 
     showApp();
@@ -1666,7 +1508,7 @@ $("#loginForm").addEventListener("submit", async e => {
     $("#loginMsg").textContent =
       error.message === "auth" ? "" : error.message;
   } finally {
-    btn.disabled = false;
+    button.disabled = false;
   }
 });
 
@@ -1675,15 +1517,15 @@ $("#logoutBtn").onclick = async () => {
     await api({action: "logout"});
   } catch {}
 
-  showLogin("");
+  showLogin();
 };
 
-(async () => {
+(async function initialize() {
   try {
     await api({action: "me"});
     showApp();
   } catch {
-    showLogin("");
+    showLogin();
   }
 })();
 </script>
