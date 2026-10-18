@@ -11,18 +11,17 @@ const pool = new Pool({
   connectionTimeoutMillis: 10000
 });
 
-const COOKIE_NAME = "admin_session";
-const SESSION_SECONDS = 2 * 60 * 60;
-const MAX_PAGE_SIZE = 100;
-const EXPORT_LIMIT = 5000;
+const COOKIE = "admin_session";
+const SESSION_SECONDS = 7200;
+const PAGE_SIZE_MAX = 100;
+const EXPORT_MAX = 5000;
 
-const ALLOWED_STATUSES = new Set([
-  "pending", "confirmed", "rejected", "completed",
-  "failed", "open", "locked", "settled",
-  "won", "lost", "cancelled"
+const STATUSES = new Set([
+  "pending", "confirmed", "rejected", "completed", "failed",
+  "open", "locked", "settled", "won", "lost", "cancelled"
 ]);
 
-function send(res, status, data) {
+function json(res, status, data) {
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
@@ -32,26 +31,20 @@ function send(res, status, data) {
 function safeEqual(a, b) {
   const x = Buffer.from(String(a ?? ""));
   const y = Buffer.from(String(b ?? ""));
-
   return x.length === y.length && crypto.timingSafeEqual(x, y);
 }
 
-function config() {
+function getConfig() {
   const username = process.env.ADMIN_USERNAME;
   const password = process.env.ADMIN_PASSWORD;
   const secret = process.env.ADMIN_SESSION_SECRET;
 
-  if (
-    !username ||
-    !password ||
-    password.length < 12 ||
-    !secret ||
-    secret.length < 32
-  ) {
-    throw new Error("Invalid admin environment configuration");
+  if (!username || !password || password.length < 12 ||
+      !secret || secret.length < 32) {
+    throw new Error("Admin environment configuration is invalid.");
   }
 
-  return { username, password, secret };
+  return { username, password };
 }
 
 function sign(value) {
@@ -72,16 +65,13 @@ function createSession(username) {
 }
 
 function readCookie(req, name) {
-  const cookies = String(req.headers.cookie || "").split(";");
-
-  for (const cookie of cookies) {
-    const index = cookie.indexOf("=");
-
+  for (const item of String(req.headers.cookie || "").split(";")) {
+    const index = item.indexOf("=");
     if (index < 0) continue;
 
-    if (cookie.slice(0, index).trim() === name) {
+    if (item.slice(0, index).trim() === name) {
       try {
-        return decodeURIComponent(cookie.slice(index + 1).trim());
+        return decodeURIComponent(item.slice(index + 1).trim());
       } catch {
         return "";
       }
@@ -109,11 +99,9 @@ function verifySession(token) {
     if (
       !session.username ||
       !Number.isFinite(session.exp) ||
-      session.exp <= Math.floor(Date.now() / 1000) ||
+      session.exp <= Date.now() / 1000 ||
       !safeEqual(session.username, process.env.ADMIN_USERNAME)
-    ) {
-      return null;
-    }
+    ) return null;
 
     return session;
   } catch {
@@ -121,21 +109,21 @@ function verifySession(token) {
   }
 }
 
-function setSessionCookie(res, token, maxAge) {
+function setCookie(res, value, maxAge) {
   res.setHeader(
     "Set-Cookie",
-    `${COOKIE_NAME}=${encodeURIComponent(token)}; Path=/api/admin; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}`
+    `${COOKIE}=${encodeURIComponent(value)}; Path=/api/admin; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}`
   );
 }
 
-function validateRequest(req) {
+function validRequest(req) {
   if (req.headers["x-admin-request"] !== "1") return false;
 
-  const origin = req.headers.origin;
-
-  if (origin) {
+  if (req.headers.origin) {
     try {
-      if (new URL(origin).host !== req.headers.host) return false;
+      if (new URL(req.headers.origin).host !== req.headers.host) {
+        return false;
+      }
     } catch {
       return false;
     }
@@ -144,29 +132,7 @@ function validateRequest(req) {
   return true;
 }
 
-function parsePage(body) {
-  const page = Math.max(
-    1,
-    Math.min(1000000, Number.parseInt(body.page, 10) || 1)
-  );
-
-  const pageSize = Math.max(
-    1,
-    Math.min(MAX_PAGE_SIZE, Number.parseInt(body.page_size, 10) || 20)
-  );
-
-  return {
-    page,
-    pageSize,
-    offset: (page - 1) * pageSize
-  };
-}
-
-function numeric(value) {
-  return Number(value || 0);
-}
-
-async function rows(sql, params = []) {
+async function query(sql, params = []) {
   const result = await pool.query(sql, params);
   return result.rows;
 }
@@ -186,52 +152,68 @@ async function audit(username, action, req, outcome = "success") {
       ]
     );
   } catch (error) {
-    // Audit schema may differ; do not leak database details.
     console.error("Admin audit write failed:", error.code || error.name);
   }
 }
 
+function pagination(body) {
+  const page = Math.max(
+    1,
+    Math.min(1000000, Number.parseInt(body.page, 10) || 1)
+  );
+
+  const size = Math.max(
+    1,
+    Math.min(PAGE_SIZE_MAX, Number.parseInt(body.page_size, 10) || 20)
+  );
+
+  return { page, size, offset: (page - 1) * size };
+}
+
 /*
  * DASHBOARD
+ * Uses actual wallet_balances table.
  */
 async function dashboard() {
-  const totals = await rows(`
+  const totals = await query(`
     SELECT
       (SELECT COUNT(*) FROM public.users) AS users,
       (SELECT COUNT(*) FROM public.bets) AS bets,
       (SELECT COALESCE(SUM(stake), 0) FROM public.bets) AS total_stake,
       (SELECT COALESCE(SUM(fee), 0) FROM public.bets) AS total_fees,
       (SELECT COALESCE(SUM(payout), 0) FROM public.bets) AS total_payouts,
-      (SELECT COALESCE(SUM(balance), 0) FROM public.wallets)
-        AS total_wallet_balance,
+      (SELECT COALESCE(SUM(balance), 0)
+       FROM public.wallet_balances) AS total_wallet_balance,
       (SELECT COALESCE(SUM(amount), 0)
        FROM public.transactions
        WHERE transaction_type = 'deposit'
          AND status IN ('confirmed', 'completed'))
-        AS total_deposits,
+       AS total_deposits,
       (SELECT COUNT(*) FROM public.transactions
        WHERE transaction_type = 'deposit'
          AND status IN ('confirmed', 'completed'))
-        AS deposit_count,
+       AS deposit_count,
       (SELECT COALESCE(SUM(amount), 0)
        FROM public.transactions
        WHERE transaction_type = 'withdrawal'
          AND status IN ('confirmed', 'completed'))
-        AS total_withdrawals,
+       AS total_withdrawals,
       (SELECT COUNT(*) FROM public.transactions
        WHERE transaction_type = 'withdrawal'
          AND status IN ('confirmed', 'completed'))
-        AS withdrawal_count
+       AS withdrawal_count,
+      (SELECT COALESCE(SUM(commission_amount), 0)
+       FROM public.referral_commissions) AS total_commissions
   `);
 
-  const roundStatuses = await rows(`
+  const roundStatuses = await query(`
     SELECT status, COUNT(*) AS count
     FROM public.game_rounds
     GROUP BY status
     ORDER BY status
   `);
 
-  const recentRounds = await rows(`
+  const recentRounds = await query(`
     SELECT
       r.round_code,
       r.status,
@@ -243,35 +225,30 @@ async function dashboard() {
       COUNT(b.id) AS bet_count,
       COALESCE(SUM(b.stake), 0) AS total_stake,
       COALESCE(SUM(b.payout), 0) AS total_payout,
-      COUNT(b.id) FILTER (
-        WHERE b.status = 'pending'
-      ) AS pending_bets,
+      COUNT(b.id) FILTER (WHERE b.status = 'pending') AS pending_bets,
       (
         r.status = 'settled'
-        AND COUNT(b.id) FILTER (
-          WHERE b.status = 'pending'
-        ) = 0
+        AND COUNT(b.id) FILTER (WHERE b.status = 'pending') = 0
       ) AS payout_complete
     FROM public.game_rounds r
-    LEFT JOIN public.bets b
-      ON b.round_code = r.round_code
+    LEFT JOIN public.bets b ON b.round_id = r.id
     GROUP BY r.id
     ORDER BY r.starts_at DESC
     LIMIT 10
   `);
 
-  const healthRows = await rows(`
+  const healthRows = await query(`
     SELECT
       (SELECT COUNT(*) FROM public.game_rounds
-       WHERE ends_at < NOW()
-         AND status <> 'settled') AS overdue_rounds,
+       WHERE ends_at < NOW() AND status <> 'settled')
+       AS overdue_rounds,
       (SELECT COUNT(*) FROM public.bets
        WHERE status = 'pending'
          AND created_at < NOW() - INTERVAL '10 minutes')
-        AS old_pending_bets,
+       AS old_pending_bets,
       (SELECT MAX(starts_at) FROM public.game_rounds)
-        AS latest_round_start,
-      (SELECT MAX(ends_at) FROM public.game_rounds
+       AS latest_round_start,
+      (SELECT MAX(settled_at) FROM public.game_rounds
        WHERE status = 'settled') AS last_settled_at
   `);
 
@@ -284,10 +261,10 @@ async function dashboard() {
     health: {
       database_ok: true,
       cron_ok:
-        numeric(health.overdue_rounds) === 0 &&
-        numeric(health.old_pending_bets) === 0,
-      overdue_rounds: numeric(health.overdue_rounds),
-      old_pending_bets: numeric(health.old_pending_bets),
+        Number(health.overdue_rounds || 0) === 0 &&
+        Number(health.old_pending_bets || 0) === 0,
+      overdue_rounds: Number(health.overdue_rounds || 0),
+      old_pending_bets: Number(health.old_pending_bets || 0),
       latest_round_start: health.latest_round_start,
       last_settled_at: health.last_settled_at
     }
@@ -295,100 +272,101 @@ async function dashboard() {
 }
 
 /*
- * PAGINATED READ-ONLY TABLES
+ * READ-ONLY LISTS
  */
-const LIST_CONFIG = {
+const LISTS = {
   users: {
     table: "public.users",
-    select: `
-      id, telegram_id, username, balance,
-      referred_by, referral_code, created_at
-    `,
-    order: "id DESC"
+    select: `u.id, u.telegram_id, u.username, w.balance,
+      u.referred_by, u.referral_code, u.created_at,
+      (SELECT COUNT(*) FROM public.users child
+       WHERE child.referred_by = u.id) AS referral_count`,
+    from: `public.users u
+      LEFT JOIN public.wallet_balances w ON w.user_id = u.id`,
+    order: "u.id DESC"
   },
   wallets: {
-    table: "public.wallets",
-    select: "user_id, balance, updated_at",
-    order: "user_id DESC"
+    table: "public.wallet_balances",
+    select: `w.user_id, u.telegram_id, u.username,
+      w.balance, w.updated_at`,
+    from: `public.wallet_balances w
+      LEFT JOIN public.users u ON u.id = w.user_id`,
+    order: "w.user_id DESC"
   },
   transactions: {
     table: "public.transactions",
-    select: `
-      id, user_id, transaction_type, amount, status,
-      network, tx_hash, created_at, updated_at
-    `,
+    select: `id, user_id, transaction_type, amount, status,
+      network, tx_hash, created_at, updated_at`,
+    from: "public.transactions",
     order: "id DESC"
   },
   rounds: {
     table: "public.game_rounds",
-    select: `
-      round_code, status, starts_at, betting_closes_at, ends_at,
-      CASE WHEN ends_at <= NOW()
-        THEN result_number ELSE NULL END AS result_number
-    `,
+    select: `round_code, status, starts_at, betting_closes_at,
+      ends_at, CASE WHEN ends_at <= NOW()
+      THEN result_number ELSE NULL END AS result_number`,
+    from: "public.game_rounds",
     order: "starts_at DESC"
   },
   bets: {
     table: "public.bets",
-    select: `
-      id, user_id, round_code, bet_type, selection,
-      stake, fee, status, result_number, payout,
-      created_at, settled_at
-    `,
-    order: "id DESC"
+    select: `b.id, b.user_id, b.round_id, r.round_code,
+      b.bet_type, b.selection, b.stake, b.fee, b.status,
+      CASE WHEN r.ends_at <= NOW()
+        THEN r.result_number ELSE NULL END AS result_number,
+      b.payout, b.created_at, b.settled_at`,
+    from: `public.bets b
+      LEFT JOIN public.game_rounds r ON r.id = b.round_id`,
+    order: "b.id DESC"
   },
   audit: {
     table: "public.admin_audit_log",
-    select: `
-      id, created_at, admin_username, action,
-      target_type, target_id, outcome, ip
-    `,
+    select: `id, created_at, admin_username, action,
+      target_type, target_id, outcome, ip`,
+    from: "public.admin_audit_log",
     order: "id DESC"
   }
 };
 
 async function listAction(action, body) {
-  const config = LIST_CONFIG[action];
+  const cfg = LISTS[action];
+  if (!cfg) throw new Error("Unsupported list action.");
 
-  if (!config) throw new Error("Unsupported list action.");
-
-  const { page, pageSize, offset } = parsePage(body);
+  const { page, size, offset } = pagination(body);
   const conditions = [];
   const params = [];
 
-  function add(sql, value) {
+  function add(condition, value) {
     params.push(value);
-    conditions.push(sql.replace("?", `$${params.length}`));
+    conditions.push(condition.replace("?", `$${params.length}`));
   }
 
-  if (action === "users") {
-    if (body.q) {
-      const query = String(body.q).trim().slice(0, 100);
+  if (action === "users" && body.q) {
+    const q = String(body.q).trim().slice(0, 100);
 
-      if (/^\d+$/.test(query)) {
-        add("CAST(telegram_id AS TEXT) = ?", query);
-      } else {
-        add("username ILIKE ?", `%${query}%`);
-      }
+    if (/^\d+$/.test(q)) {
+      add("CAST(u.telegram_id AS TEXT) = ?", q);
+    } else {
+      add("u.username ILIKE ?", `%${q}%`);
     }
   }
 
   if (action === "wallets" && body.q) {
-    const query = String(body.q).trim().slice(0, 100);
+    const q = String(body.q).trim().slice(0, 100);
 
-    if (/^\d+$/.test(query)) {
-      add("CAST(user_id AS TEXT) = ?", query);
+    if (/^\d+$/.test(q)) {
+      add("CAST(w.user_id AS TEXT) = ?", q);
+    } else {
+      add("u.username ILIKE ?", `%${q}%`);
     }
   }
 
   if (action === "transactions") {
     if (body.type) {
       const type = String(body.type);
-
       if (!["deposit", "withdrawal"].includes(type)) {
         throw new Error("Invalid transaction type.");
       }
-
       add("transaction_type = ?", type);
     }
 
@@ -396,17 +374,12 @@ async function listAction(action, body) {
       if (!/^\d{1,15}$/.test(String(body.user_id))) {
         throw new Error("Invalid user ID.");
       }
-
       add("user_id = ?", String(body.user_id));
     }
 
     if (body.status) {
       const status = String(body.status);
-
-      if (!ALLOWED_STATUSES.has(status)) {
-        throw new Error("Invalid transaction status.");
-      }
-
+      if (!STATUSES.has(status)) throw new Error("Invalid status.");
       add("status = ?", status);
     }
   }
@@ -416,22 +389,17 @@ async function listAction(action, body) {
       if (!/^\d{1,15}$/.test(String(body.user_id))) {
         throw new Error("Invalid user ID.");
       }
-
-      add("user_id = ?", String(body.user_id));
+      add("b.user_id = ?", String(body.user_id));
     }
 
     if (body.round_code) {
-      add("round_code = ?", String(body.round_code).slice(0, 100));
+      add("r.round_code = ?", String(body.round_code).slice(0, 100));
     }
 
     if (body.status) {
       const status = String(body.status);
-
-      if (!ALLOWED_STATUSES.has(status)) {
-        throw new Error("Invalid bet status.");
-      }
-
-      add("status = ?", status);
+      if (!STATUSES.has(status)) throw new Error("Invalid status.");
+      add("b.status = ?", status);
     }
   }
 
@@ -439,29 +407,29 @@ async function listAction(action, body) {
     ? `WHERE ${conditions.join(" AND ")}`
     : "";
 
-  const count = await pool.query(
-    `SELECT COUNT(*) AS total FROM ${config.table} ${where}`,
+  const countRows = await query(
+    `SELECT COUNT(*) AS total FROM ${cfg.from} ${where}`,
     params
   );
 
-  const result = await pool.query(
-    `SELECT ${config.select}
-     FROM ${config.table}
+  const resultRows = await query(
+    `SELECT ${cfg.select}
+     FROM ${cfg.from}
      ${where}
-     ORDER BY ${config.order}
+     ORDER BY ${cfg.order}
      LIMIT $${params.length + 1}
      OFFSET $${params.length + 2}`,
-    [...params, pageSize, offset]
+    [...params, size, offset]
   );
 
-  const total = numeric(count.rows[0]?.total);
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const total = Number(countRows[0]?.total || 0);
+  const totalPages = Math.max(1, Math.ceil(total / size));
 
   return {
-    [action === "audit" ? "entries" : action]: result.rows,
+    [action === "audit" ? "entries" : action]: resultRows,
     pagination: {
       page,
-      page_size: pageSize,
+      page_size: size,
       total,
       total_pages: totalPages,
       has_previous: page > 1,
@@ -474,7 +442,7 @@ async function listAction(action, body) {
  * ANALYTICS
  */
 async function analytics() {
-  const daily = await rows(`
+  const daily = await query(`
     WITH days AS (
       SELECT generate_series(
         CURRENT_DATE - INTERVAL '13 days',
@@ -487,15 +455,12 @@ async function analytics() {
       COUNT(b.id) AS bets,
       COALESCE(SUM(b.stake), 0) AS stake,
       COALESCE(SUM(b.payout), 0) AS payout,
-      COALESCE(SUM(b.stake), 0)
-        - COALESCE(SUM(b.payout), 0) AS net,
+      COALESCE(SUM(b.stake), 0) -
+        COALESCE(SUM(b.payout), 0) AS net,
       COUNT(DISTINCT b.user_id) AS active_users,
-      (
-        SELECT COUNT(*)
-        FROM public.users u
-        WHERE u.created_at >= d.day
-          AND u.created_at < d.day + INTERVAL '1 day'
-      ) AS new_users
+      (SELECT COUNT(*) FROM public.users u
+       WHERE u.created_at >= d.day
+         AND u.created_at < d.day + INTERVAL '1 day') AS new_users
     FROM days d
     LEFT JOIN public.bets b
       ON b.created_at >= d.day
@@ -504,7 +469,7 @@ async function analytics() {
     ORDER BY d.day
   `);
 
-  const results = await rows(`
+  const resultRows = await query(`
     SELECT result_number, COUNT(*) AS count
     FROM public.game_rounds
     WHERE status = 'settled'
@@ -515,27 +480,18 @@ async function analytics() {
 
   const counts = Array(10).fill(0);
 
-  for (const row of results) {
-    counts[Number(row.result_number)] = numeric(row.count);
+  for (const row of resultRows) {
+    counts[Number(row.result_number)] = Number(row.count);
   }
 
-  const totalRounds = counts.reduce((sum, value) => sum + value, 0);
+  const totalRounds = counts.reduce((a, b) => a + b, 0);
 
-  let verdict = "Not enough settled rounds for a useful statistical check";
-
-  if (totalRounds >= 100) {
-    verdict = "Distribution available; this is not proof of fairness";
-  }
-
-  const topUsers = await rows(`
-    SELECT
-      u.id,
-      u.username,
-      COUNT(b.id) AS bets,
+  const topUsers = await query(`
+    SELECT u.id, u.username, COUNT(b.id) AS bets,
       COALESCE(SUM(b.stake), 0) AS stake,
       COALESCE(SUM(b.payout), 0) AS payout,
-      COALESCE(SUM(b.stake), 0)
-        - COALESCE(SUM(b.payout), 0) AS user_net
+      COALESCE(SUM(b.stake), 0) -
+        COALESCE(SUM(b.payout), 0) AS user_net
     FROM public.users u
     JOIN public.bets b ON b.user_id = u.id
     GROUP BY u.id, u.username
@@ -543,23 +499,21 @@ async function analytics() {
     LIMIT 10
   `);
 
-  const largeStakes = await rows(`
-    SELECT id, user_id, round_code, bet_type, stake, created_at
-    FROM public.bets
-    ORDER BY stake DESC
+  const largeStakes = await query(`
+    SELECT b.id, b.user_id, r.round_code,
+      b.bet_type, b.stake, b.created_at
+    FROM public.bets b
+    LEFT JOIN public.game_rounds r ON r.id = b.round_id
+    ORDER BY b.stake DESC
     LIMIT 20
   `);
 
-  const highReturnUsers = await rows(`
-    SELECT
-      user_id,
-      COUNT(*) AS bets,
+  const highReturnUsers = await query(`
+    SELECT user_id, COUNT(*) AS bets,
       COALESCE(SUM(stake), 0) AS stake,
       COALESCE(SUM(payout), 0) AS payout,
-      ROUND(
-        100.0 * COALESCE(SUM(payout), 0)
-        / NULLIF(SUM(stake), 0), 2
-      ) AS return_percent
+      ROUND(100.0 * COALESCE(SUM(payout), 0)
+        / NULLIF(SUM(stake), 0), 2) AS return_percent
     FROM public.bets
     GROUP BY user_id
     HAVING SUM(stake) > 0
@@ -572,7 +526,9 @@ async function analytics() {
     fairness: {
       counts,
       total_rounds: totalRounds,
-      verdict
+      verdict: totalRounds < 100
+        ? "Not enough settled rounds for a useful statistical check"
+        : "Distribution available; not proof of fairness"
     },
     top_users: topUsers,
     large_stakes: largeStakes,
@@ -583,26 +539,17 @@ async function analytics() {
 /*
  * RECONCILIATION
  *
- * This is a preliminary ledger check, not a substitute for
- * reviewing every transaction type and wallet mutation.
+ * No clean=true claim is made until the complete accounting
+ * semantics of every transaction type have been verified.
  */
 async function reconcile() {
-  const totalsRows = await rows(`
+  const totalsRows = await query(`
     SELECT
       (SELECT COALESCE(SUM(balance), 0)
-       FROM public.wallets) AS wallet_total,
+       FROM public.wallet_balances) AS wallet_total,
 
-      (SELECT COALESCE(SUM(
-        CASE
-          WHEN transaction_type IN ('deposit', 'referral_commission')
-            AND status IN ('confirmed', 'completed')
-            THEN amount
-          WHEN transaction_type IN ('withdrawal', 'bet', 'payout')
-            AND status IN ('confirmed', 'completed')
-            THEN -amount
-          ELSE 0
-        END
-      ), 0) FROM public.transactions) AS ledger_net,
+      (SELECT COALESCE(SUM(commission_amount), 0)
+       FROM public.referral_commissions) AS commissions,
 
       (SELECT COALESCE(SUM(stake), 0)
        FROM public.bets) AS bets_stake,
@@ -624,85 +571,112 @@ async function reconcile() {
        WHERE status = 'won') AS paid_bets
   `);
 
-  const totals = totalsRows[0] || {};
+  const t = totalsRows[0] || {};
 
-  const walletTotal = numeric(totals.wallet_total);
-  const ledgerNet = numeric(totals.ledger_net);
-  const betStake = numeric(totals.bets_stake);
-  const betPayout = numeric(totals.bets_payout);
-
-  const mismatches = [];
-
-  const walletRows = await rows(`
-    SELECT w.user_id, u.username, w.balance
-    FROM public.wallets w
-    LEFT JOIN public.users u ON u.id = w.user_id
-    ORDER BY w.user_id
-    LIMIT 100
-  `);
+  const walletTotal = Number(t.wallet_total || 0);
+  const commissions = Number(t.commissions || 0);
 
   return {
     clean: false,
     totals: {
       wallet_total: walletTotal,
-      ledger_net: ledgerNet,
-      commissions: 0,
-      unrecorded: Number((walletTotal - ledgerNet).toFixed(2)),
-      bets_stake: betStake,
-      bet_tx: numeric(totals.bet_tx),
-      stake_diff: "Needs transaction-type and fee review",
-      bets_payout: betPayout,
-      payout_tx: numeric(totals.payout_tx),
-      payout_diff: "Needs payout ledger review",
-      bet_count_diff: numeric(totals.bet_count) - numeric(totals.bet_tx),
-      payout_count_diff: numeric(totals.paid_bets) - numeric(totals.payout_tx)
+      ledger_net: 0,
+      commissions,
+      unrecorded: "Requires full ledger mapping",
+      bets_stake: Number(t.bets_stake || 0),
+      bet_tx: Number(t.bet_tx || 0),
+      stake_diff: "Requires transaction ledger mapping",
+      bets_payout: Number(t.bets_payout || 0),
+      payout_tx: Number(t.payout_tx || 0),
+      payout_diff: "Requires payout ledger mapping",
+      bet_count_diff:
+        Number(t.bet_count || 0) - Number(t.bet_tx || 0),
+      payout_count_diff:
+        Number(t.paid_bets || 0) - Number(t.payout_tx || 0)
     },
-    mismatches,
-    wallet_sample: walletRows
+    mismatches: []
   };
 }
 
 /*
- * USER DETAILS
+ * USER DETAIL
  */
 async function userDetail(userId) {
-  const profiles = await rows(`
-    SELECT id, telegram_id, username, balance,
-           referral_code, referred_by, created_at
-    FROM public.users
-    WHERE id = $1
+  const profiles = await query(`
+    SELECT u.id, u.telegram_id, u.username,
+      w.balance, u.referral_code, u.referred_by, u.created_at
+    FROM public.users u
+    LEFT JOIN public.wallet_balances w ON w.user_id = u.id
+    WHERE u.id = $1
     LIMIT 1
   `, [userId]);
 
   if (!profiles.length) return null;
 
-  const stats = await rows(`
-    SELECT
-      COUNT(*) AS bets,
+  const stats = await query(`
+    SELECT COUNT(*) AS bets,
       COALESCE(SUM(stake), 0) AS stake,
       COALESCE(SUM(payout), 0) AS payout,
       COUNT(*) FILTER (WHERE status = 'won') AS wins,
       COUNT(*) FILTER (WHERE status = 'lost') AS losses
-    FROM public.bets
-    WHERE user_id = $1
+    FROM public.bets WHERE user_id = $1
   `, [userId]);
 
-  const recentBets = await rows(`
-    SELECT id, round_code, bet_type, selection, stake, fee,
-           status, result_number, payout, created_at, settled_at
-    FROM public.bets
-    WHERE user_id = $1
-    ORDER BY id DESC
+  const recentBets = await query(`
+    SELECT b.id, r.round_code, b.bet_type, b.selection,
+      b.stake, b.fee, b.status,
+      CASE WHEN r.ends_at <= NOW()
+        THEN r.result_number ELSE NULL END AS result_number,
+      b.payout, b.created_at, b.settled_at
+    FROM public.bets b
+    LEFT JOIN public.game_rounds r ON r.id = b.round_id
+    WHERE b.user_id = $1
+    ORDER BY b.id DESC
     LIMIT 20
   `, [userId]);
 
-  const recentTransactions = await rows(`
+  const recentTransactions = await query(`
     SELECT id, transaction_type, amount, status,
-           network, tx_hash, created_at
+      network, tx_hash, created_at
     FROM public.transactions
     WHERE user_id = $1
     ORDER BY id DESC
     LIMIT 20
+  `, [userId]);
+
+  const commissions = await query(`
+    SELECT referral_level, COUNT(*) AS count,
+      COALESCE(SUM(commission_amount), 0) AS total
+    FROM public.referral_commissions
+    WHERE referrer_user_id = $1
+    GROUP BY referral_level
+    ORDER BY referral_level
+  `, [userId]);
+
+  const referralTree = await query(`
+    WITH RECURSIVE referral_tree AS (
+      SELECT id, username, referred_by, created_at, 1 AS level
+      FROM public.users
+      WHERE referred_by = $1
+
+      UNION ALL
+
+      SELECT u.id, u.username, u.referred_by, u.created_at,
+        rt.level + 1
+      FROM public.users u
+      JOIN referral_tree rt ON u.referred_by = rt.id
+      WHERE rt.level < 3
+    )
+    SELECT id, username, referred_by, created_at, level
+    FROM referral_tree
+    ORDER BY level, id
+    LIMIT 200
+  `, [userId]);
+
+  const generated = await query(`
+    SELECT COALESCE(SUM(commission_amount), 0) AS total
+    FROM public.referral_commissions
+    WHERE source_user_id = $1
   `, [userId]);
 
   return {
@@ -710,33 +684,32 @@ async function userDetail(userId) {
     stats: stats[0] || {},
     recent_bets: recentBets,
     recent_transactions: recentTransactions,
-    referral_tree: [],
-    commissions_earned: [],
-    commissions_generated: 0
+    referral_tree: referralTree,
+    commissions_earned: commissions,
+    commissions_generated: Number(generated[0]?.total || 0)
   };
 }
 
 /*
- * GLOBAL SEARCH
+ * SEARCH
  */
-async function search(query) {
-  const q = String(query || "").trim().slice(0, 100);
+async function search(q) {
+  q = String(q || "").trim().slice(0, 100);
 
-  if (!q) {
-    return { users: [], rounds: [], bets: [] };
-  }
+  if (!q) return { users: [], rounds: [], bets: [] };
 
-  const users = await rows(`
-    SELECT id, telegram_id, username, balance
-    FROM public.users
-    WHERE CAST(id AS TEXT) = $1
-       OR CAST(telegram_id AS TEXT) = $1
-       OR username ILIKE $2
-    ORDER BY id DESC
+  const users = await query(`
+    SELECT u.id, u.telegram_id, u.username, w.balance
+    FROM public.users u
+    LEFT JOIN public.wallet_balances w ON w.user_id = u.id
+    WHERE CAST(u.id AS TEXT) = $1
+       OR CAST(u.telegram_id AS TEXT) = $1
+       OR u.username ILIKE $2
+    ORDER BY u.id DESC
     LIMIT 20
   `, [q, `%${q}%`]);
 
-  const rounds = await rows(`
+  const rounds = await query(`
     SELECT round_code, status, starts_at, ends_at
     FROM public.game_rounds
     WHERE round_code = $1
@@ -745,10 +718,12 @@ async function search(query) {
   `, [q]);
 
   const bets = /^\d+$/.test(q)
-    ? await rows(`
-        SELECT id, user_id, round_code, bet_type, stake, status
-        FROM public.bets
-        WHERE id = $1
+    ? await query(`
+        SELECT b.id, b.user_id, r.round_code,
+          b.bet_type, b.stake, b.status
+        FROM public.bets b
+        LEFT JOIN public.game_rounds r ON r.id = b.round_id
+        WHERE b.id = $1
         LIMIT 10
       `, [q])
     : [];
@@ -762,35 +737,40 @@ async function search(query) {
 async function exportCsv(body) {
   const kind = String(body.kind || "");
 
-  const exports = {
+  const exportQueries = {
     users: `
-      SELECT id, telegram_id, username, balance, created_at
-      FROM public.users ORDER BY id DESC LIMIT ${EXPORT_LIMIT}
+      SELECT u.id, u.telegram_id, u.username,
+        w.balance, u.created_at
+      FROM public.users u
+      LEFT JOIN public.wallet_balances w ON w.user_id = u.id
+      ORDER BY u.id DESC LIMIT ${EXPORT_MAX}
     `,
     bets: `
-      SELECT id, user_id, round_code, bet_type, selection,
-             stake, fee, status, result_number, payout, created_at
-      FROM public.bets ORDER BY id DESC LIMIT ${EXPORT_LIMIT}
+      SELECT b.id, b.user_id, r.round_code,
+        b.bet_type, b.selection, b.stake, b.fee,
+        b.status, b.payout, b.created_at
+      FROM public.bets b
+      LEFT JOIN public.game_rounds r ON r.id = b.round_id
+      ORDER BY b.id DESC LIMIT ${EXPORT_MAX}
     `,
     transactions: `
-      SELECT id, user_id, transaction_type, amount, status,
-             network, tx_hash, created_at
+      SELECT id, user_id, transaction_type, amount,
+        status, network, tx_hash, created_at
       FROM public.transactions
-      ORDER BY id DESC LIMIT ${EXPORT_LIMIT}
+      ORDER BY id DESC LIMIT ${EXPORT_MAX}
     `
   };
 
-  if (!exports[kind]) {
-    throw new Error("Unsupported export type.");
+  if (!exportQueries[kind]) {
+    throw new Error("Invalid export type.");
   }
 
-  const data = await rows(exports[kind]);
+  const data = await query(exportQueries[kind]);
   const columns = data.length ? Object.keys(data[0]) : [];
 
   function cell(value) {
     let text = value == null ? "" : String(value);
 
-    // Prevent spreadsheet formula injection.
     if (/^[\s]*[=+\-@\t\r]/.test(text)) {
       text = "'" + text;
     }
@@ -808,30 +788,30 @@ async function exportCsv(body) {
   return {
     csv,
     row_count: data.length,
-    truncated: data.length === EXPORT_LIMIT
+    truncated: data.length === EXPORT_MAX
   };
 }
 
 /*
- * MAIN API HANDLER
+ * MAIN HANDLER
  */
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
-    return send(res, 405, { message: "Method not allowed." });
+    return json(res, 405, { message: "Method not allowed." });
   }
 
-  if (!validateRequest(req)) {
-    return send(res, 403, { message: "Request rejected." });
+  if (!validRequest(req)) {
+    return json(res, 403, { message: "Request rejected." });
   }
 
   let settings;
 
   try {
-    settings = config();
+    settings = getConfig();
   } catch {
-    return send(res, 500, {
-      message: "Admin configuration error. Check Vercel environment variables."
+    return json(res, 500, {
+      message: "Admin configuration error. Check Vercel environment settings."
     });
   }
 
@@ -848,26 +828,26 @@ module.exports = async function handler(req, res) {
     ) {
       await audit("unknown", "login", req, "failed");
 
-      return send(res, 401, {
+      return json(res, 401, {
         message: "Invalid username or password."
       });
     }
 
-    setSessionCookie(res, createSession(username), SESSION_SECONDS);
+    setCookie(res, createSession(username), SESSION_SECONDS);
     await audit(username, "login", req);
 
-    return send(res, 200, { ok: true });
+    return json(res, 200, { ok: true });
   }
 
   if (action === "logout") {
-    setSessionCookie(res, "", 0);
-    return send(res, 200, { ok: true });
+    setCookie(res, "", 0);
+    return json(res, 200, { ok: true });
   }
 
-  const session = verifySession(readCookie(req, COOKIE_NAME));
+  const session = verifySession(readCookie(req, COOKIE));
 
   if (!session) {
-    return send(res, 401, {
+    return json(res, 401, {
       message: "Session expired. Please sign in again."
     });
   }
@@ -877,10 +857,7 @@ module.exports = async function handler(req, res) {
 
     switch (action) {
       case "me":
-        result = {
-          ok: true,
-          username: session.username
-        };
+        result = { ok: true, username: session.username };
         break;
 
       case "dashboard":
@@ -905,16 +882,16 @@ module.exports = async function handler(req, res) {
         break;
 
       case "user_detail": {
-        const userId = String(body.user_id || "");
+        const id = String(body.user_id || "");
 
-        if (!/^\d{1,15}$/.test(userId)) {
-          return send(res, 400, { message: "Invalid user ID." });
+        if (!/^\d{1,15}$/.test(id)) {
+          return json(res, 400, { message: "Invalid user ID." });
         }
 
-        result = await userDetail(userId);
+        result = await userDetail(id);
 
         if (!result) {
-          return send(res, 404, { message: "User not found." });
+          return json(res, 404, { message: "User not found." });
         }
 
         break;
@@ -929,14 +906,11 @@ module.exports = async function handler(req, res) {
         break;
 
       default:
-        return send(res, 400, {
-          message: "Unknown admin action."
-        });
+        return json(res, 400, { message: "Unknown admin action." });
     }
 
     await audit(session.username, action, req);
-
-    return send(res, 200, result);
+    return json(res, 200, result);
 
   } catch (error) {
     console.error(
@@ -950,11 +924,11 @@ module.exports = async function handler(req, res) {
     if (error.code === "42P01") {
       message = "Required database table is missing.";
     } else if (error.code === "42703") {
-      message = "A database column does not match the admin code.";
+      message = "Database column mismatch. Check actual table schema.";
     } else if (error.code === "22P02") {
       message = "Invalid database value.";
     }
 
-    return send(res, 500, { message });
+    return json(res, 500, { message });
   }
 };
