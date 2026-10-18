@@ -42,7 +42,6 @@ module.exports = async function handler(req, res) {
     const update = req.body || {};
     const message = update.message;
 
-    // Ignore updates that are not regular messages.
     if (!message || !message.chat || !message.text) {
       return res.status(200).json({
         success: true,
@@ -50,11 +49,11 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const text = message.text.trim();
+    const messageText = message.text.trim();
 
-    // Process /start and /start ref_CODE.
-    const match = text.match(
-      /^\/start(?:@\w+)?(?:\s+(\S+))?/i
+    // Accept /start and /start@BotUsername with an optional parameter.
+    const match = messageText.match(
+      /^\/start(?:@\w+)?(?:\s+(\S+))?$/i
     );
 
     if (!match) {
@@ -67,17 +66,16 @@ module.exports = async function handler(req, res) {
     const startParameter = match[1] || "";
     let referralCode = "";
 
-    if (startParameter) {
-      const referralMatch = startParameter.match(
-        /^ref_([A-Za-z0-9_-]{1,80})$/i
-      );
+    // Extract referral code.
+    const referralMatch = startParameter.match(
+      /^ref_([A-Za-z0-9_-]{1,80})$/i
+    );
 
-      if (referralMatch) {
-        referralCode = referralMatch[1];
-      }
+    if (referralMatch) {
+      referralCode = referralMatch[1];
     }
 
-    // Forward the referral code to the Mini App URL.
+    // Build Mini App URL.
     const appUrl = new URL(APP_URL);
 
     if (referralCode) {
@@ -103,8 +101,8 @@ module.exports = async function handler(req, res) {
 
     if (referralCode) {
       welcomeMessage +=
-        "\n\nReferral code detected. It will be processed " +
-        "when you open the Mini App.";
+        "\n\nYour referral link has been detected. " +
+        "Open the Mini App to process your referral.";
     }
 
     const telegramResponse = await fetch(
@@ -147,8 +145,12 @@ module.exports = async function handler(req, res) {
       message: "Start command processed",
       referral_detected: Boolean(referralCode)
     });
+
   } catch (error) {
-    console.error("Telegram webhook error:", error.message);
+    console.error(
+      "Telegram webhook error:",
+      error.message
+    );
 
     return res.status(500).json({
       success: false,
