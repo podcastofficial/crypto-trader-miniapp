@@ -1,1544 +1,750 @@
-"use strict";
-
-const crypto = require("crypto");
 const { Pool } = require("pg");
-
-if (!process.env.DATABASE_URL) {
-  console.error("DATABASE_URL is not configured.");
-}
+const crypto = require("crypto");
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
-  max: 3,
+  max: 5,
   idleTimeoutMillis: 10000,
-  connectionTimeoutMillis: 10000
+  connectionTimeoutMillis: 10000,
 });
 
-pool.on("error", err =>
-  console.error("Admin DB pool error:", err.code || err.name)
-);
-
-const COOKIE = "admin_session";
-const SESSION_SECONDS = 7200;
-const PAGE_SIZE_MAX = 100;
-const EXPORT_MAX = 5000;
-
-const STATUSES = new Set([
-  "pending", "confirmed", "rejected", "completed", "failed",
-  "open", "locked", "settled", "won", "lost", "cancelled"
-]);
-
-const USER_SEGMENTS = new Set([
-  "all", "new_today", "new_7d", "active_24h",
-  "active_7d", "inactive_30d"
-]);
+const BET_TYPES = ["Number", "Red", "Green", "Violet", "Big", "Small"];
 
 function json(res, status, data) {
-  res.statusCode = status;
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store, max-age=0");
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.end(JSON.stringify(data));
+  return res.status(status).json(data);
 }
 
-function safeEqual(a, b) {
-  const x = Buffer.from(String(a ?? ""));
-  const y = Buffer.from(String(b ?? ""));
-
-  return x.length === y.length && crypto.timingSafeEqual(x, y);
-}
-
-function getConfig() {
-  const username = process.env.ADMIN_USERNAME;
-  const password = process.env.ADMIN_PASSWORD;
-  const secret = process.env.ADMIN_SESSION_SECRET;
-
-  if (
-    !username ||
-    !password ||
-    password.length < 12 ||
-    !secret ||
-    secret.length < 32
-  ) {
-    throw new Error("Admin environment configuration is invalid.");
-  }
-
-  return { username, password };
-}
-
-function sign(value) {
-  return crypto
-    .createHmac("sha256", process.env.ADMIN_SESSION_SECRET)
-    .update(value)
-    .digest("base64url");
-}
-
-function createSession(username) {
-  const payload = Buffer.from(JSON.stringify({
-    username,
-    exp: Math.floor(Date.now() / 1000) + SESSION_SECONDS,
-    nonce: crypto.randomBytes(16).toString("hex")
-  })).toString("base64url");
-
-  return `${payload}.${sign(payload)}`;
-}
-
-function readCookie(req, name) {
-  for (const item of String(req.headers.cookie || "").split(";")) {
-    const i = item.indexOf("=");
-
-    if (i < 0) continue;
-
-    if (item.slice(0, i).trim() === name) {
-      try {
-        return decodeURIComponent(item.slice(i + 1).trim());
-      } catch {
-        return "";
-      }
-    }
-  }
-
-  return "";
-}
-
-function verifySession(token) {
-  if (!token || typeof token !== "string") return null;
-
-  const parts = token.split(".");
-  if (parts.length !== 2) return null;
-
-  const [payload, signature] = parts;
-
-  if (!safeEqual(signature, sign(payload))) return null;
-
-  try {
-    const session = JSON.parse(
-      Buffer.from(payload, "base64url").toString("utf8")
-    );
-
-    if (
-      !session.username ||
-      !Number.isFinite(session.exp) ||
-      session.exp <= Date.now() / 1000 ||
-      !safeEqual(session.username, process.env.ADMIN_USERNAME)
-    ) {
-      return null;
-    }
-
-    return session;
-  } catch {
-    return null;
-  }
-}
-
-function setCookie(res, value, maxAge) {
-  res.setHeader(
-    "Set-Cookie",
-    `${COOKIE}=${encodeURIComponent(value)}; Path=/api/admin; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}`
-  );
-}
-
-function validRequest(req) {
-  if (req.headers["x-admin-request"] !== "1") return false;
-
-  if (req.headers.origin) {
-    try {
-      if (new URL(req.headers.origin).host !== req.headers.host) {
-        return false;
-      }
-    } catch {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-async function query(sql, params = []) {
-  const result = await pool.query(sql, params);
-  return result.rows;
-}
-
-function ipAddress(req) {
-  return String(
-    req.headers["x-forwarded-for"] ||
-    req.socket?.remoteAddress ||
-    ""
-  ).split(",")[0].trim().slice(0, 100);
-}
-
-async function audit(
-  username,
-  action,
-  req,
-  outcome = "success",
-  targetType = null,
-  targetId = null
-) {
-  try {
-    await pool.query(
-      `INSERT INTO public.admin_audit_log
-       (admin_username, action, target_type, target_id, outcome, ip, created_at)
-       VALUES ($1,$2,$3,$4,$5,$6,NOW())`,
-      [
-        String(username || "unknown").slice(0, 200),
-        String(action).slice(0, 100),
-        targetType ? String(targetType).slice(0, 100) : null,
-        targetId == null ? null : String(targetId).slice(0, 100),
-        String(outcome).slice(0, 50),
-        ipAddress(req)
-      ]
-    );
-  } catch (error) {
-    console.error(
-      "Admin audit write failed:",
-      error.code || error.name
-    );
-  }
-}
-
-async function loginAllowed(req) {
-  const ip = ipAddress(req);
-
-  const rows = await query(
-    `SELECT COUNT(*) FILTER (
-       WHERE success = FALSE
-       AND attempted_at > NOW() - INTERVAL '15 minutes'
-     ) AS failed_ip
-     FROM public.admin_login_attempts
-     WHERE ip = $1`,
-    [ip]
-  );
-
-  const globalRows = await query(
-    `SELECT COUNT(*) AS failed_global
-     FROM public.admin_login_attempts
-     WHERE success = FALSE
-     AND attempted_at > NOW() - INTERVAL '15 minutes'`
-  );
-
-  return (
-    Number(rows[0]?.failed_ip || 0) < 5 &&
-    Number(globalRows[0]?.failed_global || 0) < 30
-  );
-}
-
-async function recordLogin(req, success) {
-  try {
-    await pool.query(
-      `INSERT INTO public.admin_login_attempts
-       (ip, success, attempted_at)
-       VALUES ($1,$2,NOW())`,
-      [ipAddress(req), !!success]
-    );
-  } catch (error) {
-    console.error(
-      "Login attempt logging failed:",
-      error.code || error.name
-    );
-  }
-}
-
-function pagination(body) {
-  const page = Math.max(
-    1,
-    Math.min(1000000, Number.parseInt(body.page, 10) || 1)
-  );
-
-  const size = Math.max(
-    1,
-    Math.min(PAGE_SIZE_MAX, Number.parseInt(body.page_size, 10) || 20)
+function pageParams(input = {}) {
+  const page = Math.max(1, parseInt(input.page || "1", 10) || 1);
+  const pageSize = Math.min(
+    10,
+    Math.max(1, parseInt(input.page_size || "10", 10) || 10)
   );
 
   return {
     page,
-    size,
-    offset: (page - 1) * size
+    pageSize,
+    offset: (page - 1) * pageSize,
   };
 }
 
-/* =========================
-   DASHBOARD
-========================= */
-
-async function dashboard() {
-  const [
-    totalsRows,
-    roundStatuses,
-    recentRounds,
-    healthRows,
-    userMetrics,
-    securityRows
-  ] = await Promise.all([
-    query(`SELECT
-      (SELECT COUNT(*) FROM public.users) AS users,
-      (SELECT COUNT(*) FROM public.bets) AS bets,
-      (SELECT COALESCE(SUM(stake),0) FROM public.bets) AS total_stake,
-      (SELECT COALESCE(SUM(fee),0) FROM public.bets) AS total_fees,
-      (SELECT COALESCE(SUM(payout),0) FROM public.bets) AS total_payouts,
-      (SELECT COALESCE(SUM(balance),0) FROM public.wallet_balances) AS total_wallet_balance,
-      (SELECT COALESCE(SUM(amount),0) FROM public.transactions
-        WHERE transaction_type='deposit'
-        AND status IN ('confirmed','completed')) AS total_deposits,
-      (SELECT COUNT(*) FROM public.transactions
-        WHERE transaction_type='deposit'
-        AND status IN ('confirmed','completed')) AS deposit_count,
-      (SELECT COALESCE(SUM(amount),0) FROM public.transactions
-        WHERE transaction_type='withdrawal'
-        AND status IN ('confirmed','completed')) AS total_withdrawals,
-      (SELECT COUNT(*) FROM public.transactions
-        WHERE transaction_type='withdrawal'
-        AND status IN ('confirmed','completed')) AS withdrawal_count,
-      (SELECT COALESCE(SUM(commission_amount),0)
-        FROM public.referral_commissions) AS total_commissions`),
-
-    query(`SELECT status, COUNT(*) AS count
-      FROM public.game_rounds
-      GROUP BY status
-      ORDER BY status`),
-
-    query(`SELECT
-      r.round_code,
-      r.status,
-      r.starts_at,
-      r.betting_closes_at,
-      r.ends_at,
-      CASE WHEN r.ends_at <= NOW()
-        THEN r.result_number ELSE NULL END AS result_number,
-      COUNT(b.id) AS bet_count,
-      COALESCE(SUM(b.stake),0) AS total_stake,
-      COALESCE(SUM(b.payout),0) AS total_payout,
-      COUNT(b.id) FILTER (WHERE b.status='pending') AS pending_bets,
-      (r.status='settled'
-        AND COUNT(b.id) FILTER (WHERE b.status='pending')=0)
-        AS payout_complete
-      FROM public.game_rounds r
-      LEFT JOIN public.bets b ON b.round_id=r.id
-      GROUP BY r.id
-      ORDER BY r.starts_at DESC
-      LIMIT 10`),
-
-    query(`SELECT
-      (SELECT COUNT(*) FROM public.game_rounds
-        WHERE ends_at<NOW() AND status<>'settled') AS overdue_rounds,
-      (SELECT COUNT(*) FROM public.bets
-        WHERE status='pending'
-        AND created_at<NOW()-INTERVAL '10 minutes') AS old_pending_bets,
-      (SELECT MAX(starts_at) FROM public.game_rounds)
-        AS latest_round_start,
-      (SELECT MAX(settled_at) FROM public.game_rounds
-        WHERE status='settled') AS last_settled_at`),
-
-    query(`SELECT
-      (SELECT COUNT(*) FROM public.users
-        WHERE created_at >= CURRENT_DATE
-        AND created_at < CURRENT_DATE + INTERVAL '1 day') AS new_today,
-      (SELECT COUNT(*) FROM public.users
-        WHERE created_at >= NOW()-INTERVAL '7 days') AS new_7d,
-      (SELECT COUNT(DISTINCT user_id) FROM public.bets
-        WHERE created_at >= NOW()-INTERVAL '24 hours') AS active_24h,
-      (SELECT COUNT(DISTINCT user_id) FROM public.bets
-        WHERE created_at >= NOW()-INTERVAL '7 days') AS active_7d,
-      (SELECT COUNT(*) FROM public.users u
-        WHERE NOT EXISTS (
-          SELECT 1 FROM public.bets b
-          WHERE b.user_id=u.id
-          AND b.created_at >= NOW()-INTERVAL '30 days'
-        )) AS inactive_30d`),
-
-    query(`SELECT
-      COUNT(*) FILTER (
-        WHERE success=FALSE
-        AND attempted_at>NOW()-INTERVAL '24 hours'
-      ) AS failed_logins_24h,
-      MAX(attempted_at) AS latest_login_attempt
-      FROM public.admin_login_attempts`)
-  ]);
-
-  const health = healthRows[0] || {};
-
-  return {
-    totals: totalsRows[0] || {},
-    user_metrics: userMetrics[0] || {},
-    security: securityRows[0] || {},
-    round_statuses: roundStatuses,
-    recent_rounds: recentRounds,
-    health: {
-      database_ok: true,
-      cron_ok:
-        Number(health.overdue_rounds || 0) === 0 &&
-        Number(health.old_pending_bets || 0) === 0,
-      overdue_rounds: Number(health.overdue_rounds || 0),
-      old_pending_bets: Number(health.old_pending_bets || 0),
-      latest_round_start: health.latest_round_start,
-      last_settled_at: health.last_settled_at
-    }
-  };
-}
-
-/* =========================
-   LIST CONFIGURATION
-========================= */
-
-const LISTS = {
-  users: {
-    select: `u.id,u.telegram_id,u.username,w.balance,
-      u.referred_by,u.referral_code,u.created_at,
-      (SELECT COUNT(*) FROM public.users c
-       WHERE c.referred_by=u.id) AS referral_count`,
-    from: `public.users u
-      LEFT JOIN public.wallet_balances w ON w.user_id=u.id`,
-    order: "u.id DESC"
-  },
-
-  wallets: {
-    select: `w.user_id,u.telegram_id,u.username,
-      w.balance,w.updated_at`,
-    from: `public.wallet_balances w
-      LEFT JOIN public.users u ON u.id=w.user_id`,
-    order: "w.user_id DESC"
-  },
-
-  transactions: {
-    select: `id,user_id,transaction_type,amount,status,
-      network,tx_hash,destination_address,admin_note,
-      reviewed_at,reviewed_by,created_at,updated_at`,
-    from: "public.transactions",
-    order: "id DESC"
-  },
-
-  rounds: {
-    select: `r.round_code,r.status,r.starts_at,
-      r.betting_closes_at,r.ends_at,
-      CASE WHEN r.ends_at<=NOW()
-        THEN r.result_number ELSE NULL END AS result_number,
-      COUNT(b.id) AS bet_count,
-      COALESCE(SUM(b.stake),0) AS total_stake,
-      COALESCE(SUM(b.payout),0) AS total_payout,
-      COUNT(b.id) FILTER (WHERE b.status='pending') AS pending_bets,
-      (r.status='settled'
-        AND COUNT(b.id) FILTER (WHERE b.status='pending')=0)
-        AS payout_complete`,
-    from: `public.game_rounds r
-      LEFT JOIN public.bets b ON b.round_id=r.id`,
-    order: "r.starts_at DESC",
-    group: "GROUP BY r.id"
-  },
-
-  bets: {
-    select: `b.id,b.user_id,b.round_id,r.round_code,
-      b.bet_type,b.selection,b.stake,b.fee,b.status,
-      CASE WHEN r.ends_at<=NOW()
-        THEN r.result_number ELSE NULL END AS result_number,
-      b.payout,b.created_at,b.settled_at`,
-    from: `public.bets b
-      LEFT JOIN public.game_rounds r ON r.id=b.round_id`,
-    order: "b.id DESC"
-  },
-
-  audit: {
-    select: `id,created_at,admin_username,action,
-      target_type,target_id,outcome,ip`,
-    from: "public.admin_audit_log",
-    order: "id DESC"
-  }
-};
-
-function addFilter(conditions, params, sql, value) {
-  params.push(value);
-  conditions.push(sql.replace("?", `$${params.length}`));
-}
-
-function userSegmentSql(segment) {
-  switch (segment) {
-    case "new_today":
-      return `u.created_at >= CURRENT_DATE
-        AND u.created_at < CURRENT_DATE + INTERVAL '1 day'`;
-
-    case "new_7d":
-      return `u.created_at >= NOW()-INTERVAL '7 days'`;
-
-    case "active_24h":
-      return `EXISTS (
-        SELECT 1 FROM public.bets bx
-        WHERE bx.user_id=u.id
-        AND bx.created_at>=NOW()-INTERVAL '24 hours'
-      )`;
-
-    case "active_7d":
-      return `EXISTS (
-        SELECT 1 FROM public.bets bx
-        WHERE bx.user_id=u.id
-        AND bx.created_at>=NOW()-INTERVAL '7 days'
-      )`;
-
-    case "inactive_30d":
-      return `NOT EXISTS (
-        SELECT 1 FROM public.bets bx
-        WHERE bx.user_id=u.id
-        AND bx.created_at>=NOW()-INTERVAL '30 days'
-      )`;
-
-    default:
+function verifyTelegramInitData(initData) {
+  try {
+    if (!initData || !process.env.TELEGRAM_BOT_TOKEN) {
       return null;
+    }
+
+    const params = new URLSearchParams(initData);
+    const receivedHash = params.get("hash");
+    const authDate = Number(params.get("auth_date"));
+
+    if (!receivedHash || !Number.isFinite(authDate)) {
+      return null;
+    }
+
+    if (Math.abs(Date.now() / 1000 - authDate) > 3600) {
+      return null;
+    }
+
+    params.delete("hash");
+
+    const dataCheckString = [...params.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, value]) => `${key}=${value}`)
+      .join("\n");
+
+    const secretKey = crypto
+      .createHmac("sha256", "WebAppData")
+      .update(process.env.TELEGRAM_BOT_TOKEN)
+      .digest();
+
+    const calculatedHash = crypto
+      .createHmac("sha256", secretKey)
+      .update(dataCheckString)
+      .digest("hex");
+
+    if (!/^[0-9a-f]{64}$/i.test(receivedHash)) {
+      return null;
+    }
+
+    const received = Buffer.from(receivedHash, "hex");
+    const calculated = Buffer.from(calculatedHash, "hex");
+
+    if (
+      received.length !== calculated.length ||
+      !crypto.timingSafeEqual(received, calculated)
+    ) {
+      return null;
+    }
+
+    const user = JSON.parse(params.get("user") || "{}");
+
+    return user.id ? user : null;
+  } catch (error) {
+    console.error("Telegram verification error:", error.message);
+    return null;
   }
 }
 
-/* =========================
-   PAGINATED LISTS
-========================= */
-
-async function listAction(action, body) {
-  const cfg = LISTS[action];
-
-  if (!cfg) throw new Error("Unsupported list action.");
-
-  const { page, size, offset } = pagination(body);
-  const conditions = [];
-  const params = [];
-
-  if (action === "users") {
-    const segment = String(body.segment || "all");
-
-    if (!USER_SEGMENTS.has(segment)) {
-      throw new Error("Invalid user segment.");
-    }
-
-    const segmentSql = userSegmentSql(segment);
-    if (segmentSql) conditions.push(segmentSql);
-
-    if (body.q) {
-      const q = String(body.q).trim().slice(0, 100);
-
-      if (/^\d+$/.test(q)) {
-        params.push(q);
-        conditions.push(
-          `(CAST(u.telegram_id AS TEXT)=$${params.length}
-            OR CAST(u.id AS TEXT)=$${params.length})`
-        );
-      } else {
-        addFilter(
-          conditions,
-          params,
-          "u.username ILIKE ?",
-          `%${q}%`
-        );
-      }
-    }
-  }
-
-  if (action === "wallets" && body.q) {
-    const q = String(body.q).trim().slice(0, 100);
-
-    if (/^\d+$/.test(q)) {
-      addFilter(
-        conditions,
-        params,
-        "CAST(w.user_id AS TEXT)=?",
-        q
-      );
-    } else {
-      addFilter(
-        conditions,
-        params,
-        "u.username ILIKE ?",
-        `%${q}%`
-      );
-    }
-  }
-
-  if (action === "transactions") {
-    const type = body.type || body.transaction_type;
-
-    if (type) {
-      if (!["deposit", "withdrawal"].includes(String(type))) {
-        throw new Error("Invalid transaction type.");
-      }
-
-      addFilter(
-        conditions,
-        params,
-        "transaction_type=?",
-        String(type)
-      );
-    }
-
-    if (body.user_id) {
-      if (!/^\d{1,15}$/.test(String(body.user_id))) {
-        throw new Error("Invalid user ID.");
-      }
-
-      addFilter(
-        conditions,
-        params,
-        "user_id=?",
-        String(body.user_id)
-      );
-    }
-
-    if (body.status) {
-      const status = String(body.status);
-
-      if (!STATUSES.has(status)) {
-        throw new Error("Invalid status.");
-      }
-
-      addFilter(conditions, params, "status=?", status);
-    }
-  }
-
-  if (action === "bets") {
-    if (body.user_id) {
-      if (!/^\d{1,15}$/.test(String(body.user_id))) {
-        throw new Error("Invalid user ID.");
-      }
-
-      addFilter(
-        conditions,
-        params,
-        "b.user_id=?",
-        String(body.user_id)
-      );
-    }
-
-    if (body.round_code) {
-      addFilter(
-        conditions,
-        params,
-        "r.round_code=?",
-        String(body.round_code).slice(0, 100)
-      );
-    }
-
-    if (body.status) {
-      const status = String(body.status);
-
-      if (!STATUSES.has(status)) {
-        throw new Error("Invalid status.");
-      }
-
-      addFilter(conditions, params, "b.status=?", status);
-    }
-  }
-
-  if (action === "rounds" && body.status) {
-    const status = String(body.status);
-
-    if (!STATUSES.has(status)) {
-      throw new Error("Invalid status.");
-    }
-
-    addFilter(conditions, params, "r.status=?", status);
-  }
-
-  if (action === "audit") {
-    if (body.outcome) {
-      addFilter(
-        conditions,
-        params,
-        "outcome=?",
-        String(body.outcome).slice(0, 50)
-      );
-    }
-
-    if (body.action_filter) {
-      addFilter(
-        conditions,
-        params,
-        "action ILIKE ?",
-        `%${String(body.action_filter).slice(0, 80)}%`
-      );
-    }
-  }
-
-  const where = conditions.length
-    ? `WHERE ${conditions.join(" AND ")}`
-    : "";
-
-  const countSql = action === "rounds"
-    ? `SELECT COUNT(DISTINCT r.id) AS total
-       FROM ${cfg.from} ${where}`
-    : `SELECT COUNT(*) AS total
-       FROM ${cfg.from} ${where}`;
-
-  const countRows = await query(countSql, params);
-
-  const rows = await query(
-    `SELECT ${cfg.select}
-     FROM ${cfg.from}
-     ${where}
-     ${cfg.group || ""}
-     ORDER BY ${cfg.order}
-     LIMIT $${params.length + 1}
-     OFFSET $${params.length + 2}`,
-    [...params, size, offset]
+async function getUser(client, telegramUser) {
+  const result = await client.query(
+    `INSERT INTO public.users (telegram_id, username)
+     VALUES ($1, $2)
+     ON CONFLICT (telegram_id)
+     DO UPDATE SET username = EXCLUDED.username
+     RETURNING id, telegram_id, username, referral_code, referred_by`,
+    [String(telegramUser.id), telegramUser.username || null]
   );
 
-  const total = Number(countRows[0]?.total || 0);
-  const totalPages = Math.max(1, Math.ceil(total / size));
+  const user = result.rows[0];
 
-  return {
-    [action === "audit" ? "entries" : action]: rows,
-    pagination: {
-      page,
-      page_size: size,
-      total,
-      total_pages: totalPages,
-      has_previous: page > 1,
-      has_next: page < totalPages
+  await client.query(
+    `INSERT INTO public.wallet_balances (user_id, balance)
+     VALUES ($1, 0)
+     ON CONFLICT (user_id) DO NOTHING`,
+    [user.id]
+  );
+
+  if (!user.referral_code) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const code = crypto.randomBytes(8).toString("hex").toUpperCase();
+
+      try {
+        const codeResult = await client.query(
+          `UPDATE public.users
+           SET referral_code = $2
+           WHERE id = $1
+             AND referral_code IS NULL
+           RETURNING referral_code`,
+          [user.id, code]
+        );
+
+        if (codeResult.rows.length) {
+          user.referral_code = codeResult.rows[0].referral_code;
+          break;
+        }
+
+        const existing = await client.query(
+          `SELECT referral_code
+           FROM public.users
+           WHERE id = $1`,
+          [user.id]
+        );
+
+        user.referral_code = existing.rows[0]?.referral_code || null;
+
+        if (user.referral_code) break;
+      } catch (error) {
+        if (error.code !== "23505" || attempt === 2) throw error;
+      }
     }
-  };
-}
-
-/* =========================
-   ANALYTICS
-========================= */
-
-async function analytics() {
-  const [
-    daily,
-    resultRows,
-    topUsers,
-    largeStakes,
-    highReturnUsers,
-    userMetrics
-  ] = await Promise.all([
-    query(`WITH days AS (
-      SELECT generate_series(
-        CURRENT_DATE-INTERVAL '13 days',
-        CURRENT_DATE,
-        INTERVAL '1 day'
-      )::date AS day
-    )
-    SELECT d.day,
-      COUNT(b.id) AS bets,
-      COALESCE(SUM(b.stake),0) AS stake,
-      COALESCE(SUM(b.payout),0) AS payout,
-      COALESCE(SUM(b.stake),0)-COALESCE(SUM(b.payout),0) AS net,
-      COUNT(DISTINCT b.user_id) AS active_users,
-      (SELECT COUNT(*) FROM public.users u
-       WHERE u.created_at>=d.day
-       AND u.created_at<d.day+INTERVAL '1 day') AS new_users
-    FROM days d
-    LEFT JOIN public.bets b
-      ON b.created_at>=d.day
-      AND b.created_at<d.day+INTERVAL '1 day'
-    GROUP BY d.day
-    ORDER BY d.day`),
-
-    query(`SELECT result_number,COUNT(*) AS count
-      FROM public.game_rounds
-      WHERE status='settled'
-      AND result_number BETWEEN 0 AND 9
-      GROUP BY result_number
-      ORDER BY result_number`),
-
-    query(`SELECT u.id,u.username,
-      COUNT(b.id) AS bets,
-      COALESCE(SUM(b.stake),0) AS stake,
-      COALESCE(SUM(b.payout),0) AS payout,
-      COALESCE(SUM(b.stake),0)-COALESCE(SUM(b.payout),0) AS user_net
-      FROM public.users u
-      JOIN public.bets b ON b.user_id=u.id
-      GROUP BY u.id,u.username
-      ORDER BY SUM(b.stake) DESC
-      LIMIT 10`),
-
-    query(`SELECT b.id,b.user_id,r.round_code,
-      b.bet_type,b.stake,b.created_at
-      FROM public.bets b
-      LEFT JOIN public.game_rounds r ON r.id=b.round_id
-      ORDER BY b.stake DESC
-      LIMIT 20`),
-
-    query(`SELECT user_id,
-      COUNT(*) AS bets,
-      COALESCE(SUM(stake),0) AS stake,
-      COALESCE(SUM(payout),0) AS payout,
-      ROUND(
-        100.0*COALESCE(SUM(payout),0)/NULLIF(SUM(stake),0),
-        2
-      ) AS return_percent
-      FROM public.bets
-      GROUP BY user_id
-      HAVING SUM(stake)>0
-      ORDER BY SUM(payout)/NULLIF(SUM(stake),0) DESC
-      LIMIT 10`),
-
-    query(`SELECT
-      (SELECT COUNT(*) FROM public.users
-       WHERE created_at>=CURRENT_DATE
-       AND created_at<CURRENT_DATE+INTERVAL '1 day') AS new_today,
-      (SELECT COUNT(*) FROM public.users
-       WHERE created_at>=NOW()-INTERVAL '7 days') AS new_7d,
-      (SELECT COUNT(DISTINCT user_id) FROM public.bets
-       WHERE created_at>=NOW()-INTERVAL '24 hours') AS active_24h,
-      (SELECT COUNT(DISTINCT user_id) FROM public.bets
-       WHERE created_at>=NOW()-INTERVAL '7 days') AS active_7d,
-      (SELECT COUNT(*) FROM public.users u
-       WHERE NOT EXISTS (
-         SELECT 1 FROM public.bets b
-         WHERE b.user_id=u.id
-         AND b.created_at>=NOW()-INTERVAL '30 days'
-       )) AS inactive_30d`)
-  ]);
-
-  const counts = Array(10).fill(0);
-
-  for (const row of resultRows) {
-    counts[Number(row.result_number)] = Number(row.count);
   }
 
-  const totalRounds = counts.reduce((a, b) => a + b, 0);
-
-  return {
-    daily,
-    fairness: {
-      counts,
-      total_rounds: totalRounds,
-      verdict: totalRounds < 100
-        ? "Not enough settled rounds for a useful statistical check"
-        : "Distribution available; not proof of fairness"
-    },
-    top_users: topUsers,
-    large_stakes: largeStakes,
-    high_return_users: highReturnUsers,
-    user_metrics: userMetrics[0] || {}
-  };
+  return user;
 }
 
-/* =========================
-   RECONCILIATION
-========================= */
-
-async function reconcile() {
-  const rows = await query(`SELECT
-    (SELECT COALESCE(SUM(balance),0)
-      FROM public.wallet_balances) AS wallet_total,
-    (SELECT COALESCE(SUM(commission_amount),0)
-      FROM public.referral_commissions) AS commissions,
-    (SELECT COALESCE(SUM(stake),0)
-      FROM public.bets) AS bets_stake,
-    (SELECT COALESCE(SUM(payout),0)
-      FROM public.bets WHERE status='won') AS bets_payout,
-    (SELECT COUNT(*) FROM public.bets) AS bet_count,
-    (SELECT COUNT(*) FROM public.transactions
-      WHERE transaction_type='bet'
-      AND status IN ('confirmed','completed')) AS bet_tx,
-    (SELECT COUNT(*) FROM public.transactions
-      WHERE transaction_type='payout'
-      AND status IN ('confirmed','completed')) AS payout_tx,
-    (SELECT COUNT(*) FROM public.bets
-      WHERE status='won') AS paid_bets`);
-
-  const t = rows[0] || {};
-
-  return {
-    clean: false,
-    totals: {
-      wallet_total: Number(t.wallet_total || 0),
-      ledger_net: null,
-      commissions: Number(t.commissions || 0),
-      unrecorded: "Requires full transaction ledger mapping",
-      bets_stake: Number(t.bets_stake || 0),
-      bet_tx: Number(t.bet_tx || 0),
-      stake_diff: "Requires transaction ledger mapping",
-      bets_payout: Number(t.bets_payout || 0),
-      payout_tx: Number(t.payout_tx || 0),
-      payout_diff: "Requires payout ledger mapping",
-      bet_count_diff:
-        Number(t.bet_count || 0) - Number(t.bet_tx || 0),
-      payout_count_diff:
-        Number(t.paid_bets || 0) - Number(t.payout_tx || 0)
-    },
-    mismatches: []
-  };
+function validRequestId(value) {
+  return typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
-/* =========================
-   USER DETAILS
-========================= */
+function telegramBotUsername() {
+  return String(process.env.TELEGRAM_BOT_USERNAME || "")
+    .trim()
+    .replace(/^@/, "");
+}
 
-async function userDetail(userId) {
-  const profiles = await query(
-    `SELECT u.id,u.telegram_id,u.username,w.balance,
-      u.referral_code,u.referred_by,u.created_at
-     FROM public.users u
-     LEFT JOIN public.wallet_balances w ON w.user_id=u.id
-     WHERE u.id=$1
-     LIMIT 1`,
+async function getReferralData(client, userId) {
+  const userResult = await client.query(
+    `SELECT id, referral_code, referred_by
+     FROM public.users
+     WHERE id = $1`,
     [userId]
   );
 
-  if (!profiles.length) return null;
+  const profile = userResult.rows[0];
 
-  const [
-    stats,
-    recentBets,
-    recentTransactions,
-    commissions,
-    referralTree,
-    generated,
-    rewards,
-    activity
-  ] = await Promise.all([
-    query(`SELECT COUNT(*) AS bets,
-      COALESCE(SUM(stake),0) AS stake,
-      COALESCE(SUM(payout),0) AS payout,
-      COUNT(*) FILTER(WHERE status='won') AS wins,
-      COUNT(*) FILTER(WHERE status='lost') AS losses
-      FROM public.bets WHERE user_id=$1`, [userId]),
+  if (!profile) {
+    throw new Error("User not found.");
+  }
 
-    query(`SELECT b.id,r.round_code,b.bet_type,b.selection,
-      b.stake,b.fee,b.status,
-      CASE WHEN r.ends_at<=NOW()
-        THEN r.result_number ELSE NULL END AS result_number,
-      b.payout,b.created_at,b.settled_at
-      FROM public.bets b
-      LEFT JOIN public.game_rounds r ON r.id=b.round_id
-      WHERE b.user_id=$1
-      ORDER BY b.id DESC
-      LIMIT 20`, [userId]),
-
-    query(`SELECT id,transaction_type,amount,status,network,
-      tx_hash,destination_address,admin_note,reviewed_at,
-      reviewed_by,created_at
-      FROM public.transactions
-      WHERE user_id=$1
-      ORDER BY id DESC
-      LIMIT 20`, [userId]),
-
-    query(`SELECT referral_level,COUNT(*) AS count,
-      COALESCE(SUM(commission_amount),0) AS total
-      FROM public.referral_commissions
-      WHERE referrer_user_id=$1
-      GROUP BY referral_level
-      ORDER BY referral_level`, [userId]),
-
-    query(`WITH RECURSIVE rt AS (
-      SELECT id,username,referred_by,created_at,1 AS level
-      FROM public.users WHERE referred_by=$1
-      UNION ALL
-      SELECT u.id,u.username,u.referred_by,u.created_at,rt.level+1
-      FROM public.users u
-      JOIN rt ON u.referred_by=rt.id
-      WHERE rt.level<3
-    )
-    SELECT id,username,referred_by,created_at,level
-    FROM rt ORDER BY level,id LIMIT 200`, [userId]),
-
-    query(`SELECT COALESCE(SUM(commission_amount),0) AS total
-      FROM public.referral_commissions
-      WHERE source_user_id=$1`, [userId]),
-
-    query(`SELECT COUNT(*) AS total,
-      COALESCE(SUM(reward_points),0) AS points,
-      COUNT(*) FILTER(WHERE status='credited') AS credited
-      FROM public.referral_rewards
-      WHERE referrer_user_id=$1`, [userId]),
-
-    query(`SELECT MAX(created_at) AS last_bet_at,
-      COUNT(*) FILTER(
-        WHERE created_at>=NOW()-INTERVAL '24 hours'
-      ) AS bets_24h,
-      COUNT(*) FILTER(
-        WHERE created_at>=NOW()-INTERVAL '7 days'
-      ) AS bets_7d
-      FROM public.bets WHERE user_id=$1`, [userId])
-  ]);
-
-  return {
-    profile: profiles[0],
-    stats: stats[0] || {},
-    recent_bets: recentBets,
-    recent_transactions: recentTransactions,
-    referral_tree: referralTree,
-    commissions_earned: commissions,
-    commissions_generated: Number(generated[0]?.total || 0),
-    referral_rewards: rewards[0] || {},
-    activity: activity[0] || {}
-  };
-}
-
-/* =========================
-   SEARCH
-========================= */
-
-async function search(q) {
-  q = String(q || "").trim().slice(0, 100);
-
-  if (!q) return { users: [], rounds: [], bets: [] };
-
-  const users = await query(
-    `SELECT u.id,u.telegram_id,u.username,w.balance
-     FROM public.users u
-     LEFT JOIN public.wallet_balances w ON w.user_id=u.id
-     WHERE CAST(u.id AS TEXT)=$1
-        OR CAST(u.telegram_id AS TEXT)=$1
-        OR u.username ILIKE $2
-     ORDER BY u.id DESC LIMIT 20`,
-    [q, `%${q}%`]
+  const referralCounts = await client.query(
+    `SELECT COUNT(*)::int AS total_referrals
+     FROM public.users
+     WHERE referred_by = $1`,
+    [userId]
   );
 
-  const rounds = await query(
-    `SELECT round_code,status,starts_at,ends_at
-     FROM public.game_rounds
-     WHERE round_code=$1
-     ORDER BY starts_at DESC LIMIT 10`,
-    [q]
+  const directReferrals = await client.query(
+    `SELECT id, username, created_at
+     FROM public.users
+     WHERE referred_by = $1
+     ORDER BY created_at DESC, id DESC
+     LIMIT 50`,
+    [userId]
   );
 
-  const bets = /^\d+$/.test(q)
-    ? await query(
-        `SELECT b.id,b.user_id,r.round_code,
-          b.bet_type,b.stake,b.status
-         FROM public.bets b
-         LEFT JOIN public.game_rounds r ON r.id=b.round_id
-         WHERE b.id=$1 LIMIT 10`,
-        [q]
-      )
-    : [];
+  const commissionTotals = await client.query(
+    `SELECT
+       referral_level,
+       COUNT(*)::int AS commission_count,
+       COALESCE(SUM(commission_amount), 0)::numeric(20,2)
+         AS total_commission
+     FROM public.referral_commissions
+     WHERE referrer_user_id = $1
+     GROUP BY referral_level
+     ORDER BY referral_level`,
+    [userId]
+  );
 
-  return { users, rounds, bets };
-}
+  const commissionHistory = await client.query(
+    `SELECT
+       rc.id,
+       rc.bet_id,
+       rc.source_user_id,
+       rc.referral_level,
+       rc.fee_amount,
+       rc.commission_rate,
+       rc.commission_amount,
+       rc.created_at,
+       b.bet_type,
+       b.selection,
+       b.stake,
+       r.round_code
+     FROM public.referral_commissions rc
+     LEFT JOIN public.bets b
+       ON b.id = rc.bet_id
+     LEFT JOIN public.game_rounds r
+       ON r.id = b.round_id
+     WHERE rc.referrer_user_id = $1
+     ORDER BY rc.id DESC
+     LIMIT 50`,
+    [userId]
+  );
 
-/* =========================
-   CSV EXPORT
-========================= */
+  const rewardSummary = await client.query(
+    `SELECT
+       COUNT(*) FILTER (WHERE status = 'pending')::int
+         AS pending_count,
+       COUNT(*) FILTER (WHERE status = 'credited')::int
+         AS credited_count,
+       COALESCE(
+         SUM(reward_points) FILTER (WHERE status = 'pending'),
+         0
+       )::numeric(20,2) AS pending_points,
+       COALESCE(
+         SUM(reward_points) FILTER (WHERE status = 'credited'),
+         0
+       )::numeric(20,2) AS credited_points
+     FROM public.referral_rewards
+     WHERE referrer_user_id = $1`,
+    [userId]
+  );
 
-function csvCell(value) {
-  let s = value == null ? "" : String(value);
+  const walletResult = await client.query(
+    `SELECT balance
+     FROM public.wallet_balances
+     WHERE user_id = $1`,
+    [userId]
+  );
 
-  if (/^[\s]*[=+\-@\t\r]/.test(s)) {
-    s = "'" + s;
-  }
+  const botUsername = telegramBotUsername();
 
-  return `"${s.replace(/"/g, '""')}"`;
-}
+  const referralLink = botUsername && profile.referral_code
+    ? `https://t.me/${botUsername}?start=ref_${encodeURIComponent(profile.referral_code)}`
+    : null;
 
-async function exportCsv(body) {
-  const kind = String(body.kind || "");
-  let sql = "";
-  const params = [];
-  const conditions = [];
-
-  if (kind === "users") {
-    const segment = String(body.segment || "all");
-
-    if (!USER_SEGMENTS.has(segment)) {
-      throw new Error("Invalid user segment.");
-    }
-
-    const segmentSql = userSegmentSql(segment);
-    if (segmentSql) conditions.push(segmentSql);
-
-    if (body.q) {
-      const q = String(body.q).trim().slice(0, 100);
-
-      if (/^\d+$/.test(q)) {
-        params.push(q);
-        conditions.push(
-          `(CAST(u.telegram_id AS TEXT)=$${params.length}
-            OR CAST(u.id AS TEXT)=$${params.length})`
-        );
-      } else {
-        params.push(`%${q}%`);
-        conditions.push(`u.username ILIKE $${params.length}`);
-      }
-    }
-
-    sql = `SELECT u.id,u.telegram_id,u.username,w.balance,
-      u.referred_by,u.referral_code,u.created_at
-      FROM public.users u
-      LEFT JOIN public.wallet_balances w ON w.user_id=u.id
-      ${conditions.length ? "WHERE " + conditions.join(" AND ") : ""}
-      ORDER BY u.id DESC LIMIT ${EXPORT_MAX}`;
-  } else if (kind === "bets") {
-    if (body.user_id) {
-      if (!/^\d{1,15}$/.test(String(body.user_id))) {
-        throw new Error("Invalid user ID.");
-      }
-
-      params.push(String(body.user_id));
-      conditions.push(`b.user_id=$${params.length}`);
-    }
-
-    if (body.round_code) {
-      params.push(String(body.round_code).slice(0, 100));
-      conditions.push(`r.round_code=$${params.length}`);
-    }
-
-    if (body.status) {
-      const status = String(body.status);
-
-      if (!STATUSES.has(status)) {
-        throw new Error("Invalid status.");
-      }
-
-      params.push(status);
-      conditions.push(`b.status=$${params.length}`);
-    }
-
-    sql = `SELECT b.id,b.user_id,r.round_code,b.bet_type,
-      b.selection,b.stake,b.fee,b.status,b.payout,
-      b.created_at,b.settled_at
-      FROM public.bets b
-      LEFT JOIN public.game_rounds r ON r.id=b.round_id
-      ${conditions.length ? "WHERE " + conditions.join(" AND ") : ""}
-      ORDER BY b.id DESC LIMIT ${EXPORT_MAX}`;
-  } else if (kind === "transactions") {
-    const type = body.type || body.transaction_type;
-
-    if (type) {
-      if (!["deposit", "withdrawal"].includes(String(type))) {
-        throw new Error("Invalid transaction type.");
-      }
-
-      params.push(String(type));
-      conditions.push(`transaction_type=$${params.length}`);
-    }
-
-    if (body.user_id) {
-      if (!/^\d{1,15}$/.test(String(body.user_id))) {
-        throw new Error("Invalid user ID.");
-      }
-
-      params.push(String(body.user_id));
-      conditions.push(`user_id=$${params.length}`);
-    }
-
-    if (body.status) {
-      const status = String(body.status);
-
-      if (!STATUSES.has(status)) {
-        throw new Error("Invalid status.");
-      }
-
-      params.push(status);
-      conditions.push(`status=$${params.length}`);
-    }
-
-    sql = `SELECT id,user_id,transaction_type,amount,status,
-      network,tx_hash,destination_address,admin_note,
-      reviewed_at,reviewed_by,created_at,updated_at
-      FROM public.transactions
-      ${conditions.length ? "WHERE " + conditions.join(" AND ") : ""}
-      ORDER BY id DESC LIMIT ${EXPORT_MAX}`;
-  } else {
-    throw new Error("Invalid export type.");
-  }
-
-  const rows = await query(sql, params);
-  const columns = rows.length ? Object.keys(rows[0]) : [];
-
-  const csv = [
-    columns.map(csvCell).join(","),
-    ...rows.map(row =>
-      columns.map(column => csvCell(row[column])).join(",")
-    )
-  ].join("\r\n");
-
-  return {
-    csv,
-    row_count: rows.length,
-    truncated: rows.length === EXPORT_MAX
-  };
-}
-
-/* =========================
-   WALLET TRANSACTION REVIEW
-========================= */
-
-async function reviewWalletTransaction(action, body, session, req) {
-  const transactionId = String(body.transaction_id || "");
-
-  if (!/^\d{1,15}$/.test(transactionId)) {
-    throw new Error("Invalid transaction ID.");
-  }
-
-  const note = String(body.admin_note || "").trim().slice(0, 500);
-
-  // TEST mode permits only a clearly identified test deposit approval.
-  // Real deposits require independent on-chain verification.
-  if (
-    action === "deposit_approve" &&
-    process.env.WALLET_TEST_MODE !== "true"
-  ) {
-    throw new Error(
-      "Deposit approval is disabled. Verified on-chain processing is required."
-    );
-  }
-
-  const client = await pool.connect();
-
-  try {
-    await client.query("BEGIN");
-
-    const result = await client.query(
-      `SELECT id,user_id,transaction_type,amount,status,
-        network,tx_hash
-       FROM public.transactions
-       WHERE id=$1
-       FOR UPDATE`,
-      [transactionId]
-    );
-
-    if (!result.rows.length) {
-      throw new Error("Transaction not found.");
-    }
-
-    const tx = result.rows[0];
-
-    if (tx.status !== "pending") {
-      throw new Error("Transaction is not pending.");
-    }
-
-    if (!["deposit", "withdrawal"].includes(tx.transaction_type)) {
-      throw new Error("Unsupported wallet transaction type.");
-    }
-
-    if (
-      action.startsWith("deposit_") &&
-      tx.transaction_type !== "deposit"
-    ) {
-      throw new Error("This is not a deposit transaction.");
-    }
-
-    if (
-      action.startsWith("withdrawal_") &&
-      tx.transaction_type !== "withdrawal"
-    ) {
-      throw new Error("This is not a withdrawal transaction.");
-    }
-
-    let newStatus;
-
-    if (action === "deposit_approve") {
-      // TESTING ONLY. No blockchain transaction is verified here.
-      await client.query(
-        `INSERT INTO public.wallet_balances
-          (user_id,balance,updated_at)
-         VALUES ($1,$2::numeric,NOW())
-         ON CONFLICT (user_id)
-         DO UPDATE SET
-           balance = public.wallet_balances.balance + EXCLUDED.balance,
-           updated_at = NOW()`,
-        [tx.user_id, tx.amount]
-      );
-
-      newStatus = "confirmed";
-    } else if (action === "deposit_reject") {
-      newStatus = "rejected";
-    } else if (action === "withdrawal_approve") {
-      // The amount must already have been reserved by the
-      // user-facing withdrawal request endpoint.
-      newStatus = "confirmed";
-    } else if (action === "withdrawal_reject") {
-      // Refund only when a user-facing endpoint has already
-      // reserved/debited the withdrawal amount.
-      await client.query(
-        `INSERT INTO public.wallet_balances
-          (user_id,balance,updated_at)
-         VALUES ($1,$2::numeric,NOW())
-         ON CONFLICT (user_id)
-         DO UPDATE SET
-           balance = public.wallet_balances.balance + EXCLUDED.balance,
-           updated_at = NOW()`,
-        [tx.user_id, tx.amount]
-      );
-
-      newStatus = "rejected";
-    } else {
-      throw new Error("Unsupported wallet review action.");
-    }
-
-    await client.query(
-      `UPDATE public.transactions
-       SET status=$1,
-           admin_note=$2,
-           reviewed_at=NOW(),
-           reviewed_by=$3,
-           updated_at=NOW()
-       WHERE id=$4`,
-      [
-        newStatus,
-        note || null,
-        session.username,
-        transactionId
-      ]
-    );
-
-    await client.query("COMMIT");
-
-    await audit(
-      session.username,
-      action,
-      req,
-      "success",
-      "transaction",
-      transactionId
+  const levels = [1, 2, 3].map((level) => {
+    const row = commissionTotals.rows.find(
+      (item) => Number(item.referral_level) === level
     );
 
     return {
-      ok: true,
-      transaction_id: transactionId,
-      transaction_type: tx.transaction_type,
-      status: newStatus,
-      message:
-        action === "deposit_approve"
-          ? "TEST deposit approved. Blockchain verification was not performed."
-          : action === "deposit_reject"
-          ? "Deposit rejected."
-          : action === "withdrawal_approve"
-          ? "Withdrawal approved for manual payout."
-          : "Withdrawal rejected and reserved balance refunded."
+      level,
+      rate_percent: level === 1 ? 15 : level === 2 ? 10 : 5,
+      commission_count: Number(row?.commission_count || 0),
+      total_commission: String(row?.total_commission || "0.00"),
     };
-  } catch (error) {
-    await client.query("ROLLBACK").catch(() => {});
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
-/* =========================
-   SECURITY SUMMARY
-========================= */
-
-async function securitySummary() {
-  const [attempts, auditRows] = await Promise.all([
-    query(`SELECT id,ip,success,attempted_at
-      FROM public.admin_login_attempts
-      ORDER BY attempted_at DESC
-      LIMIT 100`),
-
-    query(`SELECT id,created_at,admin_username,action,
-      target_type,target_id,outcome,ip
-      FROM public.admin_audit_log
-      ORDER BY id DESC
-      LIMIT 100`)
-  ]);
+  });
 
   return {
-    attempts,
-    entries: auditRows
+    success: true,
+    referral: {
+      referral_code: profile.referral_code,
+      referral_link: referralLink,
+      bot_username: botUsername || null,
+      referred_by: profile.referred_by,
+      total_direct_referrals: Number(
+        referralCounts.rows[0]?.total_referrals || 0
+      ),
+      commission_levels: levels,
+      total_commission: levels
+        .reduce((sum, level) => sum + Number(level.total_commission), 0)
+        .toFixed(2),
+      reward: {
+        reward_per_eligible_referral: 100,
+        qualifying_recharge_points: 100,
+        recharge_system_enabled: false,
+        pending_count: Number(
+          rewardSummary.rows[0]?.pending_count || 0
+        ),
+        credited_count: Number(
+          rewardSummary.rows[0]?.credited_count || 0
+        ),
+        pending_points: String(
+          rewardSummary.rows[0]?.pending_points || "0.00"
+        ),
+        credited_points: String(
+          rewardSummary.rows[0]?.credited_points || "0.00"
+        ),
+        message: "Rewards require a confirmed qualifying recharge. Recharge is not enabled yet.",
+      },
+      wallet_balance: String(walletResult.rows[0]?.balance ?? "0.00"),
+      direct_referrals: directReferrals.rows.map((row) => ({
+        username: row.username,
+        created_at: row.created_at,
+      })),
+      commission_history: commissionHistory.rows,
+    },
   };
 }
 
-/* =========================
-   API HANDLER
-========================= */
-
 module.exports = async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store");
+
+  // GET: current round and settled result history.
+  if (req.method === "GET") {
+    const { page, pageSize, offset } = pageParams(req.query || {});
+    let client;
+
+    try {
+      client = await pool.connect();
+
+      const timeResult = await client.query(
+        "SELECT NOW() AS server_time"
+      );
+
+      /*
+       * RESULT HISTORY FIX:
+       * Only rounds whose result has been declared are returned.
+       * Pending, open, locked and future rounds are excluded.
+       */
+      const countResult = await client.query(
+        `SELECT COUNT(*)::int AS total
+         FROM public.game_rounds
+         WHERE status = 'settled'
+           AND result_number IS NOT NULL`
+      );
+
+      const roundsResult = await client.query(
+        `SELECT id, round_code, status, starts_at,
+                betting_closes_at, ends_at,
+                result_number, created_at, settled_at
+         FROM public.game_rounds
+         WHERE status = 'settled'
+           AND result_number IS NOT NULL
+         ORDER BY starts_at DESC
+         LIMIT $1 OFFSET $2`,
+        [pageSize, offset]
+      );
+
+      /*
+       * Current round remains separate from Result History.
+       * The game timer can still find the active round.
+       */
+      const currentResult = await client.query(
+        `SELECT id, round_code, status, starts_at,
+                betting_closes_at, ends_at
+         FROM public.game_rounds
+         WHERE starts_at <= NOW()
+           AND ends_at > NOW()
+         ORDER BY starts_at DESC
+         LIMIT 1`
+      );
+
+      const total = Number(countResult.rows[0].total);
+
+      return json(res, 200, {
+        success: true,
+        server_time: timeResult.rows[0].server_time,
+        current_round: currentResult.rows[0] || null,
+        rounds: roundsResult.rows,
+        rounds_page: {
+          page,
+          page_size: pageSize,
+          total,
+          total_pages: Math.max(1, Math.ceil(total / pageSize)),
+          has_next: offset + pageSize < total,
+          has_previous: page > 1,
+        },
+      });
+    } catch (error) {
+      console.error("GET /api/game:", error);
+
+      return json(res, 500, {
+        success: false,
+        message: "Unable to load game data.",
+      });
+    } finally {
+      if (client) client.release();
+    }
+  }
+
   if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
+    res.setHeader("Allow", "GET, POST");
+
     return json(res, 405, {
-      message: "Method not allowed."
-    });
-  }
-
-  if (!validRequest(req)) {
-    return json(res, 403, {
-      message: "Request rejected."
-    });
-  }
-
-  let settings;
-
-  try {
-    settings = getConfig();
-  } catch {
-    return json(res, 500, {
-      message: "Admin configuration error. Check Vercel environment settings."
+      success: false,
+      message: "Method not allowed.",
     });
   }
 
   const body = req.body || {};
-  const action = String(body.action || "");
+  const telegramUser = verifyTelegramInitData(body.initData);
 
-  if (action === "login") {
-    try {
-      if (!(await loginAllowed(req))) {
-        await recordLogin(req, false);
-        await audit(
-          "unknown",
-          "login_rate_limited",
-          req,
-          "blocked"
-        );
-
-        return json(res, 429, {
-          message: "Too many login attempts. Try again in 15 minutes."
-        });
-      }
-
-      const ok =
-        safeEqual(body.username, settings.username) &&
-        safeEqual(body.password, settings.password);
-
-      await recordLogin(req, ok);
-
-      if (!ok) {
-        await audit("unknown", "login", req, "failed");
-
-        return json(res, 401, {
-          message: "Invalid username or password."
-        });
-      }
-
-      setCookie(
-        res,
-        createSession(settings.username),
-        SESSION_SECONDS
-      );
-
-      await audit(settings.username, "login", req);
-
-      return json(res, 200, { ok: true });
-    } catch (error) {
-      console.error(
-        "Admin login error:",
-        error.code || error.name
-      );
-
-      return json(res, 500, {
-        message: "Login service temporarily unavailable."
-      });
-    }
-  }
-
-  if (action === "logout") {
-    setCookie(res, "", 0);
-    return json(res, 200, { ok: true });
-  }
-
-  const session = verifySession(readCookie(req, COOKIE));
-
-  if (!session) {
+  if (!telegramUser) {
     return json(res, 401, {
-      message: "Session expired. Please sign in again."
+      success: false,
+      message: "Telegram authentication failed. Reopen the app.",
     });
   }
 
+  let client;
+  let transactionStarted = false;
+
   try {
-    let result;
+    client = await pool.connect();
 
-    switch (action) {
-      case "me":
-        result = {
-          ok: true,
-          username: session.username
-        };
-        break;
+    await client.query("BEGIN");
+    transactionStarted = true;
 
-      case "dashboard":
-        result = await dashboard();
-        break;
+    const user = await getUser(client, telegramUser);
+    const action = String(body.action || "");
 
-      case "analytics":
-        result = await analytics();
-        break;
+    if (action === "balance") {
+      const result = await client.query(
+        `SELECT balance
+         FROM public.wallet_balances
+         WHERE user_id = $1`,
+        [user.id]
+      );
 
-      case "reconcile":
-        result = await reconcile();
-        break;
+      await client.query("COMMIT");
+      transactionStarted = false;
 
-      case "users":
-      case "wallets":
-      case "transactions":
-      case "rounds":
-      case "bets":
-      case "audit":
-        result = await listAction(action, body);
-        break;
+      return json(res, 200, {
+        success: true,
+        balance: result.rows[0]?.balance ?? "0.00",
+      });
+    }
 
-      case "user_detail": {
-        const id = String(body.user_id || "");
+    if (action === "my_bets") {
+      const { page, pageSize, offset } = pageParams(body);
 
-        if (!/^\d{1,15}$/.test(id)) {
-          return json(res, 400, {
-            message: "Invalid user ID."
-          });
-        }
+      const countResult = await client.query(
+        `SELECT COUNT(*)::int AS total
+         FROM public.bets
+         WHERE user_id = $1`,
+        [user.id]
+      );
 
-        result = await userDetail(id);
+      const result = await client.query(
+        `SELECT b.id, b.bet_type, b.selection, b.stake,
+                b.fee, b.status, b.payout, b.created_at,
+                b.settled_at, r.round_code, r.result_number
+         FROM public.bets b
+         JOIN public.game_rounds r ON r.id = b.round_id
+         WHERE b.user_id = $1
+         ORDER BY b.id DESC
+         LIMIT $2 OFFSET $3`,
+        [user.id, pageSize, offset]
+      );
 
-        if (!result) {
-          return json(res, 404, {
-            message: "User not found."
-          });
-        }
+      const total = Number(countResult.rows[0].total);
 
-        break;
+      await client.query("COMMIT");
+      transactionStarted = false;
+
+      return json(res, 200, {
+        success: true,
+        bets: result.rows,
+        pagination: {
+          page,
+          page_size: pageSize,
+          total,
+          total_pages: Math.max(1, Math.ceil(total / pageSize)),
+          has_next: offset + pageSize < total,
+          has_previous: page > 1,
+        },
+      });
+    }
+
+    if (action === "wallet_history") {
+      const { page, pageSize, offset } = pageParams(body);
+
+      const countResult = await client.query(
+        `SELECT COUNT(*)::int AS total
+         FROM public.transactions
+         WHERE user_id = $1`,
+        [user.id]
+      );
+
+      const result = await client.query(
+        `SELECT id, transaction_type, amount, status,
+                network, tx_hash, created_at, updated_at
+         FROM public.transactions
+         WHERE user_id = $1
+         ORDER BY id DESC
+         LIMIT $2 OFFSET $3`,
+        [user.id, pageSize, offset]
+      );
+
+      const total = Number(countResult.rows[0].total);
+
+      await client.query("COMMIT");
+      transactionStarted = false;
+
+      return json(res, 200, {
+        success: true,
+        transactions: result.rows,
+        pagination: {
+          page,
+          page_size: pageSize,
+          total,
+          total_pages: Math.max(1, Math.ceil(total / pageSize)),
+          has_next: offset + pageSize < total,
+          has_previous: page > 1,
+        },
+      });
+    }
+
+    if (action === "referral_data") {
+      const data = await getReferralData(client, user.id);
+
+      await client.query("COMMIT");
+      transactionStarted = false;
+
+      return json(res, 200, data);
+    }
+
+    if (action === "apply_referral") {
+      const referralCode = String(body.referral_code || "").trim();
+
+      if (!referralCode || referralCode.length > 100) {
+        await client.query("ROLLBACK");
+        transactionStarted = false;
+
+        return json(res, 400, {
+          success: false,
+          message: "Enter a valid referral code.",
+        });
       }
 
-      case "search":
-        result = await search(body.q);
-        break;
+      const result = await client.query(
+        `SELECT public.apply_referral_code($1::bigint, $2::text) AS result`,
+        [user.id, referralCode]
+      );
 
-      case "export":
-        result = await exportCsv(body);
-        break;
+      const data = result.rows[0]?.result;
 
-      case "security":
-        result = await securitySummary();
-        break;
+      if (!data || data.success !== true) {
+        await client.query("ROLLBACK");
+        transactionStarted = false;
 
-      case "deposit_approve":
-      case "deposit_reject":
-      case "withdrawal_approve":
-      case "withdrawal_reject":
-        result = await reviewWalletTransaction(
-          action,
-          body,
-          session,
-          req
-        );
-        break;
-
-      default:
         return json(res, 400, {
-          message: "Unknown admin action."
+          success: false,
+          message: data?.message || "Unable to apply referral code.",
         });
+      }
+
+      await client.query("COMMIT");
+      transactionStarted = false;
+
+      return json(res, 200, data);
     }
 
-    if (
-      ![
-        "deposit_approve",
-        "deposit_reject",
-        "withdrawal_approve",
-        "withdrawal_reject"
-      ].includes(action)
-    ) {
-      await audit(session.username, action, req);
+    if (action === "referral_history") {
+      const { page, pageSize, offset } = pageParams(body);
+
+      const countResult = await client.query(
+        `SELECT COUNT(*)::int AS total
+         FROM public.referral_commissions
+         WHERE referrer_user_id = $1`,
+        [user.id]
+      );
+
+      const result = await client.query(
+        `SELECT
+           rc.id,
+           rc.bet_id,
+           rc.source_user_id,
+           rc.referral_level,
+           rc.fee_amount,
+           rc.commission_rate,
+           rc.commission_amount,
+           rc.created_at,
+           b.bet_type,
+           b.selection,
+           b.stake,
+           r.round_code
+         FROM public.referral_commissions rc
+         LEFT JOIN public.bets b ON b.id = rc.bet_id
+         LEFT JOIN public.game_rounds r ON r.id = b.round_id
+         WHERE rc.referrer_user_id = $1
+         ORDER BY rc.id DESC
+         LIMIT $2 OFFSET $3`,
+        [user.id, pageSize, offset]
+      );
+
+      const total = Number(countResult.rows[0].total);
+
+      await client.query("COMMIT");
+      transactionStarted = false;
+
+      return json(res, 200, {
+        success: true,
+        commissions: result.rows,
+        pagination: {
+          page,
+          page_size: pageSize,
+          total,
+          total_pages: Math.max(1, Math.ceil(total / pageSize)),
+          has_next: offset + pageSize < total,
+          has_previous: page > 1,
+        },
+      });
     }
 
-    return json(res, 200, result);
+    if (action === "place_bet") {
+      const roundCode = String(body.round_code || "");
+      const betType = String(body.bet_type || "");
+      const requestId = String(body.request_id || "");
+      const stake = Number(body.stake);
+
+      const selection =
+        body.selection === null || body.selection === undefined
+          ? null
+          : Number(body.selection);
+
+      if (!/^\d{14}$/.test(roundCode)) {
+        await client.query("ROLLBACK");
+        transactionStarted = false;
+
+        return json(res, 400, {
+          success: false,
+          message: "Invalid round code. Expected YYYYMMDDHHMMSS.",
+        });
+      }
+
+      if (!validRequestId(requestId)) {
+        await client.query("ROLLBACK");
+        transactionStarted = false;
+
+        return json(res, 400, {
+          success: false,
+          message: "Invalid request ID. Please retry.",
+        });
+      }
+
+      if (
+        !Number.isFinite(stake) ||
+        stake < 0.01 ||
+        stake > 1000 ||
+        Math.round(stake * 100) !== stake * 100
+      ) {
+        await client.query("ROLLBACK");
+        transactionStarted = false;
+
+        return json(res, 400, {
+          success: false,
+          message: "Stake must be between 0.01 and 1000, maximum 2 decimals.",
+        });
+      }
+
+      if (!BET_TYPES.includes(betType)) {
+        await client.query("ROLLBACK");
+        transactionStarted = false;
+
+        return json(res, 400, {
+          success: false,
+          message: "Invalid bet type.",
+        });
+      }
+
+      if (
+        (betType === "Number" &&
+          (!Number.isInteger(selection) || selection < 0 || selection > 9)) ||
+        (betType !== "Number" && selection !== null)
+      ) {
+        await client.query("ROLLBACK");
+        transactionStarted = false;
+
+        return json(res, 400, {
+          success: false,
+          message: "Invalid selection.",
+        });
+      }
+
+      const result = await client.query(
+        `SELECT public.place_bet_atomic(
+           $1::bigint,
+           $2::text,
+           $3::text,
+           $4::smallint,
+           $5::numeric,
+           $6::uuid
+         ) AS result`,
+        [
+          user.id,
+          roundCode,
+          betType,
+          selection,
+          stake.toFixed(2),
+          requestId,
+        ]
+      );
+
+      const data = result.rows[0].result;
+      const success = data?.success === true ||
+        data?.success === "true";
+
+      if (!success) {
+        await client.query("ROLLBACK");
+        transactionStarted = false;
+
+        return json(res, 400, {
+          ...(data && typeof data === "object" ? data : {}),
+          success: false,
+          message: data?.message || "Bet could not be placed.",
+        });
+      }
+
+      await client.query("COMMIT");
+      transactionStarted = false;
+
+      return json(res, 200, data);
+    }
+
+    await client.query("ROLLBACK");
+    transactionStarted = false;
+
+    return json(res, 400, {
+      success: false,
+      message: "Unknown action.",
+    });
   } catch (error) {
-    console.error(
-      "Admin API error:",
-      action,
-      error.code || error.name || "Error"
-    );
-
-    let message = "Admin request failed. Check server logs.";
-
-    if (error.code === "42P01") {
-      message = "Required database table is missing.";
-    } else if (error.code === "42703") {
-      message = "Database column mismatch. Check actual table schema.";
-    } else if (error.code === "22P02") {
-      message = "Invalid database value.";
-    } else if (
-      error.message &&
-      /Invalid |Unsupported |Transaction |This is not |Deposit approval is disabled/.test(
-        error.message
-      )
-    ) {
-      message = error.message;
+    if (client && transactionStarted) {
+      await client.query("ROLLBACK").catch(() => {});
     }
 
-    return json(res, 400, { message });
+    console.error("POST /api/game:", error);
+
+    return json(res, 500, {
+      success: false,
+      message: "Game request failed. Please try again.",
+    });
+  } finally {
+    if (client) client.release();
   }
 };
