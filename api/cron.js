@@ -223,7 +223,8 @@ module.exports = async function handler(req, res) {
     let resultsCalculated = 0;
     let payoutsReleased = 0;
 
-    // The database function handles calculation and release separately.
+    // The database function may return one combined step
+    // (no phase) or separate phases.
     for (
       let attempt = 0;
       attempt < MAX_SETTLEMENT_ATTEMPTS;
@@ -247,9 +248,14 @@ module.exports = async function handler(req, res) {
         resultsCalculated++;
       } else if (result.phase === "payout_released") {
         payoutsReleased++;
+      } else if (!result.phase) {
+        // Current database function calculates the result
+        // and releases payouts in one step.
+        resultsCalculated++;
+        payoutsReleased++;
       } else {
         throw new Error(
-          `Unexpected settlement phase: ${result.phase || "missing"}`
+          `Unexpected settlement phase: ${result.phase}`
         );
       }
     }
