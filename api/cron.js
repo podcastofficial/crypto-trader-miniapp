@@ -65,7 +65,7 @@ module.exports = async function handler(req, res) {
 
     await client.query("BEGIN");
 
-    // Serializes concurrent cron requests.
+    // Prevent concurrent cron requests from processing together.
     await client.query(
       "SELECT pg_advisory_xact_lock($1::bigint)",
       [739184205]
@@ -103,10 +103,9 @@ module.exports = async function handler(req, res) {
         new Date(latestResult.rows[0].starts_at).getTime();
 
       if (Number.isFinite(latestStartMs)) {
-        const latestSlot =
-          Math.floor(
-            latestStartMs / 1000 / ROUND_SECONDS
-          ) * ROUND_SECONDS;
+        const latestSlot = Math.floor(
+          latestStartMs / 1000 / ROUND_SECONDS
+        ) * ROUND_SECONDS;
 
         firstSlot = Math.min(
           currentSlot,
@@ -119,7 +118,7 @@ module.exports = async function handler(req, res) {
 
     let roundsCreated = 0;
 
-    // No fixed maximum round creation limit.
+    // Create missing rounds without a fixed historical creation cap.
     for (
       let slot = firstSlot;
       slot <= finalSlot;
@@ -177,6 +176,7 @@ module.exports = async function handler(req, res) {
       roundsCreated += inserted.rowCount;
     }
 
+    // Reopen future rounds that were incorrectly locked.
     const futureOpened = await client.query(`
       UPDATE public.game_rounds
       SET status = 'open'
@@ -189,6 +189,7 @@ module.exports = async function handler(req, res) {
       RETURNING id
     `);
 
+    // Open the current round only while its betting window is active.
     const currentOpened = await client.query(`
       UPDATE public.game_rounds
       SET status = 'open'
@@ -201,6 +202,7 @@ module.exports = async function handler(req, res) {
       RETURNING id
     `);
 
+    // Lock rounds when the betting window closes.
     const locked = await client.query(`
       UPDATE public.game_rounds
       SET status = 'locked'
@@ -212,6 +214,7 @@ module.exports = async function handler(req, res) {
       RETURNING id
     `);
 
+    // Settle eligible rounds, including older unsettled rounds.
     let settledCount = 0;
 
     for (
