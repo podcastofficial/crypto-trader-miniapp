@@ -1,92 +1,42 @@
-const { Pool } = require("pg");
+"use strict";
+
 const crypto = require("crypto");
+const { Pool } = require("pg");
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+  max: 3,
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 10000
+});
 
 const COOKIE_NAME = "admin_session";
 const SESSION_SECONDS = 2 * 60 * 60;
-const MAX_FAILS_PER_IP = 5;
-const MAX_FAILS_GLOBAL = 20;
-const EXPORT_MAX = 5000;
-const LARGE_STAKE = 500;
+const MAX_PAGE_SIZE = 100;
+const EXPORT_LIMIT = 5000;
 
-const TX_TYPES = [
-  "deposit",
-  "withdrawal",
-  "bet",
-  "payout",
-  "refund"
-];
-
-const TX_STATUSES = [
-  "pending",
-  "confirmed",
-  "rejected",
-  "completed",
-  "failed"
-];
-
-const BET_STATUSES = [
-  "pending",
-  "won",
-  "lost",
-  "cancelled"
-];
-
-const ACTIONS = new Set([
-  "login",
-  "me",
-  "logout",
-  "dashboard",
-  "analytics",
-  "reconcile",
-  "users",
-  "wallets",
-  "transactions",
-  "rounds",
-  "bets",
-  "audit",
-  "user_detail",
-  "search",
-  "export"
+const ALLOWED_STATUSES = new Set([
+  "pending", "confirmed", "rejected", "completed",
+  "failed", "open", "locked", "settled",
+  "won", "lost", "cancelled"
 ]);
 
-let pool;
-
-function getPool() {
-  if (!pool) {
-    const connectionString = process.env.DATABASE_URL;
-
-    if (!connectionString) {
-      throw new Error("Database connection is not configured.");
-    }
-
-    pool = new Pool({
-      connectionString,
-      ssl: { rejectUnauthorized: false },
-      max: 3,
-      idleTimeoutMillis: 10000,
-      connectionTimeoutMillis: 10000
-    });
-
-    pool.on("error", (err) => {
-      console.error("Admin database pool error:", err.code || "DB_ERROR");
-    });
-  }
-
-  return pool;
-}
-
-function send(res, status, body) {
+function send(res, status, data) {
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-  res.setHeader("Pragma", "no-cache");
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("X-Frame-Options", "DENY");
-  res.setHeader("Referrer-Policy", "no-referrer");
-  res.end(JSON.stringify(body));
+  res.setHeader("Cache-Control", "no-store");
+  res.end(JSON.stringify(data));
 }
 
-function getConfig() {
+function safeEqual(a, b) {
+  const x = Buffer.from(String(a ?? ""));
+  const y = Buffer.from(String(b ?? ""));
+
+  return x.length === y.length && crypto.timingSafeEqual(x, y);
+}
+
+function config() {
   const username = process.env.ADMIN_USERNAME;
   const password = process.env.ADMIN_PASSWORD;
   const secret = process.env.ADMIN_SESSION_SECRET;
@@ -94,1768 +44,917 @@ function getConfig() {
   if (
     !username ||
     !password ||
-    !secret ||
     password.length < 12 ||
+    !secret ||
     secret.length < 32
   ) {
-    return null;
+    throw new Error("Invalid admin environment configuration");
   }
 
   return { username, password, secret };
 }
 
-function safeEqual(a, b) {
-  const first = crypto
-    .createHash("sha256")
-    .update(String(a))
-    .digest();
-
-  const second = crypto
-    .createHash("sha256")
-    .update(String(b))
-    .digest();
-
-  return crypto.timingSafeEqual(first, second);
-}
-
-function signToken(payload, secret) {
-  const body = Buffer
-    .from(JSON.stringify(payload))
-    .toString("base64url");
-
-  const signature = crypto
-    .createHmac("sha256", secret)
-    .update(body)
+function sign(value) {
+  return crypto
+    .createHmac("sha256", process.env.ADMIN_SESSION_SECRET)
+    .update(value)
     .digest("base64url");
-
-  return `${body}.${signature}`;
 }
 
-function verifyToken(token, secret) {
-  if (
-    typeof token !== "string" ||
-    token.length > 1000
-  ) {
-    return null;
+function createSession(username) {
+  const payload = Buffer.from(JSON.stringify({
+    username,
+    exp: Math.floor(Date.now() / 1000) + SESSION_SECONDS,
+    nonce: crypto.randomBytes(16).toString("hex")
+  })).toString("base64url");
+
+  return `${payload}.${sign(payload)}`;
+}
+
+function readCookie(req, name) {
+  const cookies = String(req.headers.cookie || "").split(";");
+
+  for (const cookie of cookies) {
+    const index = cookie.indexOf("=");
+
+    if (index < 0) continue;
+
+    if (cookie.slice(0, index).trim() === name) {
+      try {
+        return decodeURIComponent(cookie.slice(index + 1).trim());
+      } catch {
+        return "";
+      }
+    }
   }
+
+  return "";
+}
+
+function verifySession(token) {
+  if (!token || typeof token !== "string") return null;
 
   const parts = token.split(".");
+  if (parts.length !== 2) return null;
 
-  if (parts.length !== 2 || !parts[0] || !parts[1]) {
-    return null;
-  }
+  const [payload, signature] = parts;
 
-  const expected = crypto
-    .createHmac("sha256", secret)
-    .update(parts[0])
-    .digest("base64url");
-
-  if (!safeEqual(parts[1], expected)) {
-    return null;
-  }
+  if (!safeEqual(signature, sign(payload))) return null;
 
   try {
-    const payload = JSON.parse(
-      Buffer.from(parts[0], "base64url").toString("utf8")
+    const session = JSON.parse(
+      Buffer.from(payload, "base64url").toString("utf8")
     );
 
-    const now = Math.floor(Date.now() / 1000);
-
     if (
-      typeof payload.u !== "string" ||
-      !Number.isFinite(payload.exp) ||
-      payload.exp <= now ||
-      typeof payload.iat !== "number" ||
-      payload.iat > now + 60
+      !session.username ||
+      !Number.isFinite(session.exp) ||
+      session.exp <= Math.floor(Date.now() / 1000) ||
+      !safeEqual(session.username, process.env.ADMIN_USERNAME)
     ) {
       return null;
     }
 
-    return payload;
+    return session;
   } catch {
     return null;
   }
 }
 
-function parseCookies(header) {
-  const result = {};
-
-  for (const part of String(header || "").split(";")) {
-    const index = part.indexOf("=");
-
-    if (index <= 0) continue;
-
-    const key = part.slice(0, index).trim();
-    const value = part.slice(index + 1).trim();
-
-    if (key) result[key] = value;
-  }
-
-  return result;
-}
-
-function setSessionCookie(res, value, maxAge) {
+function setSessionCookie(res, token, maxAge) {
   res.setHeader(
     "Set-Cookie",
-    `${COOKIE_NAME}=${value}; HttpOnly; Secure; SameSite=Strict; ` +
-    `Path=/api/admin; Max-Age=${maxAge}`
+    `${COOKIE_NAME}=${encodeURIComponent(token)}; Path=/api/admin; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}`
   );
 }
 
-function getSession(req, config) {
-  const token = parseCookies(req.headers.cookie)[COOKIE_NAME];
-  const payload = verifyToken(token, config.secret);
+function validateRequest(req) {
+  if (req.headers["x-admin-request"] !== "1") return false;
 
-  if (!payload || payload.u !== config.username) {
-    return null;
-  }
+  const origin = req.headers.origin;
 
-  return payload;
-}
-
-function clientIp(req) {
-  // Vercel supplies x-real-ip for the originating client.
-  // Avoid trusting arbitrary x-forwarded-for entries.
-  const ip = req.headers["x-real-ip"];
-
-  return typeof ip === "string"
-    ? ip.trim().slice(0, 64)
-    : "unknown";
-}
-
-function parseBody(req) {
-  const body = req.body;
-
-  if (
-    body &&
-    typeof body === "object" &&
-    !Array.isArray(body)
-  ) {
-    return body;
-  }
-
-  if (typeof body === "string" && body.length <= 16384) {
+  if (origin) {
     try {
-      const parsed = JSON.parse(body);
-
-      if (
-        parsed &&
-        typeof parsed === "object" &&
-        !Array.isArray(parsed)
-      ) {
-        return parsed;
-      }
-    } catch {}
+      if (new URL(origin).host !== req.headers.host) return false;
+    } catch {
+      return false;
+    }
   }
 
-  return {};
+  return true;
 }
 
-function pageParams(body, maxSize = 50) {
-  const rawPage = Number.parseInt(body.page, 10);
-  const rawSize = Number.parseInt(body.page_size, 10);
-
-  const page = Math.min(
-    100000,
-    Math.max(1, Number.isFinite(rawPage) ? rawPage : 1)
+function parsePage(body) {
+  const page = Math.max(
+    1,
+    Math.min(1000000, Number.parseInt(body.page, 10) || 1)
   );
 
-  const size = Math.min(
-    maxSize,
-    Math.max(1, Number.isFinite(rawSize) ? rawSize : 20)
+  const pageSize = Math.max(
+    1,
+    Math.min(MAX_PAGE_SIZE, Number.parseInt(body.page_size, 10) || 20)
   );
 
   return {
     page,
-    size,
-    offset: (page - 1) * size
+    pageSize,
+    offset: (page - 1) * pageSize
   };
 }
 
-function pageInfo(page, size, total) {
-  return {
-    page,
-    page_size: size,
-    total,
-    total_pages: Math.max(1, Math.ceil(total / size)),
-    has_next: page * size < total,
-    has_previous: page > 1
-  };
+function numeric(value) {
+  return Number(value || 0);
 }
 
-function likeEscape(value) {
-  return value.replace(/[\\%_]/g, (match) => "\\" + match);
+async function rows(sql, params = []) {
+  const result = await pool.query(sql, params);
+  return result.rows;
 }
 
-function cleanQuery(body) {
-  const q = String(body.q || "")
-    .trim()
-    .replace(/^@/, "")
-    .slice(0, 64);
-
-  return q || null;
-}
-
-function userSearch(q, params) {
-  if (!q) return "TRUE";
-
-  params.push(q);
-  params.push("%" + likeEscape(q) + "%");
-
-  const exact = params.length - 1;
-  const partial = params.length;
-
-  return (
-    `(u.telegram_id::text = $${exact} ` +
-    `OR u.id::text = $${exact} ` +
-    `OR u.username ILIKE $${partial} ESCAPE '\\')`
-  );
-}
-
-function csvCell(value) {
-  if (value === null || value === undefined) {
-    return "";
-  }
-
-  let result = value instanceof Date
-    ? value.toISOString()
-    : String(value);
-
-  if (/^[=+\-@\t\r]/.test(result)) {
-    result = "'" + result;
-  }
-
-  if (/[",\r\n]/.test(result)) {
-    result = '"' + result.replace(/"/g, '""') + '"';
-  }
-
-  return result;
-}
-
-async function audit(
-  client,
-  admin,
-  action,
-  targetType,
-  targetId,
-  outcome,
-  ip
-) {
-  await client.query(
-    `INSERT INTO public.admin_audit_log
-      (admin_username, action, target_type, target_id, outcome, ip)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
-    [
-      admin,
-      action,
-      targetType || null,
-      targetId || null,
-      outcome,
-      ip
-    ]
-  );
-}
-
-// --------------------------------------------------
-// LOGIN
-// --------------------------------------------------
-
-async function login(client, req, res, config, body) {
-  const ip = clientIp(req);
-
-  await client.query(
-    `DELETE FROM public.admin_login_attempts
-     WHERE attempted_at < NOW() - INTERVAL '1 day'`
-  );
-
-  const attempts = await client.query(
-    `SELECT
-       COUNT(*) FILTER (
-         WHERE ip = $1 AND success = false
-       )::int AS ip_fails,
-       COUNT(*) FILTER (
-         WHERE success = false
-       )::int AS global_fails
-     FROM public.admin_login_attempts
-     WHERE attempted_at > NOW() - INTERVAL '15 minutes'`,
-    [ip]
-  );
-
-  const failures = attempts.rows[0];
-
-  if (
-    failures.ip_fails >= MAX_FAILS_PER_IP ||
-    failures.global_fails >= MAX_FAILS_GLOBAL
-  ) {
-    await audit(
-      client,
-      "unknown",
-      "login",
-      null,
-      null,
-      "denied",
-      ip
+async function audit(username, action, req, outcome = "success") {
+  try {
+    await pool.query(
+      `INSERT INTO public.admin_audit_log
+       (admin_username, action, outcome, ip, created_at)
+       VALUES ($1, $2, $3, $4, NOW())`,
+      [
+        String(username || "unknown").slice(0, 200),
+        String(action).slice(0, 100),
+        String(outcome).slice(0, 50),
+        String(req.headers["x-forwarded-for"] || "")
+          .split(",")[0].trim().slice(0, 100)
+      ]
     );
-
-    return send(res, 429, {
-      success: false,
-      message: "Too many attempts. Try again later."
-    });
+  } catch (error) {
+    // Audit schema may differ; do not leak database details.
+    console.error("Admin audit write failed:", error.code || error.name);
   }
-
-  const username = String(body.username || "").slice(0, 200);
-  const password = String(body.password || "").slice(0, 200);
-
-  const validUsername = safeEqual(username, config.username);
-  const validPassword = safeEqual(password, config.password);
-
-  const valid = validUsername && validPassword;
-
-  await client.query(
-    `INSERT INTO public.admin_login_attempts (ip, success)
-     VALUES ($1, $2)`,
-    [ip, valid]
-  );
-
-  if (!valid) {
-    await audit(
-      client,
-      "unknown",
-      "login",
-      null,
-      null,
-      "failure",
-      ip
-    );
-
-    return send(res, 401, {
-      success: false,
-      message: "Invalid username or password."
-    });
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-
-  const token = signToken(
-    {
-      u: config.username,
-      iat: now,
-      exp: now + SESSION_SECONDS,
-      n: crypto.randomBytes(16).toString("hex")
-    },
-    config.secret
-  );
-
-  setSessionCookie(res, token, SESSION_SECONDS);
-
-  await audit(
-    client,
-    config.username,
-    "login",
-    null,
-    null,
-    "success",
-    ip
-  );
-
-  return send(res, 200, {
-    success: true,
-    username: config.username
-  });
 }
 
-// --------------------------------------------------
-// DASHBOARD
-// --------------------------------------------------
-
-async function dashboard(client) {
-  const totals = await client.query(`
+/*
+ * DASHBOARD
+ */
+async function dashboard() {
+  const totals = await rows(`
     SELECT
-      (SELECT COUNT(*) FROM public.users)::int AS users,
-      (SELECT COUNT(*) FROM public.bets)::int AS bets,
-
-      (SELECT COALESCE(SUM(stake), 0)
-       FROM public.bets)::text AS total_stake,
-
-      (SELECT COALESCE(SUM(fee), 0)
-       FROM public.bets)::text AS total_fees,
-
-      (SELECT COALESCE(SUM(payout), 0)
-       FROM public.bets)::text AS total_payouts,
-
-      (SELECT COALESCE(SUM(commission_amount), 0)
-       FROM public.referral_commissions)::text AS total_commissions,
-
-      (SELECT COALESCE(SUM(balance), 0)
-       FROM public.wallet_balances)::text AS total_wallet_balance,
-
+      (SELECT COUNT(*) FROM public.users) AS users,
+      (SELECT COUNT(*) FROM public.bets) AS bets,
+      (SELECT COALESCE(SUM(stake), 0) FROM public.bets) AS total_stake,
+      (SELECT COALESCE(SUM(fee), 0) FROM public.bets) AS total_fees,
+      (SELECT COALESCE(SUM(payout), 0) FROM public.bets) AS total_payouts,
+      (SELECT COALESCE(SUM(balance), 0) FROM public.wallets)
+        AS total_wallet_balance,
       (SELECT COALESCE(SUM(amount), 0)
        FROM public.transactions
        WHERE transaction_type = 'deposit'
-         AND status IN ('completed', 'confirmed')
-      )::text AS total_deposits,
-
-      (SELECT COUNT(*)
-       FROM public.transactions
+         AND status IN ('confirmed', 'completed'))
+        AS total_deposits,
+      (SELECT COUNT(*) FROM public.transactions
        WHERE transaction_type = 'deposit'
-      )::int AS deposit_count,
-
+         AND status IN ('confirmed', 'completed'))
+        AS deposit_count,
       (SELECT COALESCE(SUM(amount), 0)
        FROM public.transactions
        WHERE transaction_type = 'withdrawal'
-         AND status IN ('completed', 'confirmed')
-      )::text AS total_withdrawals,
-
-      (SELECT COUNT(*)
-       FROM public.transactions
+         AND status IN ('confirmed', 'completed'))
+        AS total_withdrawals,
+      (SELECT COUNT(*) FROM public.transactions
        WHERE transaction_type = 'withdrawal'
-      )::int AS withdrawal_count
+         AND status IN ('confirmed', 'completed'))
+        AS withdrawal_count
   `);
 
-  const statuses = await client.query(`
-    SELECT status, COUNT(*)::int AS count
+  const roundStatuses = await rows(`
+    SELECT status, COUNT(*) AS count
     FROM public.game_rounds
     GROUP BY status
     ORDER BY status
   `);
 
-  const health = await client.query(`
+  const recentRounds = await rows(`
     SELECT
-      NOW() AS db_time,
-
-      (SELECT MAX(starts_at)
-       FROM public.game_rounds) AS latest_round_start,
-
-      (SELECT MAX(settled_at)
-       FROM public.game_rounds) AS last_settled_at,
-
-      (SELECT COUNT(*)
-       FROM public.game_rounds
-       WHERE status NOT IN ('settled', 'cancelled')
-         AND betting_closes_at < NOW() - INTERVAL '2 minutes'
-      )::int AS overdue_rounds,
-
-      (SELECT COUNT(*)
-       FROM public.bets b
-       JOIN public.game_rounds r ON r.id = b.round_id
-       WHERE b.status = 'pending'
-         AND r.ends_at < NOW() - INTERVAL '10 minutes'
-      )::int AS old_pending_bets
+      r.round_code,
+      r.status,
+      r.starts_at,
+      r.betting_closes_at,
+      r.ends_at,
+      CASE WHEN r.ends_at <= NOW()
+        THEN r.result_number ELSE NULL END AS result_number,
+      COUNT(b.id) AS bet_count,
+      COALESCE(SUM(b.stake), 0) AS total_stake,
+      COALESCE(SUM(b.payout), 0) AS total_payout,
+      COUNT(b.id) FILTER (
+        WHERE b.status = 'pending'
+      ) AS pending_bets,
+      (
+        r.status = 'settled'
+        AND COUNT(b.id) FILTER (
+          WHERE b.status = 'pending'
+        ) = 0
+      ) AS payout_complete
+    FROM public.game_rounds r
+    LEFT JOIN public.bets b
+      ON b.round_code = r.round_code
+    GROUP BY r.id
+    ORDER BY r.starts_at DESC
+    LIMIT 10
   `);
 
-  const h = health.rows[0];
+  const healthRows = await rows(`
+    SELECT
+      (SELECT COUNT(*) FROM public.game_rounds
+       WHERE ends_at < NOW()
+         AND status <> 'settled') AS overdue_rounds,
+      (SELECT COUNT(*) FROM public.bets
+       WHERE status = 'pending'
+         AND created_at < NOW() - INTERVAL '10 minutes')
+        AS old_pending_bets,
+      (SELECT MAX(starts_at) FROM public.game_rounds)
+        AS latest_round_start,
+      (SELECT MAX(ends_at) FROM public.game_rounds
+       WHERE status = 'settled') AS last_settled_at
+  `);
 
-  const latest = h.latest_round_start
-    ? new Date(h.latest_round_start).getTime()
-    : 0;
-
-  const recent = await roundsList(client, 10, 0);
+  const health = healthRows[0] || {};
 
   return {
-    success: true,
-    totals: totals.rows[0],
-    round_statuses: statuses.rows,
-    recent_rounds: recent,
+    totals: totals[0] || {},
+    round_statuses: roundStatuses,
+    recent_rounds: recentRounds,
     health: {
       database_ok: true,
-      db_time: h.db_time,
-      latest_round_start: h.latest_round_start,
-      last_settled_at: h.last_settled_at,
-      overdue_rounds: h.overdue_rounds,
-      old_pending_bets: h.old_pending_bets,
       cron_ok:
-        latest > Date.now() &&
-        h.overdue_rounds === 0 &&
-        h.old_pending_bets === 0
+        numeric(health.overdue_rounds) === 0 &&
+        numeric(health.old_pending_bets) === 0,
+      overdue_rounds: numeric(health.overdue_rounds),
+      old_pending_bets: numeric(health.old_pending_bets),
+      latest_round_start: health.latest_round_start,
+      last_settled_at: health.last_settled_at
     }
   };
 }
 
-async function roundsList(client, limit, offset) {
-  const result = await client.query(
-    `SELECT
-       r.id,
-       r.round_code,
-       r.status,
-       r.starts_at,
-       r.betting_closes_at,
-       r.ends_at,
+/*
+ * PAGINATED READ-ONLY TABLES
+ */
+const LIST_CONFIG = {
+  users: {
+    table: "public.users",
+    select: `
+      id, telegram_id, username, balance,
+      referred_by, referral_code, created_at
+    `,
+    order: "id DESC"
+  },
+  wallets: {
+    table: "public.wallets",
+    select: "user_id, balance, updated_at",
+    order: "user_id DESC"
+  },
+  transactions: {
+    table: "public.transactions",
+    select: `
+      id, user_id, transaction_type, amount, status,
+      network, tx_hash, created_at, updated_at
+    `,
+    order: "id DESC"
+  },
+  rounds: {
+    table: "public.game_rounds",
+    select: `
+      round_code, status, starts_at, betting_closes_at, ends_at,
+      CASE WHEN ends_at <= NOW()
+        THEN result_number ELSE NULL END AS result_number
+    `,
+    order: "starts_at DESC"
+  },
+  bets: {
+    table: "public.bets",
+    select: `
+      id, user_id, round_code, bet_type, selection,
+      stake, fee, status, result_number, payout,
+      created_at, settled_at
+    `,
+    order: "id DESC"
+  },
+  audit: {
+    table: "public.admin_audit_log",
+    select: `
+      id, created_at, admin_username, action,
+      target_type, target_id, outcome, ip
+    `,
+    order: "id DESC"
+  }
+};
 
-       CASE
-         WHEN r.ends_at <= NOW() THEN r.result_number
-       END AS result_number,
+async function listAction(action, body) {
+  const config = LIST_CONFIG[action];
 
-       r.settled_at,
+  if (!config) throw new Error("Unsupported list action.");
 
-       COALESCE(a.bet_count, 0)::int AS bet_count,
-       COALESCE(a.total_stake, 0)::text AS total_stake,
-
-       CASE
-         WHEN r.ends_at <= NOW()
-         THEN COALESCE(a.total_payout, 0)
-       END::text AS total_payout,
-
-       COALESCE(a.pending_bets, 0)::int AS pending_bets,
-
-       (
-         r.status = 'settled'
-         AND COALESCE(a.pending_bets, 0) = 0
-       ) AS payout_complete
-
-     FROM public.game_rounds r
-
-     LEFT JOIN LATERAL (
-       SELECT
-         COUNT(*) AS bet_count,
-         SUM(b.stake) AS total_stake,
-         SUM(b.payout) AS total_payout,
-         COUNT(*) FILTER (
-           WHERE b.status = 'pending'
-         ) AS pending_bets
-       FROM public.bets b
-       WHERE b.round_id = r.id
-     ) a ON TRUE
-
-     ORDER BY r.starts_at DESC
-     LIMIT $1 OFFSET $2`,
-    [limit, offset]
-  );
-
-  return result.rows;
-}
-
-async function rounds(client, body) {
-  const { page, size, offset } = pageParams(body);
-
-  const count = await client.query(
-    `SELECT COUNT(*)::int AS total
-     FROM public.game_rounds`
-  );
-
-  return {
-    success: true,
-    rounds: await roundsList(client, size, offset),
-    pagination: pageInfo(page, size, count.rows[0].total)
-  };
-}
-
-// --------------------------------------------------
-// USERS
-// --------------------------------------------------
-
-async function users(client, body, maxSize = 50) {
-  const { page, size, offset } = pageParams(body, maxSize);
-
-  const params = [];
-  const where = userSearch(cleanQuery(body), params);
-
-  const count = await client.query(
-    `SELECT COUNT(*)::int AS total
-     FROM public.users u
-     WHERE ${where}`,
-    params
-  );
-
-  const rows = await client.query(
-    `SELECT
-       u.id,
-       u.telegram_id::text AS telegram_id,
-       u.username,
-       u.created_at,
-       u.referred_by,
-       u.referral_code,
-
-       COALESCE(w.balance, 0)::text AS balance,
-
-       (SELECT COUNT(*)
-        FROM public.users c
-        WHERE c.referred_by = u.id)::int AS referral_count
-
-     FROM public.users u
-
-     LEFT JOIN public.wallet_balances w
-       ON w.user_id = u.id
-
-     WHERE ${where}
-
-     ORDER BY u.id DESC
-     LIMIT $${params.length + 1}
-     OFFSET $${params.length + 2}`,
-    [...params, size, offset]
-  );
-
-  return {
-    success: true,
-    users: rows.rows,
-    pagination: pageInfo(page, size, count.rows[0].total)
-  };
-}
-
-// --------------------------------------------------
-// WALLETS
-// --------------------------------------------------
-
-async function wallets(client, body) {
-  const { page, size, offset } = pageParams(body);
-
-  const params = [];
-  const where = userSearch(cleanQuery(body), params);
-
-  const count = await client.query(
-    `SELECT COUNT(*)::int AS total
-     FROM public.wallet_balances w
-     JOIN public.users u ON u.id = w.user_id
-     WHERE ${where}`,
-    params
-  );
-
-  const rows = await client.query(
-    `SELECT
-       w.user_id,
-       u.telegram_id::text AS telegram_id,
-       u.username,
-       w.balance::text AS balance,
-       w.updated_at
-
-     FROM public.wallet_balances w
-
-     JOIN public.users u ON u.id = w.user_id
-
-     WHERE ${where}
-
-     ORDER BY w.updated_at DESC
-     LIMIT $${params.length + 1}
-     OFFSET $${params.length + 2}`,
-    [...params, size, offset]
-  );
-
-  return {
-    success: true,
-    wallets: rows.rows,
-    pagination: pageInfo(page, size, count.rows[0].total)
-  };
-}
-
-// --------------------------------------------------
-// TRANSACTIONS
-// --------------------------------------------------
-
-async function transactions(client, body, maxSize = 50) {
-  const { page, size, offset } = pageParams(body, maxSize);
-
+  const { page, pageSize, offset } = parsePage(body);
   const conditions = [];
   const params = [];
 
-  if (/^\d{1,15}$/.test(String(body.user_id || ""))) {
-    params.push(String(body.user_id));
-    conditions.push(`t.user_id = $${params.length}::bigint`);
+  function add(sql, value) {
+    params.push(value);
+    conditions.push(sql.replace("?", `$${params.length}`));
   }
 
-  if (TX_TYPES.includes(body.type)) {
-    params.push(body.type);
-    conditions.push(`t.transaction_type = $${params.length}`);
+  if (action === "users") {
+    if (body.q) {
+      const query = String(body.q).trim().slice(0, 100);
+
+      if (/^\d+$/.test(query)) {
+        add("CAST(telegram_id AS TEXT) = ?", query);
+      } else {
+        add("username ILIKE ?", `%${query}%`);
+      }
+    }
   }
 
-  if (TX_STATUSES.includes(body.status)) {
-    params.push(body.status);
-    conditions.push(`t.status = $${params.length}`);
+  if (action === "wallets" && body.q) {
+    const query = String(body.q).trim().slice(0, 100);
+
+    if (/^\d+$/.test(query)) {
+      add("CAST(user_id AS TEXT) = ?", query);
+    }
   }
 
-  const where = conditions.length
-    ? conditions.join(" AND ")
-    : "TRUE";
+  if (action === "transactions") {
+    if (body.type) {
+      const type = String(body.type);
 
-  const count = await client.query(
-    `SELECT COUNT(*)::int AS total
-     FROM public.transactions t
-     WHERE ${where}`,
-    params
-  );
+      if (!["deposit", "withdrawal"].includes(type)) {
+        throw new Error("Invalid transaction type.");
+      }
 
-  const rows = await client.query(
-    `SELECT
-       t.id,
-       t.user_id,
-       t.transaction_type,
-       t.amount::text AS amount,
-       t.status,
-       t.network,
-       t.tx_hash,
-       t.created_at,
-       t.updated_at
+      add("transaction_type = ?", type);
+    }
 
-     FROM public.transactions t
+    if (body.user_id) {
+      if (!/^\d{1,15}$/.test(String(body.user_id))) {
+        throw new Error("Invalid user ID.");
+      }
 
-     WHERE ${where}
+      add("user_id = ?", String(body.user_id));
+    }
 
-     ORDER BY t.id DESC
-     LIMIT $${params.length + 1}
-     OFFSET $${params.length + 2}`,
-    [...params, size, offset]
-  );
+    if (body.status) {
+      const status = String(body.status);
 
-  return {
-    success: true,
-    transactions: rows.rows,
-    pagination: pageInfo(page, size, count.rows[0].total)
-  };
-}
+      if (!ALLOWED_STATUSES.has(status)) {
+        throw new Error("Invalid transaction status.");
+      }
 
-// --------------------------------------------------
-// BETS
-// --------------------------------------------------
-
-async function bets(client, body, maxSize = 50) {
-  const { page, size, offset } = pageParams(body, maxSize);
-
-  const conditions = [];
-  const params = [];
-
-  if (/^\d{14}$/.test(String(body.round_code || ""))) {
-    params.push(String(body.round_code));
-    conditions.push(`r.round_code = $${params.length}`);
+      add("status = ?", status);
+    }
   }
 
-  if (/^\d{1,15}$/.test(String(body.user_id || ""))) {
-    params.push(String(body.user_id));
-    conditions.push(`b.user_id = $${params.length}::bigint`);
-  }
+  if (action === "bets") {
+    if (body.user_id) {
+      if (!/^\d{1,15}$/.test(String(body.user_id))) {
+        throw new Error("Invalid user ID.");
+      }
 
-  if (BET_STATUSES.includes(body.status)) {
-    params.push(body.status);
+      add("user_id = ?", String(body.user_id));
+    }
 
-    conditions.push(
-      `(CASE
-         WHEN r.ends_at <= NOW() THEN b.status
-         ELSE 'pending'
-       END) = $${params.length}`
-    );
+    if (body.round_code) {
+      add("round_code = ?", String(body.round_code).slice(0, 100));
+    }
+
+    if (body.status) {
+      const status = String(body.status);
+
+      if (!ALLOWED_STATUSES.has(status)) {
+        throw new Error("Invalid bet status.");
+      }
+
+      add("status = ?", status);
+    }
   }
 
   const where = conditions.length
-    ? conditions.join(" AND ")
-    : "TRUE";
+    ? `WHERE ${conditions.join(" AND ")}`
+    : "";
 
-  const count = await client.query(
-    `SELECT COUNT(*)::int AS total
-     FROM public.bets b
-     JOIN public.game_rounds r ON r.id = b.round_id
-     WHERE ${where}`,
+  const count = await pool.query(
+    `SELECT COUNT(*) AS total FROM ${config.table} ${where}`,
     params
   );
 
-  const rows = await client.query(
-    `SELECT
-       b.id,
-       b.user_id,
-       r.round_code,
-       b.bet_type,
-       b.selection,
-       b.stake::text AS stake,
-       b.fee::text AS fee,
-
-       CASE
-         WHEN r.ends_at <= NOW() THEN b.status
-         ELSE 'pending'
-       END AS status,
-
-       CASE
-         WHEN r.ends_at <= NOW() THEN r.result_number
-       END AS result_number,
-
-       CASE
-         WHEN r.ends_at <= NOW() THEN b.payout
-         ELSE 0
-       END::text AS payout,
-
-       b.created_at,
-
-       CASE
-         WHEN r.ends_at <= NOW() THEN b.settled_at
-       END AS settled_at
-
-     FROM public.bets b
-
-     JOIN public.game_rounds r ON r.id = b.round_id
-
-     WHERE ${where}
-
-     ORDER BY b.id DESC
+  const result = await pool.query(
+    `SELECT ${config.select}
+     FROM ${config.table}
+     ${where}
+     ORDER BY ${config.order}
      LIMIT $${params.length + 1}
      OFFSET $${params.length + 2}`,
-    [...params, size, offset]
+    [...params, pageSize, offset]
   );
 
+  const total = numeric(count.rows[0]?.total);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
   return {
-    success: true,
-    bets: rows.rows,
-    pagination: pageInfo(page, size, count.rows[0].total)
+    [action === "audit" ? "entries" : action]: result.rows,
+    pagination: {
+      page,
+      page_size: pageSize,
+      total,
+      total_pages: totalPages,
+      has_previous: page > 1,
+      has_next: page < totalPages
+    }
   };
 }
 
-// --------------------------------------------------
-// AUDIT LOG
-// --------------------------------------------------
-
-async function auditLog(client, body) {
-  const { page, size, offset } = pageParams(body);
-
-  const count = await client.query(
-    `SELECT COUNT(*)::int AS total
-     FROM public.admin_audit_log`
-  );
-
-  const rows = await client.query(
-    `SELECT
-       id,
-       admin_username,
-       action,
-       target_type,
-       target_id,
-       outcome,
-       ip,
-       created_at
-
-     FROM public.admin_audit_log
-
-     ORDER BY id DESC
-     LIMIT $1 OFFSET $2`,
-    [size, offset]
-  );
-
-  return {
-    success: true,
-    entries: rows.rows,
-    pagination: pageInfo(page, size, count.rows[0].total)
-  };
-}
-
-// --------------------------------------------------
-// ANALYTICS
-// --------------------------------------------------
-
-async function analytics(client) {
-  const daily = await client.query(`
+/*
+ * ANALYTICS
+ */
+async function analytics() {
+  const daily = await rows(`
     WITH days AS (
-      SELECT
-        ((NOW() AT TIME ZONE 'UTC')::date - g) AS day
-      FROM generate_series(0, 13) AS g
-    ),
-
-    bet_day AS (
-      SELECT
-        (r.starts_at AT TIME ZONE 'UTC')::date AS day,
-        COUNT(*) AS bets,
-        COALESCE(SUM(b.stake), 0) AS stake,
-        COALESCE(SUM(b.payout), 0) AS payout,
-        COUNT(DISTINCT b.user_id) AS active_users
-
-      FROM public.bets b
-
-      JOIN public.game_rounds r ON r.id = b.round_id
-
-      WHERE r.ends_at <= NOW()
-        AND (r.starts_at AT TIME ZONE 'UTC')::date
-            >= (NOW() AT TIME ZONE 'UTC')::date - 13
-
-      GROUP BY 1
-    ),
-
-    comm_day AS (
-      SELECT
-        (created_at AT TIME ZONE 'UTC')::date AS day,
-        COALESCE(SUM(commission_amount), 0) AS commissions
-
-      FROM public.referral_commissions
-
-      WHERE (created_at AT TIME ZONE 'UTC')::date
-            >= (NOW() AT TIME ZONE 'UTC')::date - 13
-
-      GROUP BY 1
-    ),
-
-    user_day AS (
-      SELECT
-        (created_at AT TIME ZONE 'UTC')::date AS day,
-        COUNT(*) AS new_users
-
-      FROM public.users
-
-      WHERE (created_at AT TIME ZONE 'UTC')::date
-            >= (NOW() AT TIME ZONE 'UTC')::date - 13
-
-      GROUP BY 1
+      SELECT generate_series(
+        CURRENT_DATE - INTERVAL '13 days',
+        CURRENT_DATE,
+        INTERVAL '1 day'
+      )::date AS day
     )
-
     SELECT
-      d.day::text AS day,
-      COALESCE(b.bets, 0)::int AS bets,
-      COALESCE(b.stake, 0)::text AS stake,
-      COALESCE(b.payout, 0)::text AS payout,
-
+      d.day,
+      COUNT(b.id) AS bets,
+      COALESCE(SUM(b.stake), 0) AS stake,
+      COALESCE(SUM(b.payout), 0) AS payout,
+      COALESCE(SUM(b.stake), 0)
+        - COALESCE(SUM(b.payout), 0) AS net,
+      COUNT(DISTINCT b.user_id) AS active_users,
       (
-        COALESCE(b.stake, 0)
-        - COALESCE(b.payout, 0)
-        - COALESCE(c.commissions, 0)
-      )::text AS net,
-
-      COALESCE(b.active_users, 0)::int AS active_users,
-      COALESCE(u.new_users, 0)::int AS new_users
-
+        SELECT COUNT(*)
+        FROM public.users u
+        WHERE u.created_at >= d.day
+          AND u.created_at < d.day + INTERVAL '1 day'
+      ) AS new_users
     FROM days d
-
-    LEFT JOIN bet_day b ON b.day = d.day
-    LEFT JOIN comm_day c ON c.day = d.day
-    LEFT JOIN user_day u ON u.day = d.day
-
+    LEFT JOIN public.bets b
+      ON b.created_at >= d.day
+     AND b.created_at < d.day + INTERVAL '1 day'
+    GROUP BY d.day
     ORDER BY d.day
   `);
 
-  const results = await client.query(`
-    SELECT
-      result_number,
-      COUNT(*)::int AS count
-
+  const results = await rows(`
+    SELECT result_number, COUNT(*) AS count
     FROM public.game_rounds
-
     WHERE status = 'settled'
-      AND result_number IS NOT NULL
-      AND ends_at <= NOW()
-
+      AND result_number BETWEEN 0 AND 9
     GROUP BY result_number
     ORDER BY result_number
   `);
 
   const counts = Array(10).fill(0);
 
-  for (const row of results.rows) {
-    const n = Number(row.result_number);
-
-    if (Number.isInteger(n) && n >= 0 && n <= 9) {
-      counts[n] = Number(row.count);
-    }
+  for (const row of results) {
+    counts[Number(row.result_number)] = numeric(row.count);
   }
 
-  const totalRounds = counts.reduce((sum, n) => sum + n, 0);
+  const totalRounds = counts.reduce((sum, value) => sum + value, 0);
 
-  let chi = null;
-  let verdict = "Not enough data (need at least 50 settled rounds).";
+  let verdict = "Not enough settled rounds for a useful statistical check";
 
-  if (totalRounds >= 50) {
-    const expected = totalRounds / 10;
-
-    chi = counts.reduce(
-      (sum, count) =>
-        sum + ((count - expected) ** 2) / expected,
-      0
-    );
-
-    if (chi > 21.67) {
-      verdict = "Strong deviation from a uniform draw. Investigate.";
-    } else if (chi > 16.92) {
-      verdict = "Possible deviation (p < 0.05). Keep watching.";
-    } else {
-      verdict = "Consistent with a fair, uniform draw.";
-    }
+  if (totalRounds >= 100) {
+    verdict = "Distribution available; this is not proof of fairness";
   }
 
-  const topUsers = await client.query(`
+  const topUsers = await rows(`
     SELECT
       u.id,
       u.username,
-      COUNT(*)::int AS bets,
-      SUM(b.stake)::text AS stake,
-      SUM(b.payout)::text AS payout,
-      (SUM(b.payout) - SUM(b.stake))::text AS user_net
-
-    FROM public.bets b
-
-    JOIN public.game_rounds r ON r.id = b.round_id
-    JOIN public.users u ON u.id = b.user_id
-
-    WHERE r.ends_at <= NOW()
-
+      COUNT(b.id) AS bets,
+      COALESCE(SUM(b.stake), 0) AS stake,
+      COALESCE(SUM(b.payout), 0) AS payout,
+      COALESCE(SUM(b.stake), 0)
+        - COALESCE(SUM(b.payout), 0) AS user_net
+    FROM public.users u
+    JOIN public.bets b ON b.user_id = u.id
     GROUP BY u.id, u.username
     ORDER BY SUM(b.stake) DESC
     LIMIT 10
   `);
 
-  const largeStakes = await client.query(
-    `SELECT
-       b.id,
-       b.user_id,
-       r.round_code,
-       b.bet_type,
-       b.stake::text AS stake,
-       b.created_at
+  const largeStakes = await rows(`
+    SELECT id, user_id, round_code, bet_type, stake, created_at
+    FROM public.bets
+    ORDER BY stake DESC
+    LIMIT 20
+  `);
 
-     FROM public.bets b
-
-     JOIN public.game_rounds r ON r.id = b.round_id
-
-     WHERE b.stake >= $1::numeric
-       AND b.created_at > NOW() - INTERVAL '7 days'
-
-     ORDER BY b.created_at DESC
-     LIMIT 10`,
-    [String(LARGE_STAKE)]
-  );
-
-  const highReturn = await client.query(`
+  const highReturnUsers = await rows(`
     SELECT
-      b.user_id,
-      COUNT(*)::int AS bets,
-      SUM(b.stake)::text AS stake,
-      SUM(b.payout)::text AS payout,
-
+      user_id,
+      COUNT(*) AS bets,
+      COALESCE(SUM(stake), 0) AS stake,
+      COALESCE(SUM(payout), 0) AS payout,
       ROUND(
-        SUM(b.payout) / NULLIF(SUM(b.stake), 0) * 100,
-        1
-      )::text AS return_percent
-
-    FROM public.bets b
-
-    JOIN public.game_rounds r ON r.id = b.round_id
-
-    WHERE r.ends_at <= NOW()
-      AND b.status IN ('won', 'lost')
-
-    GROUP BY b.user_id
-
-    HAVING COUNT(*) >= 20
-       AND SUM(b.payout) > SUM(b.stake) * 1.3
-
-    ORDER BY SUM(b.payout) - SUM(b.stake) DESC
+        100.0 * COALESCE(SUM(payout), 0)
+        / NULLIF(SUM(stake), 0), 2
+      ) AS return_percent
+    FROM public.bets
+    GROUP BY user_id
+    HAVING SUM(stake) > 0
+    ORDER BY SUM(payout) / NULLIF(SUM(stake), 0) DESC
     LIMIT 10
   `);
 
   return {
-    success: true,
-    daily: daily.rows,
-
+    daily,
     fairness: {
-      total_rounds: totalRounds,
       counts,
-      chi_square: chi === null ? null : Number(chi.toFixed(2)),
+      total_rounds: totalRounds,
       verdict
     },
-
-    top_users: topUsers.rows,
-    large_stake_threshold: LARGE_STAKE,
-    large_stakes: largeStakes.rows,
-    high_return_users: highReturn.rows
+    top_users: topUsers,
+    large_stakes: largeStakes,
+    high_return_users: highReturnUsers
   };
 }
 
-// --------------------------------------------------
-// RECONCILIATION
-// --------------------------------------------------
-
-async function reconcile(client) {
-  const totals = await client.query(`
-    WITH t AS (
-      SELECT
-
-        (SELECT COALESCE(SUM(balance), 0)
-         FROM public.wallet_balances) AS wallet_total,
-
-        (SELECT COALESCE(SUM(
-          CASE
-            WHEN transaction_type IN ('deposit', 'payout', 'refund')
-            THEN amount
-            ELSE -amount
-          END
-        ), 0)
-         FROM public.transactions
-         WHERE status IN ('completed', 'confirmed')
-        ) AS ledger_net,
-
-        (SELECT COALESCE(SUM(commission_amount), 0)
-         FROM public.referral_commissions) AS commissions,
-
-        (SELECT COALESCE(SUM(stake), 0)
-         FROM public.bets) AS bets_stake,
-
-        (SELECT COALESCE(SUM(amount), 0)
-         FROM public.transactions
-         WHERE transaction_type = 'bet'
-           AND status = 'completed'
-        ) AS bet_tx,
-
-        (SELECT COALESCE(SUM(payout), 0)
-         FROM public.bets) AS bets_payout,
-
-        (SELECT COALESCE(SUM(amount), 0)
-         FROM public.transactions
-         WHERE transaction_type = 'payout'
-           AND status = 'completed'
-        ) AS payout_tx,
-
-        (SELECT COUNT(*) FROM public.bets) AS bet_count,
-
-        (SELECT COUNT(*)
-         FROM public.transactions
-         WHERE transaction_type = 'bet'
-        ) AS bet_tx_count,
-
-        (SELECT COUNT(*)
-         FROM public.bets
-         WHERE payout > 0) AS paid_bets,
-
-        (SELECT COUNT(*)
-         FROM public.transactions
-         WHERE transaction_type = 'payout'
-        ) AS payout_tx_count
-    )
-
+/*
+ * RECONCILIATION
+ *
+ * This is a preliminary ledger check, not a substitute for
+ * reviewing every transaction type and wallet mutation.
+ */
+async function reconcile() {
+  const totalsRows = await rows(`
     SELECT
-      wallet_total::text,
-      ledger_net::text,
-      commissions::text,
+      (SELECT COALESCE(SUM(balance), 0)
+       FROM public.wallets) AS wallet_total,
 
-      (wallet_total - ledger_net - commissions)::text AS unrecorded,
+      (SELECT COALESCE(SUM(
+        CASE
+          WHEN transaction_type IN ('deposit', 'referral_commission')
+            AND status IN ('confirmed', 'completed')
+            THEN amount
+          WHEN transaction_type IN ('withdrawal', 'bet', 'payout')
+            AND status IN ('confirmed', 'completed')
+            THEN -amount
+          ELSE 0
+        END
+      ), 0) FROM public.transactions) AS ledger_net,
 
-      bets_stake::text,
-      bet_tx::text,
-      (bets_stake - bet_tx)::text AS stake_diff,
+      (SELECT COALESCE(SUM(stake), 0)
+       FROM public.bets) AS bets_stake,
 
-      bets_payout::text,
-      payout_tx::text,
-      (bets_payout - payout_tx)::text AS payout_diff,
+      (SELECT COALESCE(SUM(payout), 0)
+       FROM public.bets WHERE status = 'won') AS bets_payout,
 
-      (bet_count - bet_tx_count)::int AS bet_count_diff,
-      (paid_bets - payout_tx_count)::int AS payout_count_diff
+      (SELECT COUNT(*) FROM public.bets) AS bet_count,
 
-    FROM t
+      (SELECT COUNT(*) FROM public.transactions
+       WHERE transaction_type = 'bet'
+         AND status IN ('confirmed', 'completed')) AS bet_tx,
+
+      (SELECT COUNT(*) FROM public.transactions
+       WHERE transaction_type = 'payout'
+         AND status IN ('confirmed', 'completed')) AS payout_tx,
+
+      (SELECT COUNT(*) FROM public.bets
+       WHERE status = 'won') AS paid_bets
   `);
 
-  const mismatches = await client.query(`
+  const totals = totalsRows[0] || {};
+
+  const walletTotal = numeric(totals.wallet_total);
+  const ledgerNet = numeric(totals.ledger_net);
+  const betStake = numeric(totals.bets_stake);
+  const betPayout = numeric(totals.bets_payout);
+
+  const mismatches = [];
+
+  const walletRows = await rows(`
+    SELECT w.user_id, u.username, w.balance
+    FROM public.wallets w
+    LEFT JOIN public.users u ON u.id = w.user_id
+    ORDER BY w.user_id
+    LIMIT 100
+  `);
+
+  return {
+    clean: false,
+    totals: {
+      wallet_total: walletTotal,
+      ledger_net: ledgerNet,
+      commissions: 0,
+      unrecorded: Number((walletTotal - ledgerNet).toFixed(2)),
+      bets_stake: betStake,
+      bet_tx: numeric(totals.bet_tx),
+      stake_diff: "Needs transaction-type and fee review",
+      bets_payout: betPayout,
+      payout_tx: numeric(totals.payout_tx),
+      payout_diff: "Needs payout ledger review",
+      bet_count_diff: numeric(totals.bet_count) - numeric(totals.bet_tx),
+      payout_count_diff: numeric(totals.paid_bets) - numeric(totals.payout_tx)
+    },
+    mismatches,
+    wallet_sample: walletRows
+  };
+}
+
+/*
+ * USER DETAILS
+ */
+async function userDetail(userId) {
+  const profiles = await rows(`
+    SELECT id, telegram_id, username, balance,
+           referral_code, referred_by, created_at
+    FROM public.users
+    WHERE id = $1
+    LIMIT 1
+  `, [userId]);
+
+  if (!profiles.length) return null;
+
+  const stats = await rows(`
     SELECT
-      u.id,
-      u.username,
-      w.balance::text AS balance,
+      COUNT(*) AS bets,
+      COALESCE(SUM(stake), 0) AS stake,
+      COALESCE(SUM(payout), 0) AS payout,
+      COUNT(*) FILTER (WHERE status = 'won') AS wins,
+      COUNT(*) FILTER (WHERE status = 'lost') AS losses
+    FROM public.bets
+    WHERE user_id = $1
+  `, [userId]);
 
-      (
-        COALESCE(l.net, 0)
-        + COALESCE(c.comm, 0)
-      )::text AS expected,
-
-      (
-        w.balance
-        - COALESCE(l.net, 0)
-        - COALESCE(c.comm, 0)
-      )::text AS diff
-
-    FROM public.users u
-
-    JOIN public.wallet_balances w ON w.user_id = u.id
-
-    LEFT JOIN (
-      SELECT
-        user_id,
-
-        SUM(
-          CASE
-            WHEN transaction_type IN ('deposit', 'payout', 'refund')
-            THEN amount
-            ELSE -amount
-          END
-        ) AS net
-
-      FROM public.transactions
-
-      WHERE status IN ('completed', 'confirmed')
-
-      GROUP BY user_id
-    ) l ON l.user_id = u.id
-
-    LEFT JOIN (
-      SELECT
-        referrer_user_id,
-        SUM(commission_amount) AS comm
-
-      FROM public.referral_commissions
-
-      GROUP BY referrer_user_id
-    ) c ON c.referrer_user_id = u.id
-
-    WHERE w.balance <>
-      COALESCE(l.net, 0) + COALESCE(c.comm, 0)
-
-    ORDER BY ABS(
-      w.balance - COALESCE(l.net, 0) - COALESCE(c.comm, 0)
-    ) DESC
-
+  const recentBets = await rows(`
+    SELECT id, round_code, bet_type, selection, stake, fee,
+           status, result_number, payout, created_at, settled_at
+    FROM public.bets
+    WHERE user_id = $1
+    ORDER BY id DESC
     LIMIT 20
-  `);
+  `, [userId]);
 
-  const t = totals.rows[0];
-
-  const clean =
-    Number(t.unrecorded) === 0 &&
-    Number(t.stake_diff) === 0 &&
-    Number(t.payout_diff) === 0 &&
-    t.bet_count_diff === 0 &&
-    t.payout_count_diff === 0;
+  const recentTransactions = await rows(`
+    SELECT id, transaction_type, amount, status,
+           network, tx_hash, created_at
+    FROM public.transactions
+    WHERE user_id = $1
+    ORDER BY id DESC
+    LIMIT 20
+  `, [userId]);
 
   return {
-    success: true,
-    clean,
-    totals: t,
-    mismatches: mismatches.rows
+    profile: profiles[0],
+    stats: stats[0] || {},
+    recent_bets: recentBets,
+    recent_transactions: recentTransactions,
+    referral_tree: [],
+    commissions_earned: [],
+    commissions_generated: 0
   };
 }
 
-// --------------------------------------------------
-// USER DETAILS
-// --------------------------------------------------
-
-async function userDetail(client, body) {
-  const id = String(body.user_id || "");
-
-  if (!/^\d{1,15}$/.test(id)) {
-    return {
-      success: false,
-      message: "Invalid user ID."
-    };
-  }
-
-  const profile = await client.query(
-    `SELECT
-       u.id,
-       u.telegram_id::text AS telegram_id,
-       u.username,
-       u.created_at,
-       u.referral_code,
-       u.referred_by,
-       ru.username AS referrer_username,
-       COALESCE(w.balance, 0)::text AS balance,
-       w.updated_at AS balance_updated_at
-
-     FROM public.users u
-
-     LEFT JOIN public.wallet_balances w ON w.user_id = u.id
-     LEFT JOIN public.users ru ON ru.id = u.referred_by
-
-     WHERE u.id = $1::bigint`,
-    [id]
-  );
-
-  if (!profile.rows.length) {
-    return {
-      success: false,
-      message: "User not found."
-    };
-  }
-
-  const stats = await client.query(
-    `SELECT
-       COUNT(*)::int AS bets,
-       COALESCE(SUM(b.stake), 0)::text AS stake,
-       COALESCE(SUM(b.payout), 0)::text AS payout,
-
-       COUNT(*) FILTER (
-         WHERE b.status = 'won'
-       )::int AS wins,
-
-       COUNT(*) FILTER (
-         WHERE b.status = 'lost'
-       )::int AS losses
-
-     FROM public.bets b
-
-     JOIN public.game_rounds r ON r.id = b.round_id
-
-     WHERE b.user_id = $1::bigint
-       AND r.ends_at <= NOW()`,
-    [id]
-  );
-
-  const recentBets = await client.query(
-    `SELECT
-       b.id,
-       r.round_code,
-       b.bet_type,
-       b.selection,
-       b.stake::text AS stake,
-       b.fee::text AS fee,
-
-       CASE
-         WHEN r.ends_at <= NOW() THEN b.status
-         ELSE 'pending'
-       END AS status,
-
-       CASE
-         WHEN r.ends_at <= NOW() THEN r.result_number
-       END AS result_number,
-
-       CASE
-         WHEN r.ends_at <= NOW() THEN b.payout
-         ELSE 0
-       END::text AS payout,
-
-       b.created_at
-
-     FROM public.bets b
-
-     JOIN public.game_rounds r ON r.id = b.round_id
-
-     WHERE b.user_id = $1::bigint
-
-     ORDER BY b.id DESC
-     LIMIT 20`,
-    [id]
-  );
-
-  const recentTransactions = await client.query(
-    `SELECT
-       id,
-       transaction_type,
-       amount::text AS amount,
-       status,
-       network,
-       tx_hash,
-       created_at
-
-     FROM public.transactions
-
-     WHERE user_id = $1::bigint
-
-     ORDER BY id DESC
-     LIMIT 20`,
-    [id]
-  );
-
-  const tree = await client.query(
-    `WITH RECURSIVE tree AS (
-       SELECT
-         id,
-         username,
-         referred_by,
-         created_at,
-         1 AS level
-
-       FROM public.users
-
-       WHERE referred_by = $1::bigint
-
-       UNION ALL
-
-       SELECT
-         u.id,
-         u.username,
-         u.referred_by,
-         u.created_at,
-         t.level + 1
-
-       FROM public.users u
-
-       JOIN tree t ON u.referred_by = t.id
-
-       WHERE t.level < 3
-     )
-
-     SELECT id, username, referred_by, created_at, level
-
-     FROM tree
-
-     ORDER BY level, id
-
-     LIMIT 200`,
-    [id]
-  );
-
-  const earned = await client.query(
-    `SELECT
-       referral_level,
-       COUNT(*)::int AS count,
-       COALESCE(SUM(commission_amount), 0)::text AS total
-
-     FROM public.referral_commissions
-
-     WHERE referrer_user_id = $1::bigint
-
-     GROUP BY referral_level
-
-     ORDER BY referral_level`,
-    [id]
-  );
-
-  const generated = await client.query(
-    `SELECT
-       COALESCE(SUM(commission_amount), 0)::text AS total
-
-     FROM public.referral_commissions
-
-     WHERE source_user_id = $1::bigint`,
-    [id]
-  );
-
-  return {
-    success: true,
-    profile: profile.rows[0],
-    stats: stats.rows[0],
-    recent_bets: recentBets.rows,
-    recent_transactions: recentTransactions.rows,
-    referral_tree: tree.rows,
-    commissions_earned: earned.rows,
-    commissions_generated: generated.rows[0].total
-  };
-}
-
-// --------------------------------------------------
-// SEARCH
-// --------------------------------------------------
-
-async function search(client, body) {
-  const q = cleanQuery(body);
+/*
+ * GLOBAL SEARCH
+ */
+async function search(query) {
+  const q = String(query || "").trim().slice(0, 100);
 
   if (!q) {
-    return {
-      success: true,
-      users: [],
-      rounds: [],
-      bets: []
-    };
+    return { users: [], rounds: [], bets: [] };
   }
 
-  const params = [];
-  const where = userSearch(q, params);
+  const users = await rows(`
+    SELECT id, telegram_id, username, balance
+    FROM public.users
+    WHERE CAST(id AS TEXT) = $1
+       OR CAST(telegram_id AS TEXT) = $1
+       OR username ILIKE $2
+    ORDER BY id DESC
+    LIMIT 20
+  `, [q, `%${q}%`]);
 
-  const usersResult = await client.query(
-    `SELECT
-       u.id,
-       u.telegram_id::text AS telegram_id,
-       u.username,
-       COALESCE(w.balance, 0)::text AS balance
+  const rounds = await rows(`
+    SELECT round_code, status, starts_at, ends_at
+    FROM public.game_rounds
+    WHERE round_code = $1
+    ORDER BY starts_at DESC
+    LIMIT 10
+  `, [q]);
 
-     FROM public.users u
+  const bets = /^\d+$/.test(q)
+    ? await rows(`
+        SELECT id, user_id, round_code, bet_type, stake, status
+        FROM public.bets
+        WHERE id = $1
+        LIMIT 10
+      `, [q])
+    : [];
 
-     LEFT JOIN public.wallet_balances w ON w.user_id = u.id
-
-     WHERE ${where}
-
-     ORDER BY u.id DESC
-     LIMIT 10`,
-    params
-  );
-
-  let roundRows = [];
-
-  if (/^\d{6,14}$/.test(q)) {
-    const result = await client.query(
-      `SELECT round_code, status, starts_at, ends_at
-
-       FROM public.game_rounds
-
-       WHERE round_code LIKE $1
-
-       ORDER BY starts_at DESC
-       LIMIT 5`,
-      [q + "%"]
-    );
-
-    roundRows = result.rows;
-  }
-
-  let betRows = [];
-
-  if (/^\d{1,15}$/.test(q)) {
-    const result = await client.query(
-      `SELECT
-         b.id,
-         b.user_id,
-         r.round_code,
-         b.bet_type,
-         b.stake::text AS stake,
-
-         CASE
-           WHEN r.ends_at <= NOW() THEN b.status
-           ELSE 'pending'
-         END AS status
-
-       FROM public.bets b
-
-       JOIN public.game_rounds r ON r.id = b.round_id
-
-       WHERE b.id = $1::bigint`,
-      [q]
-    );
-
-    betRows = result.rows;
-  }
-
-  return {
-    success: true,
-    users: usersResult.rows,
-    rounds: roundRows,
-    bets: betRows
-  };
+  return { users, rounds, bets };
 }
 
-// --------------------------------------------------
-// CSV EXPORT
-// --------------------------------------------------
-
-const EXPORT_KINDS = {
-  users: {
-    fn: users,
-    key: "users",
-    cols: [
-      "id",
-      "telegram_id",
-      "username",
-      "balance",
-      "referral_count",
-      "referred_by",
-      "referral_code",
-      "created_at"
-    ]
-  },
-
-  bets: {
-    fn: bets,
-    key: "bets",
-    cols: [
-      "id",
-      "user_id",
-      "round_code",
-      "bet_type",
-      "selection",
-      "stake",
-      "fee",
-      "status",
-      "result_number",
-      "payout",
-      "created_at",
-      "settled_at"
-    ]
-  },
-
-  transactions: {
-    fn: transactions,
-    key: "transactions",
-    cols: [
-      "id",
-      "user_id",
-      "transaction_type",
-      "amount",
-      "status",
-      "network",
-      "tx_hash",
-      "created_at",
-      "updated_at"
-    ]
-  }
-};
-
-async function exportData(client, body, admin, ip) {
+/*
+ * CSV EXPORT
+ */
+async function exportCsv(body) {
   const kind = String(body.kind || "");
 
-  if (!Object.prototype.hasOwnProperty.call(EXPORT_KINDS, kind)) {
-    return {
-      success: false,
-      message: "Unknown export type."
-    };
+  const exports = {
+    users: `
+      SELECT id, telegram_id, username, balance, created_at
+      FROM public.users ORDER BY id DESC LIMIT ${EXPORT_LIMIT}
+    `,
+    bets: `
+      SELECT id, user_id, round_code, bet_type, selection,
+             stake, fee, status, result_number, payout, created_at
+      FROM public.bets ORDER BY id DESC LIMIT ${EXPORT_LIMIT}
+    `,
+    transactions: `
+      SELECT id, user_id, transaction_type, amount, status,
+             network, tx_hash, created_at
+      FROM public.transactions
+      ORDER BY id DESC LIMIT ${EXPORT_LIMIT}
+    `
+  };
+
+  if (!exports[kind]) {
+    throw new Error("Unsupported export type.");
   }
 
-  const spec = EXPORT_KINDS[kind];
+  const data = await rows(exports[kind]);
+  const columns = data.length ? Object.keys(data[0]) : [];
 
-  const data = await spec.fn(
-    client,
-    {
-      ...body,
-      page: 1,
-      page_size: EXPORT_MAX
-    },
-    EXPORT_MAX
-  );
+  function cell(value) {
+    let text = value == null ? "" : String(value);
 
-  const rows = data[spec.key] || [];
+    // Prevent spreadsheet formula injection.
+    if (/^[\s]*[=+\-@\t\r]/.test(text)) {
+      text = "'" + text;
+    }
 
-  const lines = [
-    spec.cols.map(csvCell).join(",")
-  ];
-
-  for (const row of rows) {
-    lines.push(
-      spec.cols.map((column) => csvCell(row[column])).join(",")
-    );
+    return `"${text.replace(/"/g, '""')}"`;
   }
 
-  await audit(
-    client,
-    admin,
-    "export",
-    kind,
-    `${rows.length} rows`,
-    "success",
-    ip
-  );
+  const csv = [
+    columns.map(cell).join(","),
+    ...data.map(row =>
+      columns.map(column => cell(row[column])).join(",")
+    )
+  ].join("\r\n");
 
   return {
-    success: true,
-    csv: lines.join("\r\n"),
-    row_count: rows.length,
-    total: data.pagination.total,
-    truncated: data.pagination.total > rows.length
+    csv,
+    row_count: data.length,
+    truncated: data.length === EXPORT_LIMIT
   };
 }
 
-// --------------------------------------------------
-// MAIN HANDLER
-// --------------------------------------------------
-
+/*
+ * MAIN API HANDLER
+ */
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
-
-    return send(res, 405, {
-      success: false,
-      message: "Method not allowed."
-    });
+    return send(res, 405, { message: "Method not allowed." });
   }
 
-  if (req.headers["x-admin-request"] !== "1") {
-    return send(res, 403, {
-      success: false,
-      message: "Forbidden."
-    });
+  if (!validateRequest(req)) {
+    return send(res, 403, { message: "Request rejected." });
   }
 
-  const origin = req.headers.origin;
-
-  if (origin) {
-    try {
-      const originUrl = new URL(origin);
-
-      if (
-        originUrl.host !== req.headers.host ||
-        originUrl.protocol !== "https:"
-      ) {
-        return send(res, 403, {
-          success: false,
-          message: "Forbidden."
-        });
-      }
-    } catch {
-      return send(res, 403, {
-        success: false,
-        message: "Forbidden."
-      });
-    }
-  }
-
-  const config = getConfig();
-
-  if (!config) {
-    return send(res, 503, {
-      success: false,
-      message: "Admin is not configured."
-    });
-  }
-
-  const body = parseBody(req);
-  const action = String(body.action || "");
-
-  if (!ACTIONS.has(action)) {
-    return send(res, 400, {
-      success: false,
-      message: "Unknown action."
-    });
-  }
-
-  let client;
+  let settings;
 
   try {
-    client = await getPool().connect();
+    settings = config();
+  } catch {
+    return send(res, 500, {
+      message: "Admin configuration error. Check Vercel environment variables."
+    });
+  }
 
-    if (action === "login") {
-      return await login(client, req, res, config, body);
-    }
+  const body = req.body || {};
+  const action = String(body.action || "");
 
-    const session = getSession(req, config);
+  if (action === "login") {
+    const username = String(body.username || "");
+    const password = String(body.password || "");
 
-    if (!session) {
+    if (
+      !safeEqual(username, settings.username) ||
+      !safeEqual(password, settings.password)
+    ) {
+      await audit("unknown", "login", req, "failed");
+
       return send(res, 401, {
-        success: false,
-        message: "Session expired. Please log in again."
+        message: "Invalid username or password."
       });
     }
 
-    if (action === "me") {
-      return send(res, 200, {
-        success: true,
-        username: session.u
-      });
+    setSessionCookie(res, createSession(username), SESSION_SECONDS);
+    await audit(username, "login", req);
+
+    return send(res, 200, { ok: true });
+  }
+
+  if (action === "logout") {
+    setSessionCookie(res, "", 0);
+    return send(res, 200, { ok: true });
+  }
+
+  const session = verifySession(readCookie(req, COOKIE_NAME));
+
+  if (!session) {
+    return send(res, 401, {
+      message: "Session expired. Please sign in again."
+    });
+  }
+
+  try {
+    let result;
+
+    switch (action) {
+      case "me":
+        result = {
+          ok: true,
+          username: session.username
+        };
+        break;
+
+      case "dashboard":
+        result = await dashboard();
+        break;
+
+      case "analytics":
+        result = await analytics();
+        break;
+
+      case "reconcile":
+        result = await reconcile();
+        break;
+
+      case "users":
+      case "wallets":
+      case "transactions":
+      case "rounds":
+      case "bets":
+      case "audit":
+        result = await listAction(action, body);
+        break;
+
+      case "user_detail": {
+        const userId = String(body.user_id || "");
+
+        if (!/^\d{1,15}$/.test(userId)) {
+          return send(res, 400, { message: "Invalid user ID." });
+        }
+
+        result = await userDetail(userId);
+
+        if (!result) {
+          return send(res, 404, { message: "User not found." });
+        }
+
+        break;
+      }
+
+      case "search":
+        result = await search(body.q);
+        break;
+
+      case "export":
+        result = await exportCsv(body);
+        break;
+
+      default:
+        return send(res, 400, {
+          message: "Unknown admin action."
+        });
     }
 
-    if (action === "logout") {
-      setSessionCookie(res, "", 0);
+    await audit(session.username, action, req);
 
-      await audit(
-        client,
-        session.u,
-        "logout",
-        null,
-        null,
-        "success",
-        clientIp(req)
-      );
+    return send(res, 200, result);
 
-      return send(res, 200, {
-        success: true
-      });
-    }
-
-    const handlers = {
-      dashboard: () => dashboard(client),
-      analytics: () => analytics(client),
-      reconcile: () => reconcile(client),
-      users: () => users(client, body),
-      wallets: () => wallets(client, body),
-      transactions: () => transactions(client, body),
-      rounds: () => rounds(client, body),
-      bets: () => bets(client, body),
-      audit: () => auditLog(client, body),
-      user_detail: () => userDetail(client, body),
-      search: () => search(client, body),
-      export: () => exportData(
-        client,
-        body,
-        session.u,
-        clientIp(req)
-      )
-    };
-
-    const output = await handlers[action]();
-
-    return send(
-      res,
-      output && output.success === false ? 400 : 200,
-      output
-    );
   } catch (error) {
     console.error(
       "Admin API error:",
-      error.code || "UNKNOWN",
-      error.message
+      action,
+      error.code || error.name || "Error"
     );
 
+    let message = "Admin request failed. Check server logs.";
+
     if (error.code === "42P01") {
-      return send(res, 500, {
-        success: false,
-        message: "A required admin database table is missing."
-      });
+      message = "Required database table is missing.";
+    } else if (error.code === "42703") {
+      message = "A database column does not match the admin code.";
+    } else if (error.code === "22P02") {
+      message = "Invalid database value.";
     }
 
-    return send(res, 500, {
-      success: false,
-      message: "Request failed."
-    });
-  } finally {
-    if (client) {
-      client.release();
-    }
+    return send(res, 500, { message });
   }
 };
