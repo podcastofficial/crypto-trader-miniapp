@@ -13,6 +13,8 @@ header{position:sticky;top:0;z-index:5;display:flex;justify-content:space-betwee
 header h1{font-size:16px;margin:0}
 nav{display:flex;gap:6px;overflow-x:auto;padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--line)}
 nav button{flex:none}
+.searchbar{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.searchbar input{flex:1}
 main{padding:12px;max-width:1100px;margin:0 auto}
 button{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px;cursor:pointer}
 button.on,button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -39,11 +41,18 @@ tr:last-child td{border-bottom:0}
 .pager{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px}
 .muted{color:var(--muted)}
 .note{background:#1d2a3d;border:1px solid #2c4468;border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:13px}
+.note.warn{background:#3a2c0d;border-color:#6b4f12}
+.note.good{background:#10301f;border-color:#1d5a37}
 .err{color:var(--bad)}
 .b{padding:2px 7px;border-radius:10px;font-size:11px;background:var(--line)}
 .b.won,.b.settled,.b.completed,.b.confirmed,.b.success{background:#143d27;color:var(--ok)}
 .b.lost,.b.failed,.b.rejected,.b.failure,.b.denied{background:#431a1a;color:var(--bad)}
 .b.pending,.b.open,.b.locked{background:#44330e;color:var(--warn)}
+.lnk{color:#7db3ff;text-decoration:underline}
+.chartbox{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);padding:4px 6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
 .hide{display:none}
 </style>
 </head>
@@ -67,6 +76,10 @@ tr:last-child td{border-bottom:0}
     <button id="logoutBtn">Log out</button>
   </header>
   <nav id="nav"></nav>
+  <div class="searchbar">
+    <input id="gs" placeholder="Search user ID, Telegram ID, username, round code, bet ID">
+    <button id="gsBtn" class="primary">Go</button>
+  </div>
   <main id="content"></main>
 </div>
 
@@ -76,6 +89,8 @@ const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":
 const dt = (v) => (v ? esc(new Date(v).toLocaleString()) : "-");
 const badge = (v) => `<span class="b ${esc(v)}">${esc(v)}</span>`;
 const yn = (v) => (v ? "Yes" : "No");
+const uid = (v) => (v === null || v === undefined || v === "") ? "-" : `<a href="#" class="lnk" data-user="${esc(v)}">${esc(v)}</a>`;
+const rcode = (v) => v ? `<a href="#" class="lnk" data-round="${esc(v)}">${esc(v)}</a>` : "-";
 
 async function api(body) {
   const r = await fetch("/api/admin", {
@@ -97,33 +112,35 @@ async function api(body) {
 const TX_STATUS = ["pending", "confirmed", "rejected", "completed", "failed"];
 const NO_WORKFLOW = "Deposit/withdrawal request and approval workflow is not implemented in the backend. This page only lists recorded transactions of this type (read-only).";
 
-const TX_COLS = [["id","ID"],["user_id","User ID"],["transaction_type","Type"],["amount","Amount"],["status","Status",badge],["network","Network"],["tx_hash","Tx hash"],["created_at","Created",dt],["updated_at","Updated",dt]];
+const TX_COLS = [["id","ID"],["user_id","User ID",uid],["transaction_type","Type"],["amount","Amount"],["status","Status",badge],["network","Network"],["tx_hash","Tx hash"],["created_at","Created",dt],["updated_at","Updated",dt]];
 
 const VIEWS = {
   dashboard: { label: "Dashboard" },
-  users: { label: "Users", action: "users", key: "users",
+  analytics: { label: "Analytics" },
+  reconcile: { label: "Reconcile" },
+  users: { label: "Users", action: "users", key: "users", exportKind: "users",
     filters: [{ name: "q", ph: "Telegram ID or username" }],
-    cols: [["id","ID"],["telegram_id","Telegram ID"],["username","Username"],["balance","Balance"],["referral_count","Referrals"],["referred_by","Referred by"],["referral_code","Referral code"],["created_at","Registered",dt]] },
+    cols: [["id","ID",uid],["telegram_id","Telegram ID"],["username","Username"],["balance","Balance"],["referral_count","Referrals"],["referred_by","Referred by",uid],["referral_code","Referral code"],["created_at","Registered",dt]] },
   wallets: { label: "Wallets", action: "wallets", key: "wallets",
     note: "Read-only. Balances cannot be changed from this panel.",
     filters: [{ name: "q", ph: "Telegram ID or username" }],
-    cols: [["user_id","User ID"],["telegram_id","Telegram ID"],["username","Username"],["balance","Balance"],["updated_at","Updated",dt]] },
-  transactions: { label: "Transactions", action: "transactions", key: "transactions",
+    cols: [["user_id","User ID",uid],["telegram_id","Telegram ID"],["username","Username"],["balance","Balance"],["updated_at","Updated",dt]] },
+  transactions: { label: "Transactions", action: "transactions", key: "transactions", exportKind: "transactions",
     note: "Read-only wallet transaction history.",
     filters: [{ name: "user_id", ph: "User ID" }, { name: "status", ph: "Any status", opts: TX_STATUS }],
     cols: TX_COLS },
-  deposits: { label: "Deposits", action: "transactions", key: "transactions", fixed: { type: "deposit" }, note: NO_WORKFLOW,
+  deposits: { label: "Deposits", action: "transactions", key: "transactions", exportKind: "transactions", fixed: { type: "deposit" }, note: NO_WORKFLOW,
     filters: [{ name: "user_id", ph: "User ID" }, { name: "status", ph: "Any status", opts: TX_STATUS }],
     cols: TX_COLS },
-  withdrawals: { label: "Withdrawals", action: "transactions", key: "transactions", fixed: { type: "withdrawal" }, note: NO_WORKFLOW,
+  withdrawals: { label: "Withdrawals", action: "transactions", key: "transactions", exportKind: "transactions", fixed: { type: "withdrawal" }, note: NO_WORKFLOW,
     filters: [{ name: "user_id", ph: "User ID" }, { name: "status", ph: "Any status", opts: TX_STATUS }],
     cols: TX_COLS },
   rounds: { label: "Rounds", action: "rounds", key: "rounds",
     note: "Results are hidden until the round end time. Results cannot be changed from this panel.",
-    cols: [["round_code","Round"],["status","Status",badge],["starts_at","Starts",dt],["betting_closes_at","Betting closes",dt],["ends_at","Ends",dt],["result_number","Result"],["bet_count","Bets"],["total_stake","Stake"],["total_payout","Payout"],["pending_bets","Pending bets"],["payout_complete","Payout complete",yn]] },
-  bets: { label: "Bets", action: "bets", key: "bets",
+    cols: [["round_code","Round",rcode],["status","Status",badge],["starts_at","Starts",dt],["betting_closes_at","Betting closes",dt],["ends_at","Ends",dt],["result_number","Result"],["bet_count","Bets"],["total_stake","Stake"],["total_payout","Payout"],["pending_bets","Pending bets"],["payout_complete","Payout complete",yn]] },
+  bets: { label: "Bets", action: "bets", key: "bets", exportKind: "bets",
     filters: [{ name: "round_code", ph: "Round code (14 digits)" }, { name: "user_id", ph: "User ID" }, { name: "status", ph: "Any status", opts: ["pending", "won", "lost", "cancelled"] }],
-    cols: [["id","ID"],["user_id","User ID"],["round_code","Round"],["bet_type","Type"],["selection","Selection"],["stake","Stake"],["fee","Fee"],["status","Status",badge],["result_number","Result"],["payout","Payout"],["created_at","Created",dt],["settled_at","Settled",dt]] },
+    cols: [["id","ID"],["user_id","User ID",uid],["round_code","Round",rcode],["bet_type","Type"],["selection","Selection"],["stake","Stake"],["fee","Fee"],["status","Status",badge],["result_number","Result"],["payout","Payout"],["created_at","Created",dt],["settled_at","Settled",dt]] },
   audit: { label: "Audit Log", action: "audit", key: "entries",
     cols: [["id","ID"],["created_at","Time",dt],["admin_username","Admin"],["action","Action"],["target_type","Target type"],["target_id","Target ID"],["outcome","Outcome",badge],["ip","IP"]] }
 };
@@ -144,6 +161,42 @@ function card(label, value, sub) {
   return `<div class="card"><div class="l">${esc(label)}</div><div class="v">${esc(value)}</div>${sub ? `<div class="s">${esc(sub)}</div>` : ""}</div>`;
 }
 
+/* ---------- Charts (plain SVG, no external library) ---------- */
+function fmt(v) {
+  const n = Number(v), a = Math.abs(n);
+  return a >= 1000 ? (n / 1000).toFixed(1) + "k" : n.toFixed(0);
+}
+
+function chart(title, labels, series, colors, names) {
+  const W = 340, H = 170, pl = 38, pr = 6, pt = 10, pb = 22;
+  const all = series.flat().map(Number);
+  let max = Math.max(0, ...all), min = Math.min(0, ...all);
+  if (max === min) max = min + 1;
+  const iw = W - pl - pr, ih = H - pt - pb;
+  const y = (v) => pt + ih * (max - v) / (max - min);
+  const n = labels.length, gw = iw / n;
+  const bw = Math.max(2, (gw - 3) / series.length);
+  let g = `<line x1="${pl}" x2="${W - pr}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" stroke="#2a3441"/>`;
+  g += `<text x="${pl - 4}" y="${pt + 8}" text-anchor="end" fill="#8b98a7" font-size="9">${esc(fmt(max))}</text>`;
+  g += `<text x="${pl - 4}" y="${pt + ih}" text-anchor="end" fill="#8b98a7" font-size="9">${esc(fmt(min))}</text>`;
+  series.forEach((s, si) => s.forEach((v, i) => {
+    const val = Number(v);
+    const x = pl + i * gw + 1.5 + si * bw;
+    const y0 = y(0), y1 = y(val);
+    const col = typeof colors[si] === "function" ? colors[si](val) : colors[si];
+    g += `<rect x="${x.toFixed(1)}" y="${Math.min(y0, y1).toFixed(1)}" width="${(bw - 1).toFixed(1)}" height="${Math.max(1, Math.abs(y1 - y0)).toFixed(1)}" fill="${col}"/>`;
+  }));
+  labels.forEach((l, i) => {
+    if (i % 2 === 0) g += `<text x="${(pl + i * gw + gw / 2).toFixed(1)}" y="${H - 8}" text-anchor="middle" fill="#8b98a7" font-size="9">${esc(l)}</text>`;
+  });
+  const legend = names.map((nm, i) => {
+    const c = typeof colors[i] === "function" ? "#22c55e" : colors[i];
+    return `<span><i style="background:${c}"></i>${esc(nm)}</span>`;
+  }).join("");
+  return `<h3>${esc(title)}</h3><div class="chartbox"><svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg><div class="legend">${legend}</div></div>`;
+}
+
+/* ---------- Views ---------- */
 function renderDash(d) {
   const t = d.totals, h = d.health;
   const cards = [
@@ -174,6 +227,81 @@ function renderDash(d) {
     `<h3>Recent rounds</h3>` + table(d.recent_rounds, VIEWS.rounds.cols);
 }
 
+function renderAnalytics(d) {
+  const days = d.daily;
+  const labels = days.map((x) => x.day.slice(5));
+  const sign = (v) => (v >= 0 ? "#22c55e" : "#ef4444");
+  const f = d.fairness;
+  const exp = f.total_rounds / 10;
+  const fairRows = f.counts.map((c, i) => ({
+    number: i,
+    count: c,
+    share: f.total_rounds ? (c / f.total_rounds * 100).toFixed(1) + "%" : "-",
+    diff: f.total_rounds ? (c - exp >= 0 ? "+" : "") + (c - exp).toFixed(1) : "-"
+  }));
+  const fairCls = f.verdict.startsWith("Consistent") ? "good" : (f.verdict.startsWith("Not enough") ? "" : "warn");
+
+  $("#content").innerHTML =
+    `<div class="note">All figures use UTC days and only rounds that have ended. Net = stake − payouts − referral commissions.</div>` +
+    chart("Daily stake vs payouts (last 14 days)", labels, [days.map((x) => x.stake), days.map((x) => x.payout)], ["#3b82f6", "#f59e0b"], ["Stake", "Payouts"]) +
+    chart("Daily net platform result", labels, [days.map((x) => x.net)], [sign], ["Net (green = profit, red = loss)"]) +
+    chart("Users per day", labels, [days.map((x) => x.active_users), days.map((x) => x.new_users)], ["#a78bfa", "#22c55e"], ["Active users", "New users"]) +
+    `<h3>Daily numbers</h3>` + table(days.slice().reverse(), [["day","Day (UTC)"],["bets","Bets"],["stake","Stake"],["payout","Payouts"],["net","Net"],["active_users","Active users"],["new_users","New users"]]) +
+    `<h3>Result fairness check</h3>` +
+    `<div class="note ${fairCls}">${esc(f.verdict)}${f.chi_square !== null ? " (chi-square " + esc(f.chi_square) + ", 9 degrees of freedom; 16.9 ≈ 5% and 21.7 ≈ 1% limits)" : ""}. ${esc(f.total_rounds)} settled rounds. This is a statistical check, not proof either way.</div>` +
+    table(fairRows, [["number","Result"],["count","Times drawn"],["share","Share (expected 10%)"],["diff","Vs expected"]]) +
+    `<h3>Top users by stake</h3>` + table(d.top_users, [["id","User ID",uid],["username","Username"],["bets","Bets"],["stake","Stake"],["payout","Payout"],["user_net","User net"]]) +
+    `<h3>Large stakes (≥ ${esc(d.large_stake_threshold)}, last 7 days)</h3>` + table(d.large_stakes, [["id","Bet ID"],["user_id","User ID",uid],["round_code","Round",rcode],["bet_type","Type"],["stake","Stake"],["created_at","Created",dt]]) +
+    `<h3>Users with high returns (20+ bets, return over 130%)</h3>` + table(d.high_return_users, [["user_id","User ID",uid],["bets","Bets"],["stake","Stake"],["payout","Payout"],["return_percent","Return %"]]);
+}
+
+function renderReconcile(d) {
+  const t = d.totals;
+  const status = d.clean
+    ? `<div class="note good">All checks match.</div>`
+    : `<div class="note warn">Mismatch found. The wallet total does not equal the transaction ledger plus referral commissions, or counts differ. Credits added directly in the database (for example test balances) show up here as unrecorded.</div>`;
+  const rows = [
+    { check: "Wallet balances (sum)", a: t.wallet_total, b: "-", diff: "-" },
+    { check: "Ledger net + commissions vs wallets (unrecorded)", a: t.wallet_total, b: (Number(t.ledger_net) + Number(t.commissions)).toFixed(2), diff: t.unrecorded },
+    { check: "Bet stakes vs bet transactions", a: t.bets_stake, b: t.bet_tx, diff: t.stake_diff },
+    { check: "Bet payouts vs payout transactions", a: t.bets_payout, b: t.payout_tx, diff: t.payout_diff },
+    { check: "Bet rows vs bet transaction rows (count)", a: "-", b: "-", diff: t.bet_count_diff },
+    { check: "Paid bets vs payout transaction rows (count)", a: "-", b: "-", diff: t.payout_count_diff }
+  ];
+  $("#content").innerHTML =
+    status +
+    `<div class="cards">${card("Wallet total", t.wallet_total)}${card("Ledger net", t.ledger_net, "deposits + payouts + refunds − bets − withdrawals")}${card("Commissions", t.commissions, "credited without a transaction row")}${card("Unrecorded credits", t.unrecorded)}</div>` +
+    `<h3>Checks</h3>` + table(rows, [["check","Check"],["a","Value A"],["b","Value B"],["diff","Difference"]]) +
+    `<h3>Users whose balance differs from the ledger</h3>` + table(d.mismatches, [["id","User ID",uid],["username","Username"],["balance","Balance"],["expected","Expected from ledger"],["diff","Difference"]]) +
+    `<p class="muted">Read-only. Pending withdrawals (if they ever exist) are not treated specially.</p>`;
+}
+
+function renderUser(d) {
+  const p = d.profile, s = d.stats;
+  const tree = d.referral_tree;
+  const lv = (n) => tree.filter((x) => x.level === n).length;
+  const earned = d.commissions_earned.map((x) => ({ level: x.referral_level, count: x.count, total: x.total }));
+  $("#content").innerHTML =
+    `<div class="row"><button id="backBtn">← Back</button><span class="muted">User ${esc(p.id)}</span></div>` +
+    `<div class="cards">${card("Username", p.username || "-")}${card("Telegram ID", p.telegram_id || "-")}${card("Wallet balance", p.balance, p.balance_updated_at ? "updated " + new Date(p.balance_updated_at).toLocaleString() : "")}${card("Registered", p.created_at ? new Date(p.created_at).toLocaleDateString() : "-")}</div>` +
+    `<div class="cards">${card("Bets (ended rounds)", s.bets)}${card("Total stake", s.stake)}${card("Total payouts", s.payout)}${card("Won / Lost", s.wins + " / " + s.losses)}</div>` +
+    `<div class="cards">${card("Referral code", p.referral_code || "-")}${card("Referred by", p.referred_by ? (p.referrer_username || "user") + " (#" + p.referred_by + ")" : "-")}${card("Referrals L1 / L2 / L3", lv(1) + " / " + lv(2) + " / " + lv(3))}${card("Commissions generated", d.commissions_generated, "by this user's bets")}</div>` +
+    `<h3>Referral tree (up to 3 levels)</h3>` + table(tree, [["level","Level"],["id","User ID",uid],["username","Username"],["referred_by","Parent",uid],["created_at","Registered",dt]]) +
+    `<h3>Commissions earned</h3>` + table(earned, [["level","Level"],["count","Count"],["total","Total"]]) +
+    `<h3>Recent bets (20)</h3>` + table(d.recent_bets, [["id","ID"],["round_code","Round",rcode],["bet_type","Type"],["selection","Selection"],["stake","Stake"],["fee","Fee"],["status","Status",badge],["result_number","Result"],["payout","Payout"],["created_at","Created",dt]]) +
+    `<h3>Recent transactions (20)</h3>` + table(d.recent_transactions, [["id","ID"],["transaction_type","Type"],["amount","Amount"],["status","Status",badge],["network","Network"],["tx_hash","Tx hash"],["created_at","Created",dt]]);
+  $("#backBtn").onclick = load;
+}
+
+function renderSearch(d, q) {
+  $("#content").innerHTML =
+    `<div class="row"><button id="backBtn">← Back</button><span class="muted">Results for "${esc(q)}"</span></div>` +
+    `<h3>Users</h3>` + table(d.users, [["id","User ID",uid],["telegram_id","Telegram ID"],["username","Username"],["balance","Balance"]]) +
+    (d.rounds.length ? `<h3>Rounds</h3>` + table(d.rounds, [["round_code","Round",rcode],["status","Status",badge],["starts_at","Starts",dt],["ends_at","Ends",dt]]) : "") +
+    (d.bets.length ? `<h3>Bet</h3>` + table(d.bets, [["id","Bet ID"],["user_id","User ID",uid],["round_code","Round",rcode],["bet_type","Type"],["stake","Stake"],["status","Status",badge]]) : "");
+  $("#backBtn").onclick = load;
+}
+
 function filterBar(v) {
   if (!v.filters) return "";
   const items = v.filters.map((f) => {
@@ -184,17 +312,28 @@ function filterBar(v) {
     }
     return `<input data-f="${esc(f.name)}" placeholder="${esc(f.ph)}" value="${val}">`;
   }).join("");
-  return `<div class="filters">${items}<button class="primary" id="applyBtn">Search</button></div>`;
+  const exp = v.exportKind ? `<button id="exportBtn">Export CSV</button>` : "";
+  return `<div class="filters">${items}<button class="primary" id="applyBtn">Search</button>${exp}</div><p id="exportMsg" class="muted"></p>`;
+}
+
+function downloadCsv(name, text) {
+  const blob = new Blob(["\ufeff" + text], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 
 async function load() {
   const v = VIEWS[cur], box = $("#content");
   box.innerHTML = '<p class="muted">Loading…</p>';
   try {
-    if (cur === "dashboard") {
-      renderDash(await api({ action: "dashboard" }));
-      return;
-    }
+    if (cur === "dashboard") { renderDash(await api({ action: "dashboard" })); return; }
+    if (cur === "analytics") { renderAnalytics(await api({ action: "analytics" })); return; }
+    if (cur === "reconcile") { renderReconcile(await api({ action: "reconcile" })); return; }
     const data = await api({ action: v.action, page, page_size: 20, ...(v.fixed || {}), ...filters });
     const p = data.pagination;
     box.innerHTML =
@@ -211,8 +350,49 @@ async function load() {
       page = 1;
       load();
     };
+    const ex = $("#exportBtn");
+    if (ex) ex.onclick = async () => {
+      ex.disabled = true;
+      $("#exportMsg").textContent = "Preparing export…";
+      try {
+        const d = await api({ action: "export", kind: v.exportKind, ...(v.fixed || {}), ...filters });
+        downloadCsv(`${v.exportKind}-${new Date().toISOString().slice(0, 10)}.csv`, d.csv);
+        $("#exportMsg").textContent = d.row_count + " row(s) exported" + (d.truncated ? " (limited to the first " + d.row_count + " of " + d.total + ")" : "") + ".";
+      } catch (e) {
+        if (e.message !== "auth") $("#exportMsg").textContent = e.message;
+      } finally {
+        ex.disabled = false;
+      }
+    };
     $("#prevBtn").onclick = () => { page--; load(); };
     $("#nextBtn").onclick = () => { page++; load(); };
+  } catch (e) {
+    if (e.message !== "auth") box.innerHTML = `<p class="err">${esc(e.message)}</p>`;
+  }
+}
+
+async function openUser(id) {
+  const box = $("#content");
+  if (!/^\d{1,15}$/.test(String(id))) return;
+  box.innerHTML = '<p class="muted">Loading…</p>';
+  try {
+    renderUser(await api({ action: "user_detail", user_id: String(id) }));
+    window.scrollTo(0, 0);
+  } catch (e) {
+    if (e.message !== "auth") {
+      box.innerHTML = `<p class="err">${esc(e.message)}</p><button id="backBtn">← Back</button>`;
+      $("#backBtn").onclick = load;
+    }
+  }
+}
+
+async function runSearch() {
+  const q = $("#gs").value.trim();
+  if (!q) return;
+  const box = $("#content");
+  box.innerHTML = '<p class="muted">Searching…</p>';
+  try {
+    renderSearch(await api({ action: "search", q }), q);
   } catch (e) {
     if (e.message !== "auth") box.innerHTML = `<p class="err">${esc(e.message)}</p>`;
   }
@@ -225,6 +405,22 @@ function buildNav() {
     b.onclick = () => { cur = b.dataset.v; page = 1; filters = {}; buildNav(); load(); };
   });
 }
+
+$("#content").addEventListener("click", (e) => {
+  const a = e.target.closest("[data-user],[data-round]");
+  if (!a) return;
+  e.preventDefault();
+  if (a.dataset.user) {
+    openUser(a.dataset.user);
+  } else if (a.dataset.round) {
+    cur = "bets"; page = 1; filters = { round_code: a.dataset.round };
+    buildNav();
+    load();
+  }
+});
+
+$("#gsBtn").onclick = runSearch;
+$("#gs").addEventListener("keydown", (e) => { if (e.key === "Enter") runSearch(); });
 
 function showLogin(msg) {
   $("#appView").classList.add("hide");
