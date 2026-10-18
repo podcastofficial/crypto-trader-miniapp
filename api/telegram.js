@@ -1,12 +1,7 @@
-const APP_URL = "https://crypto-trader-miniapp.vercel.app";
+const crypto = require("crypto");
 
 module.exports = async function handler(req, res) {
-  res.setHeader("Content-Type", "application/json");
-  res.setHeader("Cache-Control", "no-store");
-
   if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
-
     return res.status(405).json({
       success: false,
       message: "Method not allowed"
@@ -15,6 +10,7 @@ module.exports = async function handler(req, res) {
 
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+  const appUrl = "https://crypto-trader-miniapp.vercel.app";
 
   if (!botToken || !webhookSecret) {
     console.error("Telegram webhook environment variables missing");
@@ -25,12 +21,15 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  const receivedSecret =
-    req.headers["x-telegram-bot-api-secret-token"];
+  const suppliedSecret = req.headers["x-telegram-bot-api-secret-token"];
 
   if (
-    typeof receivedSecret !== "string" ||
-    receivedSecret !== webhookSecret
+    typeof suppliedSecret !== "string" ||
+    suppliedSecret.length !== webhookSecret.length ||
+    !crypto.timingSafeEqual(
+      Buffer.from(suppliedSecret),
+      Buffer.from(webhookSecret)
+    )
   ) {
     return res.status(401).json({
       success: false,
@@ -42,115 +41,82 @@ module.exports = async function handler(req, res) {
     const update = req.body || {};
     const message = update.message;
 
-    if (!message || !message.chat || !message.text) {
-      return res.status(200).json({
-        success: true,
-        message: "Update ignored"
-      });
+    // Ignore updates that are not messages.
+    if (!message || !message.chat || !message.from) {
+      return res.status(200).json({ success: true });
     }
 
-    const messageText = message.text.trim();
+    const chatId = message.chat.id;
+    const text = typeof message.text === "string"
+      ? message.text.trim()
+      : "";
 
-    // Accept /start and /start@BotUsername with an optional parameter.
-    const match = messageText.match(
-      /^\/start(?:@\w+)?(?:\s+(\S+))?$/i
-    );
-
-    if (!match) {
-      return res.status(200).json({
-        success: true,
-        message: "Command ignored"
-      });
+    if (!text.startsWith("/start")) {
+      return res.status(200).json({ success: true });
     }
 
-    const startParameter = match[1] || "";
-    let referralCode = "";
-
-    // Extract referral code.
+    const parts = text.split(/\s+/);
+    const startParameter = parts[1] || "";
     const referralMatch = startParameter.match(
-      /^ref_([A-Za-z0-9_-]{1,80})$/i
+      /^ref_([A-Za-z0-9_-]{1,64})$/
     );
+
+    let welcomeText =
+      "🎮 Welcome to Crypto Trader Pro!\n\n" +
+      "Open the Mini App to explore the game, wallet, records and referral program.\n\n"
 
     if (referralMatch) {
-      referralCode = referralMatch[1];
+      welcomeText +=
+        "\n\n🎁 Referral link detected. Open the Mini App to continue.";
     }
 
-    // Build Mini App URL.
-    const appUrl = new URL(APP_URL);
+    const telegramApi =
+      `https://api.telegram.org/bot${botToken}/sendMessage`;
 
-    if (referralCode) {
-      appUrl.searchParams.set("ref", referralCode);
-    }
-
-    const keyboard = {
-      inline_keyboard: [
-        [
-          {
-            text: "🚀 Open Crypto Trader Pro",
-            web_app: {
-              url: appUrl.toString()
+    const payload = {
+      chat_id: chatId,
+      text: welcomeText,
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "🚀 Open Crypto Trader Pro",
+              web_app: {
+                url: appUrl
+              }
             }
-          }
+          ]
         ]
-      ]
+      }
     };
 
-    let welcomeMessage =
-      "Welcome to Crypto Trader Pro! 🚀\n\n" +
-      "Open the Mini App using the button below.";
+    const response = await fetch(telegramApi, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
 
-    if (referralCode) {
-      welcomeMessage +=
-        "\n\nYour referral link has been detected. " +
-        "Open the Mini App to process your referral.";
-    }
+    const result = await response.json();
 
-    const telegramResponse = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendMessage`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          chat_id: message.chat.id,
-          text: welcomeMessage,
-          reply_markup: keyboard
-        })
-      }
-    );
-
-    let telegramData;
-
-    try {
-      telegramData = await telegramResponse.json();
-    } catch {
-      telegramData = null;
-    }
-
-    if (!telegramResponse.ok || !telegramData?.ok) {
+    if (!response.ok || !result.ok) {
       console.error(
         "Telegram sendMessage failed:",
-        telegramData?.description || telegramResponse.status
+        result.description || response.status
       );
 
       return res.status(502).json({
         success: false,
-        message: "Unable to send Telegram response"
+        message: "Telegram message delivery failed"
       });
     }
 
     return res.status(200).json({
-      success: true,
-      message: "Start command processed",
-      referral_detected: Boolean(referralCode)
+      success: true
     });
-
   } catch (error) {
-    console.error(
-      "Telegram webhook error:",
-      error.message
-    );
+    console.error("Telegram webhook error:", error.message);
 
     return res.status(500).json({
       success: false,
