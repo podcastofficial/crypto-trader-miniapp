@@ -1113,3 +1113,518 @@ async function userDetail(userId) {
     )
   };
 }
+/*
+ * SEARCH
+ */
+
+async function searchAction(body) {
+  const q = String(body.q || "").trim().slice(0, 100);
+
+  if (q.length < 1) {
+    return {
+      users: [],
+      rounds: [],
+      bets: []
+    };
+  }
+
+  const numeric = /^\d+$/.test(q);
+
+  const [users, rounds, bets] = await Promise.all([
+    query(
+      `SELECT
+         u.id,
+         u.telegram_id,
+         u.username,
+         w.balance,
+         u.created_at
+       FROM public.users u
+       LEFT JOIN public.wallet_balances w
+         ON w.user_id=u.id
+       WHERE ${
+         numeric
+           ? "(CAST(u.id AS TEXT)=$1 OR CAST(u.telegram_id AS TEXT)=$1)"
+           : "u.username ILIKE $1"
+       }
+       ORDER BY u.id DESC
+       LIMIT 20`,
+      [numeric ? q : `%${q}%`]
+    ),
+
+    query(
+      `SELECT
+         id,
+         round_code,
+         status,
+         starts_at,
+         ends_at,
+         CASE
+           WHEN ends_at<=NOW() THEN result_number
+           ELSE NULL
+         END AS result_number
+       FROM public.game_rounds
+       WHERE ${
+         numeric
+           ? "(CAST(id AS TEXT)=$1 OR round_code ILIKE $2)"
+           : "round_code ILIKE $1"
+       }
+       ORDER BY id DESC
+       LIMIT 20`,
+      numeric ? [q, `%${q}%`] : [`%${q}%`]
+    ),
+
+    query(
+      `SELECT
+         b.id,
+         b.user_id,
+         b.round_id,
+         r.round_code,
+         b.bet_type,
+         b.selection,
+         b.stake,
+         b.status,
+         b.payout,
+         b.created_at
+       FROM public.bets b
+       LEFT JOIN public.game_rounds r
+         ON r.id=b.round_id
+       WHERE ${
+         numeric
+           ? "(CAST(b.id AS TEXT)=$1 OR CAST(b.user_id AS TEXT)=$1)"
+           : "r.round_code ILIKE $1"
+       }
+       ORDER BY b.id DESC
+       LIMIT 20`,
+      [numeric ? q : `%${q}%`]
+    )
+  ]);
+
+  return { users, rounds, bets };
+}
+
+/*
+ * LOGIN ATTEMPTS
+ */
+
+async function loginAttempts(body) {
+  const { page, size, offset } = pagination(body);
+
+  const totalRows = await query(`
+    SELECT COUNT(*) AS total
+    FROM public.admin_login_attempts
+  `);
+
+  const entries = await query(
+    `SELECT
+       id,
+       ip,
+       success,
+       attempted_at
+     FROM public.admin_login_attempts
+     ORDER BY attempted_at DESC
+     LIMIT $1 OFFSET $2`,
+    [size, offset]
+  );
+
+  const total = Number(totalRows[0]?.total || 0);
+  const totalPages = Math.max(1, Math.ceil(total / size));
+
+  return {
+    entries,
+    pagination: {
+      page,
+      page_size: size,
+      total,
+      total_pages: totalPages,
+      has_previous: page > 1,
+      has_next: page < totalPages
+    }
+  };
+}
+
+/*
+ * CSV EXPORT
+ */
+
+function csvCell(value) {
+  if (value === null || value === undefined) {
+    return '""';
+  }
+
+  let textValue = String(value);
+
+  // Prevent spreadsheet formula injection.
+  if (/^[\s]*[=+\-@]/.test(textValue)) {
+    textValue = "'" + textValue;
+  }
+
+  return '"' + textValue.replace(/"/g, '""') + '"';
+}
+
+async function exportCsv(body) {
+  const action = String(body.dataset || "");
+
+  if (!Object.prototype.hasOwnProperty.call(LISTS, action)) {
+    throw new Error("Unsupported export dataset.");
+  }
+
+  const cfg = LISTS[action];
+  const conditions = [];
+  const params = [];
+
+  function add(condition, value) {
+    params.push(value);
+    conditions.push(
+      condition.replace("?", `$${params.length}`)
+    );
+  }
+
+  if (action === "users") {
+    const segment = String(body.segment || "all");
+
+    if (!USER_SEGMENTS.has(segment)) {
+      throw new Error("Invalid user segment.");
+    }
+
+    const segmentSql = userSegmentSql(segment);
+
+    if (segmentSql) {
+      conditions.push(`(${segmentSql})`);
+    }
+
+    if (body.q) {
+      const q = String(body.q).trim().slice(0, 100);
+
+      if (/^\d+$/.test(q)) {
+        params.push(q, q);
+        conditions.push(
+          `(CAST(u.telegram_id AS TEXT)=$${params.length - 1}
+            OR CAST(u.id AS TEXT)=$${params.length})`
+        );
+      } else {
+        add("u.username ILIKE ?", `%${q}%`);
+      }
+    }
+  }
+
+  if (action === "transactions") {
+    if (body.type) {
+      const type = String(body.type);
+
+      if (!["deposit", "withdrawal"].includes(type)) {
+        throw new Error("Invalid transaction type.");
+      }
+
+      add("transaction_type=?", type);
+    }
+
+    if (body.status) {
+      const status = String(body.status);
+
+      if (!STATUSES.has(status)) {
+        throw new Error("Invalid status.");
+      }
+
+      add("status=?", status);
+    }
+
+    if (body.user_id) {
+      if (!/^\d{1,15}$/.test(String(body.user_id))) {
+        throw new Error("Invalid user ID.");
+      }
+
+      add("user_id=?", String(body.user_id));
+    }
+  }
+
+  if (action === "bets") {
+    if (body.user_id) {
+      if (!/^\d{1,15}$/.test(String(body.user_id))) {
+        throw new Error("Invalid user ID.");
+      }
+
+      add("b.user_id=?", String(body.user_id));
+    }
+
+    if (body.status) {
+      const status = String(body.status);
+
+      if (!STATUSES.has(status)) {
+        throw new Error("Invalid status.");
+      }
+
+      add("b.status=?", status);
+    }
+  }
+
+  const where = conditions.length
+    ? `WHERE ${conditions.join(" AND ")}`
+    : "";
+
+  const rows = await query(
+    `SELECT ${cfg.select}
+     FROM ${cfg.from}
+     ${where}
+     ${cfg.group || ""}
+     ORDER BY ${cfg.order}
+     LIMIT $${params.length + 1}`,
+    [...params, EXPORT_MAX]
+  );
+
+  if (!rows.length) {
+    return {
+      csv: "",
+      row_count: 0,
+      truncated: false
+    };
+  }
+
+  const headers = Object.keys(rows[0]);
+
+  const csv = [
+    headers.map(csvCell).join(","),
+    ...rows.map(row =>
+      headers.map(key => csvCell(row[key])).join(",")
+    )
+  ].join("\r\n");
+
+  return {
+    csv,
+    row_count: rows.length,
+    truncated: rows.length === EXPORT_MAX
+  };
+}
+
+/*
+ * MAIN API HANDLER
+ */
+
+module.exports = async function handler(req, res) {
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+    return json(res, 405, {
+      ok: false,
+      error: "Method not allowed."
+    });
+  }
+
+  if (!validRequest(req)) {
+    return json(res, 403, {
+      ok: false,
+      error: "Request rejected."
+    });
+  }
+
+  let body = req.body;
+
+  if (typeof body === "string") {
+    try {
+      body = JSON.parse(body);
+    } catch {
+      return json(res, 400, {
+        ok: false,
+        error: "Invalid JSON."
+      });
+    }
+  }
+
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return json(res, 400, {
+      ok: false,
+      error: "Invalid request body."
+    });
+  }
+
+  const action = String(body.action || "").slice(0, 50);
+
+  try {
+    getConfig();
+
+    /*
+     * LOGIN
+     */
+    if (action === "login") {
+      if (!(await loginAllowed(req))) {
+        await audit(
+          "unknown",
+          "login",
+          req,
+          "rate_limited"
+        );
+
+        return json(res, 429, {
+          ok: false,
+          error: "Too many login attempts. Try again in 15 minutes."
+        });
+      }
+
+      const config = getConfig();
+
+      const username = String(body.username || "");
+      const password = String(body.password || "");
+
+      const success =
+        safeEqual(username, config.username) &&
+        safeEqual(password, config.password);
+
+      await recordLogin(req, success);
+
+      await audit(
+        success ? config.username : "unknown",
+        "login",
+        req,
+        success ? "success" : "failed"
+      );
+
+      if (!success) {
+        return json(res, 401, {
+          ok: false,
+          error: "Invalid username or password."
+        });
+      }
+
+      setCookie(res, createSession(config.username), SESSION_SECONDS);
+
+      return json(res, 200, {
+        ok: true,
+        username: config.username
+      });
+    }
+
+    /*
+     * LOGOUT
+     */
+    if (action === "logout") {
+      const token = readCookie(req, COOKIE);
+      const session = verifySession(token);
+
+      if (session) {
+        await audit(
+          session.username,
+          "logout",
+          req,
+          "success"
+        );
+      }
+
+      setCookie(res, "", 0);
+
+      return json(res, 200, { ok: true });
+    }
+
+    /*
+     * AUTHENTICATION
+     */
+    const token = readCookie(req, COOKIE);
+    const session = verifySession(token);
+
+    if (!session) {
+      return json(res, 401, {
+        ok: false,
+        error: "Session expired. Please log in again."
+      });
+    }
+
+    /*
+     * CURRENT SESSION
+     */
+    if (action === "me") {
+      return json(res, 200, {
+        ok: true,
+        username: session.username,
+        expires_in: Math.max(
+          0,
+          session.exp - Math.floor(Date.now() / 1000)
+        )
+      });
+    }
+
+    let result;
+
+    switch (action) {
+      case "dashboard":
+        result = await dashboard();
+        break;
+
+      case "analytics":
+        result = await analytics();
+        break;
+
+      case "reconcile":
+        result = await reconcile();
+        break;
+
+      case "users":
+      case "wallets":
+      case "transactions":
+      case "rounds":
+      case "bets":
+      case "audit":
+        result = await listAction(action, body);
+        break;
+
+      case "user_detail": {
+        const userId = String(body.user_id || "");
+
+        if (!/^\d{1,15}$/.test(userId)) {
+          return json(res, 400, {
+            ok: false,
+            error: "Invalid user ID."
+          });
+        }
+
+        result = await userDetail(userId);
+
+        if (!result) {
+          return json(res, 404, {
+            ok: false,
+            error: "User not found."
+          });
+        }
+
+        break;
+      }
+
+      case "search":
+        result = await searchAction(body);
+        break;
+
+      case "export":
+        result = await exportCsv(body);
+        break;
+
+      case "login_attempts":
+        result = await loginAttempts(body);
+        break;
+
+      default:
+        return json(res, 400, {
+          ok: false,
+          error: "Unknown action."
+        });
+    }
+
+    await audit(
+      session.username,
+      action,
+      req,
+      "success"
+    );
+
+    return json(res, 200, {
+      ok: true,
+      ...result
+    });
+  } catch (error) {
+    console.error(
+      "Admin API error:",
+      action,
+      error.code || error.name
+    );
+
+    return json(res, 500, {
+      ok: false,
+      error: "Admin request failed. Check server logs."
+    });
+  }
+};
