@@ -10,6 +10,7 @@ const pool = new Pool({
 });
 
 const BET_TYPES = ["Number", "Red", "Green", "Violet", "Big", "Small"];
+const ROUND_LOCK_KEY = 739184205; // same lock key as api/cron.js
 
 function json(res, status, data) {
   return res.status(status).json(data);
@@ -29,7 +30,68 @@ function pageParams(input = {}) {
   };
 }
 
-// Settles rounds whose betting window has closed.
+// Makes sure the current round and a few future rounds exist,
+// so the game never depends on the cron timing.
+// Safe to run many times: unique round_code + advisory lock.
+async function ensureRounds(client) {
+  try {
+    const check = await client.query(`
+      SELECT
+        EXISTS (
+          SELECT 1 FROM public.game_rounds
+          WHERE starts_at <= NOW() AND ends_at > NOW()
+        ) AS has_current,
+        COALESCE(
+          (SELECT MAX(starts_at) FROM public.game_rounds)
+            >= NOW() + INTERVAL '6 minutes',
+          false
+        ) AS has_future
+    `);
+
+    if (check.rows[0].has_current && check.rows[0].has_future) return;
+
+    await client.query("BEGIN");
+
+    const lock = await client.query(
+      "SELECT pg_try_advisory_xact_lock($1::bigint) AS ok",
+      [ROUND_LOCK_KEY]
+    );
+
+    if (!lock.rows[0].ok) {
+      // Cron is creating rounds right now.
+      await client.query("ROLLBACK");
+      return;
+    }
+
+    await client.query(`
+      INSERT INTO public.game_rounds (
+        round_code, status, starts_at, betting_closes_at, ends_at
+      )
+      SELECT
+        to_char(s AT TIME ZONE 'UTC', 'YYYYMMDDHH24MISS'),
+        CASE WHEN s + INTERVAL '150 seconds' <= NOW()
+             THEN 'locked' ELSE 'open' END,
+        s,
+        s + INTERVAL '150 seconds',
+        s + INTERVAL '180 seconds'
+      FROM (
+        SELECT to_timestamp(
+          (FLOOR(EXTRACT(EPOCH FROM NOW()) / 180) * 180 + 180 * g)
+            ::double precision
+        ) AS s
+        FROM generate_series(0, 5) AS g
+      ) slots
+      ON CONFLICT (round_code) DO NOTHING
+    `);
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    console.error("ensureRounds error:", error.message);
+  }
+}
+
+// Settles rounds whose end time has passed.
 // settle_expired_round() is idempotent (row lock + SKIP LOCKED),
 // so running it here together with cron cannot pay twice.
 async function settleDueRounds(client) {
@@ -38,7 +100,7 @@ async function settleDueRounds(client) {
       `SELECT 1
        FROM public.game_rounds
        WHERE status IN ('open', 'locked')
-         AND betting_closes_at <= NOW()
+         AND ends_at <= NOW()
          AND result_number IS NULL
          AND settled_at IS NULL
        LIMIT 1`
@@ -363,7 +425,9 @@ module.exports = async function handler(req, res) {
     try {
       client = await pool.connect();
 
-      // Settle due rounds first so results are ready at round end.
+      // Rounds must exist and finished rounds must be settled
+      // before we answer, so players never wait for cron.
+      await ensureRounds(client);
       await settleDueRounds(client);
 
       const timeResult = await client.query(
