@@ -6,18 +6,12 @@
 <meta name="theme-color" content="#0b0b0c">
 <title>Crypto Trader Pro</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="/languages.js" onerror="void 0"></script>
 
 <style>
 :root {
-  --bg:#0b0b0c;
-  --card:#151516;
-  --text:#f5f5f5;
-  --muted:#a1a1aa;
-  --border:#29292c;
-  --primary:#facc15;
-  --green:#22c55e;
-  --red:#ef3038;
-  --violet:#a855f7;
+  --bg:#0b0b0c; --card:#151516; --text:#f5f5f5; --muted:#a1a1aa;
+  --border:#29292c; --primary:#facc15; --green:#22c55e; --red:#ef3038; --violet:#a855f7;
 }
 * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html,body {
@@ -78,13 +72,18 @@ header {
 /* TIMER */
 .timer-card { text-align:center; padding:18px 16px; }
 .timer-card .row { color:#d4d4d8; }
-.period { font-size:12px; overflow-wrap:anywhere; margin-top:8px; }
-.timer {
-  width:108px; height:108px; margin:16px auto; display:flex;
-  align-items:center; justify-content:center; border:4px solid #333338;
-  border-right-color:#facc15; border-top-color:#facc15; border-radius:50%;
-  font-size:29px; color:#fff; box-shadow:0 0 0 5px #facc150a;
-  font-variant-numeric:tabular-nums;
+.period { font-size:14px; overflow-wrap:anywhere; margin-top:8px; font-variant-numeric:tabular-nums; }
+.ring { position:relative; width:124px; height:124px; margin:14px auto; }
+.ring svg { width:100%; height:100%; transform:rotate(-90deg); }
+.ring-bg { fill:none; stroke:#333338; stroke-width:8; }
+.ring-fg {
+  fill:none; stroke:#facc15; stroke-width:8; stroke-linecap:round;
+  transition:stroke-dashoffset 1s linear,stroke .3s;
+}
+.ring-fg.locked { stroke:#ef4444; }
+.timer-text {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:29px; color:#fff; font-variant-numeric:tabular-nums;
 }
 .status {
   display:inline-block; padding:7px 12px; border-radius:20px;
@@ -101,15 +100,13 @@ header {
 /* BETTING */
 .number-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:9px; margin:15px 0; }
 .number-btn {
-  min-width:0; min-height:48px; border-radius:12px; background:#202023;
-  border:1px solid #38383d; color:#f5f5f5; font-size:18px; font-weight:900;
-  box-shadow:inset 0 1px #ffffff08;
+  min-width:0; min-height:48px; border-radius:12px; border:0;
+  color:#fff; font-size:19px; font-weight:900; box-shadow:0 3px 12px #0005;
 }
-.number-btn.red { border-color:#3d292b; }
-.number-btn.green { border-color:#254331; }
-.number-btn.num-zero, .number-btn.num-five {
-  background:linear-gradient(135deg,#202023 0 50%,#33203d 50%); border-color:#493052;
-}
+.number-btn.red { background:#e32932; }
+.number-btn.green { background:#20b85a; color:#071b0e; }
+.number-btn.num-zero { background:linear-gradient(135deg,#a855f7 0 50%,#e32932 50%); }
+.number-btn.num-five { background:linear-gradient(135deg,#a855f7 0 50%,#20b85a 50%); }
 .option-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin:13px 0; }
 .option-btn {
   min-height:48px; padding:8px 4px; border-radius:11px; color:#fff;
@@ -119,9 +116,12 @@ header {
 .option-btn.green { background:#20b85a; color:#071b0e; }
 .option-btn.violet { background:#a34df2; }
 .big-small { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-.big-small button { border:1px solid #3a3a40; min-height:48px; border-radius:11px; font-weight:900; }
-.big-small .orange { background:#1d1b15; color:#facc15; border-color:#51421a; }
-.big-small .blue { background:#171d28; color:#93c5fd; border-color:#293d5a; }
+.big-small button {
+  border:0; min-height:48px; border-radius:11px; font-weight:900; color:#fff;
+  box-shadow:0 3px 12px #0005;
+}
+.big-small .orange { background:#f97316; }
+.big-small .blue { background:#14b8a6; }
 .primary-btn {
   width:100%; padding:14px; border-radius:11px; background:#facc15; color:#171717;
   font-weight:900; min-height:46px; box-shadow:0 5px 16px #facc151c;
@@ -186,6 +186,7 @@ label { font-weight:800; font-size:12px; }
 .trade.open .trade-body { display:block; }
 .kv { display:flex; justify-content:space-between; gap:10px; padding:4px 0; font-size:12px; }
 .kv span:first-child { color:#a1a1aa; }
+.kv.strong span:last-child { color:#facc15; font-weight:800; }
 .empty { text-align:center; padding:20px 7px; color:#a1a1aa; line-height:1.7; }
 
 /* REFERRAL */
@@ -196,6 +197,23 @@ label { font-weight:800; font-size:12px; }
 .stat { background:#19191b; border:1px solid #303034; border-radius:12px; padding:12px; }
 .stat .l { color:#a1a1aa; font-size:11px; }
 .stat .v { color:#facc15; font-size:20px; font-weight:900; margin-top:4px; }
+
+/* SETTINGS */
+.setting-row {
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:12px 0; border-bottom:1px solid #222225; font-weight:800;
+}
+.setting-row:last-child { border-bottom:0; }
+.switch {
+  width:52px; height:30px; border-radius:30px; background:#3a3a40;
+  position:relative; flex:none; transition:background .2s;
+}
+.switch i {
+  position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%;
+  background:#fff; transition:transform .2s;
+}
+.switch.on { background:#22c55e; }
+.switch.on i { transform:translateX(22px); }
 
 /* BOTTOM NAV */
 .bottom-nav {
@@ -237,7 +255,8 @@ label { font-weight:800; font-size:12px; }
 .amount-stepper { display:grid; grid-template-columns:45px minmax(0,1fr) 45px; gap:8px; }
 .amount-stepper button { border-radius:9px; background:#29292c; color:#facc15; font-size:21px; }
 .amount-stepper input { margin:0; text-align:center; }
-.lang-list { display:grid; gap:8px; margin-top:12px; }
+.breakdown { margin-top:12px; padding:10px 12px; background:#19191b; border:1px solid #303034; border-radius:11px; }
+.lang-list { display:grid; gap:8px; margin-top:12px; max-height:50vh; overflow:auto; }
 .lang-btn {
   padding:13px; border-radius:11px; background:#202023; color:#f5f5f5;
   border:1px solid #38383d; font-weight:800; text-align:left;
@@ -251,6 +270,15 @@ label { font-weight:800; font-size:12px; }
   text-align:center; line-height:1.5;
 }
 .toast.show { display:block; }
+
+.banner {
+  position:fixed; left:50%; top:12px; transform:translate(-50%,-140%);
+  width:calc(100% - 24px); max-width:560px; z-index:95; padding:12px 14px;
+  border-radius:13px; background:#1d1b15; border:1px solid #facc15; color:#f5f5f5;
+  font-weight:800; box-shadow:0 10px 30px #000a; transition:transform .3s;
+  display:flex; align-items:center; gap:10px; pointer-events:none;
+}
+.banner.show { transform:translate(-50%,0); }
 
 /* RESULT POPUP */
 .result-modal-number {
@@ -272,7 +300,7 @@ label { font-weight:800; font-size:12px; }
   .section { padding:0 10px; }
   .balance-card { margin:10px; }
   .card { padding:13px; }
-  .timer { width:96px; height:96px; font-size:26px; }
+  .ring { width:110px; height:110px; }
   .option-grid, .number-grid { gap:7px; }
   .option-btn { font-size:12px; }
   .number-btn { min-height:45px; }
@@ -281,6 +309,7 @@ label { font-weight:800; font-size:12px; }
 </head>
 
 <body>
+<div class="banner" id="banner" role="status" aria-live="polite"></div>
 <div class="app">
 
 <header>
@@ -314,7 +343,13 @@ label { font-weight:800; font-size:12px; }
         <span class="muted small" data-i18n="roundLen">3-minute round</span>
       </div>
       <div class="period" id="periodId">—</div>
-      <div class="timer" id="timer">--:--</div>
+      <div class="ring">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+          <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="52" stroke-dasharray="326.73" stroke-dashoffset="0"></circle>
+        </svg>
+        <div class="timer-text" id="timer">--:--</div>
+      </div>
       <span class="status" id="betStatus">…</span>
       <div class="notice" id="serverNotice">…</div>
     </div>
@@ -395,8 +430,19 @@ label { font-weight:800; font-size:12px; }
     </div>
 
     <div class="card">
-      <div class="section-title">🌐 <span data-i18n="language">Language</span></div>
-      <div class="lang-list" id="langListProfile"></div>
+      <div class="section-title">⚙️ <span data-i18n="settings">Settings</span></div>
+      <div class="setting-row">
+        <span>🔊 <span data-i18n="sound">Sound</span></span>
+        <button class="switch on" id="sndSwitch" type="button" role="switch" aria-checked="true"><i></i></button>
+      </div>
+      <div class="setting-row">
+        <span>📳 <span data-i18n="vibration">Vibration</span></span>
+        <button class="switch on" id="vibSwitch" type="button" role="switch" aria-checked="true"><i></i></button>
+      </div>
+      <div class="setting-row">
+        <span>🌐 <span data-i18n="language">Language</span>: <strong id="curLangName" style="color:#facc15"></strong></span>
+        <button class="sec-btn" id="langOpenBtn" type="button" data-i18n="change">Change</button>
+      </div>
     </div>
 
     <div class="card">
@@ -447,6 +493,8 @@ label { font-weight:800; font-size:12px; }
       <button id="plusAmount" type="button">+</button>
     </div>
 
+    <div class="breakdown" id="betBreakdown"></div>
+
     <div class="notice" data-i18n="betNote">Test credits only. A bet deducts test credits.</div>
     <button class="primary-btn" id="confirmBet" type="button" style="margin-top:14px" data-i18n="placeBet">Place Test Bet</button>
   </div>
@@ -486,6 +534,7 @@ label { font-weight:800; font-size:12px; }
       <div class="modal-title">🌐 <span data-i18n="language">Language</span></div>
       <button class="close-btn" data-close="langModal" type="button">✕</button>
     </div>
+    <input id="langSearch" type="search" autocomplete="off" style="margin:12px 0 0" data-i18n-ph="searchLang" placeholder="Search language">
     <div class="lang-list" id="langListModal"></div>
   </div>
 </div>
@@ -501,6 +550,10 @@ const tg = window.Telegram && window.Telegram.WebApp;
 const PAGE = 10;
 const ROUND_POLL = 3000;
 const USER_POLL = 6000;
+const ROUND_SECONDS = 180;
+const BETTING_SECONDS = 150;
+const FEE_PERCENT = 2;      // display only; the server calculates the real fee
+const RING_LENGTH = 326.73; // 2 * PI * 52
 
 /* ---------- LANGUAGES ---------- */
 const I18N = {
@@ -518,16 +571,17 @@ colPeriod:"Period", colNum:"Num", colBS:"B/S", colResult:"Result",
 colType:"Type", colAmount:"Amount", colStatus:"Status",
 range:"{from}-{to} of {total}",
 loading:"Loading…", noRounds:"No results yet.", noBets:"No bets recorded yet.",
-noTx:"No transactions yet.", noRef:"No referrals yet.",
+noTx:"No transactions yet.", noRef:"No referrals yet.", noLangs:"No language found.",
 success:"Success", fail:"Fail", pending:"Pending", cancelled:"Cancelled",
-dBet:"Bet", dStake:"Stake", dFee:"Fee", dPayout:"Payout", dResult:"Result", dTime:"Time", waiting:"waiting",
+dBet:"Bet", dStake:"Bet amount", dFee:"Fee", dActual:"Trade amount", dPayout:"Payout",
+dResult:"Result", dTime:"Time", waiting:"waiting", bkFee:"Fee ({pct}%)",
 bt_Number:"Number", bt_Red:"Red", bt_Green:"Green", bt_Violet:"Violet", bt_Big:"Big", bt_Small:"Small",
-stConnecting:"CONNECTING", stOpen:"BETTING OPEN", stLocked:"BETTING LOCKED",
+stConnecting:"CONNECTING", stSyncing:"SYNCING", stOpen:"BETTING OPEN", stLocked:"BETTING LOCKED",
 stError:"BACKEND ERROR", stTelegram:"TELEGRAM REQUIRED", stAuth:"AUTH REQUIRED",
 nConnecting:"Connecting to backend…",
 nConnected:"Connected to backend. Betting closes 30 seconds before each round ends.",
 nUnavailable:"Backend unavailable: {msg}",
-loadingRound:"Loading server round…", waitRound:"Waiting for next server round…",
+loadingRound:"Loading server round…",
 toastAuth:"Authenticate through Telegram first.",
 toastLocked:"Betting is locked. Wait for the next round.",
 toastAmount:"Enter an amount between 0.01 and 1000 test points (max 2 decimals).",
@@ -539,10 +593,12 @@ betNote:"Test credits only. A bet deducts test credits.", placeBet:"Place Test B
 rTitle:"ROUND RESULT", rPeriod:"Period", rNote:"The result was received from the game server.",
 rContinue:"CONTINUE", cRedV:"RED + VIOLET", cGreenV:"GREEN + VIOLET", cRed:"RED", cGreen:"GREEN",
 sBig:"BIG (5–9)", sSmall:"SMALL (0–4)",
+bannerResult:"Result {period}: {n} · {colour} · {size}",
 testBalance:"Database test-credit balance", deposit:"Deposit", withdraw:"Withdraw",
 txTitle:"Transactions",
 tx_deposit:"Deposit", tx_withdrawal:"Withdrawal", tx_bet:"Bet", tx_payout:"Payout", tx_refund:"Refund",
 s_completed:"Completed", s_confirmed:"Confirmed", s_pending:"Pending", s_rejected:"Rejected", s_failed:"Failed",
+txPlaced:"Placed",
 cashNotice:"Deposit and withdrawal are not enabled yet. They will be available after the payment backend is connected. Do not send any money or cryptocurrency.",
 close:"Close",
 refTitle:"Referral Program", yourLink:"Your referral link", yourCode:"Your referral code",
@@ -561,6 +617,8 @@ retryAuth:"Retry Authentication", notTg:"Not opened in Telegram",
 openInTg:"Open the Mini App inside Telegram to authenticate.",
 tgMissing:"Telegram initData missing", openOfficial:"Open the official Telegram Mini App.",
 verified:"Telegram identity verified by server.", tgUser:"Telegram user {id}",
+settings:"Settings", sound:"Sound", vibration:"Vibration", change:"Change",
+searchLang:"Search language",
 language:"Language", about:"About", aboutText:"Server-controlled rounds and test-credit wallet.",
 testingOnly:"Testing only."
 },
@@ -578,16 +636,17 @@ colPeriod:"पीरियड", colNum:"नंबर", colBS:"B/S", colResult:"�
 colType:"प्रकार", colAmount:"अमाउंट", colStatus:"स्टेटस",
 range:"{from}-{to} / {total}",
 loading:"लोड हो रहा है…", noRounds:"अभी कोई रिज़ल्ट नहीं।", noBets:"अभी कोई बेट नहीं।",
-noTx:"अभी कोई ट्रांज़ैक्शन नहीं।", noRef:"अभी कोई रेफरल नहीं।",
+noTx:"अभी कोई ट्रांज़ैक्शन नहीं।", noRef:"अभी कोई रेफरल नहीं।", noLangs:"कोई भाषा नहीं मिली।",
 success:"सफल", fail:"असफल", pending:"पेंडिंग", cancelled:"रद्द",
-dBet:"बेट", dStake:"स्टेक", dFee:"फीस", dPayout:"पेआउट", dResult:"रिज़ल्ट", dTime:"समय", waiting:"इंतज़ार",
+dBet:"बेट", dStake:"बेट अमाउंट", dFee:"फीस", dActual:"ट्रेड अमाउंट", dPayout:"पेआउट",
+dResult:"रिज़ल्ट", dTime:"समय", waiting:"इंतज़ार", bkFee:"फीस ({pct}%)",
 bt_Number:"नंबर", bt_Red:"लाल", bt_Green:"हरा", bt_Violet:"बैंगनी", bt_Big:"बड़ा", bt_Small:"छोटा",
-stConnecting:"कनेक्ट हो रहा है", stOpen:"बेटिंग खुली है", stLocked:"बेटिंग बंद है",
+stConnecting:"कनेक्ट हो रहा है", stSyncing:"सिंक हो रहा है", stOpen:"बेटिंग खुली है", stLocked:"बेटिंग बंद है",
 stError:"बैकएंड एरर", stTelegram:"टेलीग्राम ज़रूरी", stAuth:"ऑथ ज़रूरी",
 nConnecting:"बैकएंड से कनेक्ट हो रहा है…",
 nConnected:"बैकएंड से जुड़ गया। हर राउंड खत्म होने से 30 सेकंड पहले बेटिंग बंद हो जाती है।",
 nUnavailable:"बैकएंड उपलब्ध नहीं: {msg}",
-loadingRound:"सर्वर राउंड लोड हो रहा है…", waitRound:"अगले सर्वर राउंड का इंतज़ार…",
+loadingRound:"सर्वर राउंड लोड हो रहा है…",
 toastAuth:"पहले टेलीग्राम से ऑथेंटिकेट करें।",
 toastLocked:"बेटिंग बंद है। अगले राउंड का इंतज़ार करें।",
 toastAmount:"0.01 से 1000 टेस्ट पॉइंट के बीच अमाउंट डालें (अधिकतम 2 दशमलव)।",
@@ -599,10 +658,12 @@ betNote:"केवल टेस्ट क्रेडिट। बेट लग�
 rTitle:"राउंड रिज़ल्ट", rPeriod:"पीरियड", rNote:"रिज़ल्ट गेम सर्वर से मिला है।",
 rContinue:"जारी रखें", cRedV:"लाल + बैंगनी", cGreenV:"हरा + बैंगनी", cRed:"लाल", cGreen:"हरा",
 sBig:"बड़ा (5–9)", sSmall:"छोटा (0–4)",
+bannerResult:"रिज़ल्ट {period}: {n} · {colour} · {size}",
 testBalance:"डेटाबेस टेस्ट-क्रेडिट बैलेंस", deposit:"डिपॉज़िट", withdraw:"विदड्रॉ",
 txTitle:"ट्रांज़ैक्शन",
 tx_deposit:"डिपॉज़िट", tx_withdrawal:"विदड्रॉ", tx_bet:"बेट", tx_payout:"पेआउट", tx_refund:"रिफंड",
 s_completed:"पूरा", s_confirmed:"कन्फर्म", s_pending:"पेंडिंग", s_rejected:"रिजेक्ट", s_failed:"फेल",
+txPlaced:"लगाई गई",
 cashNotice:"डिपॉज़िट और विदड्रॉ अभी चालू नहीं हैं। पेमेंट बैकएंड जुड़ने के बाद उपलब्ध होंगे। कोई पैसा या क्रिप्टो न भेजें।",
 close:"बंद करें",
 refTitle:"रेफरल प्रोग्राम", yourLink:"आपका रेफरल लिंक", yourCode:"आपका रेफरल कोड",
@@ -621,6 +682,8 @@ retryAuth:"फिर से ऑथेंटिकेट करें", notTg:"�
 openInTg:"ऑथेंटिकेट करने के लिए मिनी ऐप टेलीग्राम के अंदर खोलें।",
 tgMissing:"टेलीग्राम initData नहीं मिला", openOfficial:"आधिकारिक टेलीग्राम मिनी ऐप खोलें।",
 verified:"सर्वर ने टेलीग्राम पहचान सत्यापित की।", tgUser:"टेलीग्राम यूज़र {id}",
+settings:"सेटिंग्स", sound:"साउंड", vibration:"वाइब्रेशन", change:"बदलें",
+searchLang:"भाषा खोजें",
 language:"भाषा", about:"जानकारी", aboutText:"सर्वर-नियंत्रित राउंड और टेस्ट-क्रेडिट वॉलेट।",
 testingOnly:"केवल टेस्टिंग।"
 },
@@ -638,16 +701,17 @@ colPeriod:"পিরিয়ড", colNum:"নম্বর", colBS:"B/S", colRes
 colType:"ধরন", colAmount:"অ্যামাউন্ট", colStatus:"স্ট্যাটাস",
 range:"{from}-{to} / {total}",
 loading:"লোড হচ্ছে…", noRounds:"এখনও কোনো রেজাল্ট নেই।", noBets:"এখনও কোনো বেট নেই।",
-noTx:"এখনও কোনো লেনদেন নেই।", noRef:"এখনও কোনো রেফারেল নেই।",
+noTx:"এখনও কোনো লেনদেন নেই।", noRef:"এখনও কোনো রেফারেল নেই।", noLangs:"কোনো ভাষা পাওয়া যায়নি।",
 success:"সফল", fail:"ব্যর্থ", pending:"পেন্ডিং", cancelled:"বাতিল",
-dBet:"বেট", dStake:"স্টেক", dFee:"ফি", dPayout:"পেআউট", dResult:"রেজাল্ট", dTime:"সময়", waiting:"অপেক্ষায়",
+dBet:"বেট", dStake:"বেট অ্যামাউন্ট", dFee:"ফি", dActual:"ট্রেড অ্যামাউন্ট", dPayout:"পেআউট",
+dResult:"রেজাল্ট", dTime:"সময়", waiting:"অপেক্ষায়", bkFee:"ফি ({pct}%)",
 bt_Number:"নম্বর", bt_Red:"লাল", bt_Green:"সবুজ", bt_Violet:"বেগুনি", bt_Big:"বড়", bt_Small:"ছোট",
-stConnecting:"সংযোগ হচ্ছে", stOpen:"বেটিং চালু", stLocked:"বেটিং বন্ধ",
+stConnecting:"সংযোগ হচ্ছে", stSyncing:"সিঙ্ক হচ্ছে", stOpen:"বেটিং চালু", stLocked:"বেটিং বন্ধ",
 stError:"ব্যাকএন্ড ত্রুটি", stTelegram:"টেলিগ্রাম প্রয়োজন", stAuth:"অথ প্রয়োজন",
 nConnecting:"ব্যাকএন্ডে সংযোগ হচ্ছে…",
 nConnected:"ব্যাকএন্ডে সংযুক্ত। প্রতিটি রাউন্ড শেষ হওয়ার ৩০ সেকেন্ড আগে বেটিং বন্ধ হয়।",
 nUnavailable:"ব্যাকএন্ড পাওয়া যাচ্ছে না: {msg}",
-loadingRound:"সার্ভার রাউন্ড লোড হচ্ছে…", waitRound:"পরবর্তী সার্ভার রাউন্ডের অপেক্ষা…",
+loadingRound:"সার্ভার রাউন্ড লোড হচ্ছে…",
 toastAuth:"আগে টেলিগ্রাম দিয়ে অথেন্টিকেট করুন।",
 toastLocked:"বেটিং বন্ধ। পরের রাউন্ডের অপেক্ষা করুন।",
 toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্বোচ্চ ২ দশমিক)।",
@@ -659,10 +723,12 @@ betNote:"শুধু টেস্ট ক্রেডিট। বেট দি�
 rTitle:"রাউন্ড রেজাল্ট", rPeriod:"পিরিয়ড", rNote:"রেজাল্ট গেম সার্ভার থেকে পাওয়া গেছে।",
 rContinue:"চালিয়ে যান", cRedV:"লাল + বেগুনি", cGreenV:"সবুজ + বেগুনি", cRed:"লাল", cGreen:"সবুজ",
 sBig:"বড় (5–9)", sSmall:"ছোট (0–4)",
+bannerResult:"রেজাল্ট {period}: {n} · {colour} · {size}",
 testBalance:"ডাটাবেস টেস্ট-ক্রেডিট ব্যালেন্স", deposit:"ডিপোজিট", withdraw:"উইথড্র",
 txTitle:"লেনদেন",
 tx_deposit:"ডিপোজিট", tx_withdrawal:"উইথড্র", tx_bet:"বেট", tx_payout:"পেআউট", tx_refund:"রিফান্ড",
 s_completed:"সম্পন্ন", s_confirmed:"নিশ্চিত", s_pending:"পেন্ডিং", s_rejected:"প্রত্যাখ্যাত", s_failed:"ব্যর্থ",
+txPlaced:"দেওয়া হয়েছে",
 cashNotice:"ডিপোজিট ও উইথড্র এখনও চালু হয়নি। পেমেন্ট ব্যাকএন্ড যুক্ত হলে পাওয়া যাবে। কোনো টাকা বা ক্রিপ্টো পাঠাবেন না।",
 close:"বন্ধ করুন",
 refTitle:"রেফারেল প্রোগ্রাম", yourLink:"আপনার রেফারেল লিংক", yourCode:"আপনার রেফারেল কোড",
@@ -681,26 +747,42 @@ retryAuth:"আবার অথেন্টিকেট করুন", notTg:"ট
 openInTg:"অথেন্টিকেট করতে মিনি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",
 tgMissing:"টেলিগ্রাম initData পাওয়া যায়নি", openOfficial:"অফিসিয়াল টেলিগ্রাম মিনি অ্যাপ খুলুন।",
 verified:"সার্ভার টেলিগ্রাম পরিচয় যাচাই করেছে।", tgUser:"টেলিগ্রাম ইউজার {id}",
+settings:"সেটিংস", sound:"সাউন্ড", vibration:"ভাইব্রেশন", change:"পরিবর্তন",
+searchLang:"ভাষা খুঁজুন",
 language:"ভাষা", about:"সম্পর্কে", aboutText:"সার্ভার-নিয়ন্ত্রিত রাউন্ড ও টেস্ট-ক্রেডিট ওয়ালেট।",
 testingOnly:"শুধু টেস্টিং।"
 }
 };
 
+// More languages can be added from /languages.js:
+// window.CTP_LANGS_EXTRA = { ur:{ name:"اردو", en:"Urdu", dir:"rtl", s:{ ...keys... } } };
+const EXTRA = (window.CTP_LANGS_EXTRA && typeof window.CTP_LANGS_EXTRA === "object")
+  ? window.CTP_LANGS_EXTRA : {};
+
 const LANGS = [
-  {code:"en",name:"English"},
-  {code:"hi",name:"हिन्दी"},
-  {code:"bn",name:"বাংলা"}
-];
+  {code:"en",name:"English",en:"English"},
+  {code:"hi",name:"हिन्दी",en:"Hindi"},
+  {code:"bn",name:"বাংলা",en:"Bengali"}
+].concat(Object.keys(EXTRA).filter(c => !I18N[c] && EXTRA[c] && EXTRA[c].s).map(c => ({
+  code:c,
+  name:EXTRA[c].name || c,
+  en:EXTRA[c].en || "",
+  dir:EXTRA[c].dir || "ltr"
+})));
+
+function dict(code){
+  return I18N[code] || (EXTRA[code] && EXTRA[code].s) || null;
+}
 
 function pickLang(){
   try {
     const saved = localStorage.getItem("ctp_lang");
-    if(saved && I18N[saved]) return saved;
+    if(saved && dict(saved)) return saved;
   } catch(_) {}
   try {
     const c = String(tg && tg.initDataUnsafe && tg.initDataUnsafe.user &&
                      tg.initDataUnsafe.user.language_code || "").slice(0,2);
-    if(I18N[c]) return c;
+    if(dict(c)) return c;
   } catch(_) {}
   return "en";
 }
@@ -708,7 +790,8 @@ function pickLang(){
 let lang = pickLang();
 
 function t(key,vars){
-  let s = (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
+  const d = dict(lang);
+  let s = (d && d[key]) || I18N.en[key] || key;
   if(vars){
     for(const k in vars){ s = s.split("{" + k + "}").join(String(vars[k])); }
   }
@@ -721,10 +804,58 @@ function tk(prefix,value){
 }
 
 function applyStatic(){
+  const meta = LANGS.find(l => l.code === lang);
   document.documentElement.lang = lang;
+  document.documentElement.dir = (meta && meta.dir) || "ltr";
   document.querySelectorAll("[data-i18n]").forEach(el => {
     el.textContent = t(el.dataset.i18n);
   });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el => {
+    el.placeholder = t(el.dataset.i18nPh);
+  });
+}
+
+/* ---------- SETTINGS (sound / vibration) ---------- */
+const settings = {sound:true,vibrate:true};
+
+function loadSettings(){
+  try {
+    const raw = localStorage.getItem("ctp_settings");
+    if(raw){
+      const o = JSON.parse(raw);
+      settings.sound = o.sound !== false;
+      settings.vibrate = o.vibrate !== false;
+    }
+  } catch(_) {}
+}
+
+function saveSettings(){
+  try { localStorage.setItem("ctp_settings",JSON.stringify(settings)); } catch(_) {}
+}
+
+function renderSettings(){
+  [["sndSwitch","sound"],["vibSwitch","vibrate"]].forEach(([id,key]) => {
+    const el = $(id);
+    el.classList.toggle("on",settings[key]);
+    el.setAttribute("aria-checked",settings[key] ? "true" : "false");
+  });
+}
+
+function haptic(kind){
+  if(!settings.vibrate) return;
+  try {
+    if(tg && tg.HapticFeedback){
+      if(kind === "success" || kind === "warning" || kind === "error"){
+        tg.HapticFeedback.notificationOccurred(kind);
+      } else {
+        tg.HapticFeedback.impactOccurred(kind === "heavy" ? "heavy" : "light");
+      }
+      return;
+    }
+  } catch(_) {}
+  try {
+    if(navigator.vibrate) navigator.vibrate(kind === "success" ? [30,40,30] : 25);
+  } catch(_) {}
 }
 
 /* ---------- STATE ---------- */
@@ -748,6 +879,7 @@ let activePage = "home";
 let currentBet = null;
 let pendingBetRequest = null;
 let toastTimer = null;
+let bannerTimer = null;
 let serverTimeOffset = 0;
 let roundsLoaded = false;
 let roundsFailed = false;
@@ -757,6 +889,7 @@ let roundsOk = false;
 let userOk = false;
 let lastRoundsSync = 0;
 let lastUserSync = 0;
+let lastRingFrac = 1;
 
 let firstResultShown = false;
 const seenResults = new Set();
@@ -797,9 +930,7 @@ function money(value){
     : "—";
 }
 
-function cents(value){
-  return Math.round(Number(value || 0) * 100);
-}
+function cents(value){ return Math.round(Number(value || 0) * 100); }
 
 function signedCents(c){
   const sign = c > 0 ? "+" : c < 0 ? "−" : "";
@@ -816,6 +947,28 @@ function dateUTC(value){
 }
 
 function nowMs(){ return Date.now() + serverTimeOffset; }
+
+// Period number shown to users: YYYYMMDDHHMM (seconds are always 00).
+function fmtPeriod(code){ return String(code || "").slice(0,12); }
+
+function p2(n){ return String(n).padStart(2,"0"); }
+
+function slotInfo(ms){
+  const size = ROUND_SECONDS * 1000;
+  const startMs = Math.floor(ms / size) * size;
+  const d = new Date(startMs);
+  const code = d.getUTCFullYear() + p2(d.getUTCMonth() + 1) + p2(d.getUTCDate()) +
+               p2(d.getUTCHours()) + p2(d.getUTCMinutes()) + p2(d.getUTCSeconds());
+  return {code,startMs,closesMs:startMs + BETTING_SECONDS * 1000,endsMs:startMs + size};
+}
+
+// Round end time derived from the 14-digit round code (UTC start + 180 s).
+function codeEnded(code){
+  const m = String(code || "").match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/);
+  if(!m) return true;
+  const start = Date.UTC(+m[1],+m[2] - 1,+m[3],+m[4],+m[5],+m[6]);
+  return nowMs() >= start + ROUND_SECONDS * 1000;
+}
 
 function revealed(r){
   return r && r.result_number !== null && r.result_number !== undefined &&
@@ -954,7 +1107,7 @@ function unlockAudio(){
 }
 
 function playTone(freq=700,duration=.09,type="sine",volume=.045,delay=0){
-  if(!audioUnlocked || !audioContext) return;
+  if(!settings.sound || !audioUnlocked || !audioContext) return;
   try {
     const osc = audioContext.createOscillator();
     const gain = audioContext.createGain();
@@ -974,6 +1127,7 @@ function playTone(freq=700,duration=.09,type="sine",volume=.045,delay=0){
 function playBetSound(){ playTone(880,.09,"sine",.06); playTone(1175,.12,"sine",.05,.09); }
 function playTickSound(){ playTone(950,.045,"square",.018); }
 function playLockSound(){ playTone(620,.13,"triangle",.06); playTone(420,.2,"triangle",.05,.13); }
+function playPing(){ playTone(1000,.08,"sine",.05); playTone(1300,.1,"sine",.04,.09); }
 function playResultSound(){
   playTone(660,.12,"sine",.06);
   playTone(880,.12,"sine",.06,.13);
@@ -1001,7 +1155,7 @@ function renderResults(){
     const body = rows.map(r => {
       const n = Number(r.result_number);
       return `<tr>
-        <td class="period">${esc(r.round_code)}</td>
+        <td class="period">${esc(fmtPeriod(r.round_code))}</td>
         <td class="${numTone(n)}">${esc(n)}</td>
         <td class="${n >= 5 ? "bs-b" : "bs-s"}">${n >= 5 ? "B" : "S"}</td>
         <td>${dotsHtml(n)}</td>
@@ -1031,16 +1185,30 @@ async function loadResults(){
 }
 
 /* ---------- TRADE HISTORY ---------- */
-function tradeInfo(b){
-  const s = String(b.status || "pending").toLowerCase();
-  if(s === "pending") return {cls:"pending",label:t("pending"),amt:null};
-  if(s === "cancelled") return {cls:"cancelled",label:t("cancelled"),amt:null};
-  const net = cents(b.payout) - cents(b.stake);
-  return {
-    cls:net > 0 ? "success" : "fail",
-    label:net > 0 ? t("success") : t("fail"),
-    amt:net
-  };
+// Bet 100 -> fee 2 -> actual trade 98.
+// Win: shows the payout (e.g. +196). Loss: shows the lost actual trade (e.g. -98).
+function tradeView(b){
+  const ended = codeEnded(b.round_code);
+  const status = ended ? String(b.status || "pending").toLowerCase() : "pending";
+  const stakeC = cents(b.stake);
+  const feeC = cents(b.fee);
+  const actualC = stakeC - feeC;
+  const payC = ended ? cents(b.payout) : 0;
+  const hasRes = ended && b.result_number !== null && b.result_number !== undefined;
+
+  let cls = "pending", label = t("pending"), amt = null;
+
+  if(status === "cancelled"){
+    cls = "cancelled"; label = t("cancelled");
+  } else if(status !== "pending"){
+    if(payC > actualC){
+      cls = "success"; label = t("success"); amt = payC;
+    } else {
+      cls = "fail"; label = t("fail"); amt = payC - actualC;
+    }
+  }
+
+  return {cls,label,amt,stakeC,feeC,actualC,payC,hasRes};
 }
 
 function renderTrades(){
@@ -1049,24 +1217,24 @@ function renderTrades(){
 
   if(list.length){
     html = list.map(b => {
-      const i = tradeInfo(b);
-      const hasRes = b.result_number !== null && b.result_number !== undefined;
+      const v = tradeView(b);
       const sel = b.bet_type === "Number" && b.selection !== null && b.selection !== undefined
         ? " · " + b.selection : "";
 
       return `<div class="trade">
         <div class="trade-head" data-trade="1">
-          <span class="trade-period">${esc(b.round_code)}</span>
-          <span class="trade-status ${i.cls}">${esc(i.label)}</span>
-          <span class="trade-amt ${i.cls}">${i.amt === null ? "" : esc(signedCents(i.amt))}</span>
+          <span class="trade-period">${esc(fmtPeriod(b.round_code))}</span>
+          <span class="trade-status ${v.cls}">${esc(v.label)}</span>
+          <span class="trade-amt ${v.cls}">${v.amt === null ? "" : esc(signedCents(v.amt))}</span>
           <span class="chev">⌄</span>
         </div>
         <div class="trade-body">
           <div class="kv"><span>${esc(t("dBet"))}</span><span>${esc(tk("bt_",b.bet_type) + sel)}</span></div>
-          <div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(b.stake))}</span></div>
-          <div class="kv"><span>${esc(t("dFee"))}</span><span>${esc(money(b.fee))}</span></div>
-          <div class="kv"><span>${esc(t("dPayout"))}</span><span>${esc(money(b.payout))}</span></div>
-          <div class="kv"><span>${esc(t("dResult"))}</span><span>${hasRes ? esc(b.result_number) : esc(t("waiting"))}</span></div>
+          <div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(v.stakeC / 100))}</span></div>
+          <div class="kv"><span>${esc(t("dFee"))}</span><span>${esc(money(v.feeC / 100))}</span></div>
+          <div class="kv strong"><span>${esc(t("dActual"))}</span><span>${esc(money(v.actualC / 100))}</span></div>
+          <div class="kv"><span>${esc(t("dPayout"))}</span><span>${esc(money(v.payC / 100))}</span></div>
+          <div class="kv"><span>${esc(t("dResult"))}</span><span>${v.hasRes ? esc(b.result_number) : esc(t("waiting"))}</span></div>
           <div class="kv"><span>${esc(t("dTime"))}</span><span>${esc(dateUTC(b.created_at))}</span></div>
         </div>
       </div>`;
@@ -1090,6 +1258,11 @@ async function loadTrades(silent){
 }
 
 /* ---------- WALLET ---------- */
+function txStatusLabel(x){
+  if(x.transaction_type === "bet" && x.status === "completed") return t("txPlaced");
+  return tk("s_",x.status);
+}
+
 function renderWallet(){
   const items = walletData.items || [];
   let html;
@@ -1101,7 +1274,7 @@ function renderWallet(){
       return `<tr>
         <td class="period">${esc(tk("tx_",type))}<div class="utc-time">${esc(dateUTC(x.created_at))}</div></td>
         <td class="${plus ? "n-green" : "n-red"}">${plus ? "+" : "−"}${esc(money(x.amount))}</td>
-        <td>${esc(tk("s_",x.status))}</td>
+        <td>${esc(txStatusLabel(x))}</td>
       </tr>`;
     }).join("");
 
@@ -1193,7 +1366,7 @@ function renderReferral(){
        </div>`;
 
   const commRows = (commData.items || []).map(c => `<tr>
-    <td class="period">${esc(c.round_code || "—")}<div class="utc-time">${esc(dateUTC(c.created_at))}</div></td>
+    <td class="period">${esc(fmtPeriod(c.round_code) || "—")}<div class="utc-time">${esc(dateUTC(c.created_at))}</div></td>
     <td>L${esc(c.referral_level)}</td>
     <td class="n-green">+${esc(money(c.commission_amount))}</td>
   </tr>`).join("");
@@ -1257,7 +1430,37 @@ async function applyReferral(){
   }
 }
 
-/* ---------- RESULT POPUP ---------- */
+// Referral link: bot forwards the code as ?ref=CODE (or start_param).
+async function applyReferralFromUrl(){
+  try {
+    const params = new URLSearchParams(window.location.search);
+    let code = (params.get("ref") || "").trim();
+
+    if(!code && tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param){
+      const m = String(tg.initDataUnsafe.start_param)
+        .match(/^ref_([A-Za-z0-9_-]{1,80})$/i);
+      if(m) code = m[1];
+    }
+
+    if(!/^[A-Za-z0-9_-]{1,80}$/.test(code)) return;
+
+    try {
+      if(sessionStorage.getItem("ctp_ref_done") === code) return;
+    } catch(_) {}
+
+    try {
+      await api("apply_referral",{referral_code:code});
+      referralData = null;
+      try { sessionStorage.setItem("ctp_ref_done",code); } catch(_) {}
+    } catch(error) {
+      if(/already|invalid|own|relationship/i.test(error.message || "")){
+        try { sessionStorage.setItem("ctp_ref_done",code); } catch(_) {}
+      }
+    }
+  } catch(_) {}
+}
+
+/* ---------- RESULT POPUP / BANNER ---------- */
 function queuePopup(round){
   if(queuedResults.has(round.round_code)) return;
   queuedResults.add(round.round_code);
@@ -1278,7 +1481,7 @@ function showNextResultPopup(){
 
   resultPopupOpen = true;
 
-  $("resultPopupPeriod").textContent = t("rPeriod") + " " + round.round_code;
+  $("resultPopupPeriod").textContent = t("rPeriod") + " " + fmtPeriod(round.round_code);
   $("resultPopupNumber").textContent = String(n);
   $("resultPopupNumber").style.background = popupBg(n);
   $("resultPopupColor").textContent = "🎨 " + popupColourName(n);
@@ -1286,9 +1489,7 @@ function showNextResultPopup(){
   $("resultModal").classList.add("open");
 
   playResultSound();
-  if(tg && tg.HapticFeedback){
-    try { tg.HapticFeedback.notificationOccurred("success"); } catch(_) {}
-  }
+  haptic("success");
 }
 
 function closeResultPopup(){
@@ -1297,9 +1498,27 @@ function closeResultPopup(){
   if(resultPopupQueue.length) setTimeout(showNextResultPopup,250);
 }
 
-// Popup rules:
-//  1) once when the game is opened (latest declared result),
-//  2) afterwards only for rounds where this user placed a bet.
+function showBanner(round){
+  const n = Number(round.result_number);
+  if(!Number.isInteger(n) || n < 0 || n > 9) return;
+
+  const text = t("bannerResult",{
+    period:fmtPeriod(round.round_code),
+    n:n,
+    colour:popupColourName(n),
+    size:tk("bt_",n >= 5 ? "Big" : "Small")
+  });
+
+  $("banner").innerHTML = `<span>${dotsHtml(n)}</span><span>${esc(text)}</span>`;
+  $("banner").classList.add("show");
+  clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(() => $("banner").classList.remove("show"),4500);
+}
+
+// Rules:
+//  1) one popup when the game is opened (latest declared result),
+//  2) afterwards a popup only for rounds where this user placed a bet,
+//  3) a small notification banner for every new result.
 function detectResults(){
   if(!authed) return;
 
@@ -1313,15 +1532,19 @@ function detectResults(){
     return;
   }
 
-  const fresh = rev.filter(r => !seenResults.has(r.round_code));
+  const fresh = rev
+    .filter(r => !seenResults.has(r.round_code))
+    .sort((a,b) => new Date(a.ends_at) - new Date(b.ends_at));
+
   if(!fresh.length) return;
 
   fresh.forEach(r => seenResults.add(r.round_code));
 
-  fresh
-    .filter(r => playedRounds.has(r.round_code))
-    .sort((a,b) => new Date(a.ends_at) - new Date(b.ends_at))
-    .forEach(queuePopup);
+  const played = fresh.filter(r => playedRounds.has(r.round_code));
+  played.forEach(queuePopup);
+
+  showBanner(fresh[fresh.length - 1]);
+  if(!played.length){ playPing(); haptic("light"); }
 
   syncUser(true);
 }
@@ -1410,34 +1633,58 @@ async function syncUser(){
   return userOk;
 }
 
-function updateRoundDisplay(){
-  const round = getActiveRound();
+function setRing(frac,locked){
+  const el = $("ringFg");
+  // Refill instantly when a new round starts; deplete smoothly otherwise.
+  el.style.transition = frac > lastRingFrac + 0.01 ? "none" : "";
+  el.style.strokeDashoffset = String(RING_LENGTH * (1 - frac));
+  el.classList.toggle("locked",locked);
+  lastRingFrac = frac;
+}
 
-  if(!round){
-    const waiting = roundsLoaded ? "waitRound" : "loadingRound";
-    $("periodId").textContent = t(waiting);
+function updateRoundDisplay(){
+  const server = getActiveRound();
+  let info = null;
+
+  if(server){
+    info = {
+      code:server.round_code,
+      endsMs:new Date(server.ends_at).getTime(),
+      open:isBettingOpen(server),
+      virtual:false
+    };
+  } else if(roundsLoaded){
+    // The server round is not loaded yet: show the real slot from server time.
+    const s = slotInfo(nowMs());
+    info = {code:s.code,endsMs:s.endsMs,open:false,virtual:true};
+  }
+
+  if(!info){
+    $("periodId").textContent = t("loadingRound");
     $("timer").textContent = "--:--";
-    setStatus(authBlock || (roundsFailed ? "stError" : roundsLoaded ? "stLocked" : "stConnecting"));
+    setRing(0,true);
+    setStatus(authBlock || (roundsFailed ? "stError" : "stConnecting"));
     updateBetButtons(false);
     previousBettingOpen = false;
     lastTickSecond = -1;
     return;
   }
 
-  $("periodId").textContent = round.round_code;
+  const left = Math.max(0,Math.ceil((info.endsMs - nowMs()) / 1000));
 
-  const endsAt = new Date(round.ends_at).getTime();
-  const left = Math.max(0,Math.ceil((endsAt - nowMs()) / 1000));
-  const bettingOpen = isBettingOpen(round);
-
+  $("periodId").textContent = fmtPeriod(info.code);
   $("timer").textContent =
     String(Math.floor(left / 60)).padStart(2,"0") + ":" + String(left % 60).padStart(2,"0");
 
-  setStatus(authBlock || (bettingOpen ? "stOpen" : "stLocked"));
-  updateBetButtons(bettingOpen && authed);
+  setRing(Math.min(1,left / ROUND_SECONDS),!info.open);
+  setStatus(authBlock || (info.virtual ? "stSyncing" : info.open ? "stOpen" : "stLocked"));
+  updateBetButtons(info.open && authed);
 
-  if(previousBettingOpen === true && !bettingOpen) playLockSound();
-  previousBettingOpen = bettingOpen;
+  if(previousBettingOpen === true && !info.open){
+    playLockSound();
+    haptic("light");
+  }
+  previousBettingOpen = info.open;
 
   if(left <= 30 && left > 0 && left !== lastTickSecond){
     playTickSound();
@@ -1446,10 +1693,10 @@ function updateRoundDisplay(){
     lastTickSecond = -1;
   }
 
-  if(lastDisplayedRoundCode !== round.round_code){
-    lastDisplayedRoundCode = round.round_code;
+  if(lastDisplayedRoundCode !== info.code){
+    lastDisplayedRoundCode = info.code;
     lastTickSecond = -1;
-    previousBettingOpen = bettingOpen;
+    previousBettingOpen = info.open;
   }
 }
 
@@ -1463,12 +1710,23 @@ function poll(){
   if(document.hidden) return;
 
   const now = Date.now();
-  const r = currentRound;
-  const ended = r && nowMs() >= new Date(r.ends_at).getTime();
 
-  if(!roundsBusy &&
-     (now - lastRoundsSync >= ROUND_POLL || (ended && now - lastRoundsSync >= 1000))){
-    syncRounds();
+  if(!roundsBusy){
+    const r = currentRound;
+    const ended = r && nowMs() >= new Date(r.ends_at).getTime();
+
+    // In the first 30 seconds of a round, keep asking until the
+    // previous round's result has arrived.
+    const slot = slotInfo(nowMs());
+    const prevCode = slotInfo(slot.startMs - 1).code;
+    const prevMissing = roundsLoaded &&
+      nowMs() - slot.startMs < 30000 &&
+      !latestRounds.some(x => x.round_code === prevCode && revealed(x));
+
+    const due = now - lastRoundsSync >= ROUND_POLL ||
+      ((ended || prevMissing) && now - lastRoundsSync >= 1000);
+
+    if(due) syncRounds();
   }
 
   if(authed && !userBusy && now - lastUserSync >= USER_POLL){
@@ -1546,6 +1804,7 @@ async function authenticate(){
 
     await syncRounds();
     await syncUser();
+    await applyReferralFromUrl();
   } catch(error) {
     authed = false;
     authBlock = "stError";
@@ -1556,6 +1815,19 @@ async function authenticate(){
 }
 
 /* ---------- BETTING ---------- */
+function renderBreakdown(){
+  const text = $("betAmount").value.trim();
+  const ok = /^\d{1,4}(\.\d{1,2})?$/.test(text);
+  const stakeC = ok ? cents(text) : 0;
+  const feeC = Math.floor((stakeC * FEE_PERCENT + 50) / 100); // round half up
+  const actualC = stakeC - feeC;
+
+  $("betBreakdown").innerHTML = `
+    <div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(stakeC / 100))}</span></div>
+    <div class="kv"><span>${esc(t("bkFee",{pct:FEE_PERCENT}))}</span><span>−${esc(money(feeC / 100))}</span></div>
+    <div class="kv strong"><span>${esc(t("dActual"))}</span><span>${esc(money(actualC / 100))}</span></div>`;
+}
+
 function openBet(type,selection = null){
   if(!authed){ toast(t("toastAuth")); return; }
 
@@ -1567,13 +1839,16 @@ function openBet(type,selection = null){
     return;
   }
 
+  haptic("light");
+
   currentBet = {type,selection,roundCode:round.round_code};
   pendingBetRequest = null;
 
   $("betModalTitle").textContent =
     t("betOn") + " " + tk("bt_",type) + (selection === null ? "" : " " + selection);
-  $("betModalPeriod").textContent = t("serverRound") + " " + round.round_code;
+  $("betModalPeriod").textContent = t("serverRound") + " " + fmtPeriod(round.round_code);
   $("betAmount").value = "100";
+  renderBreakdown();
   $("confirmBet").disabled = false;
   $("betModal").classList.add("open");
 }
@@ -1627,11 +1902,13 @@ async function confirmBet(){
     pendingBetRequest = null;
     $("betModal").classList.remove("open");
     playBetSound();
+    haptic("success");
     toast(t("toastBetOk"));
 
     tradePage = 1;
     await syncUser();
   } catch(error) {
+    haptic("error");
     toast(error.message || t("toastBetFail"));
   } finally {
     btn.disabled = false;
@@ -1654,17 +1931,35 @@ function showPage(name){
   window.scrollTo(0,0);
 }
 
-function renderLangButtons(){
-  const html = LANGS.map(l =>
-    `<button class="lang-btn${l.code === lang ? " active" : ""}" type="button" data-lang="${l.code}">${esc(l.name)}</button>`
-  ).join("");
-  $("langListProfile").innerHTML = html;
-  $("langListModal").innerHTML = html;
+function renderLangList(filter){
+  const q = String(filter || "").trim().toLowerCase();
+  const list = LANGS.filter(l => !q ||
+    l.name.toLowerCase().includes(q) ||
+    l.en.toLowerCase().includes(q) ||
+    l.code.toLowerCase().includes(q));
+
+  $("langListModal").innerHTML = list.length
+    ? list.map(l =>
+        `<button class="lang-btn${l.code === lang ? " active" : ""}" type="button" data-lang="${esc(l.code)}">${esc(l.name)}${l.en && l.en !== l.name ? " · " + esc(l.en) : ""}</button>`
+      ).join("")
+    : `<div class="empty">${esc(t("noLangs"))}</div>`;
+}
+
+function openLangModal(){
+  $("langSearch").value = "";
+  renderLangList("");
+  $("langModal").classList.add("open");
+}
+
+function renderCurrentLang(){
+  const meta = LANGS.find(l => l.code === lang);
+  $("curLangName").textContent = meta ? meta.name : lang;
 }
 
 function rerender(){
   applyStatic();
-  renderLangButtons();
+  renderCurrentLang();
+  renderSettings();
   renderProfile();
   setStatus(statusKey);
   setNotice(notice.key,notice.vars);
@@ -1676,7 +1971,7 @@ function rerender(){
 }
 
 function setLanguage(code){
-  if(!I18N[code]) return;
+  if(!dict(code)) return;
   lang = code;
   try { localStorage.setItem("ctp_lang",code); } catch(_) {}
   $("langModal").classList.remove("open");
@@ -1698,12 +1993,15 @@ function renderNumbers(){
 }
 
 function init(){
+  loadSettings();
+
   document.addEventListener("pointerdown",unlockAudio,{passive:true});
   document.addEventListener("keydown",unlockAudio);
 
   renderNumbers();
   applyStatic();
-  renderLangButtons();
+  renderCurrentLang();
+  renderSettings();
   renderProfile();
   setStatus("stConnecting");
   setNotice("nConnecting");
@@ -1719,12 +2017,27 @@ function init(){
   });
 
   $("headerProfile").onclick = () => showPage("profile");
-  $("headerLang").onclick = () => $("langModal").classList.add("open");
+  $("headerLang").onclick = openLangModal;
+  $("langOpenBtn").onclick = openLangModal;
+  $("langSearch").addEventListener("input",() => renderLangList($("langSearch").value));
   $("authRetry").onclick = authenticate;
   $("confirmBet").onclick = confirmBet;
   $("resultPopupClose").onclick = closeResultPopup;
   $("depositBtn").onclick = () => openCash("deposit");
   $("withdrawBtn").onclick = () => openCash("withdraw");
+
+  $("sndSwitch").onclick = () => {
+    settings.sound = !settings.sound;
+    saveSettings();
+    renderSettings();
+    if(settings.sound) playPing();
+  };
+  $("vibSwitch").onclick = () => {
+    settings.vibrate = !settings.vibrate;
+    saveSettings();
+    renderSettings();
+    if(settings.vibrate) haptic("success");
+  };
 
   $("resultModal").addEventListener("click",event => {
     if(event.target === $("resultModal")) closeResultPopup();
@@ -1748,17 +2061,23 @@ function init(){
     button.onclick = () => {
       $("betAmount").value = button.dataset.amount;
       pendingBetRequest = null;
+      renderBreakdown();
     };
   });
   $("minusAmount").onclick = () => {
     $("betAmount").value = Math.max(0.01,(Number($("betAmount").value) || 1) - 10).toFixed(2);
     pendingBetRequest = null;
+    renderBreakdown();
   };
   $("plusAmount").onclick = () => {
     $("betAmount").value = Math.min(1000,(Number($("betAmount").value) || 1) + 10).toFixed(2);
     pendingBetRequest = null;
+    renderBreakdown();
   };
-  $("betAmount").addEventListener("input",() => { pendingBetRequest = null; });
+  $("betAmount").addEventListener("input",() => {
+    pendingBetRequest = null;
+    renderBreakdown();
+  });
 
   // Delegated clicks: pagers, trade rows, language, copy/share/apply.
   document.addEventListener("click",async event => {
