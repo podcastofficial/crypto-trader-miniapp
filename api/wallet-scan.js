@@ -1,6 +1,5 @@
 "use strict";
 
-const crypto = require("crypto");
 const { Pool } = require("pg");
 
 const pool = new Pool({
@@ -8,334 +7,343 @@ const pool = new Pool({
   ssl: process.env.DATABASE_URL?.includes("localhost")
     ? false
     : { rejectUnauthorized: false },
-  max: 3,
+  max: 2,
   idleTimeoutMillis: 10000,
   connectionTimeoutMillis: 5000,
 });
 
-function send(res, status, data) {
+const TRANSFER_TOPIC =
+  "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+
+const ZERO_ADDRESS =
+  "0x0000000000000000000000000000000000000000";
+
+function json(res, status, data) {
   return res.status(status).json(data);
 }
 
-function verifyTelegramInitData(initData) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-
-  if (!token || typeof initData !== "string" || !initData) {
-    return null;
-  }
-
-  if (initData.length > 10000) return null;
-
-  let params;
-
-  try {
-    params = new URLSearchParams(initData);
-  } catch {
-    return null;
-  }
-
-  const receivedHash = params.get("hash");
-  const authDate = Number(params.get("auth_date"));
-  const userText = params.get("user");
-
-  if (
-    !receivedHash ||
-    !/^[a-f0-9]{64}$/i.test(receivedHash) ||
-    !Number.isSafeInteger(authDate) ||
-    !userText
-  ) {
-    return null;
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-
-  if (authDate > now + 30 || now - authDate > 3600) {
-    return null;
-  }
-
-  let telegramUser;
-
-  try {
-    telegramUser = JSON.parse(userText);
-  } catch {
-    return null;
-  }
-
-  if (
-    !telegramUser ||
-    !Number.isSafeInteger(Number(telegramUser.id)) ||
-    Number(telegramUser.id) <= 0
-  ) {
-    return null;
-  }
-
-  params.delete("hash");
-
-  const dataCheckString = [...params.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}=${value}`)
-    .join("\n");
-
-  const secretKey = crypto
-    .createHmac("sha256", "WebAppData")
-    .update(token)
-    .digest();
-
-  const calculatedHash = crypto
-    .createHmac("sha256", secretKey)
-    .update(dataCheckString)
-    .digest();
-
-  const receivedBuffer = Buffer.from(receivedHash, "hex");
-
-  if (
-    receivedBuffer.length !== calculatedHash.length ||
-    !crypto.timingSafeEqual(calculatedHash, receivedBuffer)
-  ) {
-    return null;
-  }
-
-  return telegramUser;
+function getAddressTopic(address) {
+  return "0x" + address.toLowerCase().replace(/^0x/, "").padStart(64, "0");
 }
 
-function validAmount(value) {
-  const str = String(value ?? "");
-
-  if (!/^\d{1,5}(\.\d{1,8})?$/.test(str)) {
-    return false;
+function parseAddressTopic(topic) {
+  if (!topic || !/^0x[0-9a-f]{64}$/i.test(topic)) {
+    return null;
   }
 
-  const amount = Number(str);
-
-  return Number.isFinite(amount) && amount >= 1 && amount <= 10000;
+  return "0x" + topic.slice(-40).toLowerCase();
 }
 
-function validBep20Address(address) {
-  return typeof address === "string" &&
-    /^0x[a-fA-F0-9]{40}$/.test(address);
+async function rpc(method, params = []) {
+  const endpoint = process.env.BSC_RPC_URL;
+
+  if (!endpoint) {
+    throw new Error("BSC_RPC_URL is not configured.");
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method,
+        params,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`BSC RPC HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error.message || "BSC RPC error");
+    }
+
+    return data.result;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function normalizeBlockNumber(value) {
+  if (!value || !/^0x[0-9a-f]+$/i.test(value)) {
+    throw new Error("Invalid block number from RPC.");
+  }
+
+  return BigInt(value);
 }
 
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
-  if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
+  if (req.method !== "GET" && req.method !== "POST") {
+    res.setHeader("Allow", "GET, POST");
 
-    return send(res, 405, {
+    return json(res, 405, {
       success: false,
       message: "Method not allowed.",
     });
   }
 
-  const body =
-    req.body && typeof req.body === "object" ? req.body : {};
+  const secret = process.env.CRON_SECRET;
 
-  const telegramUser = verifyTelegramInitData(body.initData);
-
-  if (!telegramUser) {
-    return send(res, 401, {
+  if (!secret) {
+    return json(res, 503, {
       success: false,
-      message: "Telegram authentication failed. Reopen the Mini App.",
+      message: "CRON_SECRET is not configured.",
     });
   }
 
-  const action = String(body.action || "");
-  const telegramId = String(telegramUser.id);
+  const authorization = req.headers.authorization || "";
+
+  if (authorization !== `Bearer ${secret}`) {
+    return json(res, 401, {
+      success: false,
+      message: "Unauthorized.",
+    });
+  }
+
+  const tokenAddress = String(
+    process.env.USDT_BEP20_TOKEN_ADDRESS || ""
+  ).toLowerCase();
+
+  const depositAddress = String(
+    process.env.USDT_BEP20_DEPOSIT_ADDRESS || ""
+  ).toLowerCase();
+
+  const requiredConfirmations = Number(
+    process.env.BSC_MIN_CONFIRMATIONS || "12"
+  );
+
+  if (
+    !/^0x[a-f0-9]{40}$/.test(tokenAddress) ||
+    !/^0x[a-f0-9]{40}$/.test(depositAddress) ||
+    !Number.isInteger(requiredConfirmations) ||
+    requiredConfirmations < 1 ||
+    requiredConfirmations > 1000
+  ) {
+    return json(res, 503, {
+      success: false,
+      message: "BSC token, deposit address or confirmation settings are invalid.",
+    });
+  }
 
   let client;
 
   try {
+    // Confirm RPC is reachable and get the current block.
+    const headHex = await rpc("eth_blockNumber");
+    const head = normalizeBlockNumber(headHex);
+
+    const tokenCode = await rpc("eth_getCode", [
+      tokenAddress,
+      "latest",
+    ]);
+
+    if (!tokenCode || tokenCode === "0x") {
+      return json(res, 503, {
+        success: false,
+        message: "No contract code found at the configured token address.",
+      });
+    }
+
+    // Confirm the contract exposes decimals().
+    const decimalsHex = await rpc("eth_call", [
+      {
+        to: tokenAddress,
+        data: "0x313ce567",
+      },
+      "latest",
+    ]);
+
+    if (
+      !decimalsHex ||
+      !/^0x[0-9a-f]+$/i.test(decimalsHex)
+    ) {
+      return json(res, 503, {
+        success: false,
+        message: "Could not read token decimals.",
+      });
+    }
+
+    const decimals = Number(BigInt(decimalsHex));
+
+    if (!Number.isInteger(decimals) || decimals < 0 || decimals > 36) {
+      return json(res, 503, {
+        success: false,
+        message: "Token decimals are invalid.",
+      });
+    }
+
+    const safeHead =
+      head >= BigInt(requiredConfirmations - 1)
+        ? head - BigInt(requiredConfirmations - 1)
+        : 0n;
+
     client = await pool.connect();
 
-    const userResult = await client.query(
-      `SELECT id, telegram_id
-       FROM public.users
-       WHERE telegram_id = $1
-       LIMIT 1`,
-      [telegramId]
+    // This lock is independent of the game cron lock.
+    await client.query("BEGIN");
+
+    const lockResult = await client.query(
+      `SELECT pg_try_advisory_xact_lock(739184206) AS locked`
     );
 
-    if (userResult.rowCount !== 1) {
-      return send(res, 404, {
-        success: false,
-        message: "User not found. Authenticate through the main app first.",
-      });
-    }
+    if (!lockResult.rows[0].locked) {
+      await client.query("ROLLBACK");
 
-    const userId = userResult.rows[0].id;
-
-    // WALLET HISTORY
-    if (action === "history") {
-      const balanceResult = await client.query(
-        `SELECT balance
-         FROM public.real_wallet_balances
-         WHERE user_id = $1`,
-        [userId]
-      );
-
-      const historyResult = await client.query(
-        `SELECT id, transaction_type, amount, status,
-                network, tx_hash, destination_address,
-                admin_note, created_at, updated_at,
-                reviewed_at
-         FROM public.real_wallet_ledger
-         WHERE user_id = $1
-         ORDER BY created_at DESC
-         LIMIT 50`,
-        [userId]
-      );
-
-      return send(res, 200, {
+      return json(res, 200, {
         success: true,
-        balance: balanceResult.rows[0]?.balance || "0",
-        transactions: historyResult.rows,
+        skipped: true,
+        message: "Another wallet scan is already running.",
       });
     }
 
-    // CREATE DEPOSIT REQUEST
-    if (action === "deposit_request") {
-      if (!validAmount(body.amount)) {
-        return send(res, 400, {
-          success: false,
-          message: "Enter an amount between 1 and 10000 USDT.",
-        });
-      }
+    const stateResult = await client.query(
+      `SELECT last_scanned_block
+       FROM public.real_wallet_scan_state
+       WHERE id = 1
+       FOR UPDATE`
+    );
 
-      const depositAddress =
-        process.env.USDT_BEP20_DEPOSIT_ADDRESS;
+    let lastScanned = stateResult.rowCount
+      ? BigInt(stateResult.rows[0].last_scanned_block)
+      : 0n;
 
-      if (!validBep20Address(depositAddress)) {
-        return send(res, 503, {
-          success: false,
-          message: "Deposit address is not configured correctly.",
-        });
-      }
-
-      await client.query("BEGIN");
-
-      try {
-        // Lock this user's active deposit requests to reduce races.
-        await client.query(
-          `SELECT pg_advisory_xact_lock($1::bigint)`,
-          [String(userId)]
-        );
-
-        const existing = await client.query(
-          `SELECT id, amount, status, network,
-                  destination_address, request_expires_at
-           FROM public.real_wallet_ledger
-           WHERE user_id = $1
-             AND transaction_type = 'deposit'
-             AND status = 'pending'
-             AND request_expires_at > NOW()
-           ORDER BY created_at DESC
-           LIMIT 1`,
-          [userId]
-        );
-
-        if (existing.rowCount > 0) {
-          await client.query("COMMIT");
-
-          return send(res, 200, {
-            success: true,
-            message: "You already have an active deposit request.",
-            deposit: existing.rows[0],
-          });
-        }
-
-        const baseAmount = Number(body.amount);
-
-        // Unique 4-decimal request amount.
-        // Blockchain scanner must match this exact amount.
-        const suffix = crypto.randomInt(1, 9999) / 10000;
-        const uniqueAmount = (baseAmount + suffix).toFixed(4);
-
-        // Prevent a collision with another active deposit request.
-        const collision = await client.query(
-          `SELECT id
-           FROM public.real_wallet_ledger
-           WHERE transaction_type = 'deposit'
-             AND status = 'pending'
-             AND request_expires_at > NOW()
-             AND amount = $1
-           LIMIT 1`,
-          [uniqueAmount]
-        );
-
-        if (collision.rowCount > 0) {
-          await client.query("ROLLBACK");
-
-          return send(res, 409, {
-            success: false,
-            message:
-              "A matching deposit amount is already reserved. Please try again.",
-          });
-        }
-
-        const result = await client.query(
-          `INSERT INTO public.real_wallet_ledger
-             (user_id, transaction_type, amount, status,
-              network, destination_address, request_expires_at)
-           VALUES
-             ($1, 'deposit', $2, 'pending',
-              'BEP20', $3, NOW() + INTERVAL '30 minutes')
-           RETURNING id, amount, status, network,
-                     destination_address, request_expires_at`,
-          [userId, uniqueAmount, depositAddress]
-        );
-
-        await client.query("COMMIT");
-
-        return send(res, 201, {
-          success: true,
-          message:
-            "Deposit request created. Automatic crediting is not enabled yet.",
-          deposit: result.rows[0],
-        });
-      } catch (error) {
-        await client.query("ROLLBACK");
-        throw error;
-      }
+    // Initial run starts near the chain head rather than scanning
+    // the entire blockchain from genesis.
+    if (lastScanned === 0n) {
+      lastScanned = safeHead > 0n ? safeHead - 100n : 0n;
     }
 
-    // WITHDRAWALS REMAIN DISABLED UNTIL SAFE RESERVATION
-    // AND AUTHENTICATED ADMIN REVIEW ARE IMPLEMENTED.
-    if (action === "withdraw_request") {
-      if (!validAmount(body.amount)) {
-        return send(res, 400, {
-          success: false,
-          message: "Enter an amount between 1 and 10000 USDT.",
-        });
-      }
+    if (safeHead <= lastScanned) {
+      await client.query("COMMIT");
 
-      if (!validBep20Address(body.address)) {
-        return send(res, 400, {
-          success: false,
-          message: "Enter a valid BEP-20 wallet address.",
-        });
-      }
-
-      return send(res, 503, {
-        success: false,
-        message:
-          "Withdrawals are disabled until balance reservation and secure admin approval are implemented.",
+      return json(res, 200, {
+        success: true,
+        message: "No new confirmed blocks to scan.",
+        scannedThrough: lastScanned.toString(),
+        decimals,
       });
     }
 
-    return send(res, 400, {
-      success: false,
-      message: "Unknown wallet action.",
+    // Keep each request bounded to avoid public RPC range limits.
+    const maxBlocks = 500n;
+    const fromBlock = lastScanned + 1n;
+    const toBlock =
+      safeHead - fromBlock + 1n > maxBlocks
+        ? fromBlock + maxBlocks - 1n
+        : safeHead;
+
+    const logs = await rpc("eth_getLogs", [
+      {
+        fromBlock: "0x" + fromBlock.toString(16),
+        toBlock: "0x" + toBlock.toString(16),
+        address: tokenAddress,
+        topics: [
+          TRANSFER_TOPIC,
+          null,
+          getAddressTopic(depositAddress),
+        ],
+      },
+    ]);
+
+    if (!Array.isArray(logs)) {
+      throw new Error("RPC returned invalid logs.");
+    }
+
+    const detected = [];
+
+    for (const log of logs) {
+      if (
+        !log ||
+        log.removed ||
+        !Array.isArray(log.topics) ||
+        log.topics.length < 3
+      ) {
+        continue;
+      }
+
+      const to = parseAddressTopic(log.topics[2]);
+
+      if (to !== depositAddress) continue;
+
+      if (
+        !log.data ||
+        !/^0x[0-9a-f]+$/i.test(log.data) ||
+        !/^0x[0-9a-f]{64}$/i.test(log.transactionHash || "")
+      ) {
+        continue;
+      }
+
+      const rawAmount = BigInt(log.data);
+
+      if (rawAmount <= 0n) continue;
+
+      const blockNumber = normalizeBlockNumber(log.blockNumber);
+      const confirmations = head - blockNumber + 1n;
+
+      if (confirmations < BigInt(requiredConfirmations)) {
+        continue;
+      }
+
+      detected.push({
+        transactionHash: log.transactionHash.toLowerCase(),
+        from: parseAddressTopic(log.topics[1]),
+        to,
+        rawAmount: rawAmount.toString(),
+        blockNumber: blockNumber.toString(),
+        confirmations: confirmations.toString(),
+      });
+    }
+
+    // This version ONLY reports verified transfer events.
+    // It intentionally does not credit wallet balances.
+    await client.query(
+      `UPDATE public.real_wallet_scan_state
+       SET last_scanned_block = $1,
+           updated_at = NOW()
+       WHERE id = 1`,
+      [toBlock.toString()]
+    );
+
+    await client.query("COMMIT");
+
+    return json(res, 200, {
+      success: true,
+      message:
+        "Confirmed transfer scan completed. No wallet balances were credited.",
+      tokenAddress,
+      depositAddress,
+      tokenDecimals: decimals,
+      requiredConfirmations,
+      scannedFrom: fromBlock.toString(),
+      scannedThrough: toBlock.toString(),
+      detectedCount: detected.length,
+      detectedTransfers: detected.slice(0, 50),
     });
   } catch (error) {
-    console.error("Wallet API error:", error.message);
+    if (client) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (_) {}
+    }
 
-    return send(res, 500, {
+    console.error("Wallet scanner error:", error.message);
+
+    return json(res, 500, {
       success: false,
-      message: "Wallet service temporarily unavailable.",
+      message: "Wallet scan failed. Check RPC support and server logs.",
     });
   } finally {
-    if (client) {
-      client.release();
-    }
+    if (client) client.release();
   }
 };
