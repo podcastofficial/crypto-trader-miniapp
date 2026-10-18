@@ -1,8 +1,8 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#07111f">
 <title>Crypto Trader Pro Admin</title>
@@ -11,8 +11,9 @@
 :root {
   color-scheme: dark;
   --bg: #07111f;
-  --surface: #0b1728;
-  --line: #1e3857;
+  --card: #0e1c2e;
+  --card2: #12243a;
+  --line: #203954;
   --text: #e8f2ff;
   --muted: #91a8c4;
   --blue: #268cff;
@@ -26,26 +27,41 @@
   box-sizing: border-box;
 }
 
+html {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
   background:
-    radial-gradient(ellipse at 80% -10%, #15365a 0, transparent 40%),
+    radial-gradient(ellipse at 80% 0%, #15365a 0, transparent 38%),
     var(--bg);
   color: var(--text);
-  font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 button, input, select {
   font: inherit;
+  max-width: 100%;
 }
 
 button {
-  background: #11243b;
+  background: var(--card2);
   color: var(--text);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 9px;
   padding: 9px 12px;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 button:hover {
@@ -60,7 +76,7 @@ button:disabled {
 button.primary,
 nav button.active {
   background: linear-gradient(135deg, #1678ee, #2aa8ff);
-  border-color: #359cff;
+  border-color: var(--blue);
   color: white;
 }
 
@@ -68,8 +84,8 @@ input, select {
   background: #081525;
   color: var(--text);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px 12px;
+  border-radius: 9px;
+  padding: 10px;
   min-width: 0;
 }
 
@@ -92,68 +108,80 @@ input:focus, select:focus {
 header {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 20;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 20px;
-  background: #07111fee;
-  backdrop-filter: blur(12px);
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #07111ff5;
   border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(12px);
 }
 
 .brand {
   display: flex;
-  gap: 10px;
   align-items: center;
+  gap: 9px;
+  min-width: 0;
 }
 
 .logo {
+  flex: 0 0 38px;
   width: 38px;
   height: 38px;
-  border-radius: 12px;
   display: grid;
   place-items: center;
+  border-radius: 11px;
   background: linear-gradient(145deg, #187cff, #55d6ff);
   color: #04101e;
   font-weight: 900;
 }
 
 .brand h1 {
-  font-size: 14px;
   margin: 0;
+  font-size: 14px;
 }
 
 .brand p {
+  margin: 2px 0 0;
   font-size: 10px;
   color: var(--muted);
-  margin: 2px 0 0;
 }
 
 .head-actions {
   display: flex;
-  gap: 8px;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+#appView {
+  width: 100%;
+  min-width: 0;
 }
 
 .layout {
   display: grid;
-  grid-template-columns: 210px minmax(0, 1fr);
+  grid-template-columns: 205px minmax(0, 1fr);
+  width: 100%;
   max-width: 1600px;
-  margin: auto;
-  min-height: calc(100vh - 64px);
+  margin: 0 auto;
+  min-height: calc(100vh - 62px);
 }
 
 aside {
-  padding: 16px 10px;
+  min-width: 0;
+  padding: 12px 8px;
+  background: #081423cc;
   border-right: 1px solid var(--line);
-  background: #081423aa;
 }
 
 nav {
   display: grid;
   gap: 5px;
+  width: 100%;
+  min-width: 0;
 }
 
 nav button {
@@ -161,47 +189,50 @@ nav button {
   background: transparent;
   border-color: transparent;
   color: #a9bdd5;
+  min-width: 0;
 }
 
 nav button.active {
   background: #12345a;
   border-color: #1f5e9a;
-  color: white;
   box-shadow: inset 3px 0 var(--cyan);
 }
 
 main {
-  padding: clamp(14px, 3vw, 28px);
   min-width: 0;
+  width: 100%;
+  padding: clamp(12px, 2.5vw, 26px);
 }
 
 .pagehead {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 15px;
 }
 
 .pagehead h2 {
-  font-size: 23px;
   margin: 0;
+  font-size: 23px;
 }
 
 .pagehead p {
-  font-size: 12px;
-  color: var(--muted);
   margin: 4px 0;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .search {
   display: flex;
   gap: 8px;
-  max-width: 620px;
-  margin-bottom: 18px;
+  width: 100%;
+  max-width: 680px;
+  margin-bottom: 16px;
 }
 
 .search input {
-  flex: 1;
+  flex: 1 1 auto;
   width: 100%;
 }
 
@@ -213,11 +244,12 @@ main {
 }
 
 .card {
+  min-width: 0;
+  overflow-wrap: anywhere;
   background: linear-gradient(145deg, #12243a, #0d1b2c);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 14px;
-  min-width: 0;
+  border-radius: 13px;
+  padding: 13px;
 }
 
 .card .l {
@@ -226,21 +258,21 @@ main {
 }
 
 .card .v {
-  font-size: clamp(17px, 2vw, 23px);
+  font-size: clamp(16px, 2vw, 23px);
   font-weight: 750;
-  margin-top: 7px;
+  margin-top: 6px;
   overflow-wrap: anywhere;
 }
 
 .card .s {
-  font-size: 11px;
   color: #7593b5;
+  font-size: 11px;
   margin-top: 4px;
 }
 
 h3 {
   font-size: 14px;
-  margin: 22px 0 10px;
+  margin: 21px 0 10px;
 }
 
 .note {
@@ -250,6 +282,7 @@ h3 {
   padding: 10px 12px;
   margin: 10px 0;
   font-size: 12px;
+  overflow-wrap: anywhere;
 }
 
 .note.warn {
@@ -264,8 +297,9 @@ h3 {
 
 .filters {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
   margin: 12px 0;
 }
 
@@ -275,9 +309,13 @@ h3 {
 }
 
 .wrap {
-  overflow: auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 11px;
   background: #091625;
 }
 
@@ -288,7 +326,7 @@ table {
 }
 
 th, td {
-  padding: 10px;
+  padding: 9px 10px;
   text-align: left;
   white-space: nowrap;
   border-bottom: 1px solid #1a3049;
@@ -309,6 +347,7 @@ tr:last-child td {
 
 .pager {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
@@ -353,32 +392,63 @@ tr:last-child td {
 }
 
 .panel {
-  background: var(--surface);
+  min-width: 0;
+  background: var(--card);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 12px;
+}
+
+.chartbox {
+  min-width: 0;
+  overflow: hidden;
+  background: #0a1829;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.chartbox svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.legend {
+  color: var(--muted);
+  font-size: 11px;
+  padding-top: 8px;
+}
+
+.empty {
+  padding: 18px;
+  text-align: center;
+  color: var(--muted);
 }
 
 .login-wrap {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
-  padding: 20px;
+  padding: 18px;
   background:
     radial-gradient(ellipse at 50% 10%, #123a66 0, transparent 45%),
     var(--bg);
 }
 
 .login {
-  width: min(410px, 100%);
-  padding: 25px;
+  width: 100%;
+  max-width: 410px;
+  padding: 24px;
   background: linear-gradient(145deg, #10223a, #0a1727);
   border: 1px solid #245080;
-  border-radius: 20px;
+  border-radius: 18px;
 }
 
 .login h2 {
-  margin: 0;
+  margin: 12px 0 0;
 }
 
 .login p {
@@ -387,8 +457,9 @@ tr:last-child td {
 }
 
 .login input {
+  display: block;
   width: 100%;
-  margin: 6px 0 12px;
+  margin: 6px 0 13px;
 }
 
 .login button {
@@ -399,49 +470,42 @@ tr:last-child td {
   font-size: 11px;
 }
 
-.legend {
-  color: var(--muted);
-  font-size: 11px;
-  padding-top: 8px;
-}
-
-.chartbox {
-  background: #0a1829;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 12px;
-  margin-bottom: 12px;
-}
-
-.empty {
-  padding: 18px;
-  text-align: center;
-  color: var(--muted);
-}
-
-@media(max-width:900px) {
+@media (max-width: 900px) {
   .layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   aside {
     position: sticky;
-    top: 62px;
-    z-index: 8;
+    top: 61px;
+    z-index: 15;
+    width: 100%;
+    padding: 6px;
     border-right: 0;
     border-bottom: 1px solid var(--line);
-    padding: 7px;
-    background: #07111ff2;
+    overflow: hidden;
+    background: #07111ff5;
   }
 
   nav {
     display: flex;
-    overflow: auto;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
   }
 
   nav button {
+    flex: 0 0 auto;
     white-space: nowrap;
     font-size: 12px;
+    padding: 9px 11px;
+  }
+
+  main {
+    width: 100%;
+    padding: 14px;
   }
 
   .cards {
@@ -449,37 +513,84 @@ tr:last-child td {
   }
 }
 
-@media(max-width:480px) {
+@media (max-width: 480px) {
   header {
-    padding: 10px;
-  }
-
-  .brand p {
-    display: none;
+    padding: 9px 10px;
+    gap: 7px;
   }
 
   .brand h1 {
     font-size: 12px;
   }
 
+  .brand p {
+    display: none;
+  }
+
+  .logo {
+    flex-basis: 32px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .head-actions {
+    gap: 5px;
+  }
+
   .head-actions button {
-    padding: 8px;
+    font-size: 11px;
+    padding: 7px 8px;
+  }
+
+  aside {
+    top: 51px;
+  }
+
+  main {
+    padding: 10px;
   }
 
   .pagehead h2 {
-    font-size: 20px;
+    font-size: 19px;
   }
 
   .cards {
-    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
   }
 
   .card {
-    padding: 11px;
+    padding: 10px;
   }
 
   .card .v {
-    font-size: 17px;
+    font-size: 16px;
+  }
+
+  .search {
+    gap: 6px;
+  }
+
+  .search button {
+    padding: 8px 10px;
+  }
+
+  .search input {
+    font-size: 13px;
+  }
+
+  .login {
+    padding: 19px;
+  }
+}
+
+@media (max-width: 340px) {
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .head-actions button {
+    padding: 6px;
   }
 }
 </style>
@@ -491,21 +602,24 @@ tr:last-child td {
   <div class="login">
     <div class="logo">CT</div>
     <h2>Admin Console</h2>
-    <p>Crypto Trader Pro · Secure administrator access</p>
+    <p>Crypto Trader Pro · Administrator access</p>
 
     <form id="loginForm">
-      <label>Username</label>
-      <input id="u" autocomplete="username" required maxlength="200">
+      <label for="u">Username</label>
+      <input id="u" type="text" autocomplete="username"
+             maxlength="200" required>
 
-      <label>Password</label>
+      <label for="p">Password</label>
       <input id="p" type="password" autocomplete="current-password"
-             required maxlength="200">
+             maxlength="200" required>
 
-      <button id="loginBtn" class="primary">Sign in securely</button>
+      <button id="loginBtn" class="primary" type="submit">
+        Sign in securely
+      </button>
     </form>
 
     <p id="loginMsg" class="err"></p>
-    <div class="small muted">Protected admin area · Keep credentials private</div>
+    <div class="small muted">Keep your administrator credentials private.</div>
   </div>
 </div>
 
@@ -520,29 +634,30 @@ tr:last-child td {
     </div>
 
     <div class="head-actions">
-      <button id="refreshBtn">↻ Refresh</button>
-      <button id="logoutBtn">Log out</button>
+      <button id="refreshBtn" type="button">↻ Refresh</button>
+      <button id="logoutBtn" type="button">Log out</button>
     </div>
   </header>
 
   <div class="layout">
     <aside>
-      <nav id="nav"></nav>
+      <nav id="nav" aria-label="Admin navigation"></nav>
     </aside>
 
     <main>
       <div class="pagehead">
         <div>
           <h2 id="pageTitle">Dashboard</h2>
-          <p id="pageSubtitle">Operations and system health</p>
+          <p id="pageSubtitle">Operational overview</p>
         </div>
         <span id="lastUpdated" class="muted small"></span>
       </div>
 
       <div class="search">
         <input id="gs"
-          placeholder="Search user ID, Telegram ID, username, round or bet">
-        <button id="gsBtn" class="primary">Search</button>
+          aria-label="Global search"
+          placeholder="Search user, Telegram ID, round or bet">
+        <button id="gsBtn" class="primary" type="button">Search</button>
       </div>
 
       <div id="content"></div>
@@ -578,15 +693,13 @@ const rcode = v => v
   ? `<a href="#" class="lnk" data-round="${esc(v)}">${esc(v)}</a>`
   : "-";
 
-const fmt = v =>
-  Number(v || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
+const fmt = v => Number(v || 0).toLocaleString(undefined, {
+  maximumFractionDigits: 2
+});
 
 const TX_STATUS = [
   "pending", "confirmed", "rejected", "completed", "failed"
 ];
-
-const NO_WORKFLOW =
-  "Read-only: deposit/withdrawal approval workflow is not implemented in the backend.";
 
 const TX_COLS = [
   ["id", "ID"],
@@ -604,7 +717,7 @@ const VIEWS = {
   dashboard: {
     label: "Dashboard",
     icon: "▦",
-    subtitle: "Operational overview"
+    subtitle: "System overview"
   },
 
   analytics: {
@@ -616,18 +729,18 @@ const VIEWS = {
   reconcile: {
     label: "Reconcile",
     icon: "⇄",
-    subtitle: "Read-only wallet and ledger checks"
+    subtitle: "Wallet and ledger checks"
   },
 
   users: {
     label: "Users",
     icon: "♙",
-    subtitle: "Profiles and referrals",
+    subtitle: "User profiles and referrals",
     action: "users",
     key: "users",
     exportKind: "users",
     filters: [
-      { name: "q", ph: "Telegram ID or username" }
+      {name: "q", ph: "Telegram ID or username"}
     ],
     cols: [
       ["id", "ID", uid],
@@ -644,12 +757,12 @@ const VIEWS = {
   wallets: {
     label: "Wallets",
     icon: "◈",
-    subtitle: "Read-only balances",
+    subtitle: "Read-only wallet balances",
     action: "wallets",
     key: "wallets",
-    note: "Read-only. Wallet balances cannot be changed here.",
+    note: "Read-only. This panel cannot modify wallet balances.",
     filters: [
-      { name: "q", ph: "Telegram ID or username" }
+      {name: "q", ph: "Telegram ID or username"}
     ],
     cols: [
       ["user_id", "User ID", uid],
@@ -663,14 +776,14 @@ const VIEWS = {
   transactions: {
     label: "Transactions",
     icon: "⇅",
-    subtitle: "Recorded wallet ledger",
+    subtitle: "Transaction history",
     action: "transactions",
     key: "transactions",
     exportKind: "transactions",
     note: "Read-only transaction history.",
     filters: [
-      { name: "user_id", ph: "User ID" },
-      { name: "status", ph: "Any status", opts: TX_STATUS }
+      {name: "user_id", ph: "User ID"},
+      {name: "status", ph: "Any status", opts: TX_STATUS}
     ],
     cols: TX_COLS
   },
@@ -682,11 +795,11 @@ const VIEWS = {
     action: "transactions",
     key: "transactions",
     exportKind: "transactions",
-    fixed: { type: "deposit" },
-    note: NO_WORKFLOW,
+    fixed: {type: "deposit"},
+    note: "Read-only. Deposit approval workflow is not implemented.",
     filters: [
-      { name: "user_id", ph: "User ID" },
-      { name: "status", ph: "Any status", opts: TX_STATUS }
+      {name: "user_id", ph: "User ID"},
+      {name: "status", ph: "Any status", opts: TX_STATUS}
     ],
     cols: TX_COLS
   },
@@ -698,11 +811,11 @@ const VIEWS = {
     action: "transactions",
     key: "transactions",
     exportKind: "transactions",
-    fixed: { type: "withdrawal" },
-    note: NO_WORKFLOW,
+    fixed: {type: "withdrawal"},
+    note: "Read-only. Withdrawal approval workflow is not implemented.",
     filters: [
-      { name: "user_id", ph: "User ID" },
-      { name: "status", ph: "Any status", opts: TX_STATUS }
+      {name: "user_id", ph: "User ID"},
+      {name: "status", ph: "Any status", opts: TX_STATUS}
     ],
     cols: TX_COLS
   },
@@ -713,7 +826,7 @@ const VIEWS = {
     subtitle: "Round timing and settlement",
     action: "rounds",
     key: "rounds",
-    note: "Results are displayed only after round end time. Results cannot be changed here.",
+    note: "Results cannot be changed from this panel.",
     cols: [
       ["round_code", "Round", rcode],
       ["status", "Status", badge],
@@ -737,8 +850,8 @@ const VIEWS = {
     key: "bets",
     exportKind: "bets",
     filters: [
-      { name: "round_code", ph: "Round code (14 digits)" },
-      { name: "user_id", ph: "User ID" },
+      {name: "round_code", ph: "Round code"},
+      {name: "user_id", ph: "User ID"},
       {
         name: "status",
         ph: "Any status",
@@ -764,7 +877,7 @@ const VIEWS = {
   audit: {
     label: "Audit Logs",
     icon: "≡",
-    subtitle: "Admin actions and outcomes",
+    subtitle: "Admin activity history",
     action: "audit",
     key: "entries",
     cols: [
@@ -795,9 +908,10 @@ async function api(body) {
     body: JSON.stringify(body)
   });
 
-  let d = {};
+  let data = {};
+
   try {
-    d = await r.json();
+    data = await r.json();
   } catch {}
 
   if (r.status === 401 && body.action !== "login") {
@@ -806,10 +920,10 @@ async function api(body) {
   }
 
   if (!r.ok) {
-    throw Error(d.message || "Request failed");
+    throw Error(data.message || "Request failed");
   }
 
-  return d;
+  return data;
 }
 
 function card(label, value, sub) {
@@ -836,10 +950,13 @@ function table(rows, cols) {
           ${rows.map(row =>
             "<tr>" + cols.map(c => {
               const value = row[c[0]];
+
               return `<td>${
                 c[2]
                   ? c[2](value, row)
-                  : (value == null || value === "" ? "-" : esc(value))
+                  : value == null || value === ""
+                    ? "-"
+                    : esc(value)
               }</td>`;
             }).join("") + "</tr>"
           ).join("")}
@@ -848,12 +965,18 @@ function table(rows, cols) {
     </div>`;
 }
 
-function sec(title, body) {
-  return `<h3>${esc(title)}</h3>${body}`;
+function section(title, content) {
+  return `<h3>${esc(title)}</h3>${content}`;
 }
 
 function chart(title, labels, series, colors, names) {
-  const W = 600, H = 190, pl = 38, pr = 8, pt = 12, pb = 25;
+  const W = 600;
+  const H = 190;
+  const pl = 42;
+  const pr = 8;
+  const pt = 12;
+  const pb = 25;
+
   const all = series.flat().map(Number);
   let max = Math.max(1, ...all);
   let min = Math.min(0, ...all);
@@ -865,18 +988,19 @@ function chart(title, labels, series, colors, names) {
   const n = Math.max(1, labels.length);
   const gw = iw / n;
   const bw = Math.max(3, (gw - 4) / series.length);
-  const y = v => pt + ih * (max - v) / (max - min);
 
+  const y = v => pt + ih * (max - v) / (max - min);
   let g = "";
 
   for (let j = 0; j < 4; j++) {
-    const val = min + (max - min) * j / 3;
-    const yy = y(val);
+    const value = min + (max - min) * j / 3;
+    const yy = y(value);
 
     g += `
-      <line x1="${pl}" x2="${W-pr}" y1="${yy}" y2="${yy}" stroke="#1e3857"/>
+      <line x1="${pl}" x2="${W-pr}" y1="${yy}" y2="${yy}"
+        stroke="#203954"/>
       <text x="${pl-5}" y="${yy+3}" text-anchor="end"
-        fill="#91a8c4" font-size="9">${esc(Math.round(val))}</text>`;
+        fill="#91a8c4" font-size="9">${esc(Math.round(value))}</text>`;
   }
 
   series.forEach((s, si) => s.forEach((v, i) => {
@@ -904,7 +1028,9 @@ function chart(title, labels, series, colors, names) {
   return `
     <div class="chartbox">
       <b>${esc(title)}</b>
-      <svg viewBox="0 0 ${W} ${H}" width="100%">${g}</svg>
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}">
+        ${g}
+      </svg>
       <div class="legend">
         ${names.map((name, i) => `
           <span style="margin-right:12px">
@@ -947,15 +1073,16 @@ function renderDash(d) {
     .map(x => `${esc(x.status)}: ${esc(x.count)}`).join(" · ");
 
   $("#content").innerHTML =
-    '<div class="note">Read-only monitoring. Deposit/withdrawal totals represent recorded transactions; approval workflows are not implemented here.</div>' +
-    '<div class="cards">' + cards + '</div>' +
-    sec("System health", '<div class="cards">' + health + '</div>') +
-    sec("Rounds by status", '<div class="panel">' + (statuses || "-") + '</div>') +
-    sec("Recent rounds", table(d.recent_rounds, VIEWS.rounds.cols));
+    '<div class="note">Read-only monitoring. Deposit and withdrawal approval workflows are not implemented.</div>' +
+    `<div class="cards">${cards}</div>` +
+    section("System health", `<div class="cards">${health}</div>`) +
+    section("Rounds by status", `<div class="panel">${statuses || "-"}</div>`) +
+    section("Recent rounds", table(d.recent_rounds, VIEWS.rounds.cols));
 }
 
 function renderAnalytics(d) {
   const a = d.daily || [];
+
   const f = d.fairness || {
     counts: Array(10).fill(0),
     total_rounds: 0,
@@ -977,7 +1104,7 @@ function renderAnalytics(d) {
   }));
 
   $("#content").innerHTML =
-    '<div class="note">UTC daily figures. Net is an operational indicator, not audited accounting profit. Statistical tests do not prove fairness.</div>' +
+    '<div class="note">Daily metrics use UTC. Statistical checks are indicators, not proof of fairness.</div>' +
 
     chart(
       "Daily stake vs payouts · 14 days",
@@ -1003,7 +1130,7 @@ function renderAnalytics(d) {
       ["Active users", "New users"]
     ) +
 
-    sec("Daily metrics", table(a.slice().reverse(), [
+    section("Daily metrics", table(a.slice().reverse(), [
       ["day", "Day (UTC)"],
       ["bets", "Bets"],
       ["stake", "Stake"],
@@ -1013,12 +1140,12 @@ function renderAnalytics(d) {
       ["new_users", "New users"]
     ])) +
 
-    sec("Result distribution",
+    section("Result distribution",
       `<div class="note ${
         String(f.verdict).startsWith("Consistent")
           ? "good"
           : String(f.verdict).startsWith("Not enough") ? "" : "warn"
-      }">${esc(f.verdict)} · ${esc(f.total_rounds || 0)} settled rounds. Statistical indicator only.</div>` +
+      }">${esc(f.verdict)} · ${esc(f.total_rounds || 0)} rounds. Statistical indicator only.</div>` +
       table(fair, [
         ["number", "Result"],
         ["count", "Count"],
@@ -1027,7 +1154,7 @@ function renderAnalytics(d) {
       ])
     ) +
 
-    sec("Top users by stake", table(d.top_users, [
+    section("Top users by stake", table(d.top_users, [
       ["id", "User ID", uid],
       ["username", "Username"],
       ["bets", "Bets"],
@@ -1036,7 +1163,7 @@ function renderAnalytics(d) {
       ["user_net", "User net"]
     ])) +
 
-    sec("Large stakes", table(d.large_stakes, [
+    section("Large stakes", table(d.large_stakes, [
       ["id", "Bet ID"],
       ["user_id", "User ID", uid],
       ["round_code", "Round", rcode],
@@ -1045,7 +1172,7 @@ function renderAnalytics(d) {
       ["created_at", "Created", dt]
     ])) +
 
-    sec("High-return users", table(d.high_return_users, [
+    section("High-return users", table(d.high_return_users, [
       ["user_id", "User ID", uid],
       ["bets", "Bets"],
       ["stake", "Stake"],
@@ -1086,25 +1213,25 @@ function renderReconcile(d) {
   $("#content").innerHTML =
     `<div class="note ${d.clean ? "good" : "warn"}">${
       d.clean
-        ? "Configured checks match."
-        : "Mismatch detected. Review ledger rules before taking action; do not adjust balances based on this report alone."
+        ? "Configured reconciliation checks match."
+        : "Mismatch detected. Investigate the ledger before taking any action."
     }</div>` +
 
-    '<div class="cards">' +
-      card("Wallet total", t.wallet_total) +
-      card("Ledger net", t.ledger_net) +
-      card("Commissions", t.commissions) +
-      card("Unrecorded difference", t.unrecorded) +
-    '</div>' +
+    `<div class="cards">
+      ${card("Wallet total", t.wallet_total)}
+      ${card("Ledger net", t.ledger_net)}
+      ${card("Commissions", t.commissions)}
+      ${card("Unrecorded difference", t.unrecorded)}
+    </div>` +
 
-    sec("Reconciliation checks", table(rows, [
+    section("Reconciliation checks", table(rows, [
       ["check", "Check"],
       ["a", "Value A"],
       ["b", "Value B"],
       ["diff", "Difference"]
     ])) +
 
-    sec("Users with balance differences", table(d.mismatches, [
+    section("Users with balance differences", table(d.mismatches, [
       ["id", "User ID", uid],
       ["username", "Username"],
       ["balance", "Balance"],
@@ -1117,35 +1244,36 @@ function renderUser(d) {
   const p = d.profile || {};
   const s = d.stats || {};
   const tree = d.referral_tree || [];
+
   const lv = n => tree.filter(x => +x.level === n).length;
 
   $("#content").innerHTML =
     `<div class="row"><button id="backBtn">← Back</button>
       <span class="muted">User #${esc(p.id)}</span></div>` +
 
-    '<div class="cards">' +
-      card("Username", p.username || "-") +
-      card("Telegram ID", p.telegram_id || "-") +
-      card("Balance", p.balance) +
-      card("Registered", p.created_at
-        ? new Date(p.created_at).toLocaleDateString() : "-") +
-    '</div>' +
+    `<div class="cards">
+      ${card("Username", p.username || "-")}
+      ${card("Telegram ID", p.telegram_id || "-")}
+      ${card("Balance", p.balance)}
+      ${card("Registered", p.created_at
+        ? new Date(p.created_at).toLocaleDateString() : "-")}
+    </div>` +
 
-    '<div class="cards">' +
-      card("Bets", s.bets) +
-      card("Total stake", s.stake) +
-      card("Payouts", s.payout) +
-      card("Won / lost", `${s.wins || 0} / ${s.losses || 0}`) +
-    '</div>' +
+    `<div class="cards">
+      ${card("Bets", s.bets)}
+      ${card("Total stake", s.stake)}
+      ${card("Payouts", s.payout)}
+      ${card("Won / lost", `${s.wins || 0} / ${s.losses || 0}`)}
+    </div>` +
 
-    '<div class="cards">' +
-      card("Referral code", p.referral_code || "-") +
-      card("Referred by", p.referred_by || "-") +
-      card("Referrals L1/L2/L3", `${lv(1)}/${lv(2)}/${lv(3)}`) +
-      card("Commissions generated", d.commissions_generated) +
-    '</div>' +
+    `<div class="cards">
+      ${card("Referral code", p.referral_code || "-")}
+      ${card("Referred by", p.referred_by || "-")}
+      ${card("Referrals L1/L2/L3", `${lv(1)}/${lv(2)}/${lv(3)}`)}
+      ${card("Commissions generated", d.commissions_generated)}
+    </div>` +
 
-    sec("Referral tree", table(tree, [
+    section("Referral tree", table(tree, [
       ["level", "Level"],
       ["id", "User ID", uid],
       ["username", "Username"],
@@ -1153,13 +1281,13 @@ function renderUser(d) {
       ["created_at", "Registered", dt]
     ])) +
 
-    sec("Commissions earned", table(d.commissions_earned, [
+    section("Commissions earned", table(d.commissions_earned, [
       ["referral_level", "Level"],
       ["count", "Count"],
       ["total", "Total"]
     ])) +
 
-    sec("Recent bets", table(d.recent_bets, [
+    section("Recent bets", table(d.recent_bets, [
       ["id", "ID"],
       ["round_code", "Round", rcode],
       ["bet_type", "Type"],
@@ -1172,7 +1300,7 @@ function renderUser(d) {
       ["created_at", "Created", dt]
     ])) +
 
-    sec("Recent transactions", table(d.recent_transactions, [
+    section("Recent transactions", table(d.recent_transactions, [
       ["id", "ID"],
       ["transaction_type", "Type"],
       ["amount", "Amount"],
@@ -1190,7 +1318,7 @@ function renderSearch(d, q) {
     `<div class="row"><button id="backBtn">← Back</button>
       <span class="muted">Results: ${esc(q)}</span></div>` +
 
-    sec("Users", table(d.users, [
+    section("Users", table(d.users, [
       ["id", "User ID", uid],
       ["telegram_id", "Telegram ID"],
       ["username", "Username"],
@@ -1198,7 +1326,7 @@ function renderSearch(d, q) {
     ])) +
 
     ((d.rounds || []).length
-      ? sec("Rounds", table(d.rounds, [
+      ? section("Rounds", table(d.rounds, [
           ["round_code", "Round", rcode],
           ["status", "Status", badge],
           ["starts_at", "Starts", dt],
@@ -1207,7 +1335,7 @@ function renderSearch(d, q) {
       : "") +
 
     ((d.bets || []).length
-      ? sec("Bet", table(d.bets, [
+      ? section("Bet", table(d.bets, [
           ["id", "Bet ID"],
           ["user_id", "User ID", uid],
           ["round_code", "Round", rcode],
@@ -1223,19 +1351,24 @@ function renderSearch(d, q) {
 function filterBar(v) {
   if (!v.filters) return "";
 
-  const items = v.filters.map(f => f.opts
-    ? `<select data-f="${esc(f.name)}">
-        <option value="">${esc(f.ph)}</option>
-        ${f.opts.map(o =>
-          `<option value="${esc(o)}"${
-            filters[f.name] === o ? " selected" : ""
-          }>${esc(o)}</option>`
-        ).join("")}
-       </select>`
-    : `<input data-f="${esc(f.name)}"
+  const items = v.filters.map(f => {
+    if (f.opts) {
+      return `
+        <select data-f="${esc(f.name)}">
+          <option value="">${esc(f.ph)}</option>
+          ${f.opts.map(o =>
+            `<option value="${esc(o)}"${
+              filters[f.name] === o ? " selected" : ""
+            }>${esc(o)}</option>`
+          ).join("")}
+        </select>`;
+    }
+
+    return `
+      <input data-f="${esc(f.name)}"
         placeholder="${esc(f.ph)}"
-        value="${esc(filters[f.name] || "")}">`
-  ).join("");
+        value="${esc(filters[f.name] || "")}">`;
+  }).join("");
 
   return `
     <div class="filters">
@@ -1252,14 +1385,16 @@ function downloadCsv(name, text) {
     type: "text/csv;charset=utf-8"
   });
 
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
+
+  a.href = url;
   a.download = name;
   document.body.appendChild(a);
   a.click();
   a.remove();
 
-  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
 async function load() {
@@ -1357,7 +1492,7 @@ async function load() {
         $("#exportMsg").textContent = "Preparing export…";
 
         try {
-          const x = await api({
+          const result = await api({
             action: "export",
             kind: v.exportKind,
             ...(v.fixed || {}),
@@ -1366,12 +1501,12 @@ async function load() {
 
           downloadCsv(
             `${v.exportKind}-${new Date().toISOString().slice(0, 10)}.csv`,
-            x.csv
+            result.csv
           );
 
           $("#exportMsg").textContent =
-            `${x.row_count} rows exported` +
-            (x.truncated ? " (server limit applied)" : "") + ".";
+            `${result.row_count} rows exported` +
+            (result.truncated ? " (server limit applied)" : "") + ".";
         } catch (e) {
           if (e.message !== "auth") {
             $("#exportMsg").textContent = e.message;
@@ -1412,7 +1547,8 @@ function updated() {
 
 function buildNav() {
   $("#nav").innerHTML = Object.keys(VIEWS).map(k => `
-    <button data-v="${k}" class="${k === cur ? "active" : ""}">
+    <button type="button" data-v="${k}"
+      class="${k === cur ? "active" : ""}">
       ${esc(VIEWS[k].icon)} &nbsp; ${esc(VIEWS[k].label)}
     </button>
   `).join("");
@@ -1444,9 +1580,9 @@ async function openUser(id) {
       $("#content").innerHTML =
         `<div class="note warn">${esc(e.message)}</div>` +
         '<button id="backBtn">Back</button>';
-    }
 
-    if ($("#backBtn")) $("#backBtn").onclick = load;
+      $("#backBtn").onclick = load;
+    }
   }
 }
 
@@ -1526,8 +1662,9 @@ $("#loginForm").addEventListener("submit", async e => {
     });
 
     showApp();
-  } catch (x) {
-    $("#loginMsg").textContent = x.message === "auth" ? "" : x.message;
+  } catch (error) {
+    $("#loginMsg").textContent =
+      error.message === "auth" ? "" : error.message;
   } finally {
     btn.disabled = false;
   }
