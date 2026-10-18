@@ -2,7 +2,6 @@ const { Pool } = require("pg");
 
 const ROUND_SECONDS = 180;
 const BETTING_SECONDS = 150;
-const MAX_ROUNDS_TO_CREATE = 100;
 const FUTURE_ROUNDS = 5;
 const MAX_SETTLEMENT_ATTEMPTS = 20;
 
@@ -40,14 +39,15 @@ function authorized(req) {
     return false;
   }
 
-  const authHeader = req.headers.authorization || "";
-
-  return authHeader === `Bearer ${secret}`;
+  return (
+    (req.headers.authorization || "") === `Bearer ${secret}`
+  );
 }
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET" && req.method !== "POST") {
     res.setHeader("Allow", "GET, POST");
+
     return sendJson(res, 405, {
       success: false,
       message: "Method not allowed"
@@ -61,22 +61,22 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  const db = getPool();
   let client;
 
   try {
+    const db = getPool();
     client = await db.connect();
 
-    /*
-     * Use PostgreSQL time as the single source of truth.
-     * Every round is aligned to an exact 180-second UTC slot.
-     */
-    const timeResult = await client.query(`
+    // Calculate the current 180-second round slot.
+    const timeResult = await client.query(
+      `
       SELECT
         NOW() AS db_now,
         FLOOR(EXTRACT(EPOCH FROM NOW()) / $1) * $1
           AS current_slot
-    `, [ROUND_SECONDS]);
+      `,
+      [ROUND_SECONDS]
+    );
 
     const dbNow = new Date(timeResult.rows[0].db_now);
     const currentSlot = Number(timeResult.rows[0].current_slot);
@@ -85,11 +85,10 @@ module.exports = async function handler(req, res) {
       throw new Error("Could not calculate current round slot");
     }
 
-    const finalSlot = currentSlot + FUTURE_ROUNDS * ROUND_SECONDS;
+    const finalSlot =
+      currentSlot + FUTURE_ROUNDS * ROUND_SECONDS;
 
-    /*
-     * Find the latest round already present.
-     */
+    // Find the latest round already stored in the database.
     const latestResult = await client.query(`
       SELECT starts_at
       FROM game_rounds
@@ -106,8 +105,9 @@ module.exports = async function handler(req, res) {
 
       if (Number.isFinite(latestStartMs)) {
         const latestSlot =
-          Math.floor(latestStartMs / 1000 / ROUND_SECONDS) *
-          ROUND_SECONDS;
+          Math.floor(
+            latestStartMs / 1000 / ROUND_SECONDS
+          ) * ROUND_SECONDS;
 
         firstSlot = Math.min(
           currentSlot,
@@ -116,47 +116,29 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    /*
-     * Limit historical backfill, while always ensuring the current
-     * slot and upcoming slots can be created.
-     */
-    const oldestAllowedSlot =
-      currentSlot -
-      (MAX_ROUNDS_TO_CREATE - 1) * ROUND_SECONDS;
-
-    firstSlot = Math.max(firstSlot, oldestAllowedSlot);
     firstSlot = Math.min(firstSlot, currentSlot);
 
     let roundsCreated = 0;
 
-    /*
-     * Create aligned rounds.
-     *
-     * Future rounds use status "open" so they do not need to wait
-     * for a later cron run to become open.
-     *
-     * This does NOT allow early betting: place_bet_atomic() must
-     * still validate starts_at <= NOW() < betting_closes_at.
-     */
+    // Create all missing rounds up to the future-round buffer.
+    // No fixed maximum number of rounds is imposed.
     for (
       let slot = firstSlot;
       slot <= finalSlot;
       slot += ROUND_SECONDS
     ) {
       const startsAt = new Date(slot * 1000);
+
       const bettingClosesAt = new Date(
         (slot + BETTING_SECONDS) * 1000
       );
+
       const endsAt = new Date(
         (slot + ROUND_SECONDS) * 1000
       );
 
       let status = "open";
 
-      /*
-       * Historical rounds must not remain open.
-       * The current round is locked if its betting window has ended.
-       */
       if (slot < currentSlot) {
         status = "locked";
       } else if (
@@ -175,7 +157,8 @@ module.exports = async function handler(req, res) {
         String(startsAt.getUTCSeconds()).padStart(2, "0")
       ].join("");
 
-      const insertResult = await client.query(`
+      const insertResult = await client.query(
+        `
         INSERT INTO game_rounds (
           round_code,
           status,
@@ -186,24 +169,22 @@ module.exports = async function handler(req, res) {
         VALUES ($1, $2, $3, $4, $5)
         ON CONFLICT (round_code) DO NOTHING
         RETURNING id
-      `, [
-        roundCode,
-        status,
-        startsAt,
-        bettingClosesAt,
-        endsAt
-      ]);
+        `,
+        [
+          roundCode,
+          status,
+          startsAt,
+          bettingClosesAt,
+          endsAt
+        ]
+      );
 
       if (insertResult.rowCount > 0) {
         roundsCreated++;
       }
     }
 
-    /*
-     * Promote previously created future rounds from the old cron
-     * implementation. Betting remains protected by the database
-     * time-window checks.
-     */
+    // Reopen eligible future rounds.
     const futureRoundsResult = await client.query(`
       UPDATE game_rounds
       SET status = 'open'
@@ -216,9 +197,7 @@ module.exports = async function handler(req, res) {
       RETURNING id
     `);
 
-    /*
-     * Open a current round if it is inside its valid betting window.
-     */
+    // Reopen the current round if betting is still allowed.
     const openCurrentResult = await client.query(`
       UPDATE game_rounds
       SET status = 'open'
@@ -231,10 +210,7 @@ module.exports = async function handler(req, res) {
       RETURNING id
     `);
 
-    /*
-     * Lock rounds when their betting window ends.
-     * This preserves the 30-second betting lock.
-     */
+    // Lock rounds when their betting window closes.
     const lockedResult = await client.query(`
       UPDATE game_rounds
       SET status = 'locked'
@@ -246,11 +222,7 @@ module.exports = async function handler(req, res) {
       RETURNING id
     `);
 
-    /*
-     * Settle expired rounds. The database settlement function
-     * remains responsible for calculating results, payouts,
-     * wallet credits and transaction records.
-     */
+    // Settle rounds eligible under the current SQL function.
     let settledCount = 0;
 
     for (
@@ -262,13 +234,15 @@ module.exports = async function handler(req, res) {
         SELECT settle_expired_round() AS settled_round
       `);
 
-      const settledRound = settlementResult.rows[0]?.settled_round;
+      const settledRound =
+        settlementResult.rows[0]?.settled_round;
 
+      // The SQL function returns no round_code when
+      // there is no eligible round to settle.
       if (
-        settledRound === null ||
-        settledRound === undefined ||
-        settledRound === false ||
-        settledRound === ""
+        !settledRound ||
+        typeof settledRound !== "object" ||
+        !settledRound.round_code
       ) {
         break;
       }
@@ -276,9 +250,7 @@ module.exports = async function handler(req, res) {
       settledCount++;
     }
 
-    /*
-     * Return the server/database time and the current round.
-     */
+    // Fetch the round currently in progress.
     const currentResult = await client.query(`
       SELECT
         id,
