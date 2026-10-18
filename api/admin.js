@@ -583,9 +583,20 @@ module.exports = async function handler(req, res) {
 
   const cfg = getConfig();
   if (!cfg) {
+    // TEMPORARY diagnostic: shows only which setting is missing/short.
+    // No values are ever shown. Remove after setup works.
+    const problems = [];
+    const u = process.env.ADMIN_USERNAME;
+    const p = process.env.ADMIN_PASSWORD;
+    const s = process.env.ADMIN_SESSION_SECRET;
+    if (!u) problems.push("ADMIN_USERNAME missing");
+    if (!p) problems.push("ADMIN_PASSWORD missing");
+    else if (p.length < 12) problems.push("ADMIN_PASSWORD too short (min 12)");
+    if (!s) problems.push("ADMIN_SESSION_SECRET missing");
+    else if (s.length < 32) problems.push("ADMIN_SESSION_SECRET too short (min 32)");
     return send(res, 503, {
       success: false,
-      message: "Admin is not configured."
+      message: "Admin is not configured: " + problems.join(", ")
     });
   }
 
