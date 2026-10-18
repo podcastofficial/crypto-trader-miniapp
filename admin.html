@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Admin Panel</title>
+<style>
+:root{--bg:#0f1419;--card:#1a212b;--line:#2a3441;--text:#e6edf3;--muted:#8b98a7;--accent:#3b82f6;--ok:#22c55e;--bad:#ef4444;--warn:#f59e0b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--card);border-bottom:1px solid var(--line)}
+header h1{font-size:16px;margin:0}
+nav{display:flex;gap:6px;overflow-x:auto;padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--line)}
+nav button{flex:none}
+main{padding:12px;max-width:1100px;margin:0 auto}
+button{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px;cursor:pointer}
+button.on,button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button:disabled{opacity:.5}
+input,select{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:14px;min-width:0}
+.login{max-width:360px;margin:12vh auto;padding:20px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.login h2{margin:0 0 14px}
+.login input{width:100%;margin-bottom:10px}
+.login button{width:100%}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.filters input{flex:1 1 140px}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+@media(min-width:700px){.cards{grid-template-columns:repeat(4,1fr)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px}
+.card .l{color:var(--muted);font-size:12px}
+.card .v{font-size:18px;font-weight:600;word-break:break-all}
+.card .s{color:var(--muted);font-size:11px}
+h3{margin:16px 0 8px;font-size:15px}
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:12px}
+th,td{padding:7px 9px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{background:var(--card);color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+.pager{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px}
+.muted{color:var(--muted)}
+.note{background:#1d2a3d;border:1px solid #2c4468;border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:13px}
+.err{color:var(--bad)}
+.b{padding:2px 7px;border-radius:10px;font-size:11px;background:var(--line)}
+.b.won,.b.settled,.b.completed,.b.confirmed,.b.success{background:#143d27;color:var(--ok)}
+.b.lost,.b.failed,.b.rejected,.b.failure,.b.denied{background:#431a1a;color:var(--bad)}
+.b.pending,.b.open,.b.locked{background:#44330e;color:var(--warn)}
+.hide{display:none}
+</style>
+</head>
+<body>
+
+<div id="loginView" class="hide">
+  <div class="login">
+    <h2>Admin Login</h2>
+    <form id="loginForm" autocomplete="on">
+      <input id="u" type="text" placeholder="Username" autocomplete="username" required>
+      <input id="p" type="password" placeholder="Password" autocomplete="current-password" required>
+      <button class="primary" type="submit" id="loginBtn">Log in</button>
+    </form>
+    <p id="loginMsg" class="err"></p>
+  </div>
+</div>
+
+<div id="appView" class="hide">
+  <header>
+    <h1>Crypto Trader Pro Admin</h1>
+    <button id="logoutBtn">Log out</button>
+  </header>
+  <nav id="nav"></nav>
+  <main id="content"></main>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dt = (v) => (v ? esc(new Date(v).toLocaleString()) : "-");
+const badge = (v) => `<span class="b ${esc(v)}">${esc(v)}</span>`;
+const yn = (v) => (v ? "Yes" : "No");
+
+async function api(body) {
+  const r = await fetch("/api/admin", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json", "X-Admin-Request": "1" },
+    body: JSON.stringify(body)
+  });
+  let data = {};
+  try { data = await r.json(); } catch (e) {}
+  if (r.status === 401 && body.action !== "login") {
+    showLogin("Session expired. Please log in again.");
+    throw new Error("auth");
+  }
+  if (!r.ok) throw new Error(data.message || "Request failed");
+  return data;
+}
+
+const TX_STATUS = ["pending", "confirmed", "rejected", "completed", "failed"];
+const NO_WORKFLOW = "Deposit/withdrawal request and approval workflow is not implemented in the backend. This page only lists recorded transactions of this type (read-only).";
+
+const TX_COLS = [["id","ID"],["user_id","User ID"],["transaction_type","Type"],["amount","Amount"],["status","Status",badge],["network","Network"],["tx_hash","Tx hash"],["created_at","Created",dt],["updated_at","Updated",dt]];
+
+const VIEWS = {
+  dashboard: { label: "Dashboard" },
+  users: { label: "Users", action: "users", key: "users",
+    filters: [{ name: "q", ph: "Telegram ID or username" }],
+    cols: [["id","ID"],["telegram_id","Telegram ID"],["username","Username"],["balance","Balance"],["referral_count","Referrals"],["referred_by","Referred by"],["referral_code","Referral code"],["created_at","Registered",dt]] },
+  wallets: { label: "Wallets", action: "wallets", key: "wallets",
+    note: "Read-only. Balances cannot be changed from this panel.",
+    filters: [{ name: "q", ph: "Telegram ID or username" }],
+    cols: [["user_id","User ID"],["telegram_id","Telegram ID"],["username","Username"],["balance","Balance"],["updated_at","Updated",dt]] },
+  transactions: { label: "Transactions", action: "transactions", key: "transactions",
+    note: "Read-only wallet transaction history.",
+    filters: [{ name: "user_id", ph: "User ID" }, { name: "status", ph: "Any status", opts: TX_STATUS }],
+    cols: TX_COLS },
+  deposits: { label: "Deposits", action: "transactions", key: "transactions", fixed: { type: "deposit" }, note: NO_WORKFLOW,
+    filters: [{ name: "user_id", ph: "User ID" }, { name: "status", ph: "Any status", opts: TX_STATUS }],
+    cols: TX_COLS },
+  withdrawals: { label: "Withdrawals", action: "transactions", key: "transactions", fixed: { type: "withdrawal" }, note: NO_WORKFLOW,
+    filters: [{ name: "user_id", ph: "User ID" }, { name: "status", ph: "Any status", opts: TX_STATUS }],
+    cols: TX_COLS },
+  rounds: { label: "Rounds", action: "rounds", key: "rounds",
+    note: "Results are hidden until the round end time. Results cannot be changed from this panel.",
+    cols: [["round_code","Round"],["status","Status",badge],["starts_at","Starts",dt],["betting_closes_at","Betting closes",dt],["ends_at","Ends",dt],["result_number","Result"],["bet_count","Bets"],["total_stake","Stake"],["total_payout","Payout"],["pending_bets","Pending bets"],["payout_complete","Payout complete",yn]] },
+  bets: { label: "Bets", action: "bets", key: "bets",
+    filters: [{ name: "round_code", ph: "Round code (14 digits)" }, { name: "user_id", ph: "User ID" }, { name: "status", ph: "Any status", opts: ["pending", "won", "lost", "cancelled"] }],
+    cols: [["id","ID"],["user_id","User ID"],["round_code","Round"],["bet_type","Type"],["selection","Selection"],["stake","Stake"],["fee","Fee"],["status","Status",badge],["result_number","Result"],["payout","Payout"],["created_at","Created",dt],["settled_at","Settled",dt]] },
+  audit: { label: "Audit Log", action: "audit", key: "entries",
+    cols: [["id","ID"],["created_at","Time",dt],["admin_username","Admin"],["action","Action"],["target_type","Target type"],["target_id","Target ID"],["outcome","Outcome",badge],["ip","IP"]] }
+};
+
+let cur = "dashboard", page = 1, filters = {};
+
+function table(rows, cols) {
+  if (!rows || !rows.length) return '<p class="muted">No records.</p>';
+  const head = cols.map((c) => `<th>${esc(c[1])}</th>`).join("");
+  const body = rows.map((row) => "<tr>" + cols.map((c) => {
+    const v = row[c[0]];
+    return `<td>${c[2] ? c[2](v, row) : (v === null || v === undefined || v === "" ? "-" : esc(v))}</td>`;
+  }).join("") + "</tr>").join("");
+  return `<div class="wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+function card(label, value, sub) {
+  return `<div class="card"><div class="l">${esc(label)}</div><div class="v">${esc(value)}</div>${sub ? `<div class="s">${esc(sub)}</div>` : ""}</div>`;
+}
+
+function renderDash(d) {
+  const t = d.totals, h = d.health;
+  const cards = [
+    card("Registered users", t.users),
+    card("Total bets", t.bets),
+    card("Total stake", t.total_stake),
+    card("Platform fees", t.total_fees),
+    card("Total payouts", t.total_payouts),
+    card("Referral commissions", t.total_commissions),
+    card("Wallet balances (sum)", t.total_wallet_balance),
+    card("Deposits", t.total_deposits, t.deposit_count + " record(s)"),
+    card("Withdrawals", t.total_withdrawals, t.withdrawal_count + " record(s)")
+  ].join("");
+  const health = [
+    card("API / database", h.database_ok ? "OK" : "Problem"),
+    card("Cron / settlement", h.cron_ok ? "Healthy" : "Check"),
+    card("Overdue rounds", h.overdue_rounds),
+    card("Old pending bets", h.old_pending_bets),
+    card("Last settled", h.last_settled_at ? new Date(h.last_settled_at).toLocaleTimeString() : "-"),
+    card("Latest round start", h.latest_round_start ? new Date(h.latest_round_start).toLocaleTimeString() : "-")
+  ].join("");
+  const statuses = d.round_statuses.map((s) => `${esc(s.status)}: ${esc(s.count)}`).join(" · ");
+  $("#content").innerHTML =
+    `<div class="note">Deposit and withdrawal totals only count recorded transactions. No deposit/withdrawal workflow exists in the backend.</div>` +
+    `<div class="cards">${cards}</div>` +
+    `<h3>Health</h3><div class="cards">${health}</div>` +
+    `<h3>Rounds by status</h3><p class="muted">${statuses || "-"}</p>` +
+    `<h3>Recent rounds</h3>` + table(d.recent_rounds, VIEWS.rounds.cols);
+}
+
+function filterBar(v) {
+  if (!v.filters) return "";
+  const items = v.filters.map((f) => {
+    const val = esc(filters[f.name] || "");
+    if (f.opts) {
+      return `<select data-f="${esc(f.name)}"><option value="">${esc(f.ph)}</option>` +
+        f.opts.map((o) => `<option value="${esc(o)}"${filters[f.name] === o ? " selected" : ""}>${esc(o)}</option>`).join("") + "</select>";
+    }
+    return `<input data-f="${esc(f.name)}" placeholder="${esc(f.ph)}" value="${val}">`;
+  }).join("");
+  return `<div class="filters">${items}<button class="primary" id="applyBtn">Search</button></div>`;
+}
+
+async function load() {
+  const v = VIEWS[cur], box = $("#content");
+  box.innerHTML = '<p class="muted">Loading…</p>';
+  try {
+    if (cur === "dashboard") {
+      renderDash(await api({ action: "dashboard" }));
+      return;
+    }
+    const data = await api({ action: v.action, page, page_size: 20, ...(v.fixed || {}), ...filters });
+    const p = data.pagination;
+    box.innerHTML =
+      (v.note ? `<div class="note">${esc(v.note)}</div>` : "") +
+      filterBar(v) +
+      table(data[v.key], v.cols) +
+      `<div class="pager"><button id="prevBtn"${p.has_previous ? "" : " disabled"}>Previous</button>` +
+      `<span class="muted">Page ${esc(p.page)} of ${esc(p.total_pages)} · ${esc(p.total)} total</span>` +
+      `<button id="nextBtn"${p.has_next ? "" : " disabled"}>Next</button></div>`;
+    const a = $("#applyBtn");
+    if (a) a.onclick = () => {
+      filters = {};
+      document.querySelectorAll("[data-f]").forEach((el) => { if (el.value.trim()) filters[el.dataset.f] = el.value.trim(); });
+      page = 1;
+      load();
+    };
+    $("#prevBtn").onclick = () => { page--; load(); };
+    $("#nextBtn").onclick = () => { page++; load(); };
+  } catch (e) {
+    if (e.message !== "auth") box.innerHTML = `<p class="err">${esc(e.message)}</p>`;
+  }
+}
+
+function buildNav() {
+  $("#nav").innerHTML = Object.keys(VIEWS).map((k) =>
+    `<button data-v="${k}" class="${k === cur ? "on" : ""}">${esc(VIEWS[k].label)}</button>`).join("");
+  document.querySelectorAll("#nav button").forEach((b) => {
+    b.onclick = () => { cur = b.dataset.v; page = 1; filters = {}; buildNav(); load(); };
+  });
+}
+
+function showLogin(msg) {
+  $("#appView").classList.add("hide");
+  $("#loginView").classList.remove("hide");
+  $("#loginMsg").textContent = msg || "";
+  $("#p").value = "";
+}
+
+function showApp() {
+  $("#loginView").classList.add("hide");
+  $("#appView").classList.remove("hide");
+  cur = "dashboard"; page = 1; filters = {};
+  buildNav();
+  load();
+}
+
+$("#loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = $("#loginBtn");
+  btn.disabled = true;
+  $("#loginMsg").textContent = "";
+  try {
+    await api({ action: "login", username: $("#u").value, password: $("#p").value });
+    showApp();
+  } catch (err) {
+    $("#loginMsg").textContent = err.message === "auth" ? "" : err.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$("#logoutBtn").onclick = async () => {
+  try { await api({ action: "logout" }); } catch (e) {}
+  showLogin("");
+};
+
+(async () => {
+  try {
+    await api({ action: "me" });
+    showApp();
+  } catch (e) {
+    showLogin("");
+  }
+})();
+</script>
+</body>
+</html>
