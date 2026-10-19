@@ -281,7 +281,23 @@ label { font-weight:800; font-size:12px; }
   display:flex; flex-direction:column; align-items:center; gap:9px;  
   margin:14px 0 16px; text-align:center;  
 }  
-  .deposit-submit-card { margin:14px 0; padding:12px; border:1px solid #4a4a4f; border-radius:12px; background:#242429; }
+  .checkout-modal { background:#f8f8fb; color:#25262a; max-width:640px; }
+.checkout-topbar { display:flex; align-items:center; justify-content:space-between; padding-bottom:18px; border-bottom:1px solid #d9d9de; font-size:20px; }
+.checkout-back { border:0; background:transparent; font-size:34px; color:#25262a; line-height:1; cursor:pointer; }
+.checkout-security { margin:16px 0; padding:12px 14px; border-radius:10px; background:#fff3df; color:#8a4a00; font-size:13px; }
+.checkout-paying { display:flex; align-items:center; justify-content:space-between; padding:16px 0; border-bottom:1px solid #333; font-size:24px; }
+.checkout-paying > span:last-child { display:flex; align-items:center; gap:10px; }
+.checkout-coin-logo { width:42px; height:42px; object-fit:contain; }
+.checkout-modal select, .checkout-modal input { background:#fff; color:#25262a; border-color:#d9d9de; }
+.checkout-summary { display:grid; gap:13px; padding:16px 0; font-size:16px; }
+.checkout-summary div { display:flex; justify-content:space-between; gap:16px; }
+.checkout-summary .amount-due { font-size:18px; font-weight:800; margin-top:4px; }
+.checkout-summary strong { text-align:right; }
+.checkout-modal .deposit-qr-wrap canvas, .checkout-modal .deposit-qr-wrap .deposit-qr-image { border:8px solid #f0f0f4; border-radius:16px; }
+.checkout-modal .deposit-submit-card { background:transparent; border:0; padding:0; }
+.checkout-modal .deposit-submit-card .primary-btn { background:#f57c00; color:#fff; }
+.checkout-modal .deposit-submit-card .sec-btn { background:#fff; color:#25262a; border-color:#d9d9de; }
+.deposit-submit-card { margin:14px 0; padding:12px; border:1px solid #4a4a4f; border-radius:12px; background:#242429; }
 .deposit-submit-card .row { gap:10px; }
 .deposit-submit-card input { margin-bottom:8px; }
 .deposit-submit-card #depositTimer { color:#facc15; font-variant-numeric:tabular-nums; }
@@ -542,27 +558,26 @@ label { font-weight:800; font-size:12px; }
     <button class="primary-btn" id="resultPopupClose" type="button" data-i18n="rContinue">CONTINUE</button>  
   </div>  
 </div>  <!-- DEPOSIT / WITHDRAW MODAL -->  <div class="modal-backdrop" id="cashModal">  
-  <div class="modal">  
-    <div class="row">  
-      <div class="modal-title" id="cashTitle">…</div>  
-      <button class="close-btn" data-close="cashModal" type="button">✕</button>  
-    </div>  
-  <div id="cashDepositFields" style="display:none">  
-  <div class="notice">Deposits are credited automatically after blockchain confirmations. Select the exact coin and network before sending.</div>  
+  <div class="modal checkout-modal">
+  <div class="checkout-topbar"><button class="checkout-back" data-close="cashModal" type="button" aria-label="Back">←</button><strong id="cashTitle">Deposit</strong><strong id="depositTimer" aria-live="polite">30:00</strong></div>
+  <div id="cashDepositFields" style="display:none">
+  <div class="checkout-security">Only send the exact amount on the selected blockchain. Payment is verified on-chain before points are credited.</div>
+  <div class="checkout-paying"><span>Paying With</span><span><img id="depositAssetLogo" class="checkout-coin-logo" alt="Selected cryptocurrency logo" src="https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/usdt.png"><strong id="depositAssetName">USDT</strong></span></div>
   <label for="depositOption">Coin and network</label>
-  <div class="deposit-asset-card" id="depositAssetCard" aria-live="polite">
-    <img class="deposit-asset-logo" id="depositAssetLogo" alt="Selected cryptocurrency logo" src="/coin-logos/usdt.svg">
-    <span><strong id="depositAssetName">Select an asset</strong><small id="depositAssetNetwork">Choose the exact network</small></span>
-  </div>
   <select id="depositOption"></select>
   <div class="deposit-qr-wrap">  
   <canvas id="depositQr" width="220" height="220" aria-label="QR code for the selected deposit address"></canvas>
   <img id="depositQrImage" class="deposit-qr-image" alt="QR code for the selected deposit address" hidden>
   <div class="muted small" id="depositNetworkHint">Scan to deposit</div>
   </div>
+  <div class="checkout-summary">
+    <div><span>Total Price</span><strong id="depositTotalPrice">— USDT</strong></div>
+    <div><span>Blockchain</span><strong id="depositBlockchain">—</strong></div>
+    <div><span>Subtotal</span><strong id="depositSubtotal">— USDT</strong></div>
+    <div class="amount-due"><span>Amount Due</span><strong id="depositAmountDue">— USDT</strong></div>
+  </div>
   <div class="deposit-submit-card">
-    <div class="row"><strong>Payment session</strong><strong id="depositTimer" aria-live="polite">30:00</strong></div>
-    <p class="muted small">Send the exact amount on the selected network, then submit your transaction hash. Your points are credited only after the blockchain scanner verifies the real token transfer, destination and confirmations.</p>
+    <p class="muted small">Copy the address, pay the exact amount, then submit your transaction hash. Blockchain verification checks the real received amount.</p>
     <label for="depositAmount">Amount sent (USDT)</label>
     <input id="depositAmount" type="number" min="1" step="0.000001" placeholder="10.00" inputmode="decimal">
     <label for="depositTxHash">Transaction hash</label>
@@ -754,7 +769,7 @@ tgMissing:"टेलीग्राम initData नहीं मिला", open
 verified:"सर्वर ने टेलीग्राम पहचान सत्यापित की।", tgUser:"टेलीग्राम यूज़र {id}",  
 settings:"सेटिंग्स", sound:"साउंड", vibration:"वाइब्रेशन", change:"बदलें",  
 searchLang:"भाषा खोजें",  
-language:"भाषा", about:"जानकारी", aboutText:"सर्वर-नियंत्रित राउंड और लाइव वॉलेट।",  
+language:"भाषा", about:"जानकारी", aboutText:"सर्वर-नियंत्रित रा��ंड और लाइव वॉलेट।",  
 testingOnly:"लाइव गेम सर्वर।"  
 },  
 bn:{  
@@ -783,7 +798,7 @@ nConnected:"ব্যাকএন্ডে সংযুক্ত। প্রত
 nUnavailable:"ব্যাকএন্ড পাওয়া যাচ্ছে না: {msg}",  
 loadingRound:"সার্ভার রাউন্ড লোড হচ্ছে…",  
 toastAuth:"আগে টেলিগ্রাম দিয়ে অথেন্টিকেট করুন।",  
-toastLocked:"বেটিং বন্ধ। পরের রাউন্ডের অপেক্ষা করুন।",  
+toastLocked:"বেটিং বন্ধ। পরের রাউ��্ডের অপেক্ষা করুন।",  
 toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্বোচ্চ ২ দশমিক)।",  
 toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করু���।",  
 toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদলে আবার চেষ্টা করু���।",  
@@ -1491,7 +1506,9 @@ async function openCash(kind){
         $("depositAssetLogo").alt = `${coinLabel} logo`;
         $("depositAssetName").textContent = item ? coinLabel : "Select an asset";
         $("depositAssetNetwork").textContent = item ? networkLabel : "Choose the exact network";
-        $("depositNetworkHint").textContent = item ? `Only send ${coinLabel} on ${networkLabel}. Sending another coin or network may permanently lose funds.` : "No active deposit address configured";  
+        $("depositNetworkHint").textContent = item ? `Only send ${coinLabel} on ${networkLabel}. Sending another coin or network may permanently lose funds.` : "No active deposit address configured";
+        $("depositBlockchain").textContent = networkLabel;
+        updateDepositSummary();  
         const qr = $("depositQr");
         const qrImage = $("depositQrImage");
         const payload = item?.qr_payload || address;
@@ -1523,6 +1540,13 @@ async function openCash(kind){
   }  
 }  
   
+  function updateDepositSummary() {
+    const amount = Number($("depositAmount")?.value || 0);
+    const value = amount > 0 ? `${amount.toFixed(2)} USDT` : "— USDT";
+    $("depositTotalPrice").textContent = value;
+    $("depositSubtotal").textContent = value;
+    $("depositAmountDue").textContent = value;
+  }
   let depositTimerId = null;
   function startDepositTimer() {
     clearInterval(depositTimerId);
@@ -2425,6 +2449,7 @@ function init(){
   $("resultPopupClose").onclick = closeResultPopup;  
   $("depositBtn").onclick = () => openCash("deposit");
   $("withdrawBtn").onclick = () => openCash("withdraw");
+  $("depositAmount").addEventListener("input", updateDepositSummary);
   $("submitDeposit").onclick = submitDeposit;
   $("cancelDeposit").onclick = () => { clearInterval(depositTimerId); $("cashModal").classList.remove("open"); };
   $("submitWithdrawal").onclick = submitWithdrawal;  
