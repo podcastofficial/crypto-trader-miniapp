@@ -176,7 +176,8 @@ label { font-weight:800; font-size:12px; }
 .trade-period { font-size:12px; font-variant-numeric:tabular-nums; }  
 .trade-status { font-weight:800; font-size:13px; }  
 .trade-amt { font-weight:800; font-size:13px; text-align:right; font-variant-numeric:tabular-nums; }  
-  .notification-btn { position:relative; }
+  .notification-btn { position:relative; width:42px; height:42px; display:grid; place-items:center; }
+  .notification-btn svg { width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
   #notificationCount { position:absolute; top:-3px; right:-3px; min-width:16px; height:16px; border-radius:999px; background:#ef4444; color:#fff; font-size:10px; line-height:16px; font-weight:800; }
   .notification-item { padding:11px 0; border-bottom:1px solid #2b2b31; }
   .notification-item strong, .notification-item small { display:block; }
@@ -354,7 +355,7 @@ label { font-weight:800; font-size:12px; }
   </div>  
   <div class="head-btns">  
     <button class="icon-btn" id="headerLang" type="button" aria-label="Language">🌐</button>  
-    <button class="icon-btn notification-btn" id="notificationBell" type="button" aria-label="Notifications">♢<span id="notificationCount" hidden>0</span></button>
+    <button class="icon-btn notification-btn" id="notificationBell" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span id="notificationCount" hidden>0</span></button>
   <button class="icon-btn" id="headerProfile" type="button" aria-label="Profile">👤</button>
   </div>  
 </header>
@@ -550,7 +551,7 @@ label { font-weight:800; font-size:12px; }
   <div class="notice">Deposits are credited automatically after blockchain confirmations. Select the exact coin and network before sending.</div>  
   <label for="depositOption">Coin and network</label>
   <div class="deposit-asset-card" id="depositAssetCard" aria-live="polite">
-    <span class="deposit-asset-logo" id="depositAssetLogo" aria-hidden="true">—</span>
+    <img class="deposit-asset-logo" id="depositAssetLogo" alt="Selected cryptocurrency logo" src="/coin-logos/usdt.svg">
     <span><strong id="depositAssetName">Select an asset</strong><small id="depositAssetNetwork">Choose the exact network</small></span>
   </div>
   <select id="depositOption"></select>
@@ -693,7 +694,7 @@ testingOnly:"Testing only.",
   },  
 hi:{  
 brandSub:"प्रिडिक्शन डैशबोर्ड · UTC",  
-home:"होम", wallet:"वॉलेट", referral:"रेफरल", profile:"प्रोफ़ाइल",  
+home:"ह���म", wallet:"वॉलेट", referral:"रेफरल", profile:"प्रोफ़ाइल",  
 walletBalance:"वॉलेट बैलेंस", points:"पॉइंट्स", serverNote:"लाइव सर्वर वॉलेट · पॉइंट्स बैलेंस",  
 refresh:"रिफ्रेश", refreshed:"अपडेट हो गया।", refreshFailed:"रिफ्रेश नहीं हो सका। फिर कोशिश करें।",  
 currentPeriod:"मौजूदा पीरियड", roundLen:"3 मिनट का राउंड",  
@@ -748,7 +749,7 @@ rewardNote:"रेफरल रिवॉर्ड पॉइंट्स के �
 needTg:"इसे देखने के लिए मिनी ऐप टेलीग्राम के अंदर खोलें।",  
 tgAccount:"टेलीग्राम अकाउंट", checkingTg:"टेलीग्राम जाँच रहा है…", authenticating:"टेलीग्राम से ऑथेंटिकेट हो रहा है",  
 retryAuth:"फिर से ऑथेंटिकेट करें", notTg:"टेलीग्राम में नहीं खुला",  
-openInTg:"ऑथेंटिक�������ट करने के लिए मिनी ऐप टेलीग्राम के अंदर खोलें।",  
+openInTg:"ऑथेंटिक�������ट करने के लिए मिनी ऐप टेलीग्राम के अंदर ख���लें।",  
 tgMissing:"टेलीग्राम initData नहीं मिला", openOfficial:"आधिकारिक टेलीग्राम मिनी ऐप खोलें।",  
 verified:"सर्वर ने टेलीग्राम पहचान सत्यापित की।", tgUser:"टेलीग्राम यूज़र {id}",  
 settings:"सेटिंग्स", sound:"साउंड", vibration:"वाइब्रेशन", change:"बदलें",  
@@ -784,7 +785,7 @@ loadingRound:"সার্ভার রাউন্ড লোড হচ্ছে
 toastAuth:"আগে টেলিগ্রাম দিয়ে অথেন্টিকেট করুন।",  
 toastLocked:"বেটিং বন্ধ। পরের রাউন্ডের অপেক্ষা করুন।",  
 toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্বোচ্চ ২ দশমিক)।",  
-toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করুন।",  
+toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করু���।",  
 toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদলে আবার চেষ্টা করু���।",  
 toastBetOk:"বেট গৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",  
 betOn:"বেট", serverRound:"সার্ভার রাউন্ড:", betAmount:"বেট অ্যামাউন্ট (পয়েন্ট)",  
@@ -809,7 +810,7 @@ lvl:"লেভেল", rate:"রেট", cnt:"সংখ্যা", total:"মো
 haveCode:"রেফারেল কোড আ��ে?", enterCode:"রেফারেল কোড দিন", apply:"প্রয়োগ করুন",  
 referredBy:"আপনি একজন ইউজারের রেফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",  
 commHistory:"কমিশন হ��স্ট্রি", direct:"আপনার সরাসরি রেফারেল",  
-rewardNote:"রেফারেল রিওয়ার্ড পয়েন্টের জন্য ������শ্চিত রিচার্জ দরকার। রিচার্জ এখনও চালু নয়।",  
+rewardNote:"রেফারেল রিওয়ার্ড পয়েন্টের জন্য ������শ্চিত রিচার্জ দরক���র। রিচার্জ এখনও চালু নয়।",  
 needTg:"এটি দেখতে মি��ি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",  
 tgAccount:"টেলিগ্রাম অ্যাকাউন্ট", checkingTg:"টেলিগ্রাম যাচাই হচ্ছে…", authenticating:"টেলিগ্রাম দিয়ে অথেন্টিকেট হচ্ছে",  
 retryAuth:"আবার অথেন্টিকেট করুন", notTg:"টেলিগ্রামে খোলা হয়নি",  
@@ -1332,33 +1333,41 @@ async function loadResults(){
 }  
   
 /* ---------- TRADE HISTORY ---------- */  
-// Bet 100 -> fee 2 -> actual trade 98.  
-// Win: shows the payout (e.g. +196). Loss: shows the lost actual trade (e.g. -98).  
+  // The database payout is the net win amount; display the full returned stake plus profit.
+  // A 100-point bet with a 49-point win therefore displays +149, not -49.
 function tradeView(b){  
   const ended = codeEnded(b.round_code);  
   const status = ended ? String(b.status || "pending").toLowerCase() : "pending";  
   const stakeC = cents(b.stake);  
   const feeC = cents(b.fee);  
   const actualC = stakeC - feeC;  
-  const payC = ended ? cents(b.payout) : 0;  
-  const hasRes = ended && b.result_number !== null && b.result_number !== undefined;  
+  const profitC = ended ? cents(b.payout) : 0;
+  const returnedC = profitC > 0 ? actualC + profitC : 0;
+  const hasRes = ended && b.result_number !== null && b.result_number !== undefined;
   
   let cls = "pending", label = t("pending"), amt = null;  
   
   if(status === "cancelled"){  
     cls = "cancelled"; label = t("cancelled");  
   } else if(status !== "pending"){  
-    if(payC > actualC){  
-      cls = "success"; label = t("success"); amt = payC;  
-    } else {  
-      cls = "fail"; label = t("fail"); amt = payC - actualC;  
+    if(profitC > 0){
+      cls = "success"; label = t("success"); amt = returnedC;
+    } else {
+      cls = "fail"; label = t("fail"); amt = -actualC;
     }  
   }  
   
-  return {cls,label,amt,stakeC,feeC,actualC,payC,hasRes};  
+  return {cls,label,amt,stakeC,feeC,actualC,profitC,returnedC,hasRes};
 }  
   
-function renderTrades(){  
+  function resultDetails(value){
+    const n = Number(value);
+    if(!Number.isInteger(n) || n < 0 || n > 9) return "—";
+    const colour = n === 0 || n === 5 ? (n === 0 ? "Red + Violet" : "Green + Violet") : (n % 2 === 0 ? "Red" : "Green");
+    return `${colour} · ${n} · ${n >= 5 ? "Big" : "Small"}`;
+  }
+
+  function renderTrades(){
   const list = tradeData.bets || [];  
   let html;  
   
@@ -1380,8 +1389,9 @@ function renderTrades(){
           <div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(v.stakeC / 100))}</span></div>  
           <div class="kv"><span>${esc(t("dFee"))}</span><span>${esc(money(v.feeC / 100))}</span></div>  
           <div class="kv strong"><span>${esc(t("dActual"))}</span><span>${esc(money(v.actualC / 100))}</span></div>  
-          <div class="kv"><span>${esc(t("dPayout"))}</span><span>${esc(money(v.payC / 100))}</span></div>  
-          <div class="kv"><span>${esc(t("dResult"))}</span><span>${v.hasRes ? esc(b.result_number) : esc(t("waiting"))}</span></div>  
+          <div class="kv"><span>${esc(t("dPayout"))}</span><span>${esc(money(v.returnedC / 100))}</span></div>
+          <div class="kv"><span>Profit</span><span>${esc(money(v.profitC / 100))}</span></div>
+          <div class="kv"><span>Result</span><span>${v.hasRes ? esc(resultDetails(b.result_number)) : esc(t("waiting"))}</span></div>
           <div class="kv"><span>${esc(t("dTime"))}</span><span>${esc(dateUTC(b.created_at))}</span></div>  
         </div>  
       </div>`;  
@@ -1473,8 +1483,12 @@ async function openCash(kind){
         $("depositAddress").value = address || "Deposit address is not configured";  
         const coinLabel = item?.coin || "asset";
         const networkLabel = item?.network || "network";
-        const logo = coinLabel.slice(0, 3).toUpperCase();
-        $("depositAssetLogo").textContent = logo;
+        const logoKey = coinLabel.toLowerCase().replace(/[^a-z]/g, "");
+        const logoMap = { usdt: "usdt", tether: "usdt", bnb: "bnb", eth: "eth", ethereum: "eth", solana: "sol", sol: "sol", tron: "trx", trx: "trx", polygon: "matic", matic: "matic", btc: "btc", bitcoin: "btc" };
+        const logo = logoMap[logoKey] || "usdt";
+        const logoUrls = { usdt: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/usdt.png", bnb: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/bnb.png", eth: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/eth.png", sol: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/sol.png", trx: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/trx.png", matic: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/matic.png", btc: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/btc.png" };
+        $("depositAssetLogo").src = logoUrls[logo] || logoUrls.usdt;
+        $("depositAssetLogo").alt = `${coinLabel} logo`;
         $("depositAssetName").textContent = item ? coinLabel : "Select an asset";
         $("depositAssetNetwork").textContent = item ? networkLabel : "Choose the exact network";
         $("depositNetworkHint").textContent = item ? `Only send ${coinLabel} on ${networkLabel}. Sending another coin or network may permanently lose funds.` : "No active deposit address configured";  
@@ -2154,7 +2168,8 @@ async function authenticate(){
   
     authed = true;  
     authBlock = null;  
-    user = data.user;  
+  user = data.user;
+  await loadNotifications().catch(() => {});
   
     profName = user.username ? {raw:"@" + user.username} : {k:"tgUser",v:{id:user.telegram_id}};  
     profStatus = {k:"verified"};  
