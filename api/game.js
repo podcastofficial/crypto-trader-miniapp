@@ -15,6 +15,18 @@ const MIN_BET_POINTS = 10;
 const MIN_DEPOSIT_POINTS = 100;
 const MIN_WITHDRAW_POINTS = 500;
 const ROUND_LOCK_KEY = 739184205; // same lock key as api/cron.js
+const RESULTS_CHANNEL = "@crypto_trader_results";
+
+async function notifyTelegram(text, chats = [process.env.ADMIN_CHAT_ID, RESULTS_CHANNEL]) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return;
+  await Promise.allSettled(chats.filter(Boolean).map((chatId) => fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
+    signal: AbortSignal.timeout(10000)
+  })));
+}
 
 function json(res, status, data) {
   return res.status(status).json(data);
@@ -787,8 +799,9 @@ module.exports = async function handler(req, res) {
       }
       const submitted = await client.query(`INSERT INTO public.transactions (user_id,transaction_type,amount,status,network,tx_hash,created_at,updated_at) VALUES ($1,'deposit',0,'pending',$2,$3,NOW(),NOW()) RETURNING id,status,tx_hash,created_at`, [user.id, network, txHash]);
       await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'deposit','Deposit submitted',$2)`, [user.id, `Transaction submitted for verification. Only the verified on-chain amount will be credited.`]).catch(() => {});
-      await client.query("COMMIT"); transactionStarted = false;
-      return json(res, 200, { success: true, deposit: submitted.rows[0], message: "Submitted. Credit happens only after blockchain verification." });
+  await client.query("COMMIT"); transactionStarted = false;
+  await notifyTelegram(`💰 Deposit submitted\n👤 User ID: ${user.telegram_id}\n🔗 TX: ${txHash}\n🌐 Network: ${network}\n⏳ Status: Pending verification`);
+  return json(res, 200, { success: true, deposit: submitted.rows[0], message: "Submitted. Credit happens only after blockchain verification." });
     }
 
     if (action === "request_withdrawal") {
@@ -820,8 +833,9 @@ module.exports = async function handler(req, res) {
          RETURNING id, amount, status, destination_address, created_at`,
         [user.id, amount.toFixed(2), destination]
       );
-      await client.query("COMMIT"); transactionStarted = false;
-      return json(res, 200, { success: true, withdrawal: tx.rows[0], balance: result.rows[0].balance });
+  await client.query("COMMIT"); transactionStarted = false;
+  await notifyTelegram(`📤 Withdrawal requested\n👤 User ID: ${user.telegram_id}\n💵 Amount: ${(amount / POINTS_PER_USDT).toFixed(2)} USDT (${amount.toFixed(2)} points)\n🏦 Wallet: ${destination}\n⏳ Status: Pending approval`);
+  return json(res, 200, { success: true, withdrawal: tx.rows[0], balance: result.rows[0].balance });
     }
 
     if (action === "wallet_history") {
