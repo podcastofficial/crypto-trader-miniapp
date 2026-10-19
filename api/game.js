@@ -841,10 +841,9 @@ module.exports = async function handler(req, res) {
       }
 
       if (
-        !/^\d{1,4}(\.\d{1,2})?$/.test(stakeText) ||
+        !/^\d{1,18}(\.\d{1,2})?$/.test(stakeText) ||
         !Number.isFinite(stake) ||
-        stake < 0.01 ||
-        stake > 1000
+        stake < 10
       ) {
         await client.query("ROLLBACK");
         transactionStarted = false;
@@ -852,7 +851,7 @@ module.exports = async function handler(req, res) {
         return json(res, 400, {
           success: false,
           message:
-            "Stake must be between 0.01 and 1000, maximum 2 decimals.",
+            "Stake must be at least 10 points, with maximum 2 decimals.",
         });
       }
 

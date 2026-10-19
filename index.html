@@ -375,7 +375,7 @@ label { font-weight:800; font-size:12px; }
 
     <div class="card">
       <div class="section-title">🔢 <span data-i18n="chooseNumber">Choose a Number</span></div>
-      <div class="muted small" data-i18n="chooseNumberHint">Select a number to open the test-bet window.</div>
+      <div class="muted small" data-i18n="chooseNumberHint">Select a number to open the betting window.</div>
       <div class="number-grid" id="numberGrid"></div>
 
       <div class="section-title">🎨 <span data-i18n="chooseColour">Choose a Colour</span></div>
@@ -467,7 +467,7 @@ label { font-weight:800; font-size:12px; }
     <div class="card">
       <div class="section-title" data-i18n="about">About</div>
       <p data-i18n="aboutText">Server-controlled rounds and test-credit wallet.</p>
-      <div class="notice" data-i18n="testingOnly">Testing only.</div>
+      <div class="notice" data-i18n="gameNotice">Server-controlled game. Bets use your available points.</div>
     </div>
   </div>
 </section>
@@ -499,7 +499,7 @@ label { font-weight:800; font-size:12px; }
     </div>
     <p class="muted small" id="betModalPeriod"></p>
 
-    <label for="betAmount" data-i18n="betAmount">Bet Amount (Test Points)</label>
+    <label for="betAmount" data-i18n="betAmount">Bet Amount (Points)</label>
     <div class="amount-presets">
       <button data-amount="10" type="button">10</button>
       <button data-amount="50" type="button">50</button>
@@ -508,14 +508,14 @@ label { font-weight:800; font-size:12px; }
     </div>
     <div class="amount-stepper">
       <button id="minusAmount" type="button">−</button>
-      <input id="betAmount" type="number" min="0.01" max="1000" step="0.01" value="100">
+      <input id="betAmount" type="number" min="10" step="0.01" value="100">
       <button id="plusAmount" type="button">+</button>
     </div>
 
     <div class="breakdown" id="betBreakdown"></div>
 
-    <div class="notice" data-i18n="betNote">Test credits only. A bet deducts test credits.</div>
-    <button class="primary-btn" id="confirmBet" type="button" style="margin-top:14px" data-i18n="placeBet">Place Test Bet</button>
+    <div class="notice" data-i18n="betNote">A bet deducts points from your available balance.</div>
+    <button class="primary-btn" id="confirmBet" type="button" style="margin-top:14px" data-i18n="placeBet">Place Bet</button>
   </div>
 </div>
 
@@ -582,7 +582,7 @@ home:"Home", wallet:"Wallet", referral:"Referral", profile:"Profile",
 walletBalance:"WALLET BALANCE", points:"Points", serverNote:"Server database · Test credits only",
 refresh:"Refresh", refreshed:"Updated.", refreshFailed:"Could not refresh. Try again.",
 currentPeriod:"Current Period", roundLen:"3-minute round",
-chooseNumber:"Choose a Number", chooseNumberHint:"Select a number to open the test-bet window.",
+chooseNumber:"Choose a Number", chooseNumberHint:"Select a number to open the betting window.",
 chooseColour:"Choose a Colour", red:"Red", green:"Green", violet:"Violet",
 bigSmall:"Big / Small", big:"Big (5–9)", small:"Small (0–4)",
 resultHistory:"Result History", tradeHistory:"My Trade History",
@@ -603,17 +603,17 @@ nUnavailable:"Backend unavailable: {msg}",
 loadingRound:"Loading server round…",
 toastAuth:"Authenticate through Telegram first.",
 toastLocked:"Betting is locked. Wait for the next round.",
-toastAmount:"Enter an amount between 0.01 and 1000 test points (max 2 decimals).",
+toastAmount:"Enter at least 10 points (max 2 decimals).", 
 toastChanged:"Bet details changed. Please submit again.",
 toastBetFail:"Unable to place test bet. Retry without changing the details.",
 toastBetOk:"Test bet accepted.", copied:"Copied.", copyFail:"Copy failed.",
-betOn:"Bet on", serverRound:"Server round:", betAmount:"Bet Amount (Test Points)",
-betNote:"Test credits only. A bet deducts test credits.", placeBet:"Place Test Bet",
+betOn:"Bet on", serverRound:"Server round:", betAmount:"Bet Amount (Points)",
+    betNote:"A bet deducts points from your available balance.", placeBet:"Place Bet",
 rTitle:"ROUND RESULT", rPeriod:"Period", rNote:"The result was received from the game server.",
 rContinue:"CONTINUE", cRedV:"RED + VIOLET", cGreenV:"GREEN + VIOLET", cRed:"RED", cGreen:"GREEN",
 sBig:"BIG (5–9)", sSmall:"SMALL (0–4)",
 bannerResult:"Result {period}: {n} · {colour} · {size}",
-testBalance:"Database test-credit balance", deposit:"Deposit", withdraw:"Withdraw",
+testBalance:"Database points balance", deposit:"Deposit", withdraw:"Withdraw",
 txTitle:"Transactions",
 tx_deposit:"Deposit", tx_withdrawal:"Withdrawal", tx_bet:"Bet", tx_payout:"Payout", tx_refund:"Refund",
 s_completed:"Completed", s_confirmed:"Confirmed", s_pending:"Pending", s_rejected:"Rejected", s_failed:"Failed",
@@ -654,7 +654,7 @@ resultHistory:"रिज़ल्ट हिस्ट्री", tradeHistory:"�
 colPeriod:"पीरियड", colNum:"नंबर", colBS:"B/S", colResult:"रिज़ल्ट",
 colType:"प्रकार", colAmount:"अमाउंट", colStatus:"स्टेटस",
 range:"{from}-{to} / {total}",
-loading:"लोड ���ो रहा है…", noRounds:"अभी कोई रिज़ल्ट नहीं।", noBets:"अभी कोई बेट नहीं।",
+loading:"लोड �����ो रहा है…", noRounds:"अभी कोई रिज़ल्ट नहीं।", noBets:"अभी कोई बेट नहीं।",
 noTx:"अभी कोई ट्रांज़ैक्शन नहीं।", noRef:"अभी कोई रेफरल नहीं।", noLangs:"क��ई भाषा नहीं मिली।",
 success:"सफल", fail:"असफल", pending:"पेंडिंग", cancelled:"रद्द",
 dBet:"बेट", dStake:"बेट अमाउंट", dFee:"फीस", dActual:"ट्रेड अमाउंट", dPayout:"पेआउट",
@@ -668,7 +668,7 @@ nUnavailable:"बैकएंड उपलब्ध नहीं: {msg}",
 loadingRound:"सर्वर राउंड लोड हो रहा है…",
 toastAuth:"पहले टेलीग्राम से ऑथेंटिकेट करें।",
 toastLocked:"बेटिंग बंद है। अगले राउंड का इंतज़ार करें।",
-toastAmount:"0.01 से 1000 टेस्ट पॉइंट के बीच अमाउंट डालें (अधिकतम 2 दशमलव)।",
+toastAmount:"कम से कम 10 पॉइंट डालें (अधिकतम 2 दशमलव)।",
 toastChanged:"बेट की डिटेल बदल गई। फिर से सबमिट करें।",
 toastBetFail:"टेस्ट बेट नहीं लग सकी। डिटेल बदले बिना फिर कोशिश करें।",
 toastBetOk:"टेस्ट बेट स्वीकार हुई।", copied:"कॉपी हो गया।", copyFail:"कॉपी नहीं हो सका।",
@@ -1954,7 +1954,7 @@ async function authenticate(){
 /* ---------- BETTING ---------- */
 function renderBreakdown(){
   const text = $("betAmount").value.trim();
-  const ok = /^\d{1,4}(\.\d{1,2})?$/.test(text);
+  const ok = /^\d{1,18}(\.\d{1,2})?$/.test(text);
   const stakeC = ok ? cents(text) : 0;
   const feeC = Math.floor((stakeC * FEE_PERCENT + 50) / 100); // round half up
   const actualC = stakeC - feeC;
@@ -1996,8 +1996,8 @@ async function confirmBet(){
   const stakeText = $("betAmount").value.trim();
   const stake = Number(stakeText);
 
-  if(!/^\d{1,4}(\.\d{1,2})?$/.test(stakeText) ||
-     !Number.isFinite(stake) || stake < 0.01 || stake > 1000){
+  if(!/^\d{1,18}(\.\d{1,2})?$/.test(stakeText) ||
+     !Number.isFinite(stake) || stake < 10){
     toast(t("toastAmount"));
     return;
   }
@@ -2202,12 +2202,12 @@ function init(){
     };
   });
   $("minusAmount").onclick = () => {
-    $("betAmount").value = Math.max(0.01,(Number($("betAmount").value) || 1) - 10).toFixed(2);
+    $("betAmount").value = Math.max(10,(Number($("betAmount").value) || 10) - 10).toFixed(2);
     pendingBetRequest = null;
     renderBreakdown();
   };
   $("plusAmount").onclick = () => {
-    $("betAmount").value = Math.min(1000,(Number($("betAmount").value) || 1) + 10).toFixed(2);
+    $("betAmount").value = ((Number($("betAmount").value) || 10) + 10).toFixed(2);
     pendingBetRequest = null;
     renderBreakdown();
   };
