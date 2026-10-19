@@ -10,6 +10,10 @@ const pool = new Pool({
 });
 
 const BET_TYPES = ["Number", "Red", "Green", "Violet", "Big", "Small"];
+const POINTS_PER_USDT = 100;
+const MIN_BET_POINTS = 10;
+const MIN_DEPOSIT_POINTS = 100;
+const MIN_WITHDRAW_POINTS = 500;
 const ROUND_LOCK_KEY = 739184205; // same lock key as api/cron.js
 
 function json(res, status, data) {
@@ -270,9 +274,18 @@ async function getReferralData(client, userId) {
   }
 
   const referralCounts = await client.query(
-    `SELECT COUNT(*)::int AS total_referrals
-     FROM public.users
-     WHERE referred_by = $1`,
+    `WITH RECURSIVE tree AS (
+       SELECT id, 1 AS level FROM public.users WHERE referred_by = $1
+       UNION ALL
+       SELECT u.id, tree.level + 1
+       FROM public.users u JOIN tree ON u.referred_by = tree.id
+       WHERE tree.level < 3
+     )
+     SELECT COUNT(*) FILTER (WHERE level = 1)::int AS level_1,
+            COUNT(*) FILTER (WHERE level = 2)::int AS level_2,
+            COUNT(*) FILTER (WHERE level = 3)::int AS level_3,
+            COUNT(*)::int AS total_referrals
+     FROM tree`,
     [userId]
   );
 
@@ -378,9 +391,12 @@ async function getReferralData(client, userId) {
       referral_link: referralLink,
       bot_username: botUsername || null,
       referred_by: profile.referred_by,
-      total_direct_referrals: Number(
-        referralCounts.rows[0]?.total_referrals || 0
-      ),
+      total_direct_referrals: Number(referralCounts.rows[0]?.level_1 || 0),
+      team_levels: [1, 2, 3].map((level) => ({
+        level,
+        count: Number(referralCounts.rows[0]?.[`level_${level}`] || 0),
+      })),
+      total_team_members: Number(referralCounts.rows[0]?.total_referrals || 0),
       commission_levels: levels,
       total_commission: levels
         .reduce((sum, level) => sum + Number(level.total_commission), 0)
@@ -388,7 +404,7 @@ async function getReferralData(client, userId) {
       reward: {
         reward_per_eligible_referral: 100,
         qualifying_recharge_points: 100,
-        recharge_system_enabled: false,
+        recharge_system_enabled: true,
         pending_count: Number(
           rewardSummary.rows[0]?.pending_count || 0
         ),
@@ -580,6 +596,7 @@ module.exports = async function handler(req, res) {
     transactionStarted = true;
 
     const user = await getUser(client, telegramUser);
+    await client.query(`ALTER TABLE public.referral_commissions ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ`);
     const action = String(body.action || "");
 
     if (action === "balance") {
@@ -808,6 +825,34 @@ module.exports = async function handler(req, res) {
       return json(res, 200, data);
     }
 
+    if (action === "claim_commission") {
+      const claim = await client.query(
+        `WITH claimable AS (
+           SELECT COALESCE(SUM(commission_amount), 0) AS amount
+           FROM public.referral_commissions
+           WHERE referrer_user_id = $1 AND claimed_at IS NULL
+         ), marked AS (
+           UPDATE public.referral_commissions
+           SET claimed_at = NOW()
+           WHERE referrer_user_id = $1 AND claimed_at IS NULL
+           RETURNING commission_amount
+         )
+         SELECT (SELECT amount FROM claimable)::numeric(20,2) AS amount`,
+        [user.id]
+      );
+      const amount = Number(claim.rows[0]?.amount || 0);
+      if (amount <= 0) {
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 400, { success: false, message: "No commission is available to claim." });
+      }
+      await client.query(
+        `UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`,
+        [amount.toFixed(2), user.id]
+      );
+      await client.query("COMMIT"); transactionStarted = false;
+      return json(res, 200, { success: true, claimed_points: amount.toFixed(2) });
+    }
+
     if (action === "place_bet") {
       const roundCode = String(body.round_code || "");
       const betType = String(body.bet_type || "");
@@ -843,7 +888,7 @@ module.exports = async function handler(req, res) {
       if (
         !/^\d{1,18}(\.\d{1,2})?$/.test(stakeText) ||
         !Number.isFinite(stake) ||
-        stake < 10
+        stake < MIN_BET_POINTS
       ) {
         await client.query("ROLLBACK");
         transactionStarted = false;
