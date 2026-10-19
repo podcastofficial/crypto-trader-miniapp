@@ -728,7 +728,7 @@ rewardNote:"रेफरल रिवॉर्ड पॉइंट्स के �
 needTg:"इसे देखने के लिए मिनी ऐप टेलीग्राम के अंदर खोलें।",
 tgAccount:"टेलीग्राम अकाउंट", checkingTg:"टेलीग्राम जाँच रहा है…", authenticating:"टेलीग्राम से ऑथेंटिकेट हो रहा है",
 retryAuth:"फिर से ऑथेंटिकेट करें", notTg:"टेलीग्राम में नहीं खुला",
-openInTg:"ऑथेंटिकेट करने के लिए मिनी ऐप टेलीग्राम के अंदर खोलें।",
+openInTg:"ऑथेंटिक���ट करने के लिए मिनी ऐप टेलीग्राम के अंदर खोलें।",
 tgMissing:"टेलीग्राम initData नहीं मिला", openOfficial:"आधिकारिक टेलीग्राम मिनी ऐप खोलें।",
 verified:"सर्वर ने टेलीग्राम पहचान सत्यापित की।", tgUser:"टेलीग्राम यूज़र {id}",
 settings:"सेटिंग्स", sound:"साउंड", vibration:"वाइब्रेशन", change:"बदलें",
@@ -788,7 +788,7 @@ directRef:"সরাসরি রেফারেল", totalComm:"মোট ক�
 lvl:"লেভেল", rate:"রেট", cnt:"সংখ্যা", total:"মোট", comm:"কমিশন",
 haveCode:"রেফারেল কোড আছে?", enterCode:"রেফারেল কোড দিন", apply:"প্রয়োগ করুন",
 referredBy:"আপনি একজন ইউজারের রেফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",
-commHistory:"কমিশন হিস্ট্রি", direct:"আপনার সরাসরি রেফারেল",
+commHistory:"কমিশন হ��স্ট্রি", direct:"আপনার সরাসরি রেফারেল",
 rewardNote:"রেফারেল রিওয়ার্ড পয়েন্টের জন্য নিশ্চিত রিচার্জ দরকার। রিচার্জ এখনও চালু নয়।",
 needTg:"এটি দেখতে মিনি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",
 tgAccount:"টেলিগ্রাম অ্যাকাউন্ট", checkingTg:"টেলিগ্রাম যাচাই হচ্ছে…", authenticating:"টেলিগ্রাম দিয়ে অথেন্টিকেট হচ্ছে",
@@ -811,7 +811,7 @@ const EXTRA = (window.CTP_LANGS_EXTRA && typeof window.CTP_LANGS_EXTRA === "obje
 const LANGS = [
   {code:"en",name:"English",en:"English"},
   {code:"hi",name:"हिन्दी",en:"Hindi"},
-  {code:"bn",name:"বাং��া",en:"Bengali"}
+  {code:"bn",name:"বাংলা",en:"Bengali"}
 ].concat(Object.keys(EXTRA).filter(c => !I18N[c] && EXTRA[c] && EXTRA[c].s).map(c => ({
   code:c,
   name:EXTRA[c].name || c,
@@ -842,6 +842,9 @@ function pickLang(){
 }
 
 let lang = pickLang();
+const initialLangMeta = LANGS.find(l => l.code === lang);
+document.documentElement.lang = lang;
+document.documentElement.dir = initialLangMeta && initialLangMeta.dir === "rtl" ? "rtl" : "ltr";
 
 function t(key,vars){
   const d = dict(lang);
@@ -1170,8 +1173,8 @@ function openWalletAddressModal(){
 async function saveProfile(){
   const value = $("profileDisplayName").value.trim();
   if(!value){ toast(t("displayName")); return; }
-  // Telegram remains the source of truth for username; keep this control ready
-  // without pretending a client-only name change was persisted.
+  profName = value;
+  renderProfile();
   toast(t("profileSaved"));
   $("profileModal").classList.remove("open");
 }
@@ -2179,13 +2182,17 @@ function rerender(){
   updateRoundDisplay();
 }
 
-function setLanguage(code){
+  function setLanguage(code){
   if(!dict(code)) return;
   lang = code;
+  const meta = LANGS.find(l => l.code === code);
+  document.documentElement.lang = code;
+  document.documentElement.dir = meta && meta.dir === "rtl" ? "rtl" : "ltr";
   try { localStorage.setItem("ctp_lang",code); } catch(_) {}
   $("langModal").classList.remove("open");
   rerender();
-}
+  }
+
 
 /* ---------- INIT ---------- */
 function renderNumbers(){
