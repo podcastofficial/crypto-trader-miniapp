@@ -4,6 +4,18 @@ const ROUND_SECONDS = 180;
 const BETTING_SECONDS = 150;
 const FUTURE_ROUNDS = 5;
 const MAX_SETTLEMENT_ATTEMPTS = 20;
+const RESULTS_CHANNEL = "@crypto_trader_results";
+
+async function notifyResults(text) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return;
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: RESULTS_CHANNEL, text, disable_web_page_preview: true }),
+    signal: AbortSignal.timeout(10000)
+  }).catch(() => {});
+}
 
 let pool;
 
@@ -289,6 +301,7 @@ module.exports = async function handler(req, res) {
 
       if (result.phase === "result_calculated") {
         resultsCalculated++;
+        await notifyResults(`🎲 Round result published\n🔢 Round: ${result.round_code}\n🎯 Result: ${result.result_number ?? "—"}\n🎨 Colour: ${result.result_color ?? "—"}\n📏 Size: ${result.result_size ?? "—"}`);
       } else if (result.phase === "payout_released") {
         payoutsReleased++;
       } else if (!result.phase) {

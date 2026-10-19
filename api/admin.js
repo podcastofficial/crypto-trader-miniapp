@@ -23,6 +23,19 @@ const COOKIE = "admin_session";
 const SESSION_SECONDS = 7200;
 const PAGE_SIZE_MAX = 100;
 const EXPORT_MAX = 5000;
+const RESULTS_CHANNEL = "@crypto_trader_results";
+
+async function notifyTelegram(text) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return;
+  const chats = [process.env.ADMIN_CHAT_ID, RESULTS_CHANNEL].filter(Boolean);
+  await Promise.allSettled(chats.map((chatId) => fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
+    signal: AbortSignal.timeout(10000)
+  })));
+}
 
 const STATUSES = new Set([
   "pending", "confirmed", "rejected", "completed", "failed",
@@ -1268,10 +1281,11 @@ async function reviewWalletTransaction(action, body, session, req) {
     await client.query("BEGIN");
 
     const result = await client.query(
-      `SELECT id,user_id,transaction_type,amount,status,
-        network,tx_hash
-       FROM public.transactions
-       WHERE id=$1
+      `SELECT t.id,t.user_id,t.transaction_type,t.amount,t.status,
+        t.network,t.tx_hash,u.telegram_id,u.username
+       FROM public.transactions t
+       JOIN public.users u ON u.id=t.user_id
+       WHERE t.id=$1
        FOR UPDATE`,
       [transactionId]
     );
@@ -1345,6 +1359,14 @@ async function reviewWalletTransaction(action, body, session, req) {
       throw new Error("Unsupported wallet review action.");
     }
 
+    if (action === "withdrawal_approve") {
+      await client.query(
+        `INSERT INTO public.user_notifications(user_id,kind,title,message)
+         VALUES($1,'withdrawal','Withdrawal approved',$2)`,
+        [tx.user_id, `Your withdrawal of ${(Number(tx.amount) / 100).toFixed(2)} USDT was approved and is ready for payout.`]
+      );
+    }
+
     await client.query(
       `UPDATE public.transactions
        SET status=$1,
@@ -1362,6 +1384,12 @@ async function reviewWalletTransaction(action, body, session, req) {
     );
 
     await client.query("COMMIT");
+
+    if (action === "withdrawal_approve") {
+      await notifyTelegram(`✅ Withdrawal approved\n👤 User: ${tx.username ? `@${tx.username}` : tx.telegram_id}\n💵 Amount: ${(Number(tx.amount) / 100).toFixed(2)} USDT\n📣 Manual payout approved`);
+    } else if (action === "deposit_approve") {
+      await notifyTelegram(`✅ Deposit approved\n👤 User: ${tx.username ? `@${tx.username}` : tx.telegram_id}\n💵 Amount credited: ${Number(tx.amount).toFixed(2)} points`);
+    }
 
     await audit(
       session.username,
