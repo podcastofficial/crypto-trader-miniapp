@@ -1505,7 +1505,6 @@ async function openCash(kind){
         $("depositAssetLogo").src = logoUrls[logo] || logoUrls.usdt;
         $("depositAssetLogo").alt = `${coinLabel} logo`;
         $("depositAssetName").textContent = item ? coinLabel : "Select an asset";
-        $("depositAssetNetwork").textContent = item ? networkLabel : "Choose the exact network";
         $("depositNetworkHint").textContent = item ? `Only send ${coinLabel} on ${networkLabel}. Sending another coin or network may permanently lose funds.` : "No active deposit address configured";
         $("depositBlockchain").textContent = networkLabel;
         updateDepositSummary();  
