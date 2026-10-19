@@ -348,7 +348,7 @@ label { font-weight:800; font-size:12px; }
   <div class="balance-card">
     <div class="balance-label" data-i18n="walletBalance">WALLET BALANCE</div>
     <div class="balance-value"><span id="homePoints">—</span> <span data-i18n="points">Points</span></div>
-    <div class="balance-sub" data-i18n="serverNote">Live server wallet · Points balance</div>
+    <div class="balance-sub"><span id="homeUsdt">—</span> USDT · 100 Points = 1 USDT</div>
     <div class="actions">
       <button class="action-btn alt" data-page-go="wallet" type="button">💰 <span data-i18n="wallet">Wallet</span></button>
       <button class="action-btn" data-refresh="1" type="button">↻ <span data-i18n="refresh">Refresh</span></button>
@@ -412,7 +412,7 @@ label { font-weight:800; font-size:12px; }
     <div class="card">
       <div class="muted small" data-i18n="testBalance">Live wallet balance</div>
       <div style="font-size:27px;font-weight:900;margin:9px 0;color:#facc15">
-        <span id="walletPoints">—</span> <span data-i18n="points">Points</span>
+        <span id="walletPoints">—</span> <span data-i18n="points">Points</span><div class="balance-sub" id="walletUsdt">— USDT · 100 Points = 1 USDT</div>
       </div>
       <div class="actions">
         <button class="action-btn" id="depositBtn" type="button">⬇ <span data-i18n="deposit">Deposit</span></button>
@@ -1213,8 +1213,11 @@ async function saveWalletAddress(){
 
 function updateBalance(value){
   balance = Number(value);
+  const usdt = (balance / 100).toFixed(2);
   $("homePoints").textContent = money(balance);
   $("walletPoints").textContent = money(balance);
+  $("homeUsdt").textContent = usdt + " USDT";
+  $("walletUsdt").textContent = usdt + " USDT · 100 Points = 1 USDT";
 }
 
 /* ---------- SOUND ---------- */
@@ -1423,8 +1426,10 @@ async function loadWallet(silent){
 }
 
 function openCash(kind){
-  $("cashTitle").textContent = (kind === "deposit" ? "⬇ " : "⬆ ") +
-    t(kind === "deposit" ? "deposit" : "withdraw");
+  $("cashTitle").textContent = (kind === "deposit" ? "⬇ " : "⬆ ") + t(kind === "deposit" ? "deposit" : "withdraw");
+  const hint = kind === "deposit" ? "Minimum deposit: 100 points = 1 USDT" : "Minimum withdrawal: 500 points = 5 USDT";
+  const notice = $("cashModal").querySelector(".notice");
+  if(notice) notice.textContent = hint;
   $("cashModal").classList.add("open");
 }
 
@@ -1461,6 +1466,10 @@ function renderReferral(){
     </div>
   </div>`;
 
+  const claimButton = Number(r.total_commission || 0) > 0
+    ? `<button class="primary-btn" id="claimCommissionBtn" type="button">Claim commission to wallet</button>`
+    : "";
+  const teamRows = (r.team_levels || []).map(l => `<div class="kv"><span>Level ${esc(l.level)}</span><strong>${esc(l.count)} members</strong></div>`).join("");
   const stats = `<div class="stats">
     <div class="stat"><div class="l">${esc(t("directRef"))}</div><div class="v">${esc(r.total_direct_referrals)}</div></div>
     <div class="stat"><div class="l">${esc(t("totalComm"))}</div><div class="v">${esc(money(r.total_commission))}</div></div>
@@ -1473,6 +1482,7 @@ function renderReferral(){
 
   const levelsCard = `<div class="card">
     <div class="section-title">${esc(t("levels"))}</div>
+    <div class="notice"><strong>Team · 3 levels</strong>${teamRows}<div style="margin-top:12px">${claimButton}</div></div>
     <div class="wrap"><table class="tbl"><thead><tr>
       <th>${esc(t("lvl"))}</th><th>${esc(t("rate"))}</th><th>${esc(t("cnt"))}</th><th>${esc(t("total"))}</th>
     </tr></thead><tbody>${levelRows}</tbody></table></div>
@@ -2262,6 +2272,19 @@ function init(){
   $("resultPopupClose").onclick = closeResultPopup;
   $("depositBtn").onclick = () => openCash("deposit");
   $("withdrawBtn").onclick = () => openCash("withdraw");
+  document.addEventListener("click", async (event) => {
+    if(!event.target.closest("#claimCommissionBtn")) return;
+    const button = event.target.closest("#claimCommissionBtn");
+    button.disabled = true;
+    try {
+      const result = await api("claim_commission");
+      toast(`Claimed ${money(result.claimed_points)} points (${(Number(result.claimed_points) / 100).toFixed(2)} USDT)`);
+      await refreshAll(true);
+    } catch(error) {
+      button.disabled = false;
+      toast(error.message);
+    }
+  });
 
   $("sndSwitch").onclick = () => {
     settings.sound = !settings.sound;
