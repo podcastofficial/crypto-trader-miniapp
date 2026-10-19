@@ -466,7 +466,7 @@ label { font-weight:800; font-size:12px; }
 
     <div class="card">
       <div class="section-title" data-i18n="about">About</div>
-      <p data-i18n="aboutText">Server-controlled rounds and test-credit wallet.</p>
+      <p data-i18n="aboutText">Server-controlled rounds and live points wallet.</p>
       <div class="notice" data-i18n="gameNotice">Server-controlled game. Bets use your available points.</div>
     </div>
   </div>
@@ -508,7 +508,7 @@ label { font-weight:800; font-size:12px; }
     </div>
     <div class="amount-stepper">
       <button id="minusAmount" type="button">−</button>
-      <input id="betAmount" type="number" min="10" step="0.01" value="100">
+      <input id="betAmount" type="number" min="10" step="0.01" value="100" inputmode="decimal">
       <button id="plusAmount" type="button">+</button>
     </div>
 
@@ -670,10 +670,10 @@ toastAuth:"पहले टेलीग्राम से ऑथेंटिक
 toastLocked:"बेटिंग बंद है। अगले राउंड का इंतज़ार करें।",
 toastAmount:"कम से कम 10 पॉइंट डालें (अधिकतम 2 दशमलव)।",
 toastChanged:"बेट की डिटेल बदल गई। फिर से सबमिट करें।",
-toastBetFail:"टेस्ट बेट नहीं लग सकी। डिटेल बदले बिना फिर कोशिश करें।",
-toastBetOk:"टेस्ट बेट स्वीकार हुई।", copied:"कॉपी हो गया।", copyFail:"कॉपी नहीं हो सका।",
-betOn:"बेट", serverRound:"सर्वर राउंड:", betAmount:"बेट अमाउंट (टेस्ट पॉइंट)",
-betNote:"केवल टेस्ट क्रेडिट। बेट लगाने पर टेस्ट क्रेडिट कटते हैं।", placeBet:"टेस्ट बेट लगाएँ",
+toastBetFail:"बेट नहीं लग सकी। डिटेल बदले बिना फिर कोशिश करें।",
+toastBetOk:"बेट स्वीकार हुई।", copied:"कॉपी हो गया।", copyFail:"कॉपी नहीं हो सका।",
+betOn:"बेट", serverRound:"सर्वर राउंड:", betAmount:"बेट अमाउंट (पॉइंट)",
+betNote:"आपके लाइव पॉइंट्स से बेट की राशि कटेगी।", placeBet:"बेट लगाएँ",
 rTitle:"राउंड रिज़ल्ट", rPeriod:"पीरियड", rNote:"रिज़ल्ट गेम सर्वर से मिला है।",
 rContinue:"जारी रखें", cRedV:"लाल + बैंगनी", cGreenV:"हरा + बैंगनी", cRed:"लाल", cGreen:"हरा",
 sBig:"बड़ा (5–9)", sSmall:"छोटा (0–4)",
@@ -709,10 +709,10 @@ testingOnly:"लाइव गेम सर्वर।"
 bn:{
 brandSub:"প্রেডিকশন ড্যাশবোর্ড · UTC",
 home:"হোম", wallet:"ওয়ালেট", referral:"রেফারেল", profile:"প্রোফাইল",
-walletBalance:"ওয়ালেট ব্যালেন্স", points:"পয়েন্টস", serverNote:"সার্ভার ডাটাবেস · শুধু টেস্ট ক্রেডিট",
+walletBalance:"ওয়ালেট ব্যালেন্স", points:"পয়েন্টস", serverNote:"সার্ভার ডাটাবেস · লাইভ পয়েন্টস",
 refresh:"রিফ্রেশ", refreshed:"আপডেট হয়েছে।", refreshFailed:"রিফ্রেশ করা যায়নি। আবার চেষ্টা করুন।",
 currentPeriod:"বর্তমান পিরিয়ড", roundLen:"৩ মিনিটের রাউন্ড",
-chooseNumber:"নম্বর বেছে নিন", chooseNumberHint:"টেস্ট-বেট উইন্ডো খুলতে একটি নম্বর বেছে নিন।",
+chooseNumber:"নম্বর বেছে নিন", chooseNumberHint:"বেটিং উইন্ডো খুলতে একটি নম্বর বেছে নিন।",
 chooseColour:"রং বেছে নিন", red:"লাল", green:"সবুজ", violet:"বেগুনি",
 bigSmall:"বড় / ছোট", big:"বড় (5–9)", small:"ছোট (0–4)",
 resultHistory:"���েজাল্ট হিস্ট্রি", tradeHistory:"আমার ট্রেড হিস্ট্রি",
@@ -735,15 +735,15 @@ toastAuth:"আগে টেলিগ্রাম দিয়ে অথেন্
 toastLocked:"বেটিং বন্ধ। পরের রাউন্ডের অপেক্ষা করুন।",
 toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্বোচ্চ ২ দশমিক)।",
 toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করুন।",
-toastBetFail:"টেস্ট বেট দেওয়া যায়নি। তথ্য না বদলে আবার চেষ্টা করুন।",
-toastBetOk:"টেস্ট বেট গৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",
-betOn:"বেট", serverRound:"সার্ভার রাউন্ড:", betAmount:"বেট অ্যামাউন্ট (টেস্ট পয়েন্ট)",
-betNote:"শুধু টেস্ট ক্রেডিট। বেট দিলে টেস্ট ক্রেডিট কাটা হয়।", placeBet:"টেস্ট বেট দিন",
+toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদলে আবার চেষ্টা করুন।",
+toastBetOk:"বেট গৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",
+betOn:"বেট", serverRound:"সার্ভার রাউন্ড:", betAmount:"বেট অ্যামাউন্ট (পয়েন্ট)",
+betNote:"আপনার লাইভ পয়েন্ট ব্যালেন্স থেকে বেটের টাকা কাটা হবে।", placeBet:"বেট দিন",
 rTitle:"রাউন্ড রেজাল্ট", rPeriod:"পিরিয়ড", rNote:"রেজাল্ট গেম সার্ভার থেকে পাওয়া গেছে।",
 rContinue:"চালিয়ে যান", cRedV:"লাল + বেগুনি", cGreenV:"সবুজ + বেগুনি", cRed:"লাল", cGreen:"সবুজ",
 sBig:"বড় (5–9)", sSmall:"ছোট (0–4)",
 bannerResult:"রেজাল্ট {period}: {n} · {colour} · {size}",
-testBalance:"ডাটাবেস টেস্ট-ক্রেডিট ব্যালেন্স", deposit:"ডিপোজিট", withdraw:"উইথড্র",
+testBalance:"লাইভ পয়েন্ট ব্যালেন্স", deposit:"ডিপোজিট", withdraw:"উইথড্র",
 txTitle:"লেনদেন",
 tx_deposit:"ডিপোজিট", tx_withdrawal:"উইথড্র", tx_bet:"বেট", tx_payout:"পেআউট", tx_refund:"রিফান্ড",
 s_completed:"সম্পন্ন", s_confirmed:"নিশ্চিত", s_pending:"পেন্ডিং", s_rejected:"প্রত্যাখ্যাত", s_failed:"ব্যর্থ",
@@ -768,7 +768,7 @@ tgMissing:"টেলিগ্রাম initData পাওয়া যায়�
 verified:"সার্ভার টেলিগ্রাম পরিচয় যাচাই করেছে।", tgUser:"টেলিগ্রাম ইউজার {id}",
 settings:"সেটিংস", sound:"সাউন্ড", vibration:"ভাইব্রেশন", change:"পরিবর্তন",
 searchLang:"ভাষা খুঁজুন",
-language:"ভাষা", about:"সম্পর্কে", aboutText:"সার��ভার-নিয়ন্ত্���িত রাউন্ড ও টেস্ট-ক্রেডিট ওয়ালেট।",
+language:"ভাষা", about:"সম্পর্কে", aboutText:"সার্ভার-নিয়ন্ত্রিত রাউন্ড ও লাইভ পয়েন্টস ওয়ালেট।",
 testingOnly:"শুধু টেস্টিং।"
 }
 };
