@@ -414,6 +414,63 @@ async function getReferralData(client, userId) {
   };
 }
 
+// Direct referrals with active/inactive status and reward status.
+// Active = placed at least one bet in the last 7 days.
+async function getReferralMembers(client, userId) {
+  const members = await client.query(
+    `SELECT
+       u.id,
+       u.username,
+       u.created_at,
+       EXISTS (
+         SELECT 1 FROM public.bets b
+         WHERE b.user_id = u.id
+           AND b.created_at > NOW() - INTERVAL '7 days'
+       ) AS is_active,
+       (SELECT MAX(b.created_at) FROM public.bets b
+         WHERE b.user_id = u.id) AS last_bet_at,
+       rr.status AS reward_status,
+       rr.reward_points::text AS reward_points,
+       rr.credited_at
+     FROM public.users u
+     LEFT JOIN public.referral_rewards rr
+       ON rr.referred_user_id = u.id
+      AND rr.referrer_user_id = $1
+     WHERE u.referred_by = $1
+     ORDER BY u.created_at DESC, u.id DESC
+     LIMIT 100`,
+    [userId]
+  );
+
+  const summary = await client.query(
+    `SELECT
+       COUNT(*)::int AS total,
+       COUNT(*) FILTER (WHERE EXISTS (
+         SELECT 1 FROM public.bets b
+         WHERE b.user_id = u.id
+           AND b.created_at > NOW() - INTERVAL '7 days'
+       ))::int AS active,
+       COUNT(*) FILTER (WHERE rr.status = 'pending')::int AS pending_count,
+       COALESCE(SUM(rr.reward_points)
+         FILTER (WHERE rr.status = 'pending'), 0)::text AS pending_points,
+       COUNT(*) FILTER (WHERE rr.status = 'credited')::int AS credited_count,
+       COALESCE(SUM(rr.reward_points)
+         FILTER (WHERE rr.status = 'credited'), 0)::text AS credited_points
+     FROM public.users u
+     LEFT JOIN public.referral_rewards rr
+       ON rr.referred_user_id = u.id
+      AND rr.referrer_user_id = $1
+     WHERE u.referred_by = $1`,
+    [userId]
+  );
+
+  return {
+    success: true,
+    summary: summary.rows[0],
+    members: members.rows,
+  };
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
@@ -740,6 +797,15 @@ module.exports = async function handler(req, res) {
           has_previous: page > 1,
         },
       });
+    }
+
+    if (action === "referral_members") {
+      const data = await getReferralMembers(client, user.id);
+
+      await client.query("COMMIT");
+      transactionStarted = false;
+
+      return json(res, 200, data);
     }
 
     if (action === "place_bet") {
