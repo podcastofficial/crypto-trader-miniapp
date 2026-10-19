@@ -138,12 +138,22 @@ module.exports = async function handler(req, res) {
     const users = await sql`
       INSERT INTO users (telegram_id, username)
       VALUES (
-        ${user.id},
+        ${String(user.id)},
         ${user.username || null}
       )
       ON CONFLICT (telegram_id)
       DO UPDATE SET username = EXCLUDED.username
       RETURNING id, telegram_id, username
+    `;
+
+    const registeredUser = users[0];
+
+    // Keep the wallet row ready immediately after authentication so the first
+    // balance request never fails for a newly opened Mini App.
+    await sql`
+      INSERT INTO wallet_balances (user_id, balance)
+      VALUES (${registeredUser.id}, 0)
+      ON CONFLICT (user_id) DO NOTHING
     `;
 
     return res.status(200).json({
