@@ -53,14 +53,20 @@ async function scanDeposits(client) {
   for (const log of logs || []) {
     const txHash = String(log.transactionHash || "");
     if (!/^0x[0-9a-f]{64}$/i.test(txHash)) continue;
+    const confirmations = Math.max(0, latest - parseInt(String(log.blockNumber || "0"), 16) + 1);
+    const requiredConfirmations = Math.max(1, Number(process.env.BSC_MIN_CONFIRMATIONS || 12));
+    if (confirmations < requiredConfirmations) continue;
     const raw = BigInt(log.data || "0x0");
     const usdt = Number(raw) / 1e6;
     const points = usdt * 100;
     if (!Number.isFinite(points) || points < 100) continue;
-    const userWallet = await client.query("SELECT user_id FROM public.user_wallets WHERE LOWER(wallet_address)=LOWER($1) LIMIT 1", [depositAddress]);
-    const userId = userWallet.rows[0]?.user_id;
-    if (!userId) continue;
-    const inserted = await client.query(`INSERT INTO public.transactions (user_id, transaction_type, amount, status, network, tx_hash, created_at, updated_at) SELECT $1,'deposit',$2,'confirmed','BSC',$3,NOW(),NOW() WHERE NOT EXISTS (SELECT 1 FROM public.transactions WHERE tx_hash=$3) RETURNING id`, [userId, points.toFixed(2), txHash]);
+    const submitted = await client.query("SELECT id,user_id,status FROM public.transactions WHERE LOWER(tx_hash)=LOWER($1) AND transaction_type='deposit' LIMIT 1", [txHash]);
+    const userWallet = submitted.rowCount ? null : await client.query("SELECT user_id FROM public.user_wallets WHERE LOWER(wallet_address)=LOWER($1) LIMIT 1", [depositAddress]);
+    const userId = submitted.rows[0]?.user_id || userWallet?.rows[0]?.user_id;
+    if (!userId || (submitted.rowCount && submitted.rows[0].status === "confirmed")) continue;
+    const inserted = submitted.rowCount
+      ? await client.query(`UPDATE public.transactions SET amount=$1,status='confirmed',network='BSC',updated_at=NOW() WHERE id=$2 RETURNING id`, [points.toFixed(2), submitted.rows[0].id])
+      : await client.query(`INSERT INTO public.transactions (user_id, transaction_type, amount, status, network, tx_hash, created_at, updated_at) SELECT $1,'deposit',$2,'confirmed','BSC',$3,NOW(),NOW() WHERE NOT EXISTS (SELECT 1 FROM public.transactions WHERE tx_hash=$3) RETURNING id`, [userId, points.toFixed(2), txHash]);
     if (inserted.rowCount) {
       await client.query(`INSERT INTO public.wallet_balances (user_id,balance,updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (user_id) DO UPDATE SET balance=public.wallet_balances.balance+EXCLUDED.balance,updated_at=NOW()`, [userId, points.toFixed(2)]);
       credited++;
