@@ -846,6 +846,8 @@ input:focus, select:focus { border-color: #e4b83d; box-shadow: 0 0 0 3px #e4b83d
 .btn-primary { background: linear-gradient(135deg, #f5cd58, #dfa92d); border-color: #f5cd58; box-shadow: 0 7px 18px #d6a52e24; }
 .btn-primary:hover { background: linear-gradient(135deg, #ffdc73, #eaba3b); }
 .btn-danger { background: #291820; border-color: #5e2935; }
+.row-actions { display:flex; gap:6px; flex-wrap:wrap; min-width:170px; }
+.row-actions .btn { padding:7px 9px; font-size:12px; }
 
 .table-wrap { border-color: #293544; border-radius: 12px; }
 th { background: #18202b; color: #aeb8c6; }
@@ -1485,7 +1487,7 @@ async function renderAnalytics() {
       ${table(
         ["Date", "Bets", "Stake", "Payout", "Net Stake - Payout", "Active Users", "New Users"],
         daily.map(d => [
-          escapeHtml(String(d.day || "—").slice(0, 10)),
+          escapeHtml(String(d.day || "��").slice(0, 10)),
           escapeHtml(statValue(d.bets, 0)),
           escapeHtml(money(d.stake)),
           escapeHtml(money(d.payout)),
@@ -1872,6 +1874,17 @@ async function renderUserDetail(userId) {
           ${detailItem("Losses", statValue(s.losses, 0))}
           ${detailItem("Commissions Generated", money(data.commissions_generated))}
         </div>
+        <div class="card" style="margin-top:16px">
+          <h3>Admin actions</h3>
+          <div class="row-actions" style="margin-top:10px">
+            <button class="btn user-action" data-action="block" data-user-id="${escapeHtml(p.id)}">Block</button>
+            <button class="btn user-action" data-action="unblock" data-user-id="${escapeHtml(p.id)}">Unblock</button>
+            <button class="btn user-action" data-action="add_fund" data-user-id="${escapeHtml(p.id)}">Add fund</button>
+            <button class="btn user-action" data-action="remove_fund" data-user-id="${escapeHtml(p.id)}">Remove fund</button>
+            <button class="btn user-action" data-action="create_gift" data-user-id="${escapeHtml(p.id)}">Generate gift code</button>
+            <button class="btn user-action" data-action="transfer_points" data-user-id="${escapeHtml(p.id)}">Transfer points</button>
+          </div>
+        </div>
 
         <div class="card-head" style="margin-top:22px">
           <h3>Referral Tree</h3>
@@ -1939,6 +1952,26 @@ async function renderUserDetail(userId) {
     $("closeUserDetail").addEventListener("click", () => {
       container.innerHTML = "";
     });
+    container.querySelectorAll(".user-action").forEach(button => button.addEventListener("click", async () => {
+      const action = button.dataset.action;
+      const points = ["add_fund", "remove_fund", "transfer_points"].includes(action) ? prompt("Points amount") : null;
+      if (["add_fund", "remove_fund", "transfer_points"].includes(action) && (!points || Number(points) <= 0)) return;
+      const payload = { management_action: action, user_id: button.dataset.userId };
+      if (points) payload.points = points;
+      if (action === "transfer_points") {
+        payload.to_user_id = prompt("Target user ID") || "";
+        if (!payload.to_user_id) return;
+      }
+      if (action === "create_gift") {
+        payload.points = prompt("Gift code points") || "";
+        payload.max_uses = prompt("Maximum uses", "1") || "1";
+      }
+      try {
+        const result = await api("user_management", payload);
+        toast(action === "create_gift" ? `Gift code: ${result.gift_code.code}` : "User action completed.");
+        await renderUserDetail(button.dataset.userId);
+      } catch (error) { toast(error.message, true); }
+    }));
   } catch (error) {
     container.innerHTML = `
       <div class="notice danger">${escapeHtml(error.message)}</div>
@@ -2064,10 +2097,10 @@ async function renderTransactions(view) {
       userId: true
     })}
     <div class="notice warning">
-      This page is read-only. It does not approve or reject transactions.
+      Withdrawal actions reserve funds safely. Approve means manual payout is still required; Reject/Refund returns reserved funds to the user.
     </div>
     ${table(
-      ["ID", "User ID", "Type", "Amount", "Status", "Network", "Transaction Hash", "Created", "Updated"],
+      ["ID", "User ID", "Type", "Amount", "Status", "Network", "Transaction Hash", "Created", "Updated", "Actions"],
       (data.transactions || []).map(t => [
         escapeHtml(t.id),
         escapeHtml(t.user_id),
@@ -2077,7 +2110,8 @@ async function renderTransactions(view) {
         escapeHtml(t.network || "—"),
         escapeHtml(t.tx_hash || "—"),
         escapeHtml(formatDate(t.created_at)),
-        escapeHtml(formatDate(t.updated_at))
+        escapeHtml(formatDate(t.updated_at)),
+        t.transaction_type === "withdrawal" && t.status === "pending" ? `<div class="row-actions"><button class="btn btn-primary review-tx" data-action="withdrawal_approve" data-id="${escapeHtml(t.id)}">Approve</button><button class="btn btn-danger review-tx" data-action="withdrawal_reject" data-id="${escapeHtml(t.id)}">Reject / Refund</button></div>` : "—"
       ])
     )}
     ${paginationHtml(data.pagination)}
@@ -2085,6 +2119,16 @@ async function renderTransactions(view) {
 
   attachFilterActions(view, () => renderTransactions(view));
   attachPagination(view, data.pagination, () => renderTransactions(view));
+  document.querySelectorAll(".review-tx").forEach(button => button.addEventListener("click", async () => {
+    const action = button.dataset.action;
+    const message = action === "withdrawal_approve" ? "Approve this withdrawal for manual payout?" : "Reject and refund this withdrawal?";
+    if (!window.confirm(message)) return;
+    try {
+      await api(action, { transaction_id: button.dataset.id });
+      toast(action === "withdrawal_approve" ? "Withdrawal approved." : "Withdrawal rejected and refunded.");
+      await renderTransactions(view);
+    } catch (error) { toast(error.message, true); }
+  }));
 
   $("exportTransactions").addEventListener("click", async () => {
     try {

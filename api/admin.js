@@ -207,8 +207,61 @@ function ipAddress(req) {
   ).split(",")[0].trim().slice(0, 100);
 }
 
-async function audit(
-  username,
+  async function ensureManagementTables() {
+    await query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT FALSE`);
+    await query(`CREATE TABLE IF NOT EXISTS public.gift_codes (
+      id BIGSERIAL PRIMARY KEY, code TEXT UNIQUE NOT NULL, points NUMERIC(20,2) NOT NULL,
+      max_uses INTEGER NOT NULL DEFAULT 1, uses INTEGER NOT NULL DEFAULT 0,
+      expires_at TIMESTAMPTZ, created_by TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`);
+    await query(`CREATE TABLE IF NOT EXISTS public.user_notifications (
+      id BIGSERIAL PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL, title TEXT NOT NULL, message TEXT NOT NULL, is_read BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`);
+  }
+
+  async function userManagement(body, session, req) {
+    await ensureManagementTables();
+    const userId = String(body.user_id || "");
+    if (!/^\\d{1,15}$/.test(userId)) throw new Error("Invalid user ID.");
+    const action = String(body.management_action || "");
+    if (["block", "unblock"].includes(action)) {
+      await query(`UPDATE public.users SET is_blocked=$1 WHERE id=$2`, [action === "block", userId]);
+      await query(`INSERT INTO public.user_notifications (user_id,kind,title,message) VALUES ($1,'admin', $2, $3)`, [userId, action === "block" ? "Account blocked" : "Account unblocked", action === "block" ? "Your account has been blocked by admin." : "Your account has been unblocked."]);
+    } else if (["add_fund", "remove_fund"].includes(action)) {
+      const points = Number(body.points);
+      if (!Number.isFinite(points) || points <= 0 || points > 100000000) throw new Error("Enter a valid points amount.");
+      const delta = action === "add_fund" ? points : -points;
+      const result = await query(`UPDATE public.wallet_balances SET balance=balance+$1, updated_at=NOW() WHERE user_id=$2 AND balance+$1 >= 0 RETURNING balance`, [delta, userId]);
+      if (!result.rowCount) throw new Error("Insufficient balance or user wallet not found.");
+      await query(`INSERT INTO public.user_notifications (user_id,kind,title,message) VALUES ($1,'wallet','Balance updated',$2)`, [userId, `${action === "add_fund" ? "Added" : "Removed"} ${points} points by admin.`]);
+    } else if (action === "transfer_points") {
+      const toUserId = String(body.to_user_id || "");
+      const points = Number(body.points);
+      if (!/^\\d{1,15}$/.test(toUserId) || !Number.isFinite(points) || points <= 0) throw new Error("Enter a valid target user and points.");
+      const client = await pool.connect();
+      try { await client.query("BEGIN");
+        const debit = await client.query(`UPDATE public.wallet_balances SET balance=balance-$1,updated_at=NOW() WHERE user_id=$2 AND balance >= $1 RETURNING balance`, [points, userId]);
+        if (!debit.rowCount) throw new Error("Insufficient balance.");
+        await client.query(`INSERT INTO public.wallet_balances(user_id,balance) VALUES($1,0) ON CONFLICT(user_id) DO NOTHING`, [toUserId]);
+        await client.query(`UPDATE public.wallet_balances SET balance=balance+$1,updated_at=NOW() WHERE user_id=$2`, [points, toUserId]);
+        await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'transfer','Points received',$2),($3,'transfer','Points sent',$4)`, [toUserId, `You received ${points} points.`, userId, `You sent ${points} points.`]);
+        await client.query("COMMIT");
+      } catch (error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); }
+    } else if (action === "create_gift") {
+      const points = Number(body.points), maxUses = Math.max(1, Math.floor(Number(body.max_uses || 1)));
+      if (!Number.isFinite(points) || points <= 0) throw new Error("Enter valid gift points.");
+      const code = String(body.code || `GIFT-${crypto.randomBytes(4).toString("hex").toUpperCase()}`).trim().toUpperCase();
+      const result = await query(`INSERT INTO public.gift_codes(code,points,max_uses,expires_at,created_by) VALUES($1,$2,$3,$4,$5) RETURNING code,points,max_uses,expires_at`, [code, points, maxUses, body.expires_at || null, session.username]);
+      return { ok: true, gift_code: result.rows[0] };
+    } else throw new Error("Unknown user management action.");
+    await audit(session.username, `user_${action}`, req, "success", "user", userId);
+    return { ok: true };
+  }
+
+  async function audit(
+    username,
   action,
   req,
   outcome = "success",
@@ -1490,6 +1543,10 @@ module.exports = async function handler(req, res) {
       case "bets":
       case "audit":
         result = await listAction(action, body);
+        break;
+
+      case "user_management":
+        result = await userManagement(body, session, req);
         break;
 
       case "user_detail": {

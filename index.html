@@ -176,7 +176,12 @@ label { font-weight:800; font-size:12px; }
 .trade-period { font-size:12px; font-variant-numeric:tabular-nums; }  
 .trade-status { font-weight:800; font-size:13px; }  
 .trade-amt { font-weight:800; font-size:13px; text-align:right; font-variant-numeric:tabular-nums; }  
-.success { color:#22c55e; }  
+  .notification-btn { position:relative; }
+  #notificationCount { position:absolute; top:-3px; right:-3px; min-width:16px; height:16px; border-radius:999px; background:#ef4444; color:#fff; font-size:10px; line-height:16px; font-weight:800; }
+  .notification-item { padding:11px 0; border-bottom:1px solid #2b2b31; }
+  .notification-item strong, .notification-item small { display:block; }
+  .notification-item small { color:#a1a1aa; margin-top:4px; }
+  .success { color:#22c55e; }
 .fail { color:#ef4444; }  
 .pending { color:#facc15; }  
 .cancelled { color:#94a3b8; }  
@@ -275,7 +280,11 @@ label { font-weight:800; font-size:12px; }
   display:flex; flex-direction:column; align-items:center; gap:9px;  
   margin:14px 0 16px; text-align:center;  
 }  
-  .deposit-qr-wrap canvas, .deposit-qr-wrap .deposit-qr-image {  
+  .deposit-asset-card { display:flex; align-items:center; gap:11px; margin:10px 0; padding:10px 12px; border:1px solid #4a4a4f; border-radius:12px; background:#242429; }
+.deposit-asset-logo { display:grid; place-items:center; width:38px; height:38px; border-radius:50%; background:#f5c84b; color:#171717; font-weight:900; font-size:13px; }
+.deposit-asset-card strong, .deposit-asset-card small { display:block; }
+.deposit-asset-card small { margin-top:2px; color:#a6a6ad; font-size:12px; }
+.deposit-qr-wrap canvas, .deposit-qr-wrap .deposit-qr-image {  
   width:220px; height:220px; max-width:100%; padding:10px; object-fit:contain;  
   background:#fff; border-radius:14px; border:1px solid #4a4a4f;  
 }
@@ -341,9 +350,13 @@ label { font-weight:800; font-size:12px; }
   </div>  
   <div class="head-btns">  
     <button class="icon-btn" id="headerLang" type="button" aria-label="Language">🌐</button>  
-    <button class="icon-btn" id="headerProfile" type="button" aria-label="Profile">👤</button>  
+    <button class="icon-btn notification-btn" id="notificationBell" type="button" aria-label="Notifications">♢<span id="notificationCount" hidden>0</span></button>
+  <button class="icon-btn" id="headerProfile" type="button" aria-label="Profile">👤</button>
   </div>  
-</header>  <!-- HOME (GAME) -->  <section class="page active" id="page-home">    <div class="balance-card">  
+</header>
+<div class="modal-backdrop" id="notificationModal" role="dialog" aria-modal="true" aria-labelledby="notificationTitle">
+  <div class="modal"><div class="row"><h2 id="notificationTitle">Activity notifications</h2><button class="icon-btn" id="closeNotifications" type="button" aria-label="Close">×</button></div><div id="notificationList" class="notification-list"><div class="empty">Loading…</div></div></div>
+</div>  <!-- HOME (GAME) -->  <section class="page active" id="page-home">    <div class="balance-card">
     <div class="balance-label" data-i18n="walletBalance">WALLET BALANCE</div>  
     <div class="balance-value"><span id="homePoints">—</span> <span data-i18n="points">Points</span></div>  
     <div class="balance-sub"><span id="homeUsdt">—</span> USDT · 100 Points = 1 USDT</div>  
@@ -429,7 +442,8 @@ label { font-weight:800; font-size:12px; }
   <strong id="profileName">…</strong>  
   <p class="muted small" id="profileStatus">…</p>
 
-<button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth">Retry Authentication</button>
+  <button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth">Retry Authentication</button>
+  <div class="card" style="margin-top:14px"><div class="section-title">Gift code</div><div class="copybox"><input id="giftCodeInput" placeholder="Enter gift code"><button class="sec-btn" id="redeemGiftBtn" type="button">Redeem</button></div></div>
 
   <div class="actions" style="margin-top:12px">  
     <button class="action-btn" id="editProfileBtn" type="button" data-i18n="editProfile">Edit Profile</button>  
@@ -530,8 +544,12 @@ label { font-weight:800; font-size:12px; }
     </div>  
   <div id="cashDepositFields" style="display:none">  
   <div class="notice">Deposits are credited automatically after blockchain confirmations. Select the exact coin and network before sending.</div>  
-  <label for="depositOption">Coin and network</label>  
-  <select id="depositOption"></select>  
+  <label for="depositOption">Coin and network</label>
+  <div class="deposit-asset-card" id="depositAssetCard" aria-live="polite">
+    <span class="deposit-asset-logo" id="depositAssetLogo" aria-hidden="true">—</span>
+    <span><strong id="depositAssetName">Select an asset</strong><small id="depositAssetNetwork">Choose the exact network</small></span>
+  </div>
+  <select id="depositOption"></select>
   <div class="deposit-qr-wrap">  
   <canvas id="depositQr" width="220" height="220" aria-label="QR code for the selected deposit address"></canvas>
   <img id="depositQrImage" class="deposit-qr-image" alt="QR code for the selected deposit address" hidden>
@@ -738,12 +756,12 @@ colPeriod:"পিরিয়ড", colNum:"নম্বর", colBS:"B/S", colRes
 colType:"ধরন", colAmount:"অ্যামাউন্ট", colStatus:"স্ট্যাটাস",  
 range:"{from}-{to} / {total}",  
 loading:"লোড হচ্ছে…", noRounds:"এখনও কোনো রেজাল্ট নেই।", noBets:"এখনও কোনো বেট নেই।",  
-noTx:"এখনও কোনো লেনদেন নেই।", noRef:"এখনও কোনো রেফারেল নেই।", noLangs:"কোনো ভাষা পাওয়া যায়নি।",  
+noTx:"এখনও কোনো লেনদেন নেই।", noRef:"এখনও কোনো রেফারেল নেই���", noLangs:"কোনো ভাষা পাওয়া যায়নি।",  
 success:"সফল", fail:"ব্যর্থ", pending:"পেন্ডিং", cancelled:"বাতিল",  
-dBet:"বেট", dStake:"বেট অ্যামাউন্ট", dFee:"ফি", dActual:"ট্রেড অ্যামাউন্ট", dPayout:"পেআউট",  
+dBet:"বেট", dStake:"বেট অ্যামাউন্ট", dFee:"ফি", dActual:"ট্র��ড অ্যামাউন্ট", dPayout:"পেআউট",  
 dResult:"রেজাল্ট", dTime:"সময়", waiting:"অপেক্ষায়", bkFee:"ফি ({pct}%)",  
 bt_Number:"নম্বর", bt_Red:"লাল", bt_Green:"সবুজ", bt_Violet:"বেগুনি", bt_Big:"বড়", bt_Small:"ছোট",  
-stConnecting:"সংযোগ হচ্ছে", stSyncing:"সিঙ্ক হচ্ছে", stOpen:"বেটিং চালু", stLocked:"বেটিং বন্ধ",  
+stConnecting:"সংযোগ হচ্ছে", stSyncing:"সিঙ্ক হচ্ছে", stOpen:"বেটিং চাল���", stLocked:"বেটিং বন্ধ",  
 stError:"ব্যাকএন্ড ত্রুটি", stTelegram:"টেলিগ্রাম প্রয��োজন", stAuth:"অথ প্রয়োজন",  
 nConnecting:"ব্যাকএন্ডে সংযোগ হচ্ছে…",  
 nConnected:"ব্যাকএন্ডে সংযুক্ত। প্রতিটি রাউন্ড শেষ হওয়ার ৩০ সেকেন্ড আগে বেটিং বন্ধ হয়।",  
@@ -777,7 +795,7 @@ lvl:"লেভেল", rate:"রেট", cnt:"সংখ্যা", total:"মো
 haveCode:"রেফারেল কোড আ��ে?", enterCode:"রেফারেল কোড দিন", apply:"প্রয়োগ করুন",  
 referredBy:"আপনি একজন ইউজারের রেফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",  
 commHistory:"কমিশন হ��স্ট্রি", direct:"আপনার সরাসরি রেফারেল",  
-rewardNote:"রেফারেল রিওয়ার্ড পয়েন্টের জন্য নিশ্চিত রিচার্জ দরকার। রিচার্জ এখনও চালু নয়।",  
+rewardNote:"রেফারেল রিওয়ার্ড পয়েন্টের জন্য ������শ্চিত রিচার্জ দরকার। রিচার্জ এখনও চালু নয়।",  
 needTg:"এটি দেখতে মি��ি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",  
 tgAccount:"টেলিগ্রাম অ্যাকাউন্ট", checkingTg:"টেলিগ্রাম যাচাই হচ্ছে…", authenticating:"টেলিগ্রাম দিয়ে অথেন্টিকেট হচ্ছে",  
 retryAuth:"আবার অথেন্টিকেট করুন", notTg:"টেলিগ্রামে খোলা হয়নি",  
@@ -1437,7 +1455,13 @@ async function openCash(kind){
         const item = options[Number(select.value)] || options[0];  
         const address = item?.address || "";  
         $("depositAddress").value = address || "Deposit address is not configured";  
-        $("depositNetworkHint").textContent = item ? `Scan to deposit ${item.coin} on ${item.network}` : "No active deposit address configured";  
+        const coinLabel = item?.coin || "asset";
+        const networkLabel = item?.network || "network";
+        const logo = coinLabel.slice(0, 3).toUpperCase();
+        $("depositAssetLogo").textContent = logo;
+        $("depositAssetName").textContent = item ? coinLabel : "Select an asset";
+        $("depositAssetNetwork").textContent = item ? networkLabel : "Choose the exact network";
+        $("depositNetworkHint").textContent = item ? `Only send ${coinLabel} on ${networkLabel}. Sending another coin or network may permanently lose funds.` : "No active deposit address configured";  
         const qr = $("depositQr");
         const qrImage = $("depositQrImage");
         const payload = item?.qr_payload || address;
@@ -2311,6 +2335,19 @@ function init(){
     button.onclick = () => manualRefresh(button);  
   });  
   
+  async function loadNotifications() {
+    try {
+      const data = await api("notifications");
+      const list = $("notificationList");
+      const rows = data.notifications || [];
+      $("notificationCount").textContent = rows.filter(item => !item.is_read).length;
+      $("notificationCount").hidden = !rows.some(item => !item.is_read);
+      list.innerHTML = rows.length ? rows.map(item => `<div class="notification-item"><strong>${esc(item.title)}</strong><small>${esc(item.message)} · ${new Date(item.created_at).toLocaleString()}</small></div>`).join("") : '<div class="empty">No activity yet.</div>';
+    } catch (error) { console.warn("[v0] notifications unavailable", error.message); }
+  }
+  $("notificationBell").onclick = async () => { $("notificationModal").classList.add("open"); await loadNotifications(); };
+  setInterval(() => { if (initData) loadNotifications(); }, 30000);
+  $("closeNotifications").onclick = () => $("notificationModal").classList.remove("open");
   $("headerProfile").onclick = () => showPage("profile");  
   $("editProfileBtn").onclick = openProfileModal;  
   $("walletAddressBtn").onclick = openWalletAddressModal;  
@@ -2319,8 +2356,14 @@ function init(){
   $("headerLang").onclick = openLangModal;  
   $("langOpenBtn").onclick = openLangModal;  
   $("langSearch").addEventListener("input",() => renderLangList($("langSearch").value));  
-  $("authRetry").onclick = authenticate;  
-  $("confirmBet").onclick = confirmBet;  
+  $("authRetry").onclick = authenticate;
+  $("redeemGiftBtn").onclick = async () => {
+    const code = $("giftCodeInput").value.trim();
+    if (!code) return toast("Enter a gift code.");
+    try { const result = await api("redeem_gift", { code }); toast(`Gift redeemed: ${result.points} points added.`); $("giftCodeInput").value = ""; await loadNotifications(); await loadWallet(true); }
+    catch (error) { toast(error.message, true); }
+  };
+  $("confirmBet").onclick = confirmBet;
   $("resultPopupClose").onclick = closeResultPopup;  
   $("depositBtn").onclick = () => openCash("deposit");  
   $("withdrawBtn").onclick = () => openCash("withdraw");  
