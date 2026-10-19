@@ -348,7 +348,7 @@ label { font-weight:800; font-size:12px; }
   <div class="balance-card">
     <div class="balance-label" data-i18n="walletBalance">WALLET BALANCE</div>
     <div class="balance-value"><span id="homePoints">—</span> <span data-i18n="points">Points</span></div>
-    <div class="balance-sub" data-i18n="serverNote">Server database · Test credits only</div>
+    <div class="balance-sub" data-i18n="serverNote">Live server wallet · Points balance</div>
     <div class="actions">
       <button class="action-btn alt" data-page-go="wallet" type="button">💰 <span data-i18n="wallet">Wallet</span></button>
       <button class="action-btn" data-refresh="1" type="button">↻ <span data-i18n="refresh">Refresh</span></button>
@@ -410,7 +410,7 @@ label { font-weight:800; font-size:12px; }
     <div class="section-title">💰 <span data-i18n="wallet">Wallet</span></div>
 
     <div class="card">
-      <div class="muted small" data-i18n="testBalance">Database test-credit balance</div>
+      <div class="muted small" data-i18n="testBalance">Live wallet balance</div>
       <div style="font-size:27px;font-weight:900;margin:9px 0;color:#facc15">
         <span id="walletPoints">—</span> <span data-i18n="points">Points</span>
       </div>
@@ -579,7 +579,7 @@ const I18N = {
 en:{
 brandSub:"Prediction Dashboard · UTC",
 home:"Home", wallet:"Wallet", referral:"Referral", profile:"Profile",
-walletBalance:"WALLET BALANCE", points:"Points", serverNote:"Server database · Test credits only",
+walletBalance:"WALLET BALANCE", points:"Points", serverNote:"Live server wallet · Points balance",
 refresh:"Refresh", refreshed:"Updated.", refreshFailed:"Could not refresh. Try again.",
 currentPeriod:"Current Period", roundLen:"3-minute round",
 chooseNumber:"Choose a Number", chooseNumberHint:"Select a number to open the betting window.",
@@ -605,15 +605,15 @@ toastAuth:"Authenticate through Telegram first.",
 toastLocked:"Betting is locked. Wait for the next round.",
 toastAmount:"Enter at least 10 points (max 2 decimals).", 
 toastChanged:"Bet details changed. Please submit again.",
-toastBetFail:"Unable to place test bet. Retry without changing the details.",
-toastBetOk:"Test bet accepted.", copied:"Copied.", copyFail:"Copy failed.",
+toastBetFail:"Unable to place bet. Retry without changing the details.",
+toastBetOk:"Bet accepted.", copied:"Copied.", copyFail:"Copy failed.",
 betOn:"Bet on", serverRound:"Server round:", betAmount:"Bet Amount (Points)",
     betNote:"A bet deducts points from your available balance.", placeBet:"Place Bet",
 rTitle:"ROUND RESULT", rPeriod:"Period", rNote:"The result was received from the game server.",
 rContinue:"CONTINUE", cRedV:"RED + VIOLET", cGreenV:"GREEN + VIOLET", cRed:"RED", cGreen:"GREEN",
 sBig:"BIG (5–9)", sSmall:"SMALL (0–4)",
 bannerResult:"Result {period}: {n} · {colour} · {size}",
-testBalance:"Database points balance", deposit:"Deposit", withdraw:"Withdraw",
+testBalance:"Live points balance", deposit:"Deposit", withdraw:"Withdraw",
 txTitle:"Transactions",
 tx_deposit:"Deposit", tx_withdrawal:"Withdrawal", tx_bet:"Bet", tx_payout:"Payout", tx_refund:"Refund",
 s_completed:"Completed", s_confirmed:"Confirmed", s_pending:"Pending", s_rejected:"Rejected", s_failed:"Failed",
@@ -638,13 +638,13 @@ tgMissing:"Telegram initData missing", openOfficial:"Open the official Telegram 
 verified:"Telegram identity verified by server.", tgUser:"Telegram user {id}",
 settings:"Settings", sound:"Sound", vibration:"Vibration", change:"Change",
 searchLang:"Search language",
-language:"Language", about:"About", aboutText:"Server-controlled rounds and test-credit wallet.",
+language:"Language", about:"About", aboutText:"Server-controlled rounds and live wallet.",
 testingOnly:"Testing only."
 },
 hi:{
 brandSub:"प्रिडिक्शन डैशबोर्ड · UTC",
 home:"होम", wallet:"वॉलेट", referral:"रेफरल", profile:"प्रोफ़ाइल",
-walletBalance:"वॉलेट बैलेंस", points:"पॉइंट्स", serverNote:"सर्वर डेटाबेस · केवल टेस्ट क्रेडिट",
+walletBalance:"वॉलेट बैलेंस", points:"पॉइंट्स", serverNote:"लाइव सर्वर वॉलेट · पॉइंट्स बैलेंस",
 refresh:"रिफ्रेश", refreshed:"अपडेट हो गया।", refreshFailed:"रिफ्रेश नहीं हो सका। फिर कोशिश करें।",
 currentPeriod:"मौजूदा पीरियड", roundLen:"3 मिनट का राउंड",
 chooseNumber:"नंबर चुनें", chooseNumberHint:"टेस्ट-बेट विंडो खोलने के लिए नंबर चुनें।",
@@ -654,7 +654,7 @@ resultHistory:"रिज़ल्ट हिस्ट्री", tradeHistory:"�
 colPeriod:"पीरियड", colNum:"नंबर", colBS:"B/S", colResult:"रिज़ल्ट",
 colType:"प्रकार", colAmount:"अमाउंट", colStatus:"स्टेटस",
 range:"{from}-{to} / {total}",
-loading:"लोड �����ो रहा है…", noRounds:"अभी कोई रिज़ल्ट नहीं।", noBets:"अभी कोई बेट नहीं।",
+loading:"लोड �������� रहा है…", noRounds:"अभी कोई रिज़ल्ट नहीं।", noBets:"अभी कोई बेट नहीं।",
 noTx:"अभी कोई ट्रांज़ैक्शन नहीं।", noRef:"अभी कोई रेफरल नहीं।", noLangs:"क��ई भाषा नहीं मिली।",
 success:"सफल", fail:"असफल", pending:"पेंडिंग", cancelled:"रद्द",
 dBet:"बेट", dStake:"बेट अमाउंट", dFee:"फीस", dActual:"ट्रेड अमाउंट", dPayout:"पेआउट",
@@ -678,7 +678,7 @@ rTitle:"राउंड रिज़ल्ट", rPeriod:"पीरियड", rN
 rContinue:"जारी रखें", cRedV:"लाल + बैंगनी", cGreenV:"हरा + बैंगनी", cRed:"लाल", cGreen:"हरा",
 sBig:"बड़ा (5–9)", sSmall:"छोटा (0–4)",
 bannerResult:"रिज़ल्ट {period}: {n} · {colour} · {size}",
-testBalance:"डेटाबेस टेस्ट-क्रेडिट बैलेंस", deposit:"डिपॉज़िट", withdraw:"विदड्रॉ",
+testBalance:"लाइव वॉलेट बैलेंस", deposit:"डिपॉज़िट", withdraw:"विदड्रॉ",
 txTitle:"ट्रांज़ैक्शन",
 tx_deposit:"डिपॉज़िट", tx_withdrawal:"विदड्रॉ", tx_bet:"बेट", tx_payout:"पेआउट", tx_refund:"रिफंड",
 s_completed:"पूरा", s_confirmed:"कन्फर्म", s_pending:"पेंडिंग", s_rejected:"रिजेक्ट", s_failed:"फेल",
@@ -703,8 +703,8 @@ tgMissing:"टेलीग्राम initData नहीं मिला", open
 verified:"सर्वर ने टेलीग्राम पहचान सत्यापित की।", tgUser:"टेलीग्राम यूज़र {id}",
 settings:"सेटिंग्स", sound:"साउंड", vibration:"वाइब्रेशन", change:"बदलें",
 searchLang:"भाषा खोजें",
-language:"भाषा", about:"जानकारी", aboutText:"सर्वर-नियंत्रित राउंड और टेस्ट-क्रेडिट वॉलेट।",
-testingOnly:"केवल टेस्टिंग।"
+language:"भाषा", about:"जानकारी", aboutText:"सर्वर-नियंत्रित राउंड और लाइव वॉलेट।",
+testingOnly:"लाइव गेम सर्वर।"
 },
 bn:{
 brandSub:"প্রেডিকশন ড্যাশবোর্ড · UTC",
@@ -768,7 +768,7 @@ tgMissing:"টেলিগ্রাম initData পাওয়া যায়�
 verified:"সার্ভার টেলিগ্রাম পরিচয় যাচাই করেছে।", tgUser:"টেলিগ্রাম ইউজার {id}",
 settings:"সেটিংস", sound:"সাউন্ড", vibration:"ভাইব্রেশন", change:"পরিবর্তন",
 searchLang:"ভাষা খুঁজুন",
-language:"ভাষা", about:"সম্পর্কে", aboutText:"সার��ভার-নিয়ন্ত্রিত রাউন্ড ও টেস্ট-ক্রেডিট ওয়ালেট।",
+language:"ভাষা", about:"সম্পর্কে", aboutText:"সার��ভার-নিয়ন্ত্���িত রাউন্ড ও টেস্ট-ক্রেডিট ওয়ালেট।",
 testingOnly:"শুধু টেস্টিং।"
 }
 };
