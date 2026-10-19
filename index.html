@@ -2392,6 +2392,17 @@ function renderNumbers(){
   }  
 }  
   
+async function loadNotifications() {
+  try {
+    const data = await api("notifications");
+    const list = $("notificationList");
+    const rows = data.notifications || [];
+    $("notificationCount").textContent = rows.filter(item => !item.is_read).length;
+    $("notificationCount").hidden = !rows.some(item => !item.is_read);
+    list.innerHTML = rows.length ? rows.map(item => `<div class="notification-item"><strong>${esc(item.title)}</strong><small>${esc(item.message)} · ${new Date(item.created_at).toLocaleString()}</small></div>`).join("") : '<div class="empty">No activity yet.</div>';
+  } catch (error) { console.warn("[v0] notifications unavailable", error.message); }
+}
+
 function init(){  
   loadSettings();  
   
@@ -2416,16 +2427,6 @@ function init(){
     button.onclick = () => manualRefresh(button);  
   });  
   
-  async function loadNotifications() {
-    try {
-      const data = await api("notifications");
-      const list = $("notificationList");
-      const rows = data.notifications || [];
-      $("notificationCount").textContent = rows.filter(item => !item.is_read).length;
-      $("notificationCount").hidden = !rows.some(item => !item.is_read);
-      list.innerHTML = rows.length ? rows.map(item => `<div class="notification-item"><strong>${esc(item.title)}</strong><small>${esc(item.message)} · ${new Date(item.created_at).toLocaleString()}</small></div>`).join("") : '<div class="empty">No activity yet.</div>';
-    } catch (error) { console.warn("[v0] notifications unavailable", error.message); }
-  }
   $("notificationBell").onclick = async () => { $("notificationModal").classList.add("open"); await loadNotifications(); };
   setInterval(() => { if (initData) loadNotifications(); }, 30000);
   $("closeNotifications").onclick = () => $("notificationModal").classList.remove("open");
