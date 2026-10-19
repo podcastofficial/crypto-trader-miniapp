@@ -50,6 +50,10 @@ function pageParams(input = {}) {
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     settled_at TIMESTAMPTZ
   )`);
+  await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS betting_closes_at TIMESTAMPTZ`);
+  await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS result_number INTEGER`);
+  await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
+  await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS settled_at TIMESTAMPTZ`);
   const check = await client.query(`
       SELECT
         EXISTS (
@@ -588,7 +592,7 @@ module.exports = async function handler(req, res) {
   success: false,
   message: "Unable to load game data.",
   error_code: error.code || "GAME_BACKEND_ERROR",
-  detail: process.env.NODE_ENV === "production" ? undefined : error.message,
+  detail: error.message,
   });
     } finally {
       if (client) client.release();

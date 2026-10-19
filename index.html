@@ -753,7 +753,7 @@ cashNotice:"डिपॉज़िट और विदड्रॉ अभी च�
 close:"बंद करें",  
 refTitle:"रेफरल प्रोग्राम", yourLink:"आपका रेफरल लिंक", yourCode:"आपका रेफरल कोड",  
 copy:"कॉपी", share:"शेयर",  
-noLink:"रेफरल लिंक अभी उपलब्ध नहीं है। आप अपना कोड शेयर कर सकते हैं।",  
+noLink:"र���फरल लिंक अभी उपलब्ध नहीं है। आप अपना कोड शेयर कर सकते हैं।",  
 shareText:"Crypto Trader Pro पर मेरे साथ जुड़ें!",  
 directRef:"डायरेक्ट रेफरल", totalComm:"कुल कमीशन", levels:"कमीशन लेवल",  
 lvl:"लेवल", rate:"रेट", cnt:"गिनती", total:"कुल", comm:"कमीशन",  
@@ -786,7 +786,7 @@ colPeriod:"পিরিয়ড", colNum:"নম্বর", colBS:"B/S", colRes
 colType:"ধরন", colAmount:"অ্যামাউন্ট", colStatus:"স্ট্যাটাস",  
 range:"{from}-{to} / {total}",  
 loading:"লোড হচ্ছে…", noRounds:"এখনও কোনো রেজাল্ট নেই।", noBets:"এখনও কোনো বেট নেই।",  
-noTx:"এখনও কোনো লেনদেন ��েই।", noRef:"এখনও কোনো রেফারেল নেই���", noLangs:"কোনো ভাষা পাওয়া যায়নি।",  
+noTx:"এখনও কোনো লেনদেন ���েই।", noRef:"এখনও কোনো রেফারেল নেই���", noLangs:"কোনো ভাষা পাওয়া যায়নি।",  
 success:"সফল", fail:"ব্যর্থ", pending:"পেন্ডিং", cancelled:"বাতিল",  
 dBet:"বেট", dStake:"বেট অ্যামাউন্ট", dFee:"ফি", dActual:"ট্র��ড অ্যামাউন্ট", dPayout:"পেআউট",  
 dResult:"রেজাল্ট", dTime:"সময়", waiting:"অপেক্ষায়", bkFee:"ফি ({pct}%)",  
@@ -1763,7 +1763,7 @@ Object.assign(I18N.bn,{
   mTitle:"আপনার রেফারেল", m_all:"সব", m_active:"অ্যাকটিভ", m_inactive:"ইনঅ্যাকটিভ",  
   mActive:"অ্যাকটিভ", mInactive:"ইনঅ্যাকটিভ", mPending:"পেন্ডিং", mReceived:"প���ওয়া গেছে",  
   mJoined:"যোগ দিয়েছে", mLastPlayed:"শেষ খেলেছে", mNever:"কখনও খেলেনি",  
-  mNoName:"ইউজারনেম নেই", mSumActive:"অ্যাকটিভ রেফারেল", mSumInactive:"ইনঅ্যাকটিভ রেফারেল",  
+  mNoName:"ইউজারনেম নেই", mSumActive:"অ্যাকটিভ রেফারেল", mSumInactive:"ইনঅ্যাকটিভ রেফারে��",  
   mSumPending:"পেন্ডিং রিওয়ার্ড", mSumReceived:"পাওয়া রিওয়ার্ড",  
   mActiveNote:"অ্যাকটিভ = গত ৭ দিনে অন্তত একটি বেট দিয়েছে।",  
   mNoReward:"রিওয়ার্ড রেকর্ড নেই", mCreditedOn:"পাওয়ার তারিখ"  
@@ -2194,7 +2194,7 @@ async function authenticate(){
     authed = true;  
     authBlock = null;  
   user = data.user;
-  await loadNotifications().catch(() => {});
+  if (typeof loadNotifications === "function") await loadNotifications().catch(() => {});
   
     profName = user.username ? {raw:"@" + user.username} : {k:"tgUser",v:{id:user.telegram_id}};  
     profStatus = {k:"verified"};  
