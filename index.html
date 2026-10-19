@@ -445,11 +445,15 @@ label { font-weight:800; font-size:12px; }
       <div class="muted small" data-i18n="tgAccount">Telegram account</div>
       <strong id="profileName">…</strong>
       <p class="muted small" id="profileStatus">…</p>
-      <button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth">Retry Authentication</button>
-    </div>
-
-    <div class="card">
-      <div class="section-title">⚙️ <span data-i18n="settings">Settings</span></div>
+  <button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth">Retry Authentication</button>
+  <div class="actions" style="margin-top:12px">
+    <button class="action-btn" id="editProfileBtn" type="button" data-i18n="editProfile">Edit Profile</button>
+    <button class="action-btn alt" id="walletAddressBtn" type="button" data-i18n="manageWallet">Add / Edit Wallet</button>
+  </div>
+  </div>
+  
+  <div class="card">
+  <div class="section-title">⚙️ <span data-i18n="settings">Settings</span></div>
       <div class="setting-row">
         <span>🔊 <span data-i18n="sound">Sound</span></span>
         <button class="switch on" id="sndSwitch" type="button" role="switch" aria-checked="true"><i></i></button>
@@ -516,6 +520,28 @@ label { font-weight:800; font-size:12px; }
 
     <div class="notice" data-i18n="betNote">A bet deducts points from your available balance.</div>
     <button class="primary-btn" id="confirmBet" type="button" style="margin-top:14px" data-i18n="placeBet">Place Bet</button>
+  </div>
+</div>
+
+<!-- PROFILE EDIT MODAL -->
+<div class="modal-backdrop" id="profileModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title" data-i18n="editProfile">Edit Profile</div><button class="close-btn" data-close="profileModal" type="button">✕</button></div>
+    <label for="profileDisplayName" data-i18n="displayName">Display name</label>
+    <input id="profileDisplayName" type="text" maxlength="64" autocomplete="name">
+    <div class="notice" data-i18n="profileTelegramNote">Your Telegram username is managed by Telegram.</div>
+    <button class="primary-btn" id="saveProfileBtn" type="button" style="margin-top:14px" data-i18n="saveChanges">Save Changes</button>
+  </div>
+</div>
+
+<!-- WALLET ADDRESS MODAL -->
+<div class="modal-backdrop" id="walletAddressModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title" data-i18n="manageWallet">Add / Edit Wallet</div><button class="close-btn" data-close="walletAddressModal" type="button">✕</button></div>
+    <label for="walletAddressInput" data-i18n="walletAddress">BSC wallet address</label>
+    <input id="walletAddressInput" type="text" maxlength="42" inputmode="text" autocomplete="off" placeholder="0x…">
+    <div class="notice" data-i18n="walletAddressNote">Use only your own BSC wallet address.</div>
+    <button class="primary-btn" id="saveWalletAddressBtn" type="button" style="margin-top:14px" data-i18n="saveChanges">Save Changes</button>
   </div>
 </div>
 
@@ -639,8 +665,12 @@ verified:"Telegram identity verified by server.", tgUser:"Telegram user {id}",
 settings:"Settings", sound:"Sound", vibration:"Vibration", change:"Change",
 searchLang:"Search language",
 language:"Language", about:"About", aboutText:"Server-controlled rounds and live wallet.",
-testingOnly:"Testing only."
-},
+testingOnly:"Testing only.",
+  editProfile:"Edit Profile", manageWallet:"Add / Edit Wallet", displayName:"Display name",
+  profileTelegramNote:"Your Telegram username is managed by Telegram.", saveChanges:"Save Changes",
+  walletAddress:"BSC wallet address", walletAddressNote:"Use only your own BSC wallet address.",
+  profileSaved:"Telegram controls this profile name.", walletSaved:"Wallet address saved.", invalidWallet:"Enter a valid BSC wallet address."
+  },
 hi:{
 brandSub:"प्रिडिक्शन डैशबोर्ड · UTC",
 home:"होम", wallet:"वॉलेट", referral:"रेफरल", profile:"प्रोफ़ाइल",
@@ -654,7 +684,7 @@ resultHistory:"रिज़ल्ट हिस्ट्री", tradeHistory:"�
 colPeriod:"पीरियड", colNum:"नंबर", colBS:"B/S", colResult:"रिज़ल्ट",
 colType:"प्रकार", colAmount:"अमाउंट", colStatus:"स्टेटस",
 range:"{from}-{to} / {total}",
-loading:"लोड �������� रहा है…", noRounds:"अभी कोई रिज़ल्ट नहीं।", noBets:"अभी कोई बेट नहीं।",
+loading:"लोड �������� ��हा है…", noRounds:"अभी कोई रिज़ल्ट नहीं।", noBets:"अभी कोई बेट नहीं।",
 noTx:"अभी कोई ट्रांज़ैक्शन नहीं।", noRef:"अभी कोई रेफरल नहीं।", noLangs:"क��ई भाषा नहीं मिली।",
 success:"सफल", fail:"असफल", pending:"पेंडिंग", cancelled:"रद्द",
 dBet:"बेट", dStake:"बेट अमाउंट", dFee:"फीस", dActual:"ट्रेड अमाउंट", dPayout:"पेआउट",
@@ -716,7 +746,7 @@ chooseNumber:"নম্বর বেছে নিন", chooseNumberHint:"বে�
 chooseColour:"রং বেছে নিন", red:"লাল", green:"সবুজ", violet:"বেগুনি",
 bigSmall:"বড় / ছোট", big:"বড় (5–9)", small:"ছোট (0–4)",
 resultHistory:"���েজাল্ট হিস্ট্রি", tradeHistory:"আমার ট্রেড হিস্ট্রি",
-colPeriod:"পিরিয়ড", colNum:"নম্বর", colBS:"B/S", colResult:"রেজাল্ট",
+colPeriod:"পিরিয়ড", colNum:"নম্বর", colBS:"B/S", colResult:"রেজাল্���",
 colType:"ধরন", colAmount:"অ্যামাউন্ট", colStatus:"স্ট্যাটাস",
 range:"{from}-{to} / {total}",
 loading:"লোড হচ্ছে…", noRounds:"এখনও কোনো রেজাল্ট নেই।", noBets:"এখনও কোনো বেট নেই।",
@@ -781,7 +811,7 @@ const EXTRA = (window.CTP_LANGS_EXTRA && typeof window.CTP_LANGS_EXTRA === "obje
 const LANGS = [
   {code:"en",name:"English",en:"English"},
   {code:"hi",name:"हिन्दी",en:"Hindi"},
-  {code:"bn",name:"বাংলা",en:"Bengali"}
+  {code:"bn",name:"বাং��া",en:"Bengali"}
 ].concat(Object.keys(EXTRA).filter(c => !I18N[c] && EXTRA[c] && EXTRA[c].s).map(c => ({
   code:c,
   name:EXTRA[c].name || c,
@@ -789,9 +819,14 @@ const LANGS = [
   dir:EXTRA[c].dir || "ltr"
 })));
 
-function dict(code){
+  function dict(code){
   return I18N[code] || (EXTRA[code] && EXTRA[code].s) || null;
-}
+  }
+
+  // Extra language packs can intentionally translate only part of the UI.
+  // Always fall back to English so every control remains usable.
+  function hasLanguage(code){ return !!dict(code); }
+
 
 function pickLang(){
   try {
@@ -1117,6 +1152,43 @@ function setNotice(key,vars){
 function renderProfile(){
   $("profileName").textContent = txt(profName);
   $("profileStatus").textContent = txt(profStatus);
+  const input = $("profileDisplayName");
+  if(input && document.activeElement !== input) input.value = profName || "";
+}
+
+function openProfileModal(){
+  if(!authed){ toast(t("toastAuth")); return; }
+  renderProfile();
+  $("profileModal").classList.add("open");
+}
+
+function openWalletAddressModal(){
+  if(!authed){ toast(t("toastAuth")); return; }
+  $("walletAddressModal").classList.add("open");
+}
+
+async function saveProfile(){
+  const value = $("profileDisplayName").value.trim();
+  if(!value){ toast(t("displayName")); return; }
+  // Telegram remains the source of truth for username; keep this control ready
+  // without pretending a client-only name change was persisted.
+  toast(t("profileSaved"));
+  $("profileModal").classList.remove("open");
+}
+
+async function saveWalletAddress(){
+  const value = $("walletAddressInput").value.trim();
+  if(!/^0x[a-fA-F0-9]{40}$/.test(value)){ toast(t("invalidWallet")); return; }
+  const userId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id;
+  if(!userId){ toast(t("openInTg")); return; }
+  const response = await fetch("/api/set-deposit-wallet",{
+    method:"POST", headers:{"Content-Type":"application/json","x-telegram-id":String(userId)},
+    body:JSON.stringify({walletAddress:value})
+  });
+  const data = await response.json().catch(() => null);
+  if(!response.ok || !data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; }
+  toast(t("walletSaved"));
+  $("walletAddressModal").classList.remove("open");
 }
 
 function updateBalance(value){
@@ -2154,6 +2226,10 @@ function init(){
   });
 
   $("headerProfile").onclick = () => showPage("profile");
+  $("editProfileBtn").onclick = openProfileModal;
+  $("walletAddressBtn").onclick = openWalletAddressModal;
+  $("saveProfileBtn").onclick = saveProfile;
+  $("saveWalletAddressBtn").onclick = saveWalletAddress;
   $("headerLang").onclick = openLangModal;
   $("langOpenBtn").onclick = openLangModal;
   $("langSearch").addEventListener("input",() => renderLangList($("langSearch").value));
