@@ -37,9 +37,20 @@ function pageParams(input = {}) {
 // Makes sure the current round and a few future rounds exist,
 // so the game never depends on the cron timing.
 // Safe to run many times: unique round_code + advisory lock.
-async function ensureRounds(client) {
+  async function ensureRounds(client) {
   try {
-    const check = await client.query(`
+  await client.query(`CREATE TABLE IF NOT EXISTS public.game_rounds (
+    id BIGSERIAL PRIMARY KEY,
+    round_code TEXT UNIQUE NOT NULL,
+    status TEXT NOT NULL DEFAULT 'open',
+    starts_at TIMESTAMPTZ NOT NULL,
+    betting_closes_at TIMESTAMPTZ NOT NULL,
+    ends_at TIMESTAMPTZ NOT NULL,
+    result_number INTEGER,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    settled_at TIMESTAMPTZ
+  )`);
+  const check = await client.query(`
       SELECT
         EXISTS (
           SELECT 1 FROM public.game_rounds
@@ -573,10 +584,12 @@ module.exports = async function handler(req, res) {
     } catch (error) {
       console.error("GET /api/game:", error);
 
-      return json(res, 500, {
-        success: false,
-        message: "Unable to load game data.",
-      });
+  return json(res, 500, {
+  success: false,
+  message: "Unable to load game data.",
+  error_code: error.code || "GAME_BACKEND_ERROR",
+  detail: process.env.NODE_ENV === "production" ? undefined : error.message,
+  });
     } finally {
       if (client) client.release();
     }
