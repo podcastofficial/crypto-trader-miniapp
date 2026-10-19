@@ -7,6 +7,7 @@
 <title>Crypto Trader Pro</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/languages.js" onerror="void 0"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
 
 <style>
 :root {
@@ -272,6 +273,14 @@ label { font-weight:800; font-size:12px; }
 .amount-presets button {
   background:#302911; color:#facc15; border:1px solid #51421a;
   padding:12px 3px; border-radius:9px; font-weight:900;
+}
+.deposit-qr-wrap {
+  display:flex; flex-direction:column; align-items:center; gap:9px;
+  margin:14px 0 16px; text-align:center;
+}
+.deposit-qr-wrap canvas {
+  width:220px; height:220px; max-width:100%; padding:10px;
+  background:#fff; border-radius:14px; border:1px solid #4a4a4f;
 }
 .amount-stepper { display:grid; grid-template-columns:45px minmax(0,1fr) 45px; gap:8px; }
 .amount-stepper button { border-radius:9px; background:#29292c; color:#facc15; font-size:21px; }
@@ -571,6 +580,10 @@ label { font-weight:800; font-size:12px; }
     </div>
     <div id="cashDepositFields" style="display:none">
       <div class="notice">Send BEP-20 USDT only. Deposits are credited automatically after confirmations.</div>
+      <div class="deposit-qr-wrap">
+        <canvas id="depositQr" width="220" height="220" aria-label="QR code for the BEP-20 deposit address"></canvas>
+        <div class="muted small">Scan to pay USDT on BNB Smart Chain (BEP-20)</div>
+      </div>
       <label for="depositAddress">Deposit address</label>
       <div class="copybox"><input id="depositAddress" readonly><button class="sec-btn" id="copyDepositAddress" type="button">Copy</button></div>
       <p class="muted small">Minimum: 100 points = 1 USDT. Credit rate: 100 points per USDT.</p>
@@ -798,7 +811,7 @@ toastBetFail:"বেট দেওয়া যায়নি। তথ্য �
 toastBetOk:"বেট গৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",
 betOn:"বেট", serverRound:"সার্ভার রাউন্ড:", betAmount:"বেট অ্যামাউন্ট (পয়েন্ট)",
 betNote:"আপনার লাইভ পয়েন্ট ব্যালেন্স থেকে বেটের টাকা কাটা হবে।", placeBet:"বেট দিন",
-rTitle:"রাউন্ড রেজাল্ট", rPeriod:"পিরিয়ড", rNote:"রেজাল্ট গেম সার্ভার থেকে পাওয়া গেছে।",
+rTitle:"রাউন্ড রেজাল্ট", rPeriod:"পিরিয়ড", rNote:"রেজাল্��� গেম সার্ভার থেকে পাওয়া গেছে।",
 rContinue:"চালিয়ে যান", cRedV:"লাল + বেগুনি", cGreenV:"সবুজ + বেগুনি", cRed:"লাল", cGreen:"সবুজ",
 sBig:"বড় (5–9)", sSmall:"ছোট (0–4)",
 bannerResult:"রেজাল্ট {period}: {n} · {colour} · {size}",
@@ -1471,7 +1484,19 @@ async function openCash(kind){
   if(kind === "deposit"){
     try {
       const config = await api("wallet_config");
-      $("depositAddress").value = config.deposit_address || "Deposit address is not configured";
+      const address = config.deposit_address || "";
+      $("depositAddress").value = address || "Deposit address is not configured";
+      const qr = $("depositQr");
+      if (qr && address && window.QRCode) {
+        await QRCode.toCanvas(qr, address, {
+          width: 220,
+          margin: 2,
+          color: { dark: "#111111", light: "#ffffff" },
+        });
+      } else if (qr) {
+        const context = qr.getContext("2d");
+        context.clearRect(0, 0, qr.width, qr.height);
+      }
     } catch(error) { toast(error.message); }
   }
 }

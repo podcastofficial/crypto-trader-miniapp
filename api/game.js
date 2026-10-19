@@ -685,6 +685,7 @@ module.exports = async function handler(req, res) {
       return json(res, 200, {
         success: true,
         deposit_address: process.env.USDT_BEP20_DEPOSIT_ADDRESS || null,
+        token_address: process.env.USDT_BEP20_TOKEN_ADDRESS || null,
         network: "BSC BEP-20",
         min_deposit_points: MIN_DEPOSIT_POINTS,
         min_withdraw_points: MIN_WITHDRAW_POINTS,
