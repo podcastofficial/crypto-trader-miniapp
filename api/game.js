@@ -680,6 +680,51 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (action === "wallet_config") {
+      await client.query("COMMIT"); transactionStarted = false;
+      return json(res, 200, {
+        success: true,
+        deposit_address: process.env.USDT_BEP20_DEPOSIT_ADDRESS || null,
+        network: "BSC BEP-20",
+        min_deposit_points: MIN_DEPOSIT_POINTS,
+        min_withdraw_points: MIN_WITHDRAW_POINTS,
+        points_per_usdt: POINTS_PER_USDT
+      });
+    }
+
+    if (action === "request_withdrawal") {
+      const amountText = String(body.amount || "").trim();
+      const amount = Number(amountText);
+      const destination = String(body.destination_address || "").trim().toLowerCase();
+      if (!/^\d{1,18}(\.\d{1,2})?$/.test(amountText) || !Number.isFinite(amount) || amount < MIN_WITHDRAW_POINTS) {
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 400, { success: false, message: "Minimum withdrawal is 500 points (5 USDT)." });
+      }
+      if (!/^0x[a-f0-9]{40}$/.test(destination)) {
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 400, { success: false, message: "Enter a valid BSC wallet address." });
+      }
+      const result = await client.query(
+        `UPDATE public.wallet_balances
+         SET balance = balance - $1::numeric, updated_at = NOW()
+         WHERE user_id = $2 AND balance >= $1::numeric
+         RETURNING balance`, [amount.toFixed(2), user.id]
+      );
+      if (!result.rowCount) {
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 400, { success: false, message: "Insufficient available balance." });
+      }
+      const tx = await client.query(
+        `INSERT INTO public.transactions
+          (user_id, transaction_type, amount, status, network, destination_address, created_at, updated_at)
+         VALUES ($1, 'withdrawal', $2, 'pending', 'BSC', $3, NOW(), NOW())
+         RETURNING id, amount, status, destination_address, created_at`,
+        [user.id, amount.toFixed(2), destination]
+      );
+      await client.query("COMMIT"); transactionStarted = false;
+      return json(res, 200, { success: true, withdrawal: tx.rows[0], balance: result.rows[0].balance });
+    }
+
     if (action === "wallet_history") {
       const { page, pageSize, offset } = pageParams(body);
 

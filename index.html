@@ -567,7 +567,21 @@ label { font-weight:800; font-size:12px; }
       <div class="modal-title" id="cashTitle">…</div>
       <button class="close-btn" data-close="cashModal" type="button">✕</button>
     </div>
-    <div class="notice" data-i18n="cashNotice">Deposit and withdrawal are not enabled yet.</div>
+    <div id="cashDepositFields" style="display:none">
+      <div class="notice">Send BEP-20 USDT only. Deposits are credited automatically after confirmations.</div>
+      <label for="depositAddress">Deposit address</label>
+      <div class="copybox"><input id="depositAddress" readonly><button class="sec-btn" id="copyDepositAddress" type="button">Copy</button></div>
+      <p class="muted small">Minimum: 100 points = 1 USDT. Credit rate: 100 points per USDT.</p>
+    </div>
+    <div id="cashWithdrawFields" style="display:none">
+      <div class="notice">Withdrawals are reviewed and approved by admin. Points stay reserved until completed or rejected.</div>
+      <label for="withdrawAmount">Amount (points)</label>
+      <input id="withdrawAmount" type="number" min="500" step="0.01" placeholder="500">
+      <div class="muted small" id="withdrawUsdtPreview">5.00 USDT</div>
+      <label for="withdrawAddress">BSC wallet address</label>
+      <input id="withdrawAddress" type="text" maxlength="42" placeholder="0x…" autocomplete="off">
+      <button class="primary-btn" id="submitWithdrawal" type="button" style="margin-top:14px">Request withdrawal</button>
+    </div>
     <button class="primary-btn" data-close="cashModal" type="button" style="margin-top:14px" data-i18n="close">Close</button>
   </div>
 </div>
@@ -1425,12 +1439,33 @@ async function loadWallet(silent){
   }
 }
 
-function openCash(kind){
+async function openCash(kind){
   $("cashTitle").textContent = (kind === "deposit" ? "⬇ " : "⬆ ") + t(kind === "deposit" ? "deposit" : "withdraw");
-  const hint = kind === "deposit" ? "Minimum deposit: 100 points = 1 USDT" : "Minimum withdrawal: 500 points = 5 USDT";
-  const notice = $("cashModal").querySelector(".notice");
-  if(notice) notice.textContent = hint;
+  $("cashDepositFields").style.display = kind === "deposit" ? "block" : "none";
+  $("cashWithdrawFields").style.display = kind === "withdraw" ? "block" : "none";
   $("cashModal").classList.add("open");
+  if(kind === "deposit"){
+    try {
+      const config = await api("wallet_config");
+      $("depositAddress").value = config.deposit_address || "Deposit address is not configured";
+    } catch(error) { toast(error.message); }
+  }
+}
+
+async function submitWithdrawal(){
+  const amount = Number($("withdrawAmount").value);
+  const address = $("withdrawAddress").value.trim();
+  if(!Number.isFinite(amount) || amount < 500){ toast("Minimum withdrawal is 500 points (5 USDT)."); return; }
+  if(!/^0x[a-fA-F0-9]{40}$/.test(address)){ toast("Enter a valid BSC wallet address."); return; }
+  const button = $("submitWithdrawal"); button.disabled = true;
+  try {
+    await api("request_withdrawal", {amount: amount.toFixed(2), destination_address: address});
+    toast("Withdrawal request submitted for admin approval.");
+    $("cashModal").classList.remove("open");
+    $("withdrawAmount").value = ""; $("withdrawAddress").value = "";
+    await refreshAll(true);
+  } catch(error) { toast(error.message); }
+  finally { button.disabled = false; }
 }
 
 /* ---------- REFERRAL ---------- */
@@ -2272,6 +2307,15 @@ function init(){
   $("resultPopupClose").onclick = closeResultPopup;
   $("depositBtn").onclick = () => openCash("deposit");
   $("withdrawBtn").onclick = () => openCash("withdraw");
+  $("submitWithdrawal").onclick = submitWithdrawal;
+  $("withdrawAmount").addEventListener("input", () => {
+    const points = Math.max(0, Number($("withdrawAmount").value) || 0);
+    $("withdrawUsdtPreview").textContent = `${(points / 100).toFixed(2)} USDT`;
+  });
+  $("copyDepositAddress").onclick = async () => {
+    const value = $("depositAddress").value;
+    if(value && await copyText(value)) toast("Deposit address copied.");
+  };
   document.addEventListener("click", async (event) => {
     if(!event.target.closest("#claimCommissionBtn")) return;
     const button = event.target.closest("#claimCommissionBtn");

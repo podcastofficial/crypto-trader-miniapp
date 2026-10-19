@@ -32,6 +32,43 @@ function sendJson(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
+const USDT_TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55aeb5d5f9f";
+
+async function scanDeposits(client) {
+  const rpc = process.env.BSC_RPC_URL;
+  const token = String(process.env.USDT_BEP20_TOKEN_ADDRESS || "").toLowerCase();
+  const depositAddress = String(process.env.USDT_BEP20_DEPOSIT_ADDRESS || "").toLowerCase();
+  if (!rpc || !/^0x[a-f0-9]{40}$/.test(token) || !/^0x[a-f0-9]{40}$/.test(depositAddress)) return 0;
+  const call = async (method, params) => {
+    const response = await fetch(rpc, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message || "BSC RPC error");
+    return data.result;
+  };
+  const latest = parseInt(await call("eth_blockNumber", []), 16);
+  const fromBlock = Math.max(0, latest - 2000);
+  const paddedTo = `0x${depositAddress.slice(2).padStart(64, "0")}`;
+  const logs = await call("eth_getLogs", [{ address: token, fromBlock: `0x${fromBlock.toString(16)}`, toBlock: `0x${latest.toString(16)}`, topics: [USDT_TRANSFER_TOPIC, null, paddedTo] }]);
+  let credited = 0;
+  for (const log of logs || []) {
+    const txHash = String(log.transactionHash || "");
+    if (!/^0x[0-9a-f]{64}$/i.test(txHash)) continue;
+    const raw = BigInt(log.data || "0x0");
+    const usdt = Number(raw) / 1e6;
+    const points = usdt * 100;
+    if (!Number.isFinite(points) || points < 100) continue;
+    const userWallet = await client.query("SELECT user_id FROM public.user_wallets WHERE LOWER(wallet_address)=LOWER($1) LIMIT 1", [depositAddress]);
+    const userId = userWallet.rows[0]?.user_id;
+    if (!userId) continue;
+    const inserted = await client.query(`INSERT INTO public.transactions (user_id, transaction_type, amount, status, network, tx_hash, created_at, updated_at) SELECT $1,'deposit',$2,'confirmed','BSC',$3,NOW(),NOW() WHERE NOT EXISTS (SELECT 1 FROM public.transactions WHERE tx_hash=$3) RETURNING id`, [userId, points.toFixed(2), txHash]);
+    if (inserted.rowCount) {
+      await client.query(`INSERT INTO public.wallet_balances (user_id,balance,updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (user_id) DO UPDATE SET balance=public.wallet_balances.balance+EXCLUDED.balance,updated_at=NOW()`, [userId, points.toFixed(2)]);
+      credited++;
+    }
+  }
+  return credited;
+}
+
 function authorized(req) {
   const secret = process.env.CRON_SECRET;
 
@@ -275,11 +312,13 @@ module.exports = async function handler(req, res) {
       LIMIT 1
     `);
 
-    const serverTimeResult = await client.query(`
-      SELECT NOW() AS server_time
-    `);
+    const depositsCredited = await scanDeposits(client);
 
-    await client.query("COMMIT");
+    const serverTimeResult = await client.query(`
+  SELECT NOW() AS server_time
+  `);
+
+  await client.query("COMMIT");
 
     return sendJson(res, 200, {
       success: true,
