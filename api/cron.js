@@ -223,16 +223,16 @@ module.exports = async function handler(req, res) {
           )
           VALUES ($1, $2, $3, $4, $5)
           ON CONFLICT (round_code) DO NOTHING
-          RETURNING id
-        `,
-        [
-          roundCode,
-          status,
-          startsAt,
-          bettingClosesAt,
-          endsAt
-        ]
-      );
+  RETURNING id
+  `,
+  [roundCode, "open", startsAt, bettingClosesAt, endsAt]
+  );
+  if (inserted.rowCount) {
+    const seed = [...roundCode].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    const predictedNumber = seed % 10;
+    const predictedColour = ["Red", "Green", "Violet"][seed % 3];
+    await notifyResults(`🔮 Prediction (not guaranteed)\n🔢 Round: ${roundCode}\n🎯 Suggested number: ${predictedNumber}\n🎨 Suggested colour: ${predictedColour}\n⚠️ Informational estimate only — play responsibly.`);
+  }
 
       roundsCreated += inserted.rowCount;
     }

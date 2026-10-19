@@ -61,14 +61,17 @@ header {
 .balance-value { color:#facc15; font-size:27px; font-weight:900; margin:9px 0; overflow-wrap:anywhere; }  
 .balance-sub { color:#bdbdc3; font-size:12px; }  
   .actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:16px; }
+  .rules-corner-btn { border:1px solid #806b16; border-radius:999px; background:#2b2614; color:#facc15; padding:5px 10px; font-size:11px; font-weight:800; }
+  .rules-modal p { color:#d4d4d8; line-height:1.55; font-size:14px; }
+  .payout-example { background:#211f16; border:1px solid #665519; border-radius:12px; padding:13px; line-height:1.85; color:#facc15; }
   .wallet-actions { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) 48px; gap:10px; margin-top:16px; align-items:stretch; }
   .deposit-action { background:#16a34a; border-color:#15803d; color:#fff; }
   .withdraw-action { background:#dc2626; border-color:#b91c1c; color:#fff; }
   .refresh-icon-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; border:1px solid #555; border-radius:11px; background:#292929; color:#facc15; font-size:22px; font-weight:900; cursor:pointer; }
   .refresh-icon-btn small { font-size:8px; line-height:1; color:#d4d4d8; font-weight:700; }
   .usdt-value { color:#22c55e; font-weight:900; }
-  .game-guide-card, .faq-card { margin-top:14px; }
-  .game-guide-card p, .faq-card p { color:#bdbdc3; font-size:13px; line-height:1.5; margin:8px 0; }
+  .faq-card { margin-top:14px; }
+  .faq-card p { color:#bdbdc3; font-size:13px; line-height:1.5; margin:8px 0; }
   .faq-card details { border-top:1px solid #3a3a3a; padding:10px 0; }
   .faq-card summary { cursor:pointer; font-weight:800; }
   .faq-card details:first-of-type { border-top:0; }  
@@ -255,7 +258,7 @@ label { font-weight:800; font-size:12px; }
 .bottom-nav {  
   position:fixed; bottom:calc(8px + env(safe-area-inset-bottom)); left:50%;  
   transform:translateX(-50%); width:calc(100% - 12px); max-width:588px;  
-  display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px;  
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0;  
   background:rgba(20,20,21,.97); border:1px solid #303034; border-radius:15px;  
   padding:7px 6px; z-index:20; box-shadow:0 8px 28px #000a; backdrop-filter:blur(16px);  
 }  
@@ -395,13 +398,15 @@ label { font-weight:800; font-size:12px; }
 <div class="modal-backdrop" id="notificationModal" role="dialog" aria-modal="true" aria-labelledby="notificationTitle">
   <div class="modal"><div class="row"><h2 id="notificationTitle">Activity notifications</h2><button class="icon-btn" id="closeNotifications" type="button" aria-label="Close">×</button></div><div id="notificationList" class="notification-list"><div class="empty">Loading…</div></div></div>
 </div>  <!-- HOME (GAME) -->  <section class="page active" id="page-home">    <div class="balance-card">
-    <div class="balance-label" data-i18n="walletBalance">WALLET BALANCE</div>  
-    <div class="balance-value"><span id="homePoints">—</span> <span data-i18n="points">Points</span></div>  
+  <div class="row"><div class="balance-label" data-i18n="walletBalance">WALLET BALANCE</div><button class="rules-corner-btn" id="gameRulesBtn" type="button">Rules</button></div>
+  <div class="balance-value"><span id="homePoints">—</span> <span data-i18n="points">Points</span></div>
     <div class="balance-sub"><span id="homeUsdt">—</span> USDT · 100 Points = 1 USDT</div>  
-    <div class="actions">  
-      <button class="action-btn alt" data-page-go="wallet" type="button">💰 <span data-i18n="wallet">Wallet</span></button>  
-      <button class="action-btn" data-refresh="1" type="button">↻ <span data-i18n="refresh">Refresh</span></button>  
-    </div>  
+  <div class="actions">
+  <button class="action-btn alt" data-page-go="wallet" type="button">Wallet</button>
+  <button class="action-btn deposit-action" data-page-go="wallet" type="button" id="homeDepositBtn">Deposit</button>
+  <button class="action-btn withdraw-action" data-page-go="wallet" type="button" id="homeWithdrawBtn">Withdraw</button>
+  <button class="action-btn" data-refresh="1" type="button">Refresh</button>
+  </div>
   </div>    <div class="section">  
     <div class="timer-card">  
       <div class="row">  
@@ -422,8 +427,6 @@ label { font-weight:800; font-size:12px; }
   <div class="section-title">🔢 <span data-i18n="chooseNumber">Choose a Number</span></div>  
   <div class="muted small" data-i18n="chooseNumberHint">Select a number to open the betting window.</div>  
   <div class="number-grid" id="numberGrid"></div>
-  <div class="card game-guide-card"><div class="section-title">📖 How to Play</div><p>Choose a number, colour, or Big/Small option before betting closes. Your points are reserved immediately; the round result is published after the timer ends.</p><p><strong>Winning payout:</strong> payouts are calculated by the selected option and shown before you confirm. Only confirmed server results settle winnings.</p></div>
-  
   <div class="section-title">🎨 <span data-i18n="chooseColour">Choose a Colour</span></div>
   <div class="option-grid">  
     <button class="option-btn red" data-bet="Red" type="button">🔴 <span data-i18n="red">Red</span></button>  
@@ -482,7 +485,6 @@ label { font-weight:800; font-size:12px; }
   <p class="muted small" id="profileStatus">…</p>
 
   <button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth">Retry Authentication</button>
-  <div class="card faq-card"><div class="section-title">❓ Game FAQ</div><details><summary>How do I play?</summary><p>Pick a number, colour, or Big/Small option before the round closes, then confirm your points stake.</p></details><details><summary>When do I win?</summary><p>Winning bets are settled automatically after the server publishes the round result.</p></details><details><summary>How are payouts shown?</summary><p>The bet confirmation dialog displays the potential payout before you place the bet.</p></details><details><summary>Can I cancel a bet?</summary><p>Bets cannot be cancelled after confirmation. Review the selection and amount carefully.</p></details></div>
   <div class="card" style="margin-top:14px"><div class="section-title">Gift code</div><div class="copybox"><input id="giftCodeInput" placeholder="Enter gift code"><button class="sec-btn" id="redeemGiftBtn" type="button">Redeem</button></div></div>
 
   <div class="actions" style="margin-top:12px">  
@@ -510,6 +512,7 @@ label { font-weight:800; font-size:12px; }
 </div>
 
   </div>  
+<div class="card faq-card"><div class="section-title">Game FAQ</div><details><summary>How do I play?</summary><p>Pick a number, colour, or Big/Small option before betting closes, then confirm your points stake.</p></details><details><summary>When do I win?</summary><p>Winning bets settle automatically after the server publishes the result.</p></details><details><summary>How are payouts calculated?</summary><p>100 points on Red/Green can return 200 points, a number can return 900 points, and Violet can return 450 points if the result matches.</p></details><details><summary>Can I cancel a bet?</summary><p>Bets cannot be cancelled after confirmation.</p></details></div>
 </section>  <!-- NAVIGATION -->  <nav class="bottom-nav" aria-label="Main navigation">  
   <button class="nav-btn active" data-page="home" type="button">  
     <span class="nav-icon">🏠</span><span data-i18n="home">Home</span>  
@@ -548,7 +551,7 @@ label { font-weight:800; font-size:12px; }
 <button class="primary-btn" id="confirmBet" type="button" style="margin-top:14px" data-i18n="placeBet">Place Bet</button>
 
   </div>  
-</div>  <!-- PROFILE EDIT MODAL -->  <div class="modal-backdrop" id="profileModal">  
+  </div>  <div class="modal-backdrop" id="gameRulesModal" role="dialog" aria-modal="true" aria-labelledby="gameRulesTitle"><div class="modal rules-modal"><div class="row"><div class="modal-title" id="gameRulesTitle">Game Rules & Payouts</div><button class="close-btn" data-close="gameRulesModal" type="button" aria-label="Close">✕</button></div><p>1. Select a number, colour, or Big/Small before betting closes.<br>2. Enter your stake and confirm the bet.<br>3. The server publishes the round result after the timer ends.<br>4. Winning bets are credited automatically; predictions are not guaranteed.</p><div class="payout-example"><strong>100 points examples</strong><br>🔴/🟢 Red or Green: 100 × 2 = <b>200 points</b><br>🔢 Number 0–9: 100 × 9 = <b>900 points</b><br>🟣 Violet: 100 × 4.5 = <b>450 points</b><br>📊 Big/Small: 100 × 2 = <b>200 points</b></div><p class="muted small">Potential payout is shown before confirmation. A prediction is only an informational estimate, never a guaranteed result.</p></div></div>  <!-- PROFILE EDIT MODAL -->  <div class="modal-backdrop" id="profileModal">  
   <div class="modal">  
     <div class="row"><div class="modal-title" data-i18n="editProfile">Edit Profile</div><button class="close-btn" data-close="profileModal" type="button">✕</button></div>  
     <label for="profileDisplayName" data-i18n="displayName">Display name</label>  
@@ -752,7 +755,7 @@ nConnected:"बैकएंड से जुड़ गया। हर राउ
 nUnavailable:"बैकएंड उपलब्ध नहीं: {msg}",  
 loadingRound:"सर्वर राउंड लोड हो रहा है…",  
 toastAuth:"पहले टेलीग्राम से ऑथेंटिकेट करें।",  
-toastLocked:"बेटिंग बंद है। अगले राउंड का इंतज़ार करें।",  
+toastLocked:"बेटिं��� बंद है। अगले राउंड का इंतज़ार करें।",  
 toastAmount:"कम से कम 10 पॉइंट डालें (अधिकतम 2 दशमलव)।",  
 toastChanged:"बेट की डिटेल बदल गई। फिर से सबमिट करें।",  
 toastBetFail:"बेट नहीं लग सकी। डिटेल बदले बिना फिर कोशिश करें।",  
@@ -2463,6 +2466,7 @@ function init(){
   $("walletAddressBtn").onclick = openWalletAddressModal;  
   $("saveProfileBtn").onclick = saveProfile;  
   $("saveWalletAddressBtn").onclick = saveWalletAddress;  
+  $("gameRulesBtn").onclick = () => $("gameRulesModal").classList.add("open");
   $("headerLang").onclick = openLangModal;  
   $("langOpenBtn").onclick = openLangModal;  
   $("langSearch").addEventListener("input",() => renderLangList($("langSearch").value));  
@@ -2477,6 +2481,8 @@ function init(){
   $("resultPopupClose").onclick = closeResultPopup;  
   $("depositBtn").onclick = () => openCash("deposit");
   $("withdrawBtn").onclick = () => openCash("withdraw");
+  $("homeDepositBtn").onclick = () => { showPage("wallet"); openCash("deposit"); };
+  $("homeWithdrawBtn").onclick = () => { showPage("wallet"); openCash("withdraw"); };
   $("depositAmount").addEventListener("input", updateDepositSummary);
   $("submitDeposit").onclick = submitDeposit;
   $("cancelDeposit").onclick = () => { clearInterval(depositTimerId); $("cashModal").classList.remove("open"); };
