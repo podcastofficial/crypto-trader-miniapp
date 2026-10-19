@@ -673,7 +673,7 @@ txTitle:"Transactions",
 tx_deposit:"Deposit", tx_withdrawal:"Withdrawal", tx_bet:"Bet", tx_payout:"Payout", tx_refund:"Refund",
 s_completed:"Completed", s_confirmed:"Confirmed", s_pending:"Pending", s_rejected:"Rejected", s_failed:"Failed",
 txPlaced:"Placed",
-cashNotice:"Deposit and withdrawal are not enabled yet. They will be available after the payment backend is connected. Do not send any money or cryptocurrency.",
+cashNotice:"Deposits are credited automatically after blockchain confirmations. Withdrawals require admin approval. Send BEP-20 USDT only.",
 close:"Close",
 refTitle:"Referral Program", yourLink:"Your referral link", yourCode:"Your referral code",
 copy:"Copy", share:"Share",
@@ -840,7 +840,7 @@ const EXTRA = (window.CTP_LANGS_EXTRA && typeof window.CTP_LANGS_EXTRA === "obje
 const LANGS = [
   {code:"en",name:"English",en:"English"},
   {code:"hi",name:"हिन्दी",en:"Hindi"},
-  {code:"bn",name:"বাংলা",en:"Bengali"}
+  {code:"bn",name:"বাং���া",en:"Bengali"}
 ].concat(Object.keys(EXTRA).filter(c => !I18N[c] && EXTRA[c] && EXTRA[c].s).map(c => ({
   code:c,
   name:EXTRA[c].name || c,
@@ -1662,7 +1662,7 @@ Object.assign(I18N.hi,{
 });
 Object.assign(I18N.bn,{
   mTitle:"আপনার রেফারেল", m_all:"সব", m_active:"অ্যাকটিভ", m_inactive:"ইনঅ্যাকটিভ",
-  mActive:"অ্যাকটিভ", mInactive:"ইনঅ্যাকটিভ", mPending:"পেন্ডিং", mReceived:"পাওয়া গেছে",
+  mActive:"অ্যাকটিভ", mInactive:"ইনঅ্যাকটিভ", mPending:"পেন্ডিং", mReceived:"প���ওয়া গেছে",
   mJoined:"যোগ দিয়েছে", mLastPlayed:"শেষ খেলেছে", mNever:"কখনও খেলেনি",
   mNoName:"ইউজারনেম নেই", mSumActive:"অ্যাকটিভ রেফারেল", mSumInactive:"ইনঅ্যাকটিভ রেফারেল",
   mSumPending:"পেন্ডিং রিওয়ার্ড", mSumReceived:"পাওয়া রিওয়ার্ড",
