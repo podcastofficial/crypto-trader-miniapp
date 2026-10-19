@@ -749,6 +749,30 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    if (action === "submit_deposit") {
+      const txHash = String(body.tx_hash || "").trim().toLowerCase();
+      const amountText = String(body.amount_usdt || "").trim();
+      const amount = Number(amountText);
+      const network = String(body.network || "BSC BEP-20").trim().slice(0, 80);
+      if (!/^0x[a-f0-9]{64}$/.test(txHash)) {
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 400, { success: false, message: "Enter a valid transaction hash." });
+      }
+      if (!Number.isFinite(amount) || amount < 1 || amount > 1000000) {
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 400, { success: false, message: "Enter a valid USDT amount." });
+      }
+      const existing = await client.query(`SELECT id,status FROM public.transactions WHERE LOWER(tx_hash)=LOWER($1) LIMIT 1`, [txHash]);
+      if (existing.rowCount) {
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 409, { success: false, message: "This transaction hash has already been submitted." });
+      }
+      const submitted = await client.query(`INSERT INTO public.transactions (user_id,transaction_type,amount,status,network,tx_hash,created_at,updated_at) VALUES ($1,'deposit',0,'pending',$2,$3,NOW(),NOW()) RETURNING id,status,tx_hash,created_at`, [user.id, network, txHash]);
+      await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'deposit','Deposit submitted',$2)`, [user.id, `Transaction submitted for verification. Only the verified on-chain amount will be credited.`]).catch(() => {});
+      await client.query("COMMIT"); transactionStarted = false;
+      return json(res, 200, { success: true, deposit: submitted.rows[0], message: "Submitted. Credit happens only after blockchain verification." });
+    }
+
     if (action === "request_withdrawal") {
       const amountText = String(body.amount || "").trim();
       const amount = Number(amountText);

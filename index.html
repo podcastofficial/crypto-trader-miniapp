@@ -280,7 +280,11 @@ label { font-weight:800; font-size:12px; }
   display:flex; flex-direction:column; align-items:center; gap:9px;  
   margin:14px 0 16px; text-align:center;  
 }  
-  .deposit-asset-card { display:flex; align-items:center; gap:11px; margin:10px 0; padding:10px 12px; border:1px solid #4a4a4f; border-radius:12px; background:#242429; }
+  .deposit-submit-card { margin:14px 0; padding:12px; border:1px solid #4a4a4f; border-radius:12px; background:#242429; }
+.deposit-submit-card .row { gap:10px; }
+.deposit-submit-card input { margin-bottom:8px; }
+.deposit-submit-card #depositTimer { color:#facc15; font-variant-numeric:tabular-nums; }
+.deposit-asset-card { display:flex; align-items:center; gap:11px; margin:10px 0; padding:10px 12px; border:1px solid #4a4a4f; border-radius:12px; background:#242429; }
 .deposit-asset-logo { display:grid; place-items:center; width:38px; height:38px; border-radius:50%; background:#f5c84b; color:#171717; font-weight:900; font-size:13px; }
 .deposit-asset-card strong, .deposit-asset-card small { display:block; }
 .deposit-asset-card small { margin-top:2px; color:#a6a6ad; font-size:12px; }
@@ -554,8 +558,18 @@ label { font-weight:800; font-size:12px; }
   <canvas id="depositQr" width="220" height="220" aria-label="QR code for the selected deposit address"></canvas>
   <img id="depositQrImage" class="deposit-qr-image" alt="QR code for the selected deposit address" hidden>
   <div class="muted small" id="depositNetworkHint">Scan to deposit</div>
-  </div>  
-  <label for="depositAddress">Deposit address</label>  
+  </div>
+  <div class="deposit-submit-card">
+    <div class="row"><strong>Payment session</strong><strong id="depositTimer" aria-live="polite">30:00</strong></div>
+    <p class="muted small">Send the exact amount on the selected network, then submit your transaction hash. Your points are credited only after the blockchain scanner verifies the real token transfer, destination and confirmations.</p>
+    <label for="depositAmount">Amount sent (USDT)</label>
+    <input id="depositAmount" type="number" min="1" step="0.000001" placeholder="10.00" inputmode="decimal">
+    <label for="depositTxHash">Transaction hash</label>
+    <input id="depositTxHash" type="text" maxlength="66" placeholder="0x…" autocomplete="off" spellcheck="false">
+    <div class="row" style="margin-top:10px"><button class="sec-btn" id="cancelDeposit" type="button">Cancel</button><button class="primary-btn" id="submitDeposit" type="button">Submit payment</button></div>
+    <div class="muted small" id="depositSubmitStatus" role="status"></div>
+  </div>
+  <label for="depositAddress">Deposit address</label>
   <div class="copybox"><input id="depositAddress" readonly><button class="sec-btn" id="copyDepositAddress" type="button">Copy</button></div>  
       <p class="muted small">Minimum: 100 points = 1 USDT. Credit rate: 100 points per USDT.</p>  
     </div>  
@@ -1445,8 +1459,10 @@ async function openCash(kind){
     $("withdrawUsdtPreview").textContent = available >= 500 ? "5.00 USDT" : "Minimum 5.00 USDT";  
   }  
   $("cashModal").classList.add("open");  
-  if(kind === "deposit"){  
-    try {  
+  if(kind === "deposit"){
+  startDepositTimer();
+  $("depositAmount").value = ""; $("depositTxHash").value = ""; $("depositSubmitStatus").textContent = "";
+  try {
       const config = await api("wallet_config");  
       const options = Array.isArray(config.deposit_options) ? config.deposit_options : [];  
       const select = $("depositOption");  
@@ -1493,7 +1509,34 @@ async function openCash(kind){
   }  
 }  
   
-async function submitWithdrawal(){  
+  let depositTimerId = null;
+  function startDepositTimer() {
+    clearInterval(depositTimerId);
+    const expiresAt = Date.now() + 30 * 60 * 1000;
+    const tick = () => {
+      const remaining = Math.max(0, expiresAt - Date.now());
+      const seconds = Math.floor(remaining / 1000);
+      $("depositTimer").textContent = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+      if (!remaining) { clearInterval(depositTimerId); $("submitDeposit").disabled = true; $("depositSubmitStatus").textContent = "Payment session expired. Close and start a new session."; }
+    };
+    $("submitDeposit").disabled = false; $("depositSubmitStatus").textContent = ""; tick(); depositTimerId = setInterval(tick, 1000);
+  }
+
+  async function submitDeposit(){
+    const amount = Number($("depositAmount").value);
+    const txHash = $("depositTxHash").value.trim();
+    const option = $("depositOption").selectedOptions[0]?.textContent || "BSC BEP-20";
+    if (!Number.isFinite(amount) || amount < 1) return toast("Enter the amount you sent in USDT.");
+    if (!/^0x[a-fA-F0-9]{64}$/.test(txHash)) return toast("Enter a valid transaction hash.");
+    const button = $("submitDeposit"); button.disabled = true;
+    try {
+      const result = await api("submit_deposit", { amount_usdt: amount.toFixed(6), tx_hash: txHash, network: option });
+      $("depositSubmitStatus").textContent = result.message || "Submitted for verification.";
+      toast("Payment submitted for blockchain verification.");
+    } catch (error) { button.disabled = false; toast(error.message, true); }
+  }
+
+  async function submitWithdrawal(){
   const amount = Number($("withdrawAmount").value);  
   const address = $("withdrawAddress").value.trim();  
   if(!Number.isFinite(amount) || amount < 500){ toast("Minimum withdrawal is 500 points (5 USDT)."); return; }  
@@ -2365,8 +2408,10 @@ function init(){
   };
   $("confirmBet").onclick = confirmBet;
   $("resultPopupClose").onclick = closeResultPopup;  
-  $("depositBtn").onclick = () => openCash("deposit");  
-  $("withdrawBtn").onclick = () => openCash("withdraw");  
+  $("depositBtn").onclick = () => openCash("deposit");
+  $("withdrawBtn").onclick = () => openCash("withdraw");
+  $("submitDeposit").onclick = submitDeposit;
+  $("cancelDeposit").onclick = () => { clearInterval(depositTimerId); $("cashModal").classList.remove("open"); };
   $("submitWithdrawal").onclick = submitWithdrawal;  
   $("withdrawAmount").addEventListener("input", () => {  
   const points = Math.max(0, Number($("withdrawAmount").value) || 0);  
