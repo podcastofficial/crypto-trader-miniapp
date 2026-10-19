@@ -1,5 +1,12 @@
 const crypto = require("crypto");
-const { neon } = require("@neondatabase/serverless");
+const { Pool } = require("pg");
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+  max: 3,
+  connectionTimeoutMillis: 10000,
+});
 
 module.exports = async function handler(req, res) {
   res.setHeader("Content-Type", "application/json");
@@ -53,7 +60,7 @@ module.exports = async function handler(req, res) {
     params.delete("hash");
 
     const dataCheckString = [...params.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
+      .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
       .map(([key, value]) => `${key}=${value}`)
       .join("\n");
 
@@ -132,42 +139,44 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // Register or update user in Neon database
-    const sql = neon(databaseUrl);
-
-    const users = await sql`
-      INSERT INTO users (telegram_id, username)
-      VALUES (
-        ${String(user.id)},
-        ${user.username || null}
-      )
-      ON CONFLICT (telegram_id)
-      DO UPDATE SET username = EXCLUDED.username
-      RETURNING id, telegram_id, username
-    `;
-
-    const registeredUser = users[0];
-
-    // Keep the wallet row ready immediately after authentication so the first
-    // balance request never fails for a newly opened Mini App.
-    await sql`
-      INSERT INTO wallet_balances (user_id, balance)
-      VALUES (${registeredUser.id}, 0)
-      ON CONFLICT (user_id) DO NOTHING
-    `;
-
-    return res.status(200).json({
-      success: true,
-      message: "Telegram user verified",
-      user: users[0]
-    });
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const users = await client.query(
+        `INSERT INTO public.users (telegram_id, username)
+         VALUES ($1, $2)
+         ON CONFLICT (telegram_id)
+         DO UPDATE SET username = EXCLUDED.username
+         RETURNING id, telegram_id, username`,
+        [String(user.id), user.username || null]
+      );
+      const registeredUser = users.rows[0];
+      await client.query(
+        `INSERT INTO public.wallet_balances (user_id, balance)
+         VALUES ($1, 0)
+         ON CONFLICT (user_id) DO NOTHING`,
+        [registeredUser.id]
+      );
+      await client.query("COMMIT");
+      return res.status(200).json({
+        success: true,
+        message: "Telegram user verified",
+        user: registeredUser
+      });
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => {});
+      throw error;
+    } finally {
+      client.release();
+    }
 
   } catch (error) {
     console.error("Auth API error:", error.message);
-
-    return res.status(500).json({
-      success: false,
-      message: "Authentication failed"
-    });
+    const safeMessage = error.code === "42P01"
+      ? "Authentication database tables are not ready."
+      : error.code === "23505"
+        ? "Authentication conflict. Please retry."
+        : "Authentication failed. Please reopen the Mini App.";
+    return res.status(500).json({ success: false, message: safeMessage });
   }
 };
