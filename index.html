@@ -60,7 +60,18 @@ header {
 .balance-label { color:#d4d4d8; font-size:12px; }  
 .balance-value { color:#facc15; font-size:27px; font-weight:900; margin:9px 0; overflow-wrap:anywhere; }  
 .balance-sub { color:#bdbdc3; font-size:12px; }  
-  .actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:16px; }  
+  .actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:16px; }
+  .wallet-actions { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) 48px; gap:10px; margin-top:16px; align-items:stretch; }
+  .deposit-action { background:#16a34a; border-color:#15803d; color:#fff; }
+  .withdraw-action { background:#dc2626; border-color:#b91c1c; color:#fff; }
+  .refresh-icon-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; border:1px solid #555; border-radius:11px; background:#292929; color:#facc15; font-size:22px; font-weight:900; cursor:pointer; }
+  .refresh-icon-btn small { font-size:8px; line-height:1; color:#d4d4d8; font-weight:700; }
+  .usdt-value { color:#22c55e; font-weight:900; }
+  .game-guide-card, .faq-card { margin-top:14px; }
+  .game-guide-card p, .faq-card p { color:#bdbdc3; font-size:13px; line-height:1.5; margin:8px 0; }
+  .faq-card details { border-top:1px solid #3a3a3a; padding:10px 0; }
+  .faq-card summary { cursor:pointer; font-weight:800; }
+  .faq-card details:first-of-type { border-top:0; }  
   .quick-amounts { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:9px 0 7px; }  
   .quick-amounts .sec-btn { padding:9px 6px; font-size:12px; }  
 .action-btn {  
@@ -293,7 +304,13 @@ label { font-weight:800; font-size:12px; }
 .checkout-summary div { display:flex; justify-content:space-between; gap:16px; }
 .checkout-summary .amount-due { font-size:18px; font-weight:800; margin-top:4px; }
 .checkout-summary strong { text-align:right; }
-.checkout-modal .deposit-qr-wrap canvas, .checkout-modal .deposit-qr-wrap .deposit-qr-image { border:8px solid #f0f0f4; border-radius:16px; }
+  .checkout-modal .deposit-qr-wrap { margin:8px auto 4px; }
+  .checkout-modal .deposit-qr-wrap canvas, .checkout-modal .deposit-qr-wrap .deposit-qr-image { width:180px; height:180px; border:7px solid #f0f0f4; border-radius:14px; }
+  .checkout-modal { max-height:calc(100dvh - 26px); overflow:auto; }
+  .checkout-modal .checkout-security { margin:10px 0; padding:9px 12px; }
+  .checkout-modal .checkout-paying { padding:9px 0; }
+  .checkout-modal .checkout-summary { gap:7px; padding:9px 0; }
+  .checkout-modal label, .checkout-modal input, .checkout-modal select { margin-top:6px; }
 .checkout-modal .deposit-submit-card { background:transparent; border:0; padding:0; }
 .checkout-modal .deposit-submit-card .primary-btn { background:#f57c00; color:#fff; }
 .checkout-modal .deposit-submit-card .sec-btn { background:#fff; color:#25262a; border-color:#d9d9de; }
@@ -404,9 +421,10 @@ label { font-weight:800; font-size:12px; }
     </div>  <div class="card">  
   <div class="section-title">🔢 <span data-i18n="chooseNumber">Choose a Number</span></div>  
   <div class="muted small" data-i18n="chooseNumberHint">Select a number to open the betting window.</div>  
-  <div class="number-grid" id="numberGrid"></div>  
-
-  <div class="section-title">🎨 <span data-i18n="chooseColour">Choose a Colour</span></div>  
+  <div class="number-grid" id="numberGrid"></div>
+  <div class="card game-guide-card"><div class="section-title">📖 How to Play</div><p>Choose a number, colour, or Big/Small option before betting closes. Your points are reserved immediately; the round result is published after the timer ends.</p><p><strong>Winning payout:</strong> payouts are calculated by the selected option and shown before you confirm. Only confirmed server results settle winnings.</p></div>
+  
+  <div class="section-title">🎨 <span data-i18n="chooseColour">Choose a Colour</span></div>
   <div class="option-grid">  
     <button class="option-btn red" data-bet="Red" type="button">🔴 <span data-i18n="red">Red</span></button>  
     <button class="option-btn green" data-bet="Green" type="button">🟢 <span data-i18n="green">Green</span></button>  
@@ -436,13 +454,13 @@ label { font-weight:800; font-size:12px; }
     <div class="section-title">💰 <span data-i18n="wallet">Wallet</span></div>  <div class="card">  
   <div class="muted small" data-i18n="testBalance">Live wallet balance</div>  
   <div style="font-size:27px;font-weight:900;margin:9px 0;color:#facc15">  
-    <span id="walletPoints">—</span> <span data-i18n="points">Points</span><div class="balance-sub" id="walletUsdt">— USDT · 100 Points = 1 USDT</div>  
+    <span id="walletPoints">—</span> <span data-i18n="points">Points</span><div class="balance-sub usdt-value" id="walletUsdt">— USDT · 100 Points = 1 USDT</div>  
   </div>  
-  <div class="actions">  
-    <button class="action-btn" id="depositBtn" type="button">⬇ <span data-i18n="deposit">Deposit</span></button>  
-    <button class="action-btn alt" id="withdrawBtn" type="button">⬆ <span data-i18n="withdraw">Withdraw</span></button>  
-  </div>  
-  <button class="primary-btn" data-refresh="1" type="button" style="margin-top:12px">↻ <span data-i18n="refresh">Refresh</span></button>  
+  <div class="wallet-actions">
+  <button class="action-btn deposit-action" id="depositBtn" type="button">⬇ <span data-i18n="deposit">Deposit</span></button>
+  <button class="action-btn withdraw-action" id="withdrawBtn" type="button">⬆ <span data-i18n="withdraw">Withdraw</span></button>
+  <button class="refresh-icon-btn" data-refresh="1" type="button" aria-label="Refresh wallet" title="Refresh wallet">↻<small>Refresh</small></button>
+  </div>
 </div>  
 
 <div class="card">  
@@ -464,6 +482,7 @@ label { font-weight:800; font-size:12px; }
   <p class="muted small" id="profileStatus">…</p>
 
   <button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth">Retry Authentication</button>
+  <div class="card faq-card"><div class="section-title">❓ Game FAQ</div><details><summary>How do I play?</summary><p>Pick a number, colour, or Big/Small option before the round closes, then confirm your points stake.</p></details><details><summary>When do I win?</summary><p>Winning bets are settled automatically after the server publishes the round result.</p></details><details><summary>How are payouts shown?</summary><p>The bet confirmation dialog displays the potential payout before you place the bet.</p></details><details><summary>Can I cancel a bet?</summary><p>Bets cannot be cancelled after confirmation. Review the selection and amount carefully.</p></details></div>
   <div class="card" style="margin-top:14px"><div class="section-title">Gift code</div><div class="copybox"><input id="giftCodeInput" placeholder="Enter gift code"><button class="sec-btn" id="redeemGiftBtn" type="button">Redeem</button></div></div>
 
   <div class="actions" style="margin-top:12px">  
@@ -753,7 +772,7 @@ cashNotice:"डिपॉज़िट और विदड्रॉ अभी च�
 close:"बंद करें",  
 refTitle:"रेफरल प्रोग्राम", yourLink:"आपका रेफरल लिंक", yourCode:"आपका रेफरल कोड",  
 copy:"कॉपी", share:"शेयर",  
-noLink:"र�����फरल लिंक अभी उपलब्ध नहीं है। आप अपना कोड शेयर कर सकते हैं।",  
+noLink:"र�������फरल लिंक अभी उपलब्ध नहीं है। आप अपना कोड शेयर कर सकते हैं।",  
 shareText:"Crypto Trader Pro पर मेरे साथ जुड़ें!",  
 directRef:"डायरेक्ट रेफरल", totalComm:"कुल कमीशन", levels:"कमीशन लेवल",  
 lvl:"लेवल", rate:"रेट", cnt:"गिनती", total:"कुल", comm:"कमीशन",  
@@ -810,7 +829,7 @@ rContinue:"চালিয়ে যান", cRedV:"লাল + বেগুন�
 sBig:"বড় (5–9)", sSmall:"ছোট (0–4)",  
 bannerResult:"রেজাল্ট {period}: {n} · {colour} · {size}",  
 testBalance:"লাইভ পয়েন্ট ব্যালেন্স", deposit:"ডিপোজিট", withdraw:"উইথড্র",  
-txTitle:"লেন��েন",  
+txTitle:"ল��ন��েন",  
 tx_deposit:"ডিপোজিট", tx_withdrawal:"উইথড্র", tx_bet:"বেট", tx_payout:"পেআউট", tx_refund:"রিফান্ড",  
 s_completed:"সম্পন্ন", s_confirmed:"নিশ্চিত", s_pending:"পেন্ডিং", s_rejected:"প্রত্যাখ্যাত", s_failed:"ব্যর্থ",  
 txPlaced:"দেওয়া হয়েছে",  
@@ -1447,7 +1466,7 @@ function renderWallet(){
       const plus = type === "deposit" || type === "payout" || type === "refund";  
       return `<tr>  
         <td class="period">${esc(tk("tx_",type))}<div class="utc-time">${esc(dateUTC(x.created_at))}</div></td>  
-        <td class="${plus ? "n-green" : "n-red"}">${plus ? "+" : "−"}${esc(money(x.amount))}</td>  
+        <td class="${plus ? "n-green" : "n-red"}">${plus ? "+" : "−"}${esc(money(x.amount))} <small class="usdt-value">(${(Number(x.amount || 0) / 100).toFixed(2)} USDT)</small></td>  
         <td>${esc(txStatusLabel(x))}</td>  
       </tr>`;  
     }).join("");  
