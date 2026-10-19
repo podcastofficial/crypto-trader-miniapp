@@ -1874,6 +1874,17 @@ async function renderUserDetail(userId) {
           ${detailItem("Losses", statValue(s.losses, 0))}
           ${detailItem("Commissions Generated", money(data.commissions_generated))}
         </div>
+        <div class="card" style="margin-top:16px">
+          <h3>Admin actions</h3>
+          <div class="row-actions" style="margin-top:10px">
+            <button class="btn user-action" data-action="block" data-user-id="${escapeHtml(p.id)}">Block</button>
+            <button class="btn user-action" data-action="unblock" data-user-id="${escapeHtml(p.id)}">Unblock</button>
+            <button class="btn user-action" data-action="add_fund" data-user-id="${escapeHtml(p.id)}">Add fund</button>
+            <button class="btn user-action" data-action="remove_fund" data-user-id="${escapeHtml(p.id)}">Remove fund</button>
+            <button class="btn user-action" data-action="create_gift" data-user-id="${escapeHtml(p.id)}">Generate gift code</button>
+            <button class="btn user-action" data-action="transfer_points" data-user-id="${escapeHtml(p.id)}">Transfer points</button>
+          </div>
+        </div>
 
         <div class="card-head" style="margin-top:22px">
           <h3>Referral Tree</h3>
@@ -1941,6 +1952,26 @@ async function renderUserDetail(userId) {
     $("closeUserDetail").addEventListener("click", () => {
       container.innerHTML = "";
     });
+    container.querySelectorAll(".user-action").forEach(button => button.addEventListener("click", async () => {
+      const action = button.dataset.action;
+      const points = ["add_fund", "remove_fund", "transfer_points"].includes(action) ? prompt("Points amount") : null;
+      if (["add_fund", "remove_fund", "transfer_points"].includes(action) && (!points || Number(points) <= 0)) return;
+      const payload = { management_action: action, user_id: button.dataset.userId };
+      if (points) payload.points = points;
+      if (action === "transfer_points") {
+        payload.to_user_id = prompt("Target user ID") || "";
+        if (!payload.to_user_id) return;
+      }
+      if (action === "create_gift") {
+        payload.points = prompt("Gift code points") || "";
+        payload.max_uses = prompt("Maximum uses", "1") || "1";
+      }
+      try {
+        const result = await api("user_management", payload);
+        toast(action === "create_gift" ? `Gift code: ${result.gift_code.code}` : "User action completed.");
+        await renderUserDetail(button.dataset.userId);
+      } catch (error) { toast(error.message, true); }
+    }));
   } catch (error) {
     container.innerHTML = `
       <div class="notice danger">${escapeHtml(error.message)}</div>

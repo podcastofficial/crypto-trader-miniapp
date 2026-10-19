@@ -193,18 +193,33 @@ async function getUser(client, telegramUser) {
      VALUES ($1, $2)
      ON CONFLICT (telegram_id)
      DO UPDATE SET username = EXCLUDED.username
-     RETURNING id, telegram_id, username, referral_code, referred_by`,
+     RETURNING id, telegram_id, username, referral_code, referred_by, (xmax = 0) AS is_new`,
     [String(telegramUser.id), telegramUser.username || null]
   );
 
   const user = result.rows[0];
 
+  await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT FALSE`);
+  await client.query(`CREATE TABLE IF NOT EXISTS public.user_notifications (
+    id BIGSERIAL PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL, title TEXT NOT NULL, message TEXT NOT NULL, is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+  await client.query(`CREATE TABLE IF NOT EXISTS public.gift_codes (
+    id BIGSERIAL PRIMARY KEY, code TEXT UNIQUE NOT NULL, points NUMERIC(20,2) NOT NULL,
+    max_uses INTEGER NOT NULL DEFAULT 1, uses INTEGER NOT NULL DEFAULT 0, expires_at TIMESTAMPTZ,
+    created_by TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
   await client.query(
     `INSERT INTO public.wallet_balances (user_id, balance)
      VALUES ($1, 0)
      ON CONFLICT (user_id) DO NOTHING`,
     [user.id]
   );
+  if (user.is_new) {
+    await client.query(`UPDATE public.wallet_balances SET balance=balance+25,updated_at=NOW() WHERE user_id=$1`, [user.id]);
+    await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'bonus','Joining bonus','You received 25 points as a new user joining bonus.')`, [user.id]);
+  }
 
   if (!user.referral_code) {
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -614,6 +629,28 @@ module.exports = async function handler(req, res) {
         success: true,
         balance: result.rows[0]?.balance ?? "0.00",
       });
+    }
+
+    if (action === "notifications") {
+      const notifications = await client.query(`SELECT id,kind,title,message,is_read,created_at FROM public.user_notifications WHERE user_id=$1 ORDER BY id DESC LIMIT 50`, [user.id]);
+      await client.query("COMMIT"); transactionStarted = false;
+      return json(res, 200, { success: true, notifications: notifications.rows });
+    }
+
+    if (action === "redeem_gift") {
+      const code = String(body.code || "").trim().toUpperCase();
+      if (!/^[A-Z0-9-]{4,64}$/.test(code)) throw new Error("Enter a valid gift code.");
+      const gift = await client.query(`SELECT * FROM public.gift_codes WHERE code=$1 AND uses < max_uses AND (expires_at IS NULL OR expires_at > NOW()) FOR UPDATE`, [code]);
+      if (!gift.rowCount) throw new Error("Gift code is invalid, expired, or already used.");
+      const used = await client.query(`SELECT 1 FROM public.gift_code_redemptions WHERE gift_code_id=$1 AND user_id=$2`, [gift.rows[0].id, user.id]).catch(() => ({ rowCount: 0 }));
+      if (used.rowCount) throw new Error("You have already redeemed this gift code.");
+      await client.query(`CREATE TABLE IF NOT EXISTS public.gift_code_redemptions (gift_code_id BIGINT REFERENCES public.gift_codes(id) ON DELETE CASCADE, user_id BIGINT REFERENCES public.users(id) ON DELETE CASCADE, redeemed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY(gift_code_id,user_id))`);
+      await client.query(`INSERT INTO public.gift_code_redemptions(gift_code_id,user_id) VALUES($1,$2)`, [gift.rows[0].id, user.id]);
+      await client.query(`UPDATE public.gift_codes SET uses=uses+1 WHERE id=$1`, [gift.rows[0].id]);
+      await client.query(`UPDATE public.wallet_balances SET balance=balance+$1,updated_at=NOW() WHERE user_id=$2`, [gift.rows[0].points, user.id]);
+      await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'gift','Gift code redeemed',$2)`, [user.id, `You received ${gift.rows[0].points} points.`]);
+      await client.query("COMMIT"); transactionStarted = false;
+      return json(res, 200, { success: true, points: gift.rows[0].points });
     }
 
     if (action === "my_bets") {

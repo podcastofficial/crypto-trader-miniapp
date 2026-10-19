@@ -176,7 +176,12 @@ label { font-weight:800; font-size:12px; }
 .trade-period { font-size:12px; font-variant-numeric:tabular-nums; }  
 .trade-status { font-weight:800; font-size:13px; }  
 .trade-amt { font-weight:800; font-size:13px; text-align:right; font-variant-numeric:tabular-nums; }  
-.success { color:#22c55e; }  
+  .notification-btn { position:relative; }
+  #notificationCount { position:absolute; top:-3px; right:-3px; min-width:16px; height:16px; border-radius:999px; background:#ef4444; color:#fff; font-size:10px; line-height:16px; font-weight:800; }
+  .notification-item { padding:11px 0; border-bottom:1px solid #2b2b31; }
+  .notification-item strong, .notification-item small { display:block; }
+  .notification-item small { color:#a1a1aa; margin-top:4px; }
+  .success { color:#22c55e; }
 .fail { color:#ef4444; }  
 .pending { color:#facc15; }  
 .cancelled { color:#94a3b8; }  
@@ -345,9 +350,13 @@ label { font-weight:800; font-size:12px; }
   </div>  
   <div class="head-btns">  
     <button class="icon-btn" id="headerLang" type="button" aria-label="Language">🌐</button>  
-    <button class="icon-btn" id="headerProfile" type="button" aria-label="Profile">👤</button>  
+    <button class="icon-btn notification-btn" id="notificationBell" type="button" aria-label="Notifications">♢<span id="notificationCount" hidden>0</span></button>
+  <button class="icon-btn" id="headerProfile" type="button" aria-label="Profile">👤</button>
   </div>  
-</header>  <!-- HOME (GAME) -->  <section class="page active" id="page-home">    <div class="balance-card">  
+</header>
+<div class="modal-backdrop" id="notificationModal" role="dialog" aria-modal="true" aria-labelledby="notificationTitle">
+  <div class="modal"><div class="row"><h2 id="notificationTitle">Activity notifications</h2><button class="icon-btn" id="closeNotifications" type="button" aria-label="Close">×</button></div><div id="notificationList" class="notification-list"><div class="empty">Loading…</div></div></div>
+</div>  <!-- HOME (GAME) -->  <section class="page active" id="page-home">    <div class="balance-card">
     <div class="balance-label" data-i18n="walletBalance">WALLET BALANCE</div>  
     <div class="balance-value"><span id="homePoints">—</span> <span data-i18n="points">Points</span></div>  
     <div class="balance-sub"><span id="homeUsdt">—</span> USDT · 100 Points = 1 USDT</div>  
@@ -433,7 +442,8 @@ label { font-weight:800; font-size:12px; }
   <strong id="profileName">…</strong>  
   <p class="muted small" id="profileStatus">…</p>
 
-<button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth">Retry Authentication</button>
+  <button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth">Retry Authentication</button>
+  <div class="card" style="margin-top:14px"><div class="section-title">Gift code</div><div class="copybox"><input id="giftCodeInput" placeholder="Enter gift code"><button class="sec-btn" id="redeemGiftBtn" type="button">Redeem</button></div></div>
 
   <div class="actions" style="margin-top:12px">  
     <button class="action-btn" id="editProfileBtn" type="button" data-i18n="editProfile">Edit Profile</button>  
@@ -746,9 +756,9 @@ colPeriod:"পিরিয়ড", colNum:"নম্বর", colBS:"B/S", colRes
 colType:"ধরন", colAmount:"অ্যামাউন্ট", colStatus:"স্ট্যাটাস",  
 range:"{from}-{to} / {total}",  
 loading:"লোড হচ্ছে…", noRounds:"এখনও কোনো রেজাল্ট নেই।", noBets:"এখনও কোনো বেট নেই।",  
-noTx:"এখনও কোনো লেনদেন নেই।", noRef:"এখনও কোনো রেফারেল নেই।", noLangs:"কোনো ভাষা পাওয়া যায়নি।",  
+noTx:"এখনও কোনো লেনদেন নেই।", noRef:"এখনও কোনো রেফারেল নেই���", noLangs:"কোনো ভাষা পাওয়া যায়নি।",  
 success:"সফল", fail:"ব্যর্থ", pending:"পেন্ডিং", cancelled:"বাতিল",  
-dBet:"বেট", dStake:"বেট অ্যামাউন্ট", dFee:"ফি", dActual:"ট্রেড অ্যামাউন্ট", dPayout:"পেআউট",  
+dBet:"বেট", dStake:"বেট অ্যামাউন্ট", dFee:"ফি", dActual:"ট্র��ড অ্যামাউন্ট", dPayout:"পেআউট",  
 dResult:"রেজাল্ট", dTime:"সময়", waiting:"অপেক্ষায়", bkFee:"ফি ({pct}%)",  
 bt_Number:"নম্বর", bt_Red:"লাল", bt_Green:"সবুজ", bt_Violet:"বেগুনি", bt_Big:"বড়", bt_Small:"ছোট",  
 stConnecting:"সংযোগ হচ্ছে", stSyncing:"সিঙ্ক হচ্ছে", stOpen:"বেটিং চাল���", stLocked:"বেটিং বন্ধ",  
@@ -2325,6 +2335,19 @@ function init(){
     button.onclick = () => manualRefresh(button);  
   });  
   
+  async function loadNotifications() {
+    try {
+      const data = await api("notifications");
+      const list = $("notificationList");
+      const rows = data.notifications || [];
+      $("notificationCount").textContent = rows.filter(item => !item.is_read).length;
+      $("notificationCount").hidden = !rows.some(item => !item.is_read);
+      list.innerHTML = rows.length ? rows.map(item => `<div class="notification-item"><strong>${esc(item.title)}</strong><small>${esc(item.message)} · ${new Date(item.created_at).toLocaleString()}</small></div>`).join("") : '<div class="empty">No activity yet.</div>';
+    } catch (error) { console.warn("[v0] notifications unavailable", error.message); }
+  }
+  $("notificationBell").onclick = async () => { $("notificationModal").classList.add("open"); await loadNotifications(); };
+  setInterval(() => { if (initData) loadNotifications(); }, 30000);
+  $("closeNotifications").onclick = () => $("notificationModal").classList.remove("open");
   $("headerProfile").onclick = () => showPage("profile");  
   $("editProfileBtn").onclick = openProfileModal;  
   $("walletAddressBtn").onclick = openWalletAddressModal;  
@@ -2333,8 +2356,14 @@ function init(){
   $("headerLang").onclick = openLangModal;  
   $("langOpenBtn").onclick = openLangModal;  
   $("langSearch").addEventListener("input",() => renderLangList($("langSearch").value));  
-  $("authRetry").onclick = authenticate;  
-  $("confirmBet").onclick = confirmBet;  
+  $("authRetry").onclick = authenticate;
+  $("redeemGiftBtn").onclick = async () => {
+    const code = $("giftCodeInput").value.trim();
+    if (!code) return toast("Enter a gift code.");
+    try { const result = await api("redeem_gift", { code }); toast(`Gift redeemed: ${result.points} points added.`); $("giftCodeInput").value = ""; await loadNotifications(); await loadWallet(true); }
+    catch (error) { toast(error.message, true); }
+  };
+  $("confirmBet").onclick = confirmBet;
   $("resultPopupClose").onclick = closeResultPopup;  
   $("depositBtn").onclick = () => openCash("deposit");  
   $("withdrawBtn").onclick = () => openCash("withdraw");  
