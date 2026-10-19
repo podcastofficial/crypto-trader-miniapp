@@ -654,8 +654,8 @@ resultHistory:"रिज़ल्ट हिस्ट्री", tradeHistory:"�
 colPeriod:"पीरियड", colNum:"नंबर", colBS:"B/S", colResult:"रिज़ल्ट",
 colType:"प्रकार", colAmount:"अमाउंट", colStatus:"स्टेटस",
 range:"{from}-{to} / {total}",
-loading:"लोड हो रहा है…", noRounds:"अभी कोई रिज़ल्ट नहीं।", noBets:"अभी कोई बेट नहीं।",
-noTx:"अभी कोई ट्रांज़ैक्शन नहीं।", noRef:"अभी कोई रेफरल नहीं।", noLangs:"कोई भाषा नहीं मिली।",
+loading:"लोड ���ो रहा है…", noRounds:"अभी कोई रिज़ल्ट नहीं।", noBets:"अभी कोई बेट नहीं।",
+noTx:"अभी कोई ट्रांज़ैक्शन नहीं।", noRef:"अभी कोई रेफरल नहीं।", noLangs:"क��ई भाषा नहीं मिली।",
 success:"सफल", fail:"असफल", pending:"पेंडिंग", cancelled:"रद्द",
 dBet:"बेट", dStake:"बेट अमाउंट", dFee:"फीस", dActual:"ट्रेड अमाउंट", dPayout:"पेआउट",
 dResult:"रिज़ल्ट", dTime:"समय", waiting:"इंतज़ार", bkFee:"फीस ({pct}%)",
@@ -715,7 +715,7 @@ currentPeriod:"বর্তমান পিরিয়ড", roundLen:"৩ ম�
 chooseNumber:"নম্বর বেছে নিন", chooseNumberHint:"টেস্ট-বেট উইন্ডো খুলতে একটি নম্বর বেছে নিন।",
 chooseColour:"রং বেছে নিন", red:"লাল", green:"সবুজ", violet:"বেগুনি",
 bigSmall:"বড় / ছোট", big:"বড় (5–9)", small:"ছোট (0–4)",
-resultHistory:"রেজাল্ট হিস্ট্রি", tradeHistory:"আমার ট্রেড হিস্ট্রি",
+resultHistory:"���েজাল্ট হিস্ট্রি", tradeHistory:"আমার ট্রেড হিস্ট্রি",
 colPeriod:"পিরিয়ড", colNum:"নম্বর", colBS:"B/S", colResult:"রেজাল্ট",
 colType:"ধরন", colAmount:"অ্যামাউন্ট", colStatus:"স্ট্যাটাস",
 range:"{from}-{to} / {total}",
@@ -768,7 +768,7 @@ tgMissing:"টেলিগ্রাম initData পাওয়া যায়�
 verified:"সার্ভার টেলিগ্রাম পরিচয় যাচাই করেছে।", tgUser:"টেলিগ্রাম ইউজার {id}",
 settings:"সেটিংস", sound:"সাউন্ড", vibration:"ভাইব্রেশন", change:"পরিবর্তন",
 searchLang:"ভাষা খুঁজুন",
-language:"ভাষা", about:"সম্পর্কে", aboutText:"সার্ভার-নিয়ন্ত্রিত রাউন্ড ও টেস্ট-ক্রেডিট ওয়ালেট।",
+language:"ভাষা", about:"সম্পর্কে", aboutText:"সার��ভার-নিয়ন্ত্রিত রাউন্ড ও টেস্ট-ক্রেডিট ওয়ালেট।",
 testingOnly:"শুধু টেস্টিং।"
 }
 };
@@ -1057,12 +1057,23 @@ async function copyText(text){
 
 /* ---------- API ---------- */
 async function parseResponse(response){
-  let data;
-  try { data = await response.json(); }
-  catch { throw new Error("Backend returned an invalid response."); }
-  if(!response.ok || !data.success){
-    throw new Error(data.message || "Backend request failed.");
+  const contentType = response.headers.get("content-type") || "";
+  let data = null;
+
+  if(contentType.includes("application/json")){
+    try { data = await response.json(); } catch(_) {}
+  } else {
+    const body = await response.text().catch(() => "");
+    if(body.trim()) console.error("[v0] API returned non-JSON:", response.status, body.slice(0,200));
   }
+
+  if(!response.ok || !data || !data.success){
+    const message = data && data.message
+      ? data.message
+      : `Backend request failed (HTTP ${response.status}).`;
+    throw new Error(message);
+  }
+
   return data;
 }
 
