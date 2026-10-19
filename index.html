@@ -786,7 +786,7 @@ colPeriod:"পিরিয়ড", colNum:"নম্বর", colBS:"B/S", colRes
 colType:"ধরন", colAmount:"অ্যামাউন্ট", colStatus:"স্ট্যাটাস",  
 range:"{from}-{to} / {total}",  
 loading:"লোড হচ্ছে…", noRounds:"এখনও কোনো রেজাল্ট নেই।", noBets:"এখনও কোনো বেট নেই।",  
-noTx:"এখনও কোনো লেনদেন নেই।", noRef:"এখনও কোনো রেফারেল নেই���", noLangs:"কোনো ভাষা পাওয়া যায়নি।",  
+noTx:"এখনও কোনো লেনদেন ��েই।", noRef:"এখনও কোনো রেফারেল নেই���", noLangs:"কোনো ভাষা পাওয়া যায়নি।",  
 success:"সফল", fail:"ব্যর্থ", pending:"পেন্ডিং", cancelled:"বাতিল",  
 dBet:"বেট", dStake:"বেট অ্যামাউন্ট", dFee:"ফি", dActual:"ট্র��ড অ্যামাউন্ট", dPayout:"পেআউট",  
 dResult:"রেজাল্ট", dTime:"সময়", waiting:"অপেক্ষায়", bkFee:"ফি ({pct}%)",  
@@ -1144,7 +1144,9 @@ async function parseResponse(response){
   if(!response.ok || !data || !data.success){  
     const message = data && data.message  
       ? data.message  
-      : `Backend request failed (HTTP ${response.status}).`;  
+      : data && data.detail
+        ? `${data.message || "Backend request failed"}: ${data.detail}`
+        : `Backend request failed (HTTP ${response.status}).`;
     throw new Error(message);  
   }  
   
