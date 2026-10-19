@@ -578,14 +578,16 @@ label { font-weight:800; font-size:12px; }
       <div class="modal-title" id="cashTitle">…</div>
       <button class="close-btn" data-close="cashModal" type="button">✕</button>
     </div>
-    <div id="cashDepositFields" style="display:none">
-      <div class="notice">Send BEP-20 USDT only. Deposits are credited automatically after confirmations.</div>
-      <div class="deposit-qr-wrap">
-        <canvas id="depositQr" width="220" height="220" aria-label="QR code for the BEP-20 deposit address"></canvas>
-        <div class="muted small">Scan to pay USDT on BNB Smart Chain (BEP-20)</div>
-      </div>
-      <label for="depositAddress">Deposit address</label>
-      <div class="copybox"><input id="depositAddress" readonly><button class="sec-btn" id="copyDepositAddress" type="button">Copy</button></div>
+  <div id="cashDepositFields" style="display:none">
+  <div class="notice">Deposits are credited automatically after blockchain confirmations. Select the exact coin and network before sending.</div>
+  <label for="depositOption">Coin and network</label>
+  <select id="depositOption"></select>
+  <div class="deposit-qr-wrap">
+  <canvas id="depositQr" width="220" height="220" aria-label="QR code for the selected deposit address"></canvas>
+  <div class="muted small" id="depositNetworkHint">Scan to deposit</div>
+  </div>
+  <label for="depositAddress">Deposit address</label>
+  <div class="copybox"><input id="depositAddress" readonly><button class="sec-btn" id="copyDepositAddress" type="button">Copy</button></div>
       <p class="muted small">Minimum: 100 points = 1 USDT. Credit rate: 100 points per USDT.</p>
     </div>
   <div id="cashWithdrawFields" style="display:none">
@@ -750,7 +752,7 @@ rTitle:"राउंड रिज़ल्ट", rPeriod:"पीरियड", rN
 rContinue:"जारी रखें", cRedV:"लाल + बैंगनी", cGreenV:"हरा + बैंगनी", cRed:"लाल", cGreen:"हरा",
 sBig:"बड़ा (5–9)", sSmall:"छोटा (0–4)",
 bannerResult:"रिज़ल्ट {period}: {n} · {colour} · {size}",
-testBalance:"लाइव वॉलेट बैलेंस", deposit:"डिपॉज़िट", withdraw:"विदड्रॉ",
+testBalance:"लाइव वॉलेट बैल��ंस", deposit:"डिपॉज़िट", withdraw:"विदड्रॉ",
 txTitle:"ट्रांज़ैक्शन",
 tx_deposit:"डिपॉज़िट", tx_withdrawal:"विदड्रॉ", tx_bet:"बेट", tx_payout:"पेआउट", tx_refund:"रिफंड",
 s_completed:"पूरा", s_confirmed:"कन्फर्म", s_pending:"पेंडिंग", s_rejected:"रिजेक्ट", s_failed:"फेल",
@@ -807,7 +809,7 @@ toastAuth:"আগে টেলিগ্রাম দিয়ে অথেন্
 toastLocked:"বেটিং বন্ধ। পরের রাউন্ডের অপেক্ষা করুন।",
 toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্বোচ্চ ২ দশমিক)।",
 toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করুন।",
-toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদলে আবার চেষ্টা করুন।",
+toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদলে আবার চেষ্টা করু���।",
 toastBetOk:"বেট গৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",
 betOn:"বেট", serverRound:"সার্ভার রাউন্ড:", betAmount:"বেট অ্যামাউন্ট (পয়েন্ট)",
 betNote:"আপনার লাইভ পয়েন্ট ব্যালেন্স থেকে বেটের টাকা কাটা হবে।", placeBet:"বেট দিন",
@@ -1484,19 +1486,21 @@ async function openCash(kind){
   if(kind === "deposit"){
     try {
       const config = await api("wallet_config");
-      const address = config.deposit_address || "";
-      $("depositAddress").value = address || "Deposit address is not configured";
-      const qr = $("depositQr");
-      if (qr && address && window.QRCode) {
-        await QRCode.toCanvas(qr, address, {
-          width: 220,
-          margin: 2,
-          color: { dark: "#111111", light: "#ffffff" },
-        });
-      } else if (qr) {
-        const context = qr.getContext("2d");
-        context.clearRect(0, 0, qr.width, qr.height);
-      }
+      const options = Array.isArray(config.deposit_options) ? config.deposit_options : [];
+      const select = $("depositOption");
+      select.innerHTML = options.map((item, index) => `<option value="${index}">${esc(item.coin)} · ${esc(item.network)}</option>`).join("");
+      const setOption = () => {
+        const item = options[Number(select.value)] || options[0];
+        const address = item?.address || "";
+        $("depositAddress").value = address || "Deposit address is not configured";
+        $("depositNetworkHint").textContent = item ? `Scan to deposit ${item.coin} on ${item.network}` : "No active deposit address configured";
+        const qr = $("depositQr");
+        if (qr && address && window.QRCode) {
+          QRCode.toCanvas(qr, item.qr_payload || address, { width: 220, margin: 2, color: { dark: "#111111", light: "#ffffff" } });
+        } else if (qr) qr.getContext("2d").clearRect(0, 0, qr.width, qr.height);
+      };
+      select.onchange = setOption;
+      setOption();
     } catch(error) { toast(error.message); }
   }
 }

@@ -860,6 +860,7 @@ const VIEWS = [
       ["users", "♙", "Users"],
       ["wallets", "◈", "Wallets"],
       ["transactions", "⇄", "Transactions"],
+      ["deposit_addresses", "⌁", "Deposit Addresses"],
       ["deposits", "↓", "Deposits"],
       ["withdrawals", "↑", "Withdrawals"],
       ["rounds", "◷", "Game Rounds"],
@@ -1139,6 +1140,10 @@ async function navigate(view) {
 
       case "transactions":
         await renderTransactions("transactions");
+        break;
+
+      case "deposit_addresses":
+        await renderDepositAddresses();
         break;
 
       case "deposits":
@@ -1863,6 +1868,34 @@ async function renderWallets() {
       toast(error.message, true);
     }
   });
+}
+
+async function renderDepositAddresses() {
+  setPage("Deposit Addresses", "Manage up to 10 active coin and network deposit addresses shown to users.", '<button class="btn btn-primary" id="addDepositAddress">Add address</button>');
+  const data = await api("deposit_addresses");
+  const rows = data.deposit_addresses || [];
+  const editor = (item = {}) => `<form class="card deposit-address-form" data-id="${escapeHtml(item.id || "")}">
+    <div class="grid-4">
+      <input name="coin" placeholder="Coin e.g. USDT" value="${escapeHtml(item.coin || "")}" required maxlength="30">
+      <input name="network" placeholder="Network e.g. BSC BEP-20" value="${escapeHtml(item.network || "")}" required maxlength="60">
+      <input name="address" placeholder="Wallet address" value="${escapeHtml(item.address || "")}" required maxlength="150">
+      <input name="qr_payload" placeholder="QR payload (optional)" value="${escapeHtml(item.qr_payload || "")}" maxlength="300">
+    </div>
+    <label><input type="checkbox" name="is_active" ${item.is_active !== false ? "checked" : ""}> Active</label>
+    <input name="sort_order" type="number" min="0" max="100" value="${Number(item.sort_order || 0)}" aria-label="Display order">
+    <button class="btn btn-primary" type="submit">Save</button>
+    ${item.id ? '<button class="btn btn-danger delete-deposit" type="button">Delete</button>' : ''}
+  </form>`;
+  $("viewBody").innerHTML = `${rows.map(editor).join("") || '<div class="notice">No addresses configured. Add your first coin/network below.</div>'}<div id="newDepositAddress"></div>`;
+  $("addDepositAddress").onclick = () => { if (rows.length >= 10) return toast("Maximum 10 deposit addresses allowed.", true); $("newDepositAddress").innerHTML = editor(); bindDepositForms(); };
+  bindDepositForms();
+  function bindDepositForms() {
+    document.querySelectorAll(".deposit-address-form").forEach(form => form.onsubmit = async event => {
+      event.preventDefault(); const f = new FormData(form);
+      try { await api("deposit_addresses", { mode: "save", id: form.dataset.id, coin: f.get("coin"), network: f.get("network"), address: f.get("address"), qr_payload: f.get("qr_payload"), is_active: f.get("is_active") === "on", sort_order: f.get("sort_order") }); await renderDepositAddresses(); } catch (error) { toast(error.message, true); }
+    });
+    document.querySelectorAll(".delete-deposit").forEach(button => button.onclick = async () => { const form = button.closest("form"); try { await api("deposit_addresses", { mode: "delete", id: form.dataset.id }); await renderDepositAddresses(); } catch (error) { toast(error.message, true); } });
+  }
 }
 
 async function renderTransactions(view) {
