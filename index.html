@@ -728,7 +728,7 @@ rewardNote:"रेफरल रिवॉर्ड पॉइंट्स के �
 needTg:"इसे देखने के लिए मिनी ऐप टेलीग्राम के अंदर खोलें।",
 tgAccount:"टेलीग्राम अकाउंट", checkingTg:"टेलीग्राम जाँच रहा है…", authenticating:"टेलीग्राम से ऑथेंटिकेट हो रहा है",
 retryAuth:"फिर से ऑथेंटिकेट करें", notTg:"टेलीग्राम में नहीं खुला",
-openInTg:"ऑथेंटिक���ट करने के लिए मिनी ऐप टेलीग्राम के अंदर खोलें।",
+openInTg:"ऑथेंटिक�����ट करने के लिए मिनी ऐप टेलीग्राम के अंदर खोलें।",
 tgMissing:"टेलीग्राम initData नहीं मिला", openOfficial:"आधिकारिक टेलीग्राम मिनी ऐप खोलें।",
 verified:"सर्वर ने टेलीग्राम पहचान सत्यापित की।", tgUser:"टेलीग्राम यूज़र {id}",
 settings:"सेटिंग्स", sound:"साउंड", vibration:"वाइब्रेशन", change:"बदलें",
@@ -786,7 +786,7 @@ noLink:"রেফারেল লিংক এখনও পাওয়া য�
 shareText:"Crypto Trader Pro-তে আমার সাথে যোগ দিন!",
 directRef:"সরাসরি রেফারেল", totalComm:"মোট কমিশন", levels:"কমিশন লেভেল",
 lvl:"লেভেল", rate:"রেট", cnt:"সংখ্যা", total:"মোট", comm:"কমিশন",
-haveCode:"রেফারেল কোড আছে?", enterCode:"রেফারেল কোড দিন", apply:"প্রয়োগ করুন",
+haveCode:"রেফারেল কোড আ��ে?", enterCode:"রেফারেল কোড দিন", apply:"প্রয়োগ করুন",
 referredBy:"আপনি একজন ইউজারের রেফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",
 commHistory:"কমিশন হ��স্ট্রি", direct:"আপনার সরাসরি রেফারেল",
 rewardNote:"রেফারেল রিওয়ার্ড পয়েন্টের জন্য নিশ্চিত রিচার্জ দরকার। রিচার্জ এখনও চালু নয়।",
@@ -1156,7 +1156,7 @@ function renderProfile(){
   $("profileName").textContent = txt(profName);
   $("profileStatus").textContent = txt(profStatus);
   const input = $("profileDisplayName");
-  if(input && document.activeElement !== input) input.value = profName || "";
+  if(input && document.activeElement !== input) input.value = profName && profName.raw ? profName.raw : "";
 }
 
 function openProfileModal(){
@@ -1173,10 +1173,23 @@ function openWalletAddressModal(){
 async function saveProfile(){
   const value = $("profileDisplayName").value.trim();
   if(!value){ toast(t("displayName")); return; }
-  profName = value;
-  renderProfile();
-  toast(t("profileSaved"));
-  $("profileModal").classList.remove("open");
+  const userId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id;
+  if(!userId){ toast(t("openInTg")); return; }
+  try {
+    const response = await fetch("/api/profile",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-telegram-id":String(userId)},
+      body:JSON.stringify({displayName:value})
+    });
+    const data = await response.json().catch(() => null);
+    if(!response.ok || !data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; }
+    profName = {raw:data.displayName};
+    renderProfile();
+    toast(t("profileSaved"));
+    $("profileModal").classList.remove("open");
+  } catch(_) {
+    toast(t("refreshFailed"));
+  }
 }
 
 async function saveWalletAddress(){
