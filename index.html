@@ -275,10 +275,10 @@ label { font-weight:800; font-size:12px; }
   display:flex; flex-direction:column; align-items:center; gap:9px;  
   margin:14px 0 16px; text-align:center;  
 }  
-.deposit-qr-wrap canvas {  
-  width:220px; height:220px; max-width:100%; padding:10px;  
+  .deposit-qr-wrap canvas, .deposit-qr-wrap .deposit-qr-image {  
+  width:220px; height:220px; max-width:100%; padding:10px; object-fit:contain;  
   background:#fff; border-radius:14px; border:1px solid #4a4a4f;  
-}  
+}
 .amount-stepper { display:grid; grid-template-columns:45px minmax(0,1fr) 45px; gap:8px; }  
 .amount-stepper button { border-radius:9px; background:#29292c; color:#facc15; font-size:21px; }  
 .amount-stepper input { margin:0; text-align:center; }  
@@ -533,8 +533,9 @@ label { font-weight:800; font-size:12px; }
   <label for="depositOption">Coin and network</label>  
   <select id="depositOption"></select>  
   <div class="deposit-qr-wrap">  
-  <canvas id="depositQr" width="220" height="220" aria-label="QR code for the selected deposit address"></canvas>  
-  <div class="muted small" id="depositNetworkHint">Scan to deposit</div>  
+  <canvas id="depositQr" width="220" height="220" aria-label="QR code for the selected deposit address"></canvas>
+  <img id="depositQrImage" class="deposit-qr-image" alt="QR code for the selected deposit address" hidden>
+  <div class="muted small" id="depositNetworkHint">Scan to deposit</div>
   </div>  
   <label for="depositAddress">Deposit address</label>  
   <div class="copybox"><input id="depositAddress" readonly><button class="sec-btn" id="copyDepositAddress" type="button">Copy</button></div>  
@@ -743,7 +744,7 @@ dBet:"বেট", dStake:"বেট অ্যামাউন্ট", dFee:"ফ�
 dResult:"রেজাল্ট", dTime:"সময়", waiting:"অপেক্ষায়", bkFee:"ফি ({pct}%)",  
 bt_Number:"নম্বর", bt_Red:"লাল", bt_Green:"সবুজ", bt_Violet:"বেগুনি", bt_Big:"বড়", bt_Small:"ছোট",  
 stConnecting:"সংযোগ হচ্ছে", stSyncing:"সিঙ্ক হচ্ছে", stOpen:"বেটিং চালু", stLocked:"বেটিং বন্ধ",  
-stError:"ব্যাকএন্ড ত্রুটি", stTelegram:"টেলিগ্রাম প্রয়োজন", stAuth:"অথ প্রয়োজন",  
+stError:"ব্যাকএন্ড ত্রুটি", stTelegram:"টেলিগ্রাম প্রয��োজন", stAuth:"অথ প্রয়োজন",  
 nConnecting:"ব্যাকএন্ডে সংযোগ হচ্ছে…",  
 nConnected:"ব্যাকএন্ডে সংযুক্ত। প্রতিটি রাউন্ড শেষ হওয়ার ৩০ সেকেন্ড আগে বেটিং বন্ধ হয়।",  
 nUnavailable:"ব্যাকএন্ড পাওয়া যাচ্ছে না: {msg}",  
@@ -777,7 +778,7 @@ haveCode:"রেফারেল কোড আ��ে?", enterCode:"রেফ�
 referredBy:"আপনি একজন ইউজারের রেফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",  
 commHistory:"কমিশন হ��স্ট্রি", direct:"আপনার সরাসরি রেফারেল",  
 rewardNote:"রেফারেল রিওয়ার্ড পয়েন্টের জন্য নিশ্চিত রিচার্জ দরকার। রিচার্জ এখনও চালু নয়।",  
-needTg:"এটি দেখতে মিনি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",  
+needTg:"এটি দেখতে মি��ি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",  
 tgAccount:"টেলিগ্রাম অ্যাকাউন্ট", checkingTg:"টেলিগ্রাম যাচাই হচ্ছে…", authenticating:"টেলিগ্রাম দিয়ে অথেন্টিকেট হচ্ছে",  
 retryAuth:"আবার অথেন্টিকেট করুন", notTg:"টেলিগ্রামে খোলা হয়নি",  
 openInTg:"অথেন্টিকেট করতে মিনি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",  
@@ -1437,10 +1438,30 @@ async function openCash(kind){
         const address = item?.address || "";  
         $("depositAddress").value = address || "Deposit address is not configured";  
         $("depositNetworkHint").textContent = item ? `Scan to deposit ${item.coin} on ${item.network}` : "No active deposit address configured";  
-        const qr = $("depositQr");  
-        if (qr && address && window.QRCode) {  
-          QRCode.toCanvas(qr, item.qr_payload || address, { width: 220, margin: 2, color: { dark: "#111111", light: "#ffffff" } });  
-        } else if (qr) qr.getContext("2d").clearRect(0, 0, qr.width, qr.height);  
+        const qr = $("depositQr");
+        const qrImage = $("depositQrImage");
+        const payload = item?.qr_payload || address;
+        if (qrImage) {
+          qrImage.hidden = true;
+          qrImage.removeAttribute("src");
+        }
+        if (qr && address && window.QRCode) {
+          qr.hidden = false;
+          QRCode.toCanvas(qr, payload, { width: 220, margin: 2, color: { dark: "#111111", light: "#ffffff" } }, (error) => {
+            if (error && qrImage) {
+              qr.hidden = true;
+              qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(payload)}`;
+              qrImage.hidden = false;
+            }
+          });
+        } else if (qrImage && address) {
+          qr.hidden = true;
+          qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(payload)}`;
+          qrImage.hidden = false;
+        } else if (qr) {
+          qr.hidden = false;
+          qr.getContext("2d").clearRect(0, 0, qr.width, qr.height);
+        }  
       };  
       select.onchange = setOption;  
       setOption();  
