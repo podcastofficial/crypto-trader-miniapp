@@ -215,6 +215,25 @@ label { font-weight:800; font-size:12px; }
 .switch.on { background:#22c55e; }
 .switch.on i { transform:translateX(22px); }
 
+/* REFERRAL MEMBERS */
+.tabs { display:flex; gap:6px; margin:12px 0; }
+.tab {
+  flex:1; padding:9px 4px; border-radius:10px; background:#202023;
+  color:#b4b4bc; border:1px solid #2d2d31; font-weight:800; font-size:12px;
+}
+.tab.on { background:#302911; color:#facc15; border-color:#51421a; }
+.member {
+  padding:12px; margin-bottom:9px; background:#19191b;
+  border:1px solid #303034; border-radius:12px;
+}
+.pill {
+  display:inline-block; padding:4px 9px; border-radius:999px; font-size:11px;
+  font-weight:800; background:#2d2d31; color:#b4b4bc;
+}
+.pill.ok { background:#143d27; color:#4ade80; }
+.pill.wait { background:#44330e; color:#facc15; }
+.pill.off { background:#351b1d; color:#fca5a5; }
+
 /* BOTTOM NAV */
 .bottom-nav {
   position:fixed; bottom:calc(8px + env(safe-area-inset-bottom)); left:50%;
@@ -1381,17 +1400,7 @@ function renderReferral(){
     ${pager("comm",commPage,commData.total)}
   </div>`;
 
-  const directRows = (r.direct_referrals || []).map(d => `<div class="kv">
-    <span style="color:#f5f5f5">${esc(d.username ? "@" + d.username : "—")}</span>
-    <span>${esc(dateUTC(d.created_at))}</span>
-  </div>`).join("");
-
-  const directCard = `<div class="card">
-    <div class="section-title">${esc(t("direct"))}</div>
-    ${directRows || `<div class="empty">${esc(t("noRef"))}</div>`}
-  </div>`;
-
-  box.innerHTML = linkCard + stats + levelsCard + applyCard + commCard + directCard;
+  box.innerHTML = linkCard + stats + membersCardHtml() + levelsCard + applyCard + commCard;
 }
 
 async function loadReferral(silent){
@@ -1459,6 +1468,123 @@ async function applyReferralFromUrl(){
     }
   } catch(_) {}
 }
+
+/* ---------- REFERRAL MEMBERS (active / inactive, rewards) ---------- */
+Object.assign(I18N.en,{
+  mTitle:"Your referrals", m_all:"All", m_active:"Active", m_inactive:"Inactive",
+  mActive:"Active", mInactive:"Inactive", mPending:"Pending", mReceived:"Received",
+  mJoined:"Joined", mLastPlayed:"Last played", mNever:"Never played",
+  mNoName:"No username", mSumActive:"Active referrals", mSumInactive:"Inactive referrals",
+  mSumPending:"Pending reward", mSumReceived:"Reward received",
+  mActiveNote:"Active = placed a bet in the last 7 days.",
+  mNoReward:"No reward record", mCreditedOn:"Received on"
+});
+Object.assign(I18N.hi,{
+  mTitle:"आपके रेफरल", m_all:"सभी", m_active:"एक्टिव", m_inactive:"इनएक्टिव",
+  mActive:"एक्टिव", mInactive:"इनएक्टिव", mPending:"पेंडिंग", mReceived:"मिला",
+  mJoined:"जुड़े", mLastPlayed:"आखिरी बार खेला", mNever:"कभी नहीं खेला",
+  mNoName:"यूज़रनेम नहीं", mSumActive:"एक्टिव रेफरल", mSumInactive:"इनएक्टिव रेफरल",
+  mSumPending:"पेंडिंग रिवॉर्ड", mSumReceived:"मिला हुआ रिवॉर्ड",
+  mActiveNote:"एक्टिव = पिछले 7 दिन में कम से कम एक बेट लगाई।",
+  mNoReward:"रिवॉर्ड रिकॉर्ड नहीं", mCreditedOn:"मिलने की तारीख"
+});
+Object.assign(I18N.bn,{
+  mTitle:"আপনার রেফারেল", m_all:"সব", m_active:"অ্যাকটিভ", m_inactive:"ইনঅ্যাকটিভ",
+  mActive:"অ্যাকটিভ", mInactive:"ইনঅ্যাকটিভ", mPending:"পেন্ডিং", mReceived:"পাওয়া গেছে",
+  mJoined:"যোগ দিয়েছে", mLastPlayed:"শেষ খেলেছে", mNever:"কখনও খেলেনি",
+  mNoName:"ইউজারনেম নেই", mSumActive:"অ্যাকটিভ রেফারেল", mSumInactive:"ইনঅ্যাকটিভ রেফারেল",
+  mSumPending:"পেন্ডিং রিওয়ার্ড", mSumReceived:"পাওয়া রিওয়ার্ড",
+  mActiveNote:"অ্যাকটিভ = গত ৭ দিনে অন্তত একটি বেট দিয়েছে।",
+  mNoReward:"রিওয়ার্ড রেকর্ড নেই", mCreditedOn:"পাওয়ার তারিখ"
+});
+
+let membersData = null;
+let membersFor = null;
+let membersLoading = false;
+let membersFilter = "all";
+
+async function loadMembers(){
+  membersLoading = true;
+  try {
+    membersData = await api("referral_members");
+  } catch(error) {
+    membersData = {error:error.message};
+  } finally {
+    membersLoading = false;
+    renderReferral();
+  }
+}
+
+function membersCardHtml(){
+  // Reload whenever the referral data was refreshed.
+  if(membersFor !== referralData && !membersLoading){
+    membersFor = referralData;
+    loadMembers();
+  }
+
+  const title = `<div class="section-title">${esc(t("mTitle"))}</div>`;
+
+  if(!membersData){
+    return `<div class="card">${title}<div class="empty">${esc(t("loading"))}</div></div>`;
+  }
+
+  if(membersData.error){
+    return `<div class="card">${title}<div class="empty">${esc(membersData.error)}</div></div>`;
+  }
+
+  const s = membersData.summary || {};
+  const all = membersData.members || [];
+  const list = all.filter(m =>
+    membersFilter === "all" ||
+    (membersFilter === "active" ? m.is_active : !m.is_active));
+
+  const stats = `<div class="stats">
+    <div class="stat"><div class="l">${esc(t("mSumActive"))}</div><div class="v">${esc(s.active || 0)}</div></div>
+    <div class="stat"><div class="l">${esc(t("mSumInactive"))}</div><div class="v">${esc((s.total || 0) - (s.active || 0))}</div></div>
+    <div class="stat"><div class="l">${esc(t("mSumPending"))}</div><div class="v">${esc(money(s.pending_points))}</div></div>
+    <div class="stat"><div class="l">${esc(t("mSumReceived"))}</div><div class="v">${esc(money(s.credited_points))}</div></div>
+  </div>`;
+
+  const tabs = ["all","active","inactive"].map(k =>
+    `<button type="button" class="tab${membersFilter === k ? " on" : ""}" data-mfilter="${k}">${esc(t("m_" + k))}</button>`
+  ).join("");
+
+  const rows = list.map(m => {
+    const active = !!m.is_active;
+
+    const reward = m.reward_status === "credited"
+      ? `<span class="pill ok">${esc(t("mReceived"))} +${esc(money(m.reward_points))}</span>
+         <div class="utc-time">${esc(t("mCreditedOn"))}: ${esc(dateUTC(m.credited_at))}</div>`
+      : m.reward_status === "pending"
+        ? `<span class="pill wait">${esc(t("mPending"))} · ${esc(money(m.reward_points))}</span>`
+        : `<span class="pill">${esc(t("mNoReward"))}</span>`;
+
+    return `<div class="member">
+      <div class="row">
+        <strong>${esc(m.username ? "@" + m.username : t("mNoName"))}</strong>
+        <span class="pill ${active ? "ok" : "off"}">${esc(t(active ? "mActive" : "mInactive"))}</span>
+      </div>
+      <div class="utc-time">${esc(t("mJoined"))}: ${esc(dateUTC(m.created_at))}</div>
+      <div class="utc-time">${esc(t("mLastPlayed"))}: ${esc(m.last_bet_at ? dateUTC(m.last_bet_at) : t("mNever"))}</div>
+      <div style="margin-top:8px">${reward}</div>
+    </div>`;
+  }).join("");
+
+  return `<div class="card">
+    ${title}
+    ${stats}
+    <div class="notice" style="margin-top:0">${esc(t("mActiveNote"))} ${esc(t("rewardNote"))}</div>
+    <div class="tabs">${tabs}</div>
+    ${rows || `<div class="empty">${esc(t("noRef"))}</div>`}
+  </div>`;
+}
+
+document.addEventListener("click",event => {
+  const b = event.target.closest("[data-mfilter]");
+  if(!b) return;
+  membersFilter = b.dataset.mfilter;
+  renderReferral();
+});
 
 /* ---------- RESULT POPUP / BANNER ---------- */
 function queuePopup(round){
