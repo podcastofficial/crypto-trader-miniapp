@@ -846,6 +846,8 @@ input:focus, select:focus { border-color: #e4b83d; box-shadow: 0 0 0 3px #e4b83d
 .btn-primary { background: linear-gradient(135deg, #f5cd58, #dfa92d); border-color: #f5cd58; box-shadow: 0 7px 18px #d6a52e24; }
 .btn-primary:hover { background: linear-gradient(135deg, #ffdc73, #eaba3b); }
 .btn-danger { background: #291820; border-color: #5e2935; }
+.row-actions { display:flex; gap:6px; flex-wrap:wrap; min-width:170px; }
+.row-actions .btn { padding:7px 9px; font-size:12px; }
 
 .table-wrap { border-color: #293544; border-radius: 12px; }
 th { background: #18202b; color: #aeb8c6; }
@@ -1485,7 +1487,7 @@ async function renderAnalytics() {
       ${table(
         ["Date", "Bets", "Stake", "Payout", "Net Stake - Payout", "Active Users", "New Users"],
         daily.map(d => [
-          escapeHtml(String(d.day || "—").slice(0, 10)),
+          escapeHtml(String(d.day || "��").slice(0, 10)),
           escapeHtml(statValue(d.bets, 0)),
           escapeHtml(money(d.stake)),
           escapeHtml(money(d.payout)),
@@ -2064,10 +2066,10 @@ async function renderTransactions(view) {
       userId: true
     })}
     <div class="notice warning">
-      This page is read-only. It does not approve or reject transactions.
+      Withdrawal actions reserve funds safely. Approve means manual payout is still required; Reject/Refund returns reserved funds to the user.
     </div>
     ${table(
-      ["ID", "User ID", "Type", "Amount", "Status", "Network", "Transaction Hash", "Created", "Updated"],
+      ["ID", "User ID", "Type", "Amount", "Status", "Network", "Transaction Hash", "Created", "Updated", "Actions"],
       (data.transactions || []).map(t => [
         escapeHtml(t.id),
         escapeHtml(t.user_id),
@@ -2077,7 +2079,8 @@ async function renderTransactions(view) {
         escapeHtml(t.network || "—"),
         escapeHtml(t.tx_hash || "—"),
         escapeHtml(formatDate(t.created_at)),
-        escapeHtml(formatDate(t.updated_at))
+        escapeHtml(formatDate(t.updated_at)),
+        t.transaction_type === "withdrawal" && t.status === "pending" ? `<div class="row-actions"><button class="btn btn-primary review-tx" data-action="withdrawal_approve" data-id="${escapeHtml(t.id)}">Approve</button><button class="btn btn-danger review-tx" data-action="withdrawal_reject" data-id="${escapeHtml(t.id)}">Reject / Refund</button></div>` : "—"
       ])
     )}
     ${paginationHtml(data.pagination)}
@@ -2085,6 +2088,16 @@ async function renderTransactions(view) {
 
   attachFilterActions(view, () => renderTransactions(view));
   attachPagination(view, data.pagination, () => renderTransactions(view));
+  document.querySelectorAll(".review-tx").forEach(button => button.addEventListener("click", async () => {
+    const action = button.dataset.action;
+    const message = action === "withdrawal_approve" ? "Approve this withdrawal for manual payout?" : "Reject and refund this withdrawal?";
+    if (!window.confirm(message)) return;
+    try {
+      await api(action, { transaction_id: button.dataset.id });
+      toast(action === "withdrawal_approve" ? "Withdrawal approved." : "Withdrawal rejected and refunded.");
+      await renderTransactions(view);
+    } catch (error) { toast(error.message, true); }
+  }));
 
   $("exportTransactions").addEventListener("click", async () => {
     try {

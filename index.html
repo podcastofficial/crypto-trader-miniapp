@@ -743,7 +743,7 @@ success:"সফল", fail:"ব্যর্থ", pending:"পেন্ডিং",
 dBet:"বেট", dStake:"বেট অ্যামাউন্ট", dFee:"ফি", dActual:"ট্রেড অ্যামাউন্ট", dPayout:"পেআউট",  
 dResult:"রেজাল্ট", dTime:"সময়", waiting:"অপেক্ষায়", bkFee:"ফি ({pct}%)",  
 bt_Number:"নম্বর", bt_Red:"লাল", bt_Green:"সবুজ", bt_Violet:"বেগুনি", bt_Big:"বড়", bt_Small:"ছোট",  
-stConnecting:"সংযোগ হচ্ছে", stSyncing:"সিঙ্ক হচ্ছে", stOpen:"বেটিং চালু", stLocked:"বেটিং বন্ধ",  
+stConnecting:"সংযোগ হচ্ছে", stSyncing:"সিঙ্ক হচ্ছে", stOpen:"বেটিং চাল��", stLocked:"বেটিং বন্ধ",  
 stError:"ব্যাকএন্ড ত্রুটি", stTelegram:"টেলিগ্রাম প্রয��োজন", stAuth:"অথ প্রয়োজন",  
 nConnecting:"ব্যাকএন্ডে সংযোগ হচ্ছে…",  
 nConnected:"ব্যাকএন্ডে সংযুক্ত। প্রতিটি রাউন্ড শেষ হওয়ার ৩০ সেকেন্ড আগে বেটিং বন্ধ হয়।",  
@@ -777,7 +777,7 @@ lvl:"লেভেল", rate:"রেট", cnt:"সংখ্যা", total:"মো
 haveCode:"রেফারেল কোড আ��ে?", enterCode:"রেফারেল কোড দিন", apply:"প্রয়োগ করুন",  
 referredBy:"আপনি একজন ইউজারের রেফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",  
 commHistory:"কমিশন হ��স্ট্রি", direct:"আপনার সরাসরি রেফারেল",  
-rewardNote:"রেফারেল রিওয়ার্ড পয়েন্টের জন্য নিশ্চিত রিচার্জ দরকার। রিচার্জ এখনও চালু নয়।",  
+rewardNote:"রেফারেল রিওয়ার্ড পয়েন্টের জন্য ন���শ্চিত রিচার্জ দরকার। রিচার্জ এখনও চালু নয়।",  
 needTg:"এটি দেখতে মি��ি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",  
 tgAccount:"টেলিগ্রাম অ্যাকাউন্ট", checkingTg:"টেলিগ্রাম যাচাই হচ্ছে…", authenticating:"টেলিগ্রাম দিয়ে অথেন্টিকেট হচ্ছে",  
 retryAuth:"আবার অথেন্টিকেট করুন", notTg:"টেলিগ্রামে খোলা হয়নি",  
@@ -1437,7 +1437,9 @@ async function openCash(kind){
         const item = options[Number(select.value)] || options[0];  
         const address = item?.address || "";  
         $("depositAddress").value = address || "Deposit address is not configured";  
-        $("depositNetworkHint").textContent = item ? `Scan to deposit ${item.coin} on ${item.network}` : "No active deposit address configured";  
+        const coinLabel = item?.coin || "asset";
+        const networkLabel = item?.network || "network";
+        $("depositNetworkHint").textContent = item ? `Only send ${coinLabel} on ${networkLabel}. Sending another coin or network may permanently lose funds.` : "No active deposit address configured";  
         const qr = $("depositQr");
         const qrImage = $("depositQrImage");
         const payload = item?.qr_payload || address;
