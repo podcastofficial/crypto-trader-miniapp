@@ -62,7 +62,9 @@ header {
 .balance-label { color:#d4d4d8; font-size:12px; }
 .balance-value { color:#facc15; font-size:27px; font-weight:900; margin:9px 0; overflow-wrap:anywhere; }
 .balance-sub { color:#bdbdc3; font-size:12px; }
-.actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:16px; }
+  .actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:16px; }
+  .quick-amounts { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:9px 0 7px; }
+  .quick-amounts .sec-btn { padding:9px 6px; font-size:12px; }
 .action-btn {
   padding:13px 8px; background:#facc15; color:#171717;
   border:1px solid #eab308; border-radius:11px; font-weight:800;
@@ -573,11 +575,24 @@ label { font-weight:800; font-size:12px; }
       <div class="copybox"><input id="depositAddress" readonly><button class="sec-btn" id="copyDepositAddress" type="button">Copy</button></div>
       <p class="muted small">Minimum: 100 points = 1 USDT. Credit rate: 100 points per USDT.</p>
     </div>
-    <div id="cashWithdrawFields" style="display:none">
-      <div class="notice">Withdrawals are reviewed and approved by admin. Points stay reserved until completed or rejected.</div>
-      <label for="withdrawAmount">Amount (points)</label>
-      <input id="withdrawAmount" type="number" min="500" step="0.01" placeholder="500">
-      <div class="muted small" id="withdrawUsdtPreview">5.00 USDT</div>
+  <div id="cashWithdrawFields" style="display:none">
+  <div class="notice">Withdrawals are reviewed and approved by admin. Points stay reserved until completed or rejected.</div>
+  <div class="row" style="align-items:flex-end;margin-bottom:10px">
+    <div>
+      <div class="muted small">Available balance</div>
+      <strong id="withdrawAvailableBalance">— Points · — USDT</strong>
+    </div>
+    <div class="muted small">Minimum: 500 Points · 5 USDT</div>
+  </div>
+  <label for="withdrawAmount">Amount (points)</label>
+  <input id="withdrawAmount" type="number" min="500" step="0.01" placeholder="500">
+  <div class="quick-amounts" role="group" aria-label="Withdrawal amount shortcuts">
+    <button type="button" class="sec-btn withdraw-preset" data-percent="25">25%</button>
+    <button type="button" class="sec-btn withdraw-preset" data-percent="50">50%</button>
+    <button type="button" class="sec-btn withdraw-preset" data-percent="100">100%</button>
+    <button type="button" class="sec-btn withdraw-preset" data-percent="max">Max</button>
+  </div>
+  <div class="muted small" id="withdrawUsdtPreview">5.00 USDT</div>
       <label for="withdrawAddress">BSC wallet address</label>
       <input id="withdrawAddress" type="text" maxlength="42" placeholder="0x…" autocomplete="off">
       <button class="primary-btn" id="submitWithdrawal" type="button" style="margin-top:14px">Request withdrawal</button>
@@ -1232,7 +1247,9 @@ function updateBalance(value){
   $("walletPoints").textContent = money(balance);
   $("homeUsdt").textContent = usdt + " USDT";
   $("walletUsdt").textContent = usdt + " USDT · 100 Points = 1 USDT";
-}
+  const withdrawBalance = $("withdrawAvailableBalance");
+  if(withdrawBalance) withdrawBalance.textContent = `${money(balance)} Points · ${usdt} USDT`;
+  }
 
 /* ---------- SOUND ---------- */
 function unlockAudio(){
@@ -1443,6 +1460,13 @@ async function openCash(kind){
   $("cashTitle").textContent = (kind === "deposit" ? "⬇ " : "⬆ ") + t(kind === "deposit" ? "deposit" : "withdraw");
   $("cashDepositFields").style.display = kind === "deposit" ? "block" : "none";
   $("cashWithdrawFields").style.display = kind === "withdraw" ? "block" : "none";
+  if(kind === "withdraw"){
+    const available = Number.isFinite(balance) ? Math.max(0, balance) : 0;
+    $("withdrawAvailableBalance").textContent = `${money(available)} Points · ${(available / 100).toFixed(2)} USDT`;
+    $("withdrawAmount").max = available.toFixed(2);
+    $("withdrawAmount").value = available >= 500 ? "500" : "";
+    $("withdrawUsdtPreview").textContent = available >= 500 ? "5.00 USDT" : "Minimum 5.00 USDT";
+  }
   $("cashModal").classList.add("open");
   if(kind === "deposit"){
     try {
@@ -2309,8 +2333,17 @@ function init(){
   $("withdrawBtn").onclick = () => openCash("withdraw");
   $("submitWithdrawal").onclick = submitWithdrawal;
   $("withdrawAmount").addEventListener("input", () => {
-    const points = Math.max(0, Number($("withdrawAmount").value) || 0);
-    $("withdrawUsdtPreview").textContent = `${(points / 100).toFixed(2)} USDT`;
+  const points = Math.max(0, Number($("withdrawAmount").value) || 0);
+  $("withdrawUsdtPreview").textContent = `${(points / 100).toFixed(2)} USDT`;
+  });
+  document.querySelectorAll(".withdraw-preset").forEach((button) => {
+    button.addEventListener("click", () => {
+      const available = Math.max(0, Number(balance) || 0);
+      const percent = button.dataset.percent === "max" ? 100 : Number(button.dataset.percent);
+      const amount = Math.floor((available * percent / 100) * 100) / 100;
+      $("withdrawAmount").value = amount >= 500 ? amount.toFixed(2) : "";
+      $("withdrawUsdtPreview").textContent = amount >= 500 ? `${(amount / 100).toFixed(2)} USDT` : "Minimum 5.00 USDT";
+    });
   });
   $("copyDepositAddress").onclick = async () => {
     const value = $("depositAddress").value;
