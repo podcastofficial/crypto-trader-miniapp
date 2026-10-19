@@ -681,11 +681,31 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === "wallet_config") {
+      await client.query(`CREATE TABLE IF NOT EXISTS public.deposit_addresses (
+        id BIGSERIAL PRIMARY KEY,
+        coin TEXT NOT NULL,
+        network TEXT NOT NULL,
+        address TEXT NOT NULL,
+        qr_payload TEXT,
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`);
+      const seedAddress = process.env.USDT_BEP20_DEPOSIT_ADDRESS || "";
+      if (seedAddress) {
+        await client.query(`INSERT INTO public.deposit_addresses (coin,network,address)
+          SELECT 'USDT','BSC BEP-20',$1 WHERE NOT EXISTS (SELECT 1 FROM public.deposit_addresses)`, [seedAddress]);
+      }
+      const options = await client.query(`SELECT id,coin,network,address,COALESCE(qr_payload,address) AS qr_payload
+        FROM public.deposit_addresses WHERE is_active=TRUE ORDER BY sort_order,id LIMIT 10`);
       await client.query("COMMIT"); transactionStarted = false;
       return json(res, 200, {
         success: true,
-        deposit_address: process.env.USDT_BEP20_DEPOSIT_ADDRESS || null,
-        network: "BSC BEP-20",
+        deposit_options: options.rows,
+        deposit_address: options.rows[0]?.address || null,
+        token_address: process.env.USDT_BEP20_TOKEN_ADDRESS || null,
+        network: options.rows[0]?.network || "BSC BEP-20",
         min_deposit_points: MIN_DEPOSIT_POINTS,
         min_withdraw_points: MIN_WITHDRAW_POINTS,
         points_per_usdt: POINTS_PER_USDT

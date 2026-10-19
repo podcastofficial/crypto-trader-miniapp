@@ -160,6 +160,45 @@ async function query(sql, params = []) {
   return result.rows;
 }
 
+async function ensureDepositAddresses() {
+  await query(`CREATE TABLE IF NOT EXISTS public.deposit_addresses (
+    id BIGSERIAL PRIMARY KEY,
+    coin TEXT NOT NULL,
+    network TEXT NOT NULL,
+    address TEXT NOT NULL,
+    qr_payload TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+}
+
+async function depositAddressConfig(body, session, req) {
+  await ensureDepositAddresses();
+  if (body.mode === "save") {
+    const id = String(body.id || "");
+    const coin = String(body.coin || "").trim().slice(0, 30);
+    const network = String(body.network || "").trim().slice(0, 60);
+    const address = String(body.address || "").trim().slice(0, 150);
+    const qrPayload = String(body.qr_payload || address).trim().slice(0, 300);
+    const active = body.is_active !== false;
+    const order = Math.max(0, Math.min(100, Number(body.sort_order) || 0));
+    if (!coin || !network || !address) throw new Error("Coin, network and address are required.");
+    const rows = id
+      ? await query(`UPDATE public.deposit_addresses SET coin=$1,network=$2,address=$3,qr_payload=$4,is_active=$5,sort_order=$6,updated_at=NOW() WHERE id=$7 RETURNING *`, [coin,network,address,qrPayload,active,order,id])
+      : await query(`INSERT INTO public.deposit_addresses (coin,network,address,qr_payload,is_active,sort_order) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`, [coin,network,address,qrPayload,active,order]);
+    if (!rows.length) throw new Error("Deposit address not found.");
+    await audit(session.username, "deposit_address_save", req, "success", "deposit_address", rows[0].id);
+  }
+  if (body.mode === "delete") {
+    const id = String(body.id || "");
+    await query("DELETE FROM public.deposit_addresses WHERE id=$1", [id]);
+    await audit(session.username, "deposit_address_delete", req, "success", "deposit_address", id);
+  }
+  return { ok: true, deposit_addresses: await query("SELECT * FROM public.deposit_addresses ORDER BY sort_order,id LIMIT 10") };
+}
+
 function ipAddress(req) {
   return String(
     req.headers["x-forwarded-for"] ||
@@ -1472,6 +1511,10 @@ module.exports = async function handler(req, res) {
 
         break;
       }
+
+      case "deposit_addresses":
+        result = await depositAddressConfig(body, session, req);
+        break;
 
       case "search":
         result = await search(body.q);
