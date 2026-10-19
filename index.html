@@ -753,7 +753,7 @@ cashNotice:"डिपॉज़िट और विदड्रॉ अभी च�
 close:"बंद करें",  
 refTitle:"रेफरल प्रोग्राम", yourLink:"आपका रेफरल लिंक", yourCode:"आपका रेफरल कोड",  
 copy:"कॉपी", share:"शेयर",  
-noLink:"र���फरल लिंक अभी उपलब्ध नहीं है। आप अपना कोड शेयर कर सकते हैं।",  
+noLink:"र�����फरल लिंक अभी उपलब्ध नहीं है। आप अपना कोड शेयर कर सकते हैं।",  
 shareText:"Crypto Trader Pro पर मेरे साथ जुड़ें!",  
 directRef:"डायरेक्ट रेफरल", totalComm:"कुल कमीशन", levels:"कमीशन लेवल",  
 lvl:"लेवल", rate:"रेट", cnt:"गिनती", total:"कुल", comm:"कमीशन",  
@@ -810,7 +810,7 @@ rContinue:"চালিয়ে যান", cRedV:"লাল + বেগুন�
 sBig:"বড় (5–9)", sSmall:"ছোট (0–4)",  
 bannerResult:"রেজাল্ট {period}: {n} · {colour} · {size}",  
 testBalance:"লাইভ পয়েন্ট ব্যালেন্স", deposit:"ডিপোজিট", withdraw:"উইথড্র",  
-txTitle:"লেনদেন",  
+txTitle:"লেন��েন",  
 tx_deposit:"ডিপোজিট", tx_withdrawal:"উইথড্র", tx_bet:"বেট", tx_payout:"পেআউট", tx_refund:"রিফান্ড",  
 s_completed:"সম্পন্ন", s_confirmed:"নিশ্চিত", s_pending:"পেন্ডিং", s_rejected:"প্রত্যাখ্যাত", s_failed:"ব্যর্থ",  
 txPlaced:"দেওয়া হয়েছে",  
@@ -1763,7 +1763,7 @@ Object.assign(I18N.bn,{
   mTitle:"আপনার রেফারেল", m_all:"সব", m_active:"অ্যাকটিভ", m_inactive:"ইনঅ্যাকটিভ",  
   mActive:"অ্যাকটিভ", mInactive:"ইনঅ্যাকটিভ", mPending:"পেন্ডিং", mReceived:"প���ওয়া গেছে",  
   mJoined:"যোগ দিয়েছে", mLastPlayed:"শেষ খেলেছে", mNever:"কখনও খেলেনি",  
-  mNoName:"ইউজারনেম নেই", mSumActive:"অ্যাকটিভ রেফারেল", mSumInactive:"ইনঅ্যাকটিভ রেফারে��",  
+  mNoName:"ইউজারনেম নেই", mSumActive:"অ্যাকটিভ রেফারেল", mSumInactive:"ইনঅ্যাকটিভ রেফ��রে��",  
   mSumPending:"পেন্ডিং রিওয়ার্ড", mSumReceived:"পাওয়া রিওয়ার্ড",  
   mActiveNote:"অ্যাকটিভ = গত ৭ দিনে অন্তত একটি বেট দিয়েছে।",  
   mNoReward:"রিওয়ার্ড রেকর্ড নেই", mCreditedOn:"পাওয়ার তারিখ"  
@@ -2200,17 +2200,24 @@ async function authenticate(){
     profStatus = {k:"verified"};  
     renderProfile();  
   
-    await syncRounds();  
-    await syncUser();  
-    await applyReferralFromUrl();  
-  } catch(error) {  
-    authed = false;  
-    authBlock = "stError";  
-    profStatus = {raw:error.message};  
-    renderProfile();  
-    toast(error.message);  
-  }  
-}  
+  try {
+    await syncRounds();
+    await syncUser();
+    await applyReferralFromUrl();
+  } catch (error) {
+    console.warn("[v0] post-auth sync failed", error.message);
+    authBlock = "stConnecting";
+    renderProfile();
+    toast("Account authenticated; syncing game data…");
+  }
+  } catch(error) {
+  authed = false;
+  authBlock = "stAuth";
+  profStatus = {raw:error.message};
+  renderProfile();
+  toast(error.message);
+  }
+  }
   
 /* ---------- BETTING ---------- */  
 function renderBreakdown(){  
