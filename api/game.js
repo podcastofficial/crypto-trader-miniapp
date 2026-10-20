@@ -799,7 +799,7 @@ module.exports = async function handler(req, res) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 409, { success: false, message: "This transaction hash has already been submitted." });
       }
-      const submitted = await client.query(`INSERT INTO public.transactions (user_id,transaction_type,amount,status,network,tx_hash,created_at,updated_at) VALUES ($1,'deposit',0,'pending',$2,$3,NOW(),NOW()) RETURNING id,status,tx_hash,created_at`, [user.id, network, txHash]);
+      const submitted = await client.query(`INSERT INTO public.transactions (user_id,transaction_type,amount,status,network,tx_hash,created_at,updated_at) VALUES ($1,'deposit',$2::numeric,'pending',$3,$4,NOW(),NOW()) RETURNING id,amount,status,network,tx_hash,created_at`, [user.id, amount.toFixed(6), network, txHash]);
       await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'deposit','Deposit submitted',$2)`, [user.id, `Transaction submitted for verification. Only the verified on-chain amount will be credited.`]).catch(() => {});
   await client.query("COMMIT"); transactionStarted = false;
   await notifyTelegram(`💰 Deposit submitted\n👤 User ID: ${user.telegram_id}\n🔗 TX: ${txHash}\n🌐 Network: ${network}\n⏳ Status: Pending verification`);
