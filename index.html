@@ -34,7 +34,8 @@ header {
 .brand { font-size:18px; font-weight:900; letter-spacing:-.3px; }  
 .brand span { color:#facc15; }  
 .head-btns { display:flex; gap:8px; }  
-.icon-btn {  
+  .icon-btn { border:1px solid #3f3f46; background:linear-gradient(145deg,#292929,#202023); box-shadow:0 4px 12px #0005; }
+  .icon-btn {
   background:#29292c; color:#facc15; border:1px solid #3a3830;  
   border-radius:11px; padding:10px;  
 }  
@@ -61,6 +62,8 @@ header {
 .balance-value { color:#facc15; font-size:27px; font-weight:900; margin:9px 0; overflow-wrap:anywhere; }  
 .balance-sub { color:#bdbdc3; font-size:12px; }  
   .actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:16px; }
+  .refresh-corner-btn { border:1px solid #806b16; border-radius:12px; background:#292929; color:#facc15; padding:7px 9px; font-weight:800; line-height:1; }
+  .refresh-corner-btn small { display:block; font-size:9px; margin-top:3px; color:#f4f4f5; }
   .rules-corner-btn { border:1px solid #806b16; border-radius:999px; background:#2b2614; color:#facc15; padding:5px 10px; font-size:11px; font-weight:800; }
   .rules-modal p { color:#d4d4d8; line-height:1.55; font-size:14px; }
   .payout-example { background:#211f16; border:1px solid #665519; border-radius:12px; padding:13px; line-height:1.85; color:#facc15; }
@@ -70,6 +73,10 @@ header {
   .refresh-icon-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; border:1px solid #555; border-radius:11px; background:#292929; color:#facc15; font-size:22px; font-weight:900; cursor:pointer; }
   .refresh-icon-btn small { font-size:8px; line-height:1; color:#d4d4d8; font-weight:700; }
   .usdt-value { color:#22c55e; font-weight:900; }
+  .profile-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px; }
+  .profile-stats div { border:1px solid #333; border-radius:12px; padding:10px 8px; background:#1d1d1f; }
+  .profile-stats span { display:block; color:#a1a1aa; font-size:10px; }
+  .profile-stats strong { display:block; color:#facc15; font-size:13px; margin-top:4px; }
   .faq-card { margin-top:14px; }
   .faq-card p { color:#bdbdc3; font-size:13px; line-height:1.5; margin:8px 0; }
   .faq-card details { border-top:1px solid #3a3a3a; padding:10px 0; }
@@ -402,10 +409,9 @@ label { font-weight:800; font-size:12px; }
   <div class="balance-value"><span id="homePoints">—</span> <span data-i18n="points">Points</span></div>
     <div class="balance-sub"><span id="homeUsdt">—</span> USDT · 100 Points = 1 USDT</div>  
   <div class="actions">
-  <button class="action-btn alt" data-page-go="wallet" type="button">Wallet</button>
   <button class="action-btn deposit-action" data-page-go="wallet" type="button" id="homeDepositBtn">Deposit</button>
   <button class="action-btn withdraw-action" data-page-go="wallet" type="button" id="homeWithdrawBtn">Withdraw</button>
-  <button class="action-btn" data-refresh="1" type="button">Refresh</button>
+  <button class="refresh-corner-btn" data-refresh="1" type="button" aria-label="Refresh balance" title="Refresh balance">↻ <small>Refresh</small></button>
   </div>
   </div>    <div class="section">  
     <div class="timer-card">  
@@ -483,6 +489,7 @@ label { font-weight:800; font-size:12px; }
   <div class="muted small" data-i18n="tgAccount">Telegram account</div>  
   <strong id="profileName">…</strong>  
   <p class="muted small" id="profileStatus">…</p>
+  <div class="profile-stats"><div><span>Joined</span><strong id="profileJoined">—</strong></div><div><span>Available points</span><strong id="profileAvailablePoints">—</strong></div><div><span>Commission claimed</span><strong id="profileCommission">—</strong></div></div>
 
   <button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth">Retry Authentication</button>
   <div class="card" style="margin-top:14px"><div class="section-title">Gift code</div><div class="copybox"><input id="giftCodeInput" placeholder="Enter gift code"><button class="sec-btn" id="redeemGiftBtn" type="button">Redeem</button></div></div>
@@ -554,9 +561,11 @@ label { font-weight:800; font-size:12px; }
   </div>  <div class="modal-backdrop" id="gameRulesModal" role="dialog" aria-modal="true" aria-labelledby="gameRulesTitle"><div class="modal rules-modal"><div class="row"><div class="modal-title" id="gameRulesTitle">Game Rules & Payouts</div><button class="close-btn" data-close="gameRulesModal" type="button" aria-label="Close">✕</button></div><p>1. Select a number, colour, or Big/Small before betting closes.<br>2. Enter your stake and confirm the bet.<br>3. The server publishes the round result after the timer ends.<br>4. Winning bets are credited automatically; predictions are not guaranteed.</p><div class="payout-example"><strong>100 points examples</strong><br>🔴/🟢 Red or Green: 100 × 2 = <b>200 points</b><br>🔢 Number 0–9: 100 × 9 = <b>900 points</b><br>🟣 Violet: 100 × 4.5 = <b>450 points</b><br>📊 Big/Small: 100 × 2 = <b>200 points</b></div><p class="muted small">Potential payout is shown before confirmation. A prediction is only an informational estimate, never a guaranteed result.</p></div></div>  <!-- PROFILE EDIT MODAL -->  <div class="modal-backdrop" id="profileModal">  
   <div class="modal">  
     <div class="row"><div class="modal-title" data-i18n="editProfile">Edit Profile</div><button class="close-btn" data-close="profileModal" type="button">✕</button></div>  
-    <label for="profileDisplayName" data-i18n="displayName">Display name</label>  
-    <input id="profileDisplayName" type="text" maxlength="64" autocomplete="name">  
-    <div class="notice" data-i18n="profileTelegramNote">Your Telegram username is managed by Telegram.</div>  
+  <label for="profileDisplayName" data-i18n="displayName">Display name</label>
+  <input id="profileDisplayName" type="text" maxlength="64" autocomplete="name">
+  <label for="profileAvatar" style="margin-top:12px">Profile image</label>
+  <input id="profileAvatar" type="file" accept="image/png,image/jpeg,image/webp">
+  <div class="notice" data-i18n="profileTelegramNote">Your Telegram username is managed by Telegram.</div>
     <button class="primary-btn" id="saveProfileBtn" type="button" style="margin-top:14px" data-i18n="saveChanges">Save Changes</button>  
   </div>  
 </div>  <!-- WALLET ADDRESS MODAL -->  <div class="modal-backdrop" id="walletAddressModal">  
@@ -780,7 +789,7 @@ shareText:"Crypto Trader Pro पर मेरे साथ जुड़ें!",
 directRef:"डायरेक्ट रेफरल", totalComm:"कुल कमीशन", levels:"कमीशन लेवल",  
 lvl:"लेवल", rate:"रेट", cnt:"गिनती", total:"कुल", comm:"कमीशन",  
 haveCode:"रेफरल कोड है?", enterCode:"रेफरल कोड डालें", apply:"लागू करें",  
-referredBy:"आप किसी यूज़र के रेफरल से आए हैं। कोड पहले से लागू है।",  
+referredBy:"आप किसी यूज़र ���े रेफरल से आए हैं। कोड पहले से लागू है।",
 commHistory:"कमीशन हिस्ट्री", direct:"आपके डायरेक्ट रेफरल",  
 rewardNote:"रेफरल रिवॉर्ड पॉइंट्स के लिए कन्फर्म्ड रिचार्ज ज़रूरी है। रिचार्ज अभी चालू नहीं है।",  
 needTg:"इसे देखने के लिए मिनी ऐप टेलीग्राम के अंदर खोलें।",  
@@ -807,7 +816,7 @@ resultHistory:"���েজাল্ট হিস্ট্রি", tradeHisto
 colPeriod:"পিরিয়ড", colNum:"নম্বর", colBS:"B/S", colResult:"রেজাল্���",  
 colType:"ধরন", colAmount:"অ্যামাউন্ট", colStatus:"স্ট্যাটাস",  
 range:"{from}-{to} / {total}",  
-loading:"লোড হচ্ছে…", noRounds:"এখনও কোনো রেজাল্ট নেই।", noBets:"এখনও কোনো বেট নেই।",  
+loading:"লোড হচ���ছে…", noRounds:"এখনও কোনো রেজাল্ট নেই।", noBets:"এখনও কোনো বেট নেই",
 noTx:"এখনও কোনো লেনদেন ���েই।", noRef:"এখনও কোনো রেফারেল নেই���", noLangs:"কোনো ভাষা পাওয়া যায়নি।",  
 success:"সফল", fail:"ব্যর্থ", pending:"পেন্ডিং", cancelled:"বাতিল",  
 dBet:"বেট", dStake:"বেট অ্যামাউন্ট", dFee:"ফি", dActual:"ট্র��ড অ্যামাউন্ট", dPayout:"পেআউট",  
@@ -1213,8 +1222,12 @@ function setNotice(key,vars){
 }  
   
 function renderProfile(){  
-  $("profileName").textContent = txt(profName);  
-  $("profileStatus").textContent = txt(profStatus);  
+  $("profileName").textContent = txt(profName);
+  $("profileStatus").textContent = txt(profStatus);
+  const available = $("homePoints")?.textContent || "—";
+  $("profileAvailablePoints").textContent = available;
+  $("profileJoined").textContent = (tg?.initDataUnsafe?.user?.id ? "Telegram" : "—");
+  $("profileCommission").textContent = "0 points";
   const input = $("profileDisplayName");  
   if(input && document.activeElement !== input) input.value = profName && profName.raw ? profName.raw : "";  
 }  
@@ -1236,12 +1249,21 @@ async function saveProfile(){
   const userId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id;  
   if(!userId){ toast(t("openInTg")); return; }  
   try {  
-    const response = await fetch("/api/profile",{  
-      method:"POST",  
-      headers:{"Content-Type":"application/json","x-telegram-id":String(userId)},  
-      body:JSON.stringify({displayName:value})  
-    });  
-    const data = await response.json().catch(() => null);  
+  const response = await fetch("/api/profile",{
+  method:"POST",
+  headers:{"Content-Type":"application/json","x-telegram-id":String(userId)},
+  body:JSON.stringify({displayName:value})
+  });
+  const data = await response.json().catch(() => null);
+  const avatar = $("profileAvatar").files && $("profileAvatar").files[0];
+  if (avatar) {
+    if (avatar.size > 2 * 1024 * 1024) { toast("Image must be under 2 MB."); return; }
+    const reader = new FileReader();
+    const imageData = await new Promise(resolve => { reader.onload = () => resolve(reader.result); reader.readAsDataURL(avatar); });
+    const avatarResponse = await fetch("/api/profile-avatar", { method:"POST", headers:{"Content-Type":"application/json","x-telegram-id":String(userId)}, body:JSON.stringify({file:imageData}) });
+    const avatarData = await avatarResponse.json().catch(() => null);
+    if (!avatarResponse.ok || !avatarData?.success) { toast(avatarData?.message || "Could not upload image."); return; }
+  }
     if(!response.ok || !data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; }  
     profName = {raw:data.displayName};  
     renderProfile();  
@@ -1372,8 +1394,7 @@ async function loadResults(){
 }  
   
 /* ---------- TRADE HISTORY ---------- */  
-  // The database payout is the net win amount; display the full returned stake plus profit.
-  // A 100-point bet with a 49-point win therefore displays +149, not -49.
+  // The database payout is the net profit after the fee; display the fee-adjusted stake and net payout.
 function tradeView(b){  
   const ended = codeEnded(b.round_code);  
   const status = ended ? String(b.status || "pending").toLowerCase() : "pending";  
@@ -1381,7 +1402,7 @@ function tradeView(b){
   const feeC = cents(b.fee);  
   const actualC = stakeC - feeC;  
   const profitC = ended ? cents(b.payout) : 0;
-  const returnedC = profitC > 0 ? actualC + profitC : 0;
+  const returnedC = profitC > 0 ? profitC : 0;
   const hasRes = ended && b.result_number !== null && b.result_number !== undefined;
   
   let cls = "pending", label = t("pending"), amt = null;  
@@ -2427,8 +2448,11 @@ async function loadNotifications() {
   try {
     const data = await api("notifications");
     const list = $("notificationList");
-    const rows = data.notifications || [];
-    $("notificationCount").textContent = rows.filter(item => !item.is_read).length;
+  let rows = data.notifications || [];
+  if (!rows.length && (tradeData.bets || []).length) {
+    rows = tradeData.bets.slice(0, 5).map(b => ({ title: "Trade activity", message: `${b.bet_type} bet ${b.status || "pending"}`, created_at: b.created_at, is_read: false }));
+  }
+  $("notificationCount").textContent = rows.filter(item => !item.is_read).length;
     $("notificationCount").hidden = !rows.some(item => !item.is_read);
     list.innerHTML = rows.length ? rows.map(item => `<div class="notification-item"><strong>${esc(item.title)}</strong><small>${esc(item.message)} · ${new Date(item.created_at).toLocaleString()}</small></div>`).join("") : '<div class="empty">No activity yet.</div>';
   } catch (error) { console.warn("[v0] notifications unavailable", error.message); }
