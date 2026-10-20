@@ -2465,9 +2465,10 @@ async function renderReferrals() {
         </form>
       </div>
       <div class="card"><div class="card-head"><h3>Notification history</h3><button class="btn small" id="refreshTelegram">Refresh</button></div>
-        ${table(["ID","Event","Channel","Status","Attempts","Sent","Error"], (data.notifications || []).map(item => [
+        ${table(["ID","Event","Channel","Status","Attempts","Sent","Error","Action"], (data.notifications || []).map(item => [
           escapeHtml(item.id), escapeHtml(item.event_type), escapeHtml(item.channel), badge(item.status),
-          escapeHtml(item.attempt_count), escapeHtml(formatDate(item.sent_at)), escapeHtml(item.error_message || "—")
+          escapeHtml(item.attempt_count), escapeHtml(formatDate(item.sent_at)), escapeHtml(item.error_message || "—"),
+          item.status === "sent" ? "—" : `<button class="btn small telegram-retry" data-id="${escapeHtml(item.id)}">Retry</button>`
         ]))}
       </div>`;
     $("telegramForm").addEventListener("submit", async (event) => {
@@ -2479,6 +2480,14 @@ async function renderReferrals() {
       } catch (error) { toast(error.message, true); }
     });
     $("refreshTelegram").addEventListener("click", () => renderTelegram());
+    document.querySelectorAll(".telegram-retry").forEach((button) => button.addEventListener("click", async () => {
+      button.disabled = true;
+      try {
+        await api("telegram", { mode: "retry", id: button.dataset.id });
+        toast("Telegram notification retried.");
+        await renderTelegram();
+      } catch (error) { button.disabled = false; toast(error.message, true); }
+    }));
   }
 
   async function renderAudit() {
