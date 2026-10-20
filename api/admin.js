@@ -45,6 +45,26 @@ async function notifyTelegram(text, chats = [process.env.ADMIN_CHAT_ID]) {
 
 async function telegramAdminAction(body, session, req) {
   await ensureManagementTables();
+  if (body.mode === "retry") {
+    const id = String(body.id || "").trim();
+    if (!/^\d+$/.test(id)) throw new Error("Invalid notification ID.");
+    const rows = await query(`SELECT id,channel,message,status,attempt_count FROM public.telegram_notifications WHERE id=$1`, [id]);
+    if (!rows.length) throw new Error("Notification not found.");
+    if (rows[0].status === "sent") throw new Error("This notification was already delivered.");
+    const attempt = Number(rows[0].attempt_count || 0) + 1;
+    await query(`UPDATE public.telegram_notifications SET status='pending',attempt_count=$1,error_message=NULL WHERE id=$2`, [attempt, id]);
+    const result = await notifyTelegram(rows[0].message, [rows[0].channel]);
+    if (result.ok) {
+      const telegramId = result.results.find(item => item.ok)?.payload?.result?.message_id;
+      await query(`UPDATE public.telegram_notifications SET status='sent',telegram_message_id=$1,sent_at=NOW() WHERE id=$2`, [telegramId ? String(telegramId) : null, id]);
+    } else {
+      const error = result.results.map(item => item.error || item.payload?.description).filter(Boolean).join("; ");
+      await query(`UPDATE public.telegram_notifications SET status='failed',error_message=$1 WHERE id=$2`, [error.slice(0, 500), id]);
+    }
+    await audit(session.username, "telegram_retry", req, result.ok ? "success" : "failed", "telegram_notification", id);
+    if (!result.ok) throw new Error("Telegram retry failed.");
+    return { ok: true, notification_id: id };
+  }
   if (body.mode === "history") {
     const page = Math.max(1, Number(body.page) || 1);
     const pageSize = Math.min(PAGE_SIZE_MAX, Math.max(1, Number(body.page_size) || 25));
