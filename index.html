@@ -794,7 +794,7 @@ tgMissing:"Telegram initData missing", openOfficial:"Open the official Telegram 
 verified:"Telegram identity verified by server.", tgUser:"Telegram user {id}",
 settings:"Settings", sound:"Sound", vibration:"Vibration", change:"Change",
 searchLang:"Search language",
-  language:"Language", about:"About", aboutText:"Server-controlled rounds and live wallet.", gameNotice:"Server-controlled game. Bets use your available points.",
+  language:"Language", about:"About", aboutText:"Crypto Trader is a server-controlled prediction game where you can place points-based bets on numbers, colours, and Big or Small outcomes. Results are published automatically, and your wallet, deposits, withdrawals, and referral rewards are tracked securely.", gameNotice:"Each 100 points equals 1 USDT. Play responsibly and review the game rules before placing a bet.",
 testingOnly:"Testing only.",
   editProfile:"Edit Profile", manageWallet:"Add / Edit Wallet", displayName:"Display name",
   profileTelegramNote:"Your Telegram username is managed by Telegram.", saveChanges:"Save Changes",
@@ -895,7 +895,7 @@ toastAuth:"আগে টেলিগ্রাম দিয়ে অথেন্
 toastLocked:"বেটিং বন্ধ। পরের রাউন্ডের অপেক্ষা করুন।",
 toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্বোচ্চ ২ দশমিক)।",
 toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করুন।",
-toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদল����� আবার চেষ্টা করুন।",
+toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদল������� আবার চেষ্টা করুন।",
 toastBetOk:"বেট গৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",
 betOn:"বেট", serverRound:"সার্ভার রাউন্ড:", betAmount:"বেট অ্যামাউন্ট (পয়েন্ট)",
 betNote:"আপনার লাইভ পয়েন্ট ব্যালেন্স থেকে বেটের টাকা কাটা হবে।", placeBet:"বেট দিন",
@@ -919,7 +919,7 @@ lvl:"লেভেল", rate:"রেট", cnt:"সংখ্যা", total:"মো
 haveCode:"রেফারেল কোড আছে?", enterCode:"রেফারেল কোড দিন", apply:"প্রয়োগ করুন",
 referredBy:"আপনি একজন ইউজারের রেফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",
 commHistory:"কমিশন হিস্ট্রি", direct:"আপনার সরাসরি রেফারেল",
-rewardNote:"রেফারেল ���ি���য়ার্ড পয়েন্টের জন্য নিশ্চিত রিচার্জ দরকার। রিচার্জ এখনও চালু নয়।",
+rewardNote:"রেফার��ল ���ি���য়ার্ড পয়েন্টের জন্য নিশ্চিত রিচার্জ দরকার। রিচার্জ এখনও চালু নয়।",
 needTg:"এটি দেখতে মিনি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",
 tgAccount:"টেলিগ্রাম অ্যাকাউন্ট", checkingTg:"টেলিগ্রাম যাচাই হচ্ছে…", authenticating:"টেলিগ্রাম দিয়ে অথেন্টিকেট হচ্ছে",
 retryAuth:"আবার অথেন্টিকেট করুন", notTg:"টেলিগ্রামে খোলা হয়নি",
@@ -1552,6 +1552,12 @@ function txStatusLabel(x){
   return tk("s_",x.status);
 }
 
+function transactionUsdt(x){
+  const type = String(x.transaction_type || "").toLowerCase();
+  const amount = Number(x.amount || 0);
+  return (type === "deposit" || type === "withdrawal" ? amount : amount / 100).toFixed(2);
+}
+
 function renderWallet(){
   const items = walletData.items || [];
   let html;
@@ -1562,7 +1568,7 @@ function renderWallet(){
       const plus = type === "deposit" || type === "payout" || type === "refund";
       return `<tr>
         <td class="period">${esc(tk("tx_",type))}<div class="utc-time">${esc(dateUTC(x.created_at))}</div></td>
-        <td class="${plus ? "n-green" : "n-red"}">${plus ? "+" : "−"}${esc(money(x.amount))} <small class="usdt-value">(${(Number(x.amount || 0) / 100).toFixed(2)} USDT)</small></td>
+        <td class="${plus ? "n-green" : "n-red"}">${plus ? "+" : "−"}${esc(money(x.amount))} <small class="usdt-value">(${esc(transactionUsdt(x))} USDT)</small></td>
         <td>${esc(txStatusLabel(x))}</td>
       </tr>`;
     }).join("");
@@ -1579,7 +1585,7 @@ function renderWallet(){
   const historyTable = (type) => {
     const filtered = items.filter(x => String(x.transaction_type || "").toLowerCase() === type);
     if (!filtered.length) return `<div class="empty">No ${type} history yet.</div>`;
-    return `<div class="wrap"><table class="tbl"><thead><tr><th>Type</th><th>Amount</th><th>Status</th></tr></thead><tbody>${filtered.map(x => `<tr><td>${esc(tk("tx_", x.transaction_type))}<div class="utc-time">${esc(dateUTC(x.created_at))}</div></td><td>${esc(money(x.amount))}</td><td>${esc(txStatusLabel(x))}</td></tr>`).join("")}</tbody></table></div>`;
+    return `<div class="wrap"><table class="tbl"><thead><tr><th>Type</th><th>Amount</th><th>Status</th></tr></thead><tbody>${filtered.map(x => `<tr><td>${esc(tk("tx_", x.transaction_type))}<div class="utc-time">${esc(dateUTC(x.created_at))}</div></td><td>${esc(money(x.amount))} <small class="usdt-value">(${esc(transactionUsdt(x))} USDT)</small></td><td>${esc(txStatusLabel(x))}</td></tr>`).join("")}</tbody></table></div>`;
   };
   $("depositHistoryList").innerHTML = historyTable("deposit");
   $("withdrawHistoryList").innerHTML = historyTable("withdrawal");
@@ -1750,6 +1756,7 @@ function renderReferral(){
   const link = r.referral_link;
 
   const linkCard = `<div class="card">
+    <div class="notice"><strong>Earn 100 points per referral.</strong> Your referral receives credit after completing a qualifying recharge.</div>
     <label>${esc(t("yourLink"))}</label>
     ${link
       ? `<div class="copybox" style="margin-top:7px">
