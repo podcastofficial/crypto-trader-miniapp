@@ -1263,6 +1263,11 @@ async function reviewWalletTransaction(action, body, session, req) {
   }
 
   const note = String(body.admin_note || "").trim().slice(0, 500);
+  const payoutTxHash = String(body.payout_tx_hash || "").trim().slice(0, 200);
+  const reviewNote = payoutTxHash ? `${note}${note ? " | " : ""}Payout TX: ${payoutTxHash}`.slice(0, 500) : note;
+  if (action === "withdrawal_approve" && !/^0x[a-fA-F0-9]{64}$/.test(payoutTxHash)) {
+  throw new Error("A valid payout transaction hash is required.");
+  }
 
   const client = await pool.connect();
 
@@ -1357,17 +1362,17 @@ async function reviewWalletTransaction(action, body, session, req) {
 
     await client.query(
       `UPDATE public.transactions
-       SET status=$1,
-           admin_note=$2,
+SET status=$1,
+  admin_note=$2,
            reviewed_at=NOW(),
            reviewed_by=$3,
            updated_at=NOW()
        WHERE id=$4`,
       [
-        newStatus,
-        note || null,
-        session.username,
-        transactionId
+newStatus,
+  reviewNote,
+  session.username,
+  transactionId
       ]
     );
 

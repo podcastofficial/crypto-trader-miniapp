@@ -2274,13 +2274,15 @@ async function renderTransactions(view) {
     
     let message = "Are you sure?";
     if (action === "withdrawal_approve") message = "Approve this withdrawal for manual payout?";
+  const payoutTxHash = action === "withdrawal_approve" ? prompt("Enter the payout transaction hash:") : "";
+  if (action === "withdrawal_approve" && !payoutTxHash?.trim()) return;
     if (action === "withdrawal_reject") message = "Reject and refund this withdrawal?";
     if (action === "deposit_approve") message = "Approve this deposit? Points will be credited to the user.";
     if (action === "deposit_reject") message = "Reject this deposit?";
     
     if (!window.confirm(message)) return;
     try {
-      await api(action, { transaction_id: button.dataset.id });
+      await api(action, { transaction_id: button.dataset.id, payout_tx_hash: payoutTxHash?.trim() || "" });
       toast("Action successful.");
       fetchNotifications(); // Refresh notification count
       await renderTransactions(view);
