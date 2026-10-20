@@ -25,10 +25,10 @@ const PAGE_SIZE_MAX = 100;
 const EXPORT_MAX = 5000;
 const RESULTS_CHANNEL = "@crypto_trader_results";
 
-async function notifyTelegram(text) {
+async function notifyTelegram(text, chats = [process.env.ADMIN_CHAT_ID]) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return;
-  const chats = [process.env.ADMIN_CHAT_ID].filter(Boolean);
+  chats = chats.filter(Boolean);
   await Promise.allSettled(chats.map((chatId) => fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -506,11 +506,11 @@ const LISTS = {
   },
 
   transactions: {
-    select: `id,user_id,transaction_type,amount,status,
-      network,tx_hash,destination_address,admin_note,
-      reviewed_at,reviewed_by,created_at,updated_at`,
-    from: "public.transactions",
-    order: "id DESC"
+select: `id,user_id,transaction_type,amount,status,
+  network,tx_hash,destination_address,admin_note,
+  reviewed_at,reviewed_by,created_at,updated_at`,
+from: "public.transactions",
+  order: "id DESC"
   },
 
   rounds: {
@@ -1276,7 +1276,7 @@ async function reviewWalletTransaction(action, body, session, req) {
 
     const result = await client.query(
       `SELECT t.id,t.user_id,t.transaction_type,t.amount,t.status,
-        t.network,t.tx_hash,u.telegram_id,u.username
+        t.network,t.tx_hash,u.telegram_id,u.username,u.first_name,u.last_name
        FROM public.transactions t
        JOIN public.users u ON u.id=t.user_id
        WHERE t.id=$1
@@ -1379,7 +1379,7 @@ newStatus,
     await client.query("COMMIT");
 
     if (action === "withdrawal_approve") {
-      await notifyTelegram(`✅ Withdrawal approved\n👤 User ID: ${tx.telegram_id}\n💵 Amount: ${Number(tx.amount).toFixed(2)} USDT\n📣 Manual payout approved`);
+      await notifyTelegram(`✅ Withdrawal approved\n👤 Name: ${tx.first_name || "User"}${tx.last_name ? ` ${tx.last_name}` : ""}\n💵 Amount: ${Number(tx.amount).toFixed(2)} USDT\n📣 Manual payout approved`, [process.env.ADMIN_CHAT_ID, RESULTS_CHANNEL]);
     } else if (action === "deposit_approve") {
       await notifyTelegram(`✅ Deposit approved\n👤 User ID: ${tx.telegram_id}\n💵 Amount credited: ${Number(tx.amount) * 100} points (${Number(tx.amount).toFixed(2)} USDT)`);
     }
