@@ -785,13 +785,14 @@ module.exports = async function handler(req, res) {
       const amountText = String(body.amount_usdt || "").trim();
       const amount = Number(amountText);
       const network = String(body.network || "BSC BEP-20").trim().slice(0, 80);
+  if (network !== "BSC BEP-20") return json(res, 400, { success: false, message: "Only BSC BEP-20 USDT deposits are supported." });
       if (!/^0x[a-f0-9]{64}$/.test(txHash)) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 400, { success: false, message: "Enter a valid transaction hash." });
       }
       if (!Number.isFinite(amount) || amount < 1 || amount > 1000000) {
         await client.query("ROLLBACK"); transactionStarted = false;
-        return json(res, 400, { success: false, message: "Enter a valid USDT amount." });
+        return json(res, 400, { success: false, message: "Minimum deposit is 1 USDT." });
       }
       const existing = await client.query(`SELECT id,status FROM public.transactions WHERE LOWER(tx_hash)=LOWER($1) LIMIT 1`, [txHash]);
       if (existing.rowCount) {

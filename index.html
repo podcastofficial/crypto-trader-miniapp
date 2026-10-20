@@ -498,15 +498,12 @@ label { font-weight:800; font-size:12px; }
     <div class="section-title">⬇ <span data-i18n="deposit">Deposit</span></div>
   <div class="card deposit-page-card deposit-chooser">
   <div class="section-title">Choose coin</div>
-  <div class="coin-grid" id="depositCoinPicker">
-    <button class="coin-choice active" type="button" data-coin="USDT"><span class="coin-badge usdt">₮</span><span><strong>USDT</strong><small>Stablecoin</small></span></button>
-    <button class="coin-choice" type="button" data-coin="BNB"><span class="coin-badge bnb">B</span><span><strong>BNB</strong><small><span data-live-price="BNB">—</span> USDT</small></span></button>
-    <button class="coin-choice" type="button" data-coin="ETH"><span class="coin-badge eth">◆</span><span><strong>Ethereum</strong><small><span data-live-price="ETH">—</span> USDT</small></span></button>
-    <button class="coin-choice" type="button" data-coin="SOL"><span class="coin-badge sol">S</span><span><strong>Solana</strong><small><span data-live-price="SOL">—</span> USDT</small></span></button>
+<div class="coin-grid" id="depositCoinPicker">
+  <button class="coin-choice active" type="button" data-coin="USDT"><span class="coin-badge usdt">₮</span><span><strong>USDT</strong><small>Supported asset</small></span></button>
   </div>
   <div class="section-title chooser-subtitle">Choose network</div>
-  <div class="network-grid" id="depositNetworkPicker"><button class="network-choice active" type="button" data-network="BSC BEP-20"><span class="network-icon">◎</span><span><strong>BSC</strong> BNB Smart Chain (BEP20)<small>Min. deposit 1 USDT · Est. arrival 1 min</small></span><b>›</b></button></div>
-  <div class="notice">Only send the selected coin on the selected network. Deposits are credited after blockchain verification.</div>
+  <div class="network-grid" id="depositNetworkPicker"><button class="network-choice active" type="button" data-network="BSC BEP-20"><span class="network-icon">◎</span><span><strong>BSC</strong> BNB Smart Chain (BEP20)<small>Minimum deposit 1 USDT · Est. arrival 1 min</small></span><b>›</b></button></div>
+  <div class="notice">Only send USDT on BSC (BEP20). Deposits are credited after blockchain verification.</div>
   <button class="primary-btn" data-open-cash="deposit" type="button">Continue to deposit address</button>
   </div>
     <div class="card"><div class="section-title">Deposit History</div><div id="depositHistoryList"><div class="empty" data-i18n="loading">Loading…</div></div></div>
@@ -664,7 +661,7 @@ label { font-weight:800; font-size:12px; }
   </div>
   <label for="depositAddress">Deposit address</label>
   <div class="copybox"><input id="depositAddress" readonly><button class="sec-btn" id="copyDepositAddress" type="button">Copy</button></div>  
-      <p class="muted small">Minimum: 100 points = 1 USDT. Credit rate: 100 points per USDT.</p>  
+      <p class="muted small">Minimum deposit: 1 USDT. Credit rate: 100 points per USDT.</p>
     </div>  
   <div id="cashWithdrawFields" style="display:none">  
   <div class="notice">Withdrawals are reviewed and approved by admin. Points stay reserved until completed or rejected.</div>  
@@ -875,7 +872,7 @@ nConnecting:"ব্যাকএন্ডে সংযোগ হচ্ছে…",
 nConnected:"ব্যাকএন্ডে সংযুক্ত। প্রতিটি রাউন্ড শেষ হওয়ার ৩০ সেকেন্ড আগে বেটিং বন্ধ হয়।",  
 nUnavailable:"ব্যাকএন্ড পাওয়া যাচ্ছে না: {msg}",  
 loadingRound:"সার্ভার রাউন্ড লোড হচ্ছে…",  
-toastAuth:"আগে টেলিগ্রাম দিয়ে অথেন্টিকেট করুন।",  
+toastAuth:"আগে টেলিগ্রাম দিয়ে অথেন্টিকেট কর���ন।",
 toastLocked:"বেটিং বন্ধ। পরের রাউ��্ডের অপেক্ষা করুন।",  
 toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্বোচ্চ ২ দশমিক)।",  
 toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করু���।",  
@@ -2592,7 +2589,7 @@ function init(){
   $("submitWithdrawal").onclick = submitWithdrawal;  
   $("withdrawAmount").addEventListener("input", () => {  
   const points = Math.max(0, Number($("withdrawAmount").value) || 0);  
-  $("withdrawUsdtPreview").textContent = `${(points / 100).toFixed(2)} USDT`;  
+  $("withdrawUsdtPreview").textContent = `${(points * 0.9 / 100).toFixed(2)} USDT after 10% fee`;
   });  
   document.querySelectorAll(".withdraw-preset").forEach((button) => {  
     button.addEventListener("click", () => {  
