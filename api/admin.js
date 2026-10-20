@@ -49,8 +49,12 @@ async function telegramAdminAction(body, session, req) {
     const page = Math.max(1, Number(body.page) || 1);
     const pageSize = Math.min(PAGE_SIZE_MAX, Math.max(1, Number(body.page_size) || 25));
     const offset = (page - 1) * pageSize;
-    const rows = await query(`SELECT id,event_type,channel,message,status,telegram_message_id,error_message,attempt_count,created_at,sent_at FROM public.telegram_notifications ORDER BY id DESC LIMIT $1 OFFSET $2`, [pageSize, offset]);
-    return { ok: true, notifications: rows, page, page_size: pageSize };
+    const [rows, totals] = await Promise.all([
+      query(`SELECT id,event_type,channel,message,status,telegram_message_id,error_message,attempt_count,created_at,sent_at FROM public.telegram_notifications ORDER BY id DESC LIMIT $1 OFFSET $2`, [pageSize, offset]),
+      query(`SELECT COUNT(*)::int AS total FROM public.telegram_notifications`)
+    ]);
+    const total = Number(totals[0]?.total || 0);
+    return { ok: true, notifications: rows, page, page_size: pageSize, total, total_pages: Math.max(1, Math.ceil(total / pageSize)) };
   }
   const message = String(body.message || "").trim().slice(0, 4000);
   const channel = String(body.channel || process.env.ADMIN_CHAT_ID || "").trim().slice(0, 200);
@@ -84,6 +88,9 @@ function json(res, status, data) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store, max-age=0");
   res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
   res.end(JSON.stringify(data));
 }
 
