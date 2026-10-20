@@ -6,7 +6,7 @@
 <title>Crypto Trader Pro</title>  
 <script src="https://telegram.org/js/telegram-web-app.js"></script>  
 <script src="/languages.js" onerror="void 0"></script>  
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>  <style>  
+  <style>
 :root {  
   --bg:#0b0b0c; --card:#151516; --text:#f5f5f5; --muted:#a1a1aa;  
   --border:#29292c; --primary:#facc15; --green:#22c55e; --red:#ef3038; --violet:#a855f7;  
@@ -299,10 +299,7 @@ label { font-weight:800; font-size:12px; }
   background:#302911; color:#facc15; border:1px solid #51421a;  
   padding:12px 3px; border-radius:9px; font-weight:900;  
 }  
-.deposit-qr-wrap {  
-  display:flex; flex-direction:column; align-items:center; gap:9px;  
-  margin:14px 0 16px; text-align:center;  
-}  
+
   .checkout-modal { background:#f8f8fb; color:#25262a; max-width:640px; }
 .checkout-topbar { display:flex; align-items:center; justify-content:space-between; padding-bottom:18px; border-bottom:1px solid #d9d9de; font-size:20px; }
 .checkout-back { border:0; background:transparent; font-size:34px; color:#25262a; line-height:1; cursor:pointer; }
@@ -315,8 +312,6 @@ label { font-weight:800; font-size:12px; }
 .checkout-summary div { display:flex; justify-content:space-between; gap:16px; }
 .checkout-summary .amount-due { font-size:18px; font-weight:800; margin-top:4px; }
 .checkout-summary strong { text-align:right; }
-  .checkout-modal .deposit-qr-wrap { margin:8px auto 4px; }
-  .checkout-modal .deposit-qr-wrap canvas, .checkout-modal .deposit-qr-wrap .deposit-qr-image { width:180px; height:180px; border:7px solid #f0f0f4; border-radius:14px; }
   .checkout-modal { max-height:calc(100dvh - 26px); overflow:auto; }
   .checkout-modal .checkout-security { margin:10px 0; padding:9px 12px; }
   .checkout-modal .checkout-paying { padding:9px 0; }
@@ -333,8 +328,10 @@ label { font-weight:800; font-size:12px; }
   #depositInlineFields { width:100%; margin-top:16px; }
   #depositInlineFields #depositTimer, #depositInlineFields .checkout-topbar, #depositInlineFields .checkout-security { display:none !important; }
   #depositInlineFields .checkout-paying { margin-top:0; }
-  #depositInlineFields .deposit-qr-wrap { margin:12px auto; }
   #depositInlineFields .deposit-submit-card { margin-top:12px; }
+  .deposit-address-panel { margin:12px 0 4px; }
+  .deposit-address-panel .copybox { margin-top:7px; }
+  .deposit-address-panel input { min-width:0; font-size:12px; }
   .coin-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
   .coin-choice { min-height:86px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border:1px solid #3f3f46; border-radius:14px; background:#242424; color:#f4f4f5; }
   .coin-choice.active { border-color:#facc15; box-shadow:0 0 0 1px #facc15 inset; }
@@ -351,10 +348,7 @@ label { font-weight:800; font-size:12px; }
 .deposit-asset-logo { display:grid; place-items:center; width:38px; height:38px; border-radius:50%; background:#f5c84b; color:#171717; font-weight:900; font-size:13px; }
 .deposit-asset-card strong, .deposit-asset-card small { display:block; }
 .deposit-asset-card small { margin-top:2px; color:#a6a6ad; font-size:12px; }
-.deposit-qr-wrap canvas, .deposit-qr-wrap .deposit-qr-image {  
-  width:220px; height:220px; max-width:100%; padding:10px; object-fit:contain;  
-  background:#fff; border-radius:14px; border:1px solid #4a4a4f;  
-}
+
 .amount-stepper { display:grid; grid-template-columns:45px minmax(0,1fr) 45px; gap:8px; }  
 .amount-stepper button { border-radius:9px; background:#29292c; color:#facc15; font-size:21px; }  
 .amount-stepper input { margin:0; text-align:center; }  
@@ -643,10 +637,9 @@ label { font-weight:800; font-size:12px; }
   <div class="checkout-paying"><span>Paying With</span><span><img id="depositAssetLogo" class="checkout-coin-logo" alt="Selected cryptocurrency logo" src="https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/usdt.png"><strong id="depositAssetName">USDT</strong></span></div>
   <label for="depositOption">Coin and network</label>
   <select id="depositOption"></select>
-  <div class="deposit-qr-wrap">  
-  <canvas id="depositQr" width="220" height="220" aria-label="QR code for the selected deposit address"></canvas>
-  <img id="depositQrImage" class="deposit-qr-image" alt="QR code for the selected deposit address" hidden>
-  <div class="muted small" id="depositNetworkHint">Scan to deposit</div>
+  <div class="deposit-address-panel">
+  <div class="muted small" id="depositNetworkHint">Deposit address</div>
+  <div class="copybox"><input id="depositAddress" readonly placeholder="Loading address..."><button class="sec-btn" id="copyDepositAddress" type="button">Copy</button></div>
   </div>
   <div class="checkout-summary">
     <div><span>Total Price</span><strong id="depositTotalPrice">— USDT</strong></div>
@@ -664,8 +657,6 @@ label { font-weight:800; font-size:12px; }
     <div class="row" style="margin-top:10px"><button class="sec-btn" id="cancelDeposit" type="button">Cancel</button><button class="primary-btn" id="submitDeposit" type="button">Submit payment</button></div>
     <div class="muted small" id="depositSubmitStatus" role="status"></div>
   </div>
-  <label for="depositAddress">Deposit address</label>
-  <div class="copybox"><input id="depositAddress" readonly><button class="sec-btn" id="copyDepositAddress" type="button">Copy</button></div>  
       <p class="muted small">Minimum deposit: 1 USDT. Credit rate: 100 points per USDT.</p>
     </div>  
   <div id="cashWithdrawFields" style="display:none">  
@@ -882,7 +873,7 @@ toastLocked:"বেটিং বন্ধ। পরের রাউ��্ড�
 toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্বোচ্চ ২ দশমিক)।",  
 toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করু���।",  
 toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদলে আবার চেষ্টা করু���।",  
-toastBetOk:"বেট ��ৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",
+toastBetOk:"ব���ট ��ৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",
 betOn:"বেট", serverRound:"সার্ভার রাউন্ড:", betAmount:"বেট অ্যামাউন্ট (পয়েন্ট)",  
 betNote:"আপনার লাইভ পয়েন্ট ব্যালেন্স থেকে বেটের টাকা কাটা হবে।", placeBet:"বেট দিন",  
 rTitle:"রাউন্ড রেজাল্ট", rPeriod:"পিরিয়ড", rNote:"রেজাল্��� গেম সার্ভার থেকে পাওয়া গেছে।",  
@@ -903,7 +894,7 @@ shareText:"Crypto Trader Pro-তে আমার সাথে যোগ দি�
 directRef:"সরাসরি রেফারেল", totalComm:"মোট কমিশন", levels:"কমিশন লেভেল",  
 lvl:"লেভে��", rate:"রেট", cnt:"সংখ্যা", total:"মোট", comm:"কমিশন",
 haveCode:"রেফারেল কোড আ��ে?", enterCode:"রেফারেল কোড দিন", apply:"প্রয়োগ করুন",  
-referredBy:"আপনি একজন ইউজারের রেফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",  
+referredBy:"আপনি একজন ইউজারের র���ফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",
 commHistory:"কমিশন হ��স্ট্রি", direct:"আপনার সরাসরি রেফারেল",  
 rewardNote:"রেফারেল রিওয়ার্ড পয়েন��টের জন্য ������শ্চিত রিচার্জ দরক���র। রিচার্জ এখনও চালু নয়।",
 needTg:"এটি দেখতে মি��ি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",  
@@ -1634,30 +1625,6 @@ let selectedDepositCoin = "USDT";
         $("depositNetworkHint").textContent = item ? `Only send ${coinLabel} on ${networkLabel}. Sending another coin or network may permanently lose funds.` : "No active deposit address configured";
         $("depositBlockchain").textContent = networkLabel;
         updateDepositSummary();  
-        const qr = $("depositQr");
-        const qrImage = $("depositQrImage");
-        const payload = item?.qr_payload || address;
-        if (qrImage) {
-          qrImage.hidden = true;
-          qrImage.removeAttribute("src");
-        }
-        if (qr && address && window.QRCode) {
-          qr.hidden = false;
-          QRCode.toCanvas(qr, payload, { width: 220, margin: 2, color: { dark: "#111111", light: "#ffffff" } }, (error) => {
-            if (error && qrImage) {
-              qr.hidden = true;
-              qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(payload)}`;
-              qrImage.hidden = false;
-            }
-          });
-        } else if (qrImage && address) {
-          qr.hidden = true;
-          qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(payload)}`;
-          qrImage.hidden = false;
-        } else if (qr) {
-          qr.hidden = false;
-          qr.getContext("2d").clearRect(0, 0, qr.width, qr.height);
-        }  
       };  
       select.onchange = setOption;  
       setOption();  
@@ -1884,7 +1851,7 @@ Object.assign(I18N.hi,{
   mTitle:"आपके रेफरल", m_all:"सभी", m_active:"एक्टिव", m_inactive:"इनएक्टिव",  
   mActive:"एक्टिव", mInactive:"इनएक्टिव", mPending:"पेंडिंग", mReceived:"मिला",  
   mJoined:"जुड़े", mLastPlayed:"आखिरी बार खेला", mNever:"कभी नहीं खेला",  
-  mNoName:"यूज़रनेम नहीं", mSumActive:"एक्टिव रेफरल", mSumInactive:"इनएक्टिव रेफरल",  
+  mNoName:"यूज़रनेम नहीं", mSumActive:"एक्टिव रेफरल", mSumInactive:"इ��एक्टिव रेफरल",
   mSumPending:"पेंडिंग रिवॉर्ड", mSumReceived:"मिला हुआ रिवॉर्ड",  
   mActiveNote:"एक्टिव = पिछले 7 दिन में कम से कम एक बेट लगाई।",  
   mNoReward:"रिवॉर्ड रिकॉर्ड नहीं", mCreditedOn:"मिलने की तारीख"  
