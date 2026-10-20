@@ -330,6 +330,11 @@ label { font-weight:800; font-size:12px; }
 .deposit-submit-card input { margin-bottom:8px; }
 .deposit-submit-card #depositTimer { color:#facc15; font-variant-numeric:tabular-nums; }
   .deposit-chooser { min-height:calc(100svh - 190px); display:flex; flex-direction:column; justify-content:center; }
+  #depositInlineFields { width:100%; margin-top:16px; }
+  #depositInlineFields #depositTimer, #depositInlineFields .checkout-topbar, #depositInlineFields .checkout-security { display:none !important; }
+  #depositInlineFields .checkout-paying { margin-top:0; }
+  #depositInlineFields .deposit-qr-wrap { margin:12px auto; }
+  #depositInlineFields .deposit-submit-card { margin-top:12px; }
   .coin-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
   .coin-choice { min-height:86px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border:1px solid #3f3f46; border-radius:14px; background:#242424; color:#f4f4f5; }
   .coin-choice.active { border-color:#facc15; box-shadow:0 0 0 1px #facc15 inset; }
@@ -504,7 +509,7 @@ label { font-weight:800; font-size:12px; }
   <div class="section-title chooser-subtitle">Choose network</div>
   <div class="network-grid" id="depositNetworkPicker"><button class="network-choice active" type="button" data-network="BSC BEP-20"><span class="network-icon">◎</span><span><strong>BSC</strong> BNB Smart Chain (BEP20)<small>Minimum deposit 1 USDT · Est. arrival 1 min</small></span><b>›</b></button></div>
   <div class="notice">Only send USDT on BSC (BEP20). Deposits are credited after blockchain verification.</div>
-  <button class="primary-btn" data-open-cash="deposit" type="button">Continue to deposit address</button>
+  <div id="depositInlineFields"></div>
   </div>
     <div class="card"><div class="section-title">Deposit History</div><div id="depositHistoryList"><div class="empty" data-i18n="loading">Loading…</div></div></div>
   </div>
@@ -877,7 +882,7 @@ toastLocked:"বেটিং বন্ধ। পরের রাউ��্ড�
 toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্বোচ্চ ২ দশমিক)।",  
 toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করু���।",  
 toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদলে আবার চেষ্টা করু���।",  
-toastBetOk:"বেট গৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",  
+toastBetOk:"বেট ��ৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",
 betOn:"বেট", serverRound:"সার্ভার রাউন্ড:", betAmount:"বেট অ্যামাউন্ট (পয়েন্ট)",  
 betNote:"আপনার লাইভ পয়েন্ট ব্যালেন্স থেকে বেটের টাকা কাটা হবে।", placeBet:"বেট দিন",  
 rTitle:"রাউন্ড রেজাল্ট", rPeriod:"পিরিয়ড", rNote:"রেজাল্��� গেম সার্ভার থেকে পাওয়া গেছে।",  
@@ -900,7 +905,7 @@ lvl:"লেভে��", rate:"রেট", cnt:"সংখ্যা", total:"ম
 haveCode:"রেফারেল কোড আ��ে?", enterCode:"রেফারেল কোড দিন", apply:"প্রয়োগ করুন",  
 referredBy:"আপনি একজন ইউজারের রেফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",  
 commHistory:"কমিশন হ��স্ট্রি", direct:"আপনার সরাসরি রেফারেল",  
-rewardNote:"রেফারেল রিওয়ার্ড পয়েন্টের জন্য ������শ্চিত রিচার্জ দরক���র। রিচার্জ এখনও চালু নয়।",  
+rewardNote:"রেফারেল রিওয়ার্ড পয়েন��টের জন্য ������শ্চিত রিচার্জ দরক���র। রিচার্জ এখনও চালু নয়।",
 needTg:"এটি দেখতে মি��ি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",  
 tgAccount:"টেলিগ্রাম অ্যাকাউন্ট", checkingTg:"টেলিগ্রাম যাচাই হচ্ছে…", authenticating:"টেলিগ্রাম দিয়ে অথেন্টিকেট ���চ্ছে",
 retryAuth:"আবার অথেন্টিকেট করুন", notTg:"��েলিগ্রামে খোলা হয়নি",
@@ -1583,6 +1588,13 @@ let selectedDepositCoin = "USDT";
   document.querySelectorAll("#depositCoinPicker [data-coin]").forEach(button => button.addEventListener("click", () => { selectedDepositCoin = button.dataset.coin; document.querySelectorAll("#depositCoinPicker [data-coin]").forEach(item => item.classList.toggle("active", item === button)); updateDepositSummary(); }));
   refreshDepositPrices();
   async function openCash(kind){
+  if (kind === "deposit") {
+    const inline = $("depositInlineFields");
+    const fields = $("cashDepositFields");
+    if (inline && fields && fields.parentElement !== inline) inline.appendChild(fields);
+    fields.style.display = "block";
+    $("cashModal").classList.remove("open");
+  }
   $("cashTitle").textContent = (kind === "deposit" ? "⬇ " : "⬆ ") + t(kind === "deposit" ? "deposit" : "withdraw");  
   $("cashDepositFields").style.display = kind === "deposit" ? "block" : "none";
   $("cashWithdrawFields").style.display = kind === "withdraw" ? "block" : "none";
@@ -1594,7 +1606,7 @@ let selectedDepositCoin = "USDT";
     $("withdrawAmount").value = available >= 500 ? "500" : "";  
     $("withdrawUsdtPreview").textContent = available >= 500 ? `${(Number($("withdrawAmount").value || 0) * 0.9 / 100).toFixed(2)} USDT after 10% fee` : "Minimum 5.00 USDT";
   }  
-  $("cashModal").classList.add("open");  
+  if(kind === "withdraw") $("cashModal").classList.add("open");
   if(kind === "deposit"){
   refreshDepositPrices();
   startDepositTimer();
@@ -1879,7 +1891,7 @@ Object.assign(I18N.hi,{
 });  
 Object.assign(I18N.bn,{  
   mTitle:"আপনার রেফারেল", m_all:"সব", m_active:"অ্যাকটিভ", m_inactive:"ইনঅ্যাকটিভ",  
-  mActive:"অ্যাকটিভ", mInactive:"ইনঅ্যাকটিভ", mPending:"পেন্ডিং", mReceived:"প���ওয়া গেছে",  
+  mActive:"অ্যাক���িভ", mInactive:"ইনঅ্যাকটিভ", mPending:"পেন্ডিং", mReceived:"প���ওয়া গেছে",
   mJoined:"যোগ দিয়েছে", mLastPlayed:"শেষ খেলেছে", mNever:"কখনও খেলেনি",  
   mNoName:"ইউজারনেম নেই", mSumActive:"অ্যাকটিভ রেফারেল", mSumInactive:"ইনঅ্যাকটিভ রেফ��রে��",  
   mSumPending:"পেন্ডিং রিওয়ার্ড", mSumReceived:"পাওয়া রিওয়ার্ড",  
@@ -2578,9 +2590,9 @@ function init(){
   };
   $("confirmBet").onclick = confirmBet;
   $("resultPopupClose").onclick = closeResultPopup;  
-  $("depositBtn").onclick = () => showPage("deposit");
+  $("depositBtn").onclick = () => { showPage("deposit"); openCash("deposit"); };
   $("withdrawBtn").onclick = () => showPage("withdraw");
-  $("homeDepositBtn").onclick = () => showPage("deposit");
+  $("homeDepositBtn").onclick = () => { showPage("deposit"); openCash("deposit"); };
   $("homeWithdrawBtn").onclick = () => showPage("withdraw");
   document.querySelectorAll("[data-open-cash]").forEach(button => { button.onclick = () => openCash(button.dataset.openCash); });
   $("depositAmount").addEventListener("input", updateDepositSummary);

@@ -209,7 +209,7 @@ async function depositAddressConfig(body, session, req) {
     await query("DELETE FROM public.deposit_addresses WHERE id=$1", [id]);
     await audit(session.username, "deposit_address_delete", req, "success", "deposit_address", id);
   }
-  return { ok: true, deposit_addresses: await query("SELECT * FROM public.deposit_addresses ORDER BY sort_order,id LIMIT 10") };
+  return { ok: true, deposit_addresses: await query("SELECT * FROM public.deposit_addresses ORDER BY sort_order,id LIMIT 20") };
 }
 
 function ipAddress(req) {
