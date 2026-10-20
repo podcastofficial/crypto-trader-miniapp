@@ -669,7 +669,7 @@ label { font-weight:800; font-size:12px; }
   <div class="amount-due"><span>Amount Due</span><strong id="depositAmountDue">— USDT</strong></div>
   </div>
   <div class="deposit-submit-card">
-    <p class="muted small">Copy the address, pay the exact amount, then submit your transaction hash. Blockchain verification checks the real received amount.</p>
+    <p class="muted small">Enter the amount you sent and transaction hash. Your request goes to admin for verification; balance is added only after approval.</p>
     <label for="depositAmount">Amount sent (USDT)</label>
     <input id="depositAmount" type="number" min="1" step="0.000001" placeholder="10.00" inputmode="decimal">
     <label for="depositTxHash">Transaction hash</label>
@@ -753,7 +753,7 @@ stError:"BACKEND ERROR", stTelegram:"TELEGRAM REQUIRED", stAuth:"AUTH REQUIRED",
 nConnecting:"Connecting to backend…",
 nConnected:"Connected to backend. Betting closes 30 seconds before each round ends.",
 nUnavailable:"Backend unavailable: {msg}",
-loadingRound:"Loading server round…",
+loadingRound:"Loading server round���",
 toastAuth:"Authenticate through Telegram first.",
 toastLocked:"Betting is locked. Wait for the next round.",
 toastAmount:"Enter at least 10 points (max 2 decimals).",
@@ -866,7 +866,7 @@ testingOnly:"लाइव गेम सर्वर।"
 bn:{
 brandSub:"প্রেডিকশন ড্যাশবোর্ড · UTC",
 home:"হোম", wallet:"ওয়ালেট", referral:"রেফারেল", profile:"প্রোফাইল",
-walletBalance:"ওয়ালেট ব্যালেন্স", points:"পয়েন্টস", serverNote:"সার্ভার ডাটাবেস · লাইভ পয়েন্টস",
+walletBalance:"ওয়ালেট ব্যালেন্স", points:"পয়���ন্টস", serverNote:"সার্ভার ডাটাবেস · লাইভ পয়েন্টস",
 refresh:"রিফ্রেশ", refreshed:"আপডেট হয়েছে।", refreshFailed:"রিফ্রেশ করা যায়নি। আবার চেষ্টা করুন।",
 currentPeriod:"বর্তমান পিরিয়ড", roundLen:"৩ মিনিটের রাউন্ড",
 chooseNumber:"নম্বর বেছে নিন", chooseNumberHint:"বেটিং উইন্ডো খুলতে একটি নম্বর বেছে নিন।",
@@ -892,7 +892,7 @@ toastAuth:"আ���ে টেলিগ্রাম দিয়ে অথে
 toastLocked:"বেটিং বন্ধ। পরের রাউ��্ডের অপেক্ষা করুন।",
 toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যা���াউন্ট দিন (সর্বোচ্চ ২ দশমিক)।",
 toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করু���।",
-toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদলে আবার চেষ্টা করু���।",
+toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদলে আবার চেষ্টা ���রু���।",
 toastBetOk:"ব���ট ��ৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",
 betOn:"বেট", serverRound:"সার্ভার রাউন্ড:", betAmount:"বেট অ্যামাউন্ট (পয়েন্ট)",
 betNote:"আপনার লাইভ পয়েন্ট ব্যালেন্স থেকে বেটের টাকা কাটা হবে।", placeBet:"বেট দিন",
@@ -1678,7 +1678,7 @@ let selectedDepositCoin = "USDT";
     try {
       const result = await api("submit_deposit", { amount_usdt: amount.toFixed(6), tx_hash: txHash, network: option });
       $("depositSubmitStatus").textContent = result.message || "Submitted for verification.";
-      toast("Payment submitted for blockchain verification.");
+      toast("Deposit request sent to admin for approval.");
     } catch (error) { button.disabled = false; toast(error.message, true); }
   }
 
