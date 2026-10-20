@@ -1776,12 +1776,13 @@ function renderReferral(){
     ? `<button class="primary-btn" id="claimCommissionBtn" type="button">Claim commission to wallet</button>`
     : "";
   const teamRows = (r.team_levels || []).map(l => `<div class="kv"><span>Level ${esc(l.level)}</span><strong>${esc(l.count)} members</strong></div>`).join("");
-  const rewardSummary = r.reward_summary || r.referral_rewards || {};
+  
+  const reward = r.reward || {};
   const stats = `<div class="stats">
-  <div class="stat"><div class="l">${esc(t("directRef"))}</div><div class="v">${esc(r.total_direct_referrals)}</div></div>
-  <div class="stat"><div class="l">Available commission</div><div class="v">${esc(money(r.total_commission))}</div></div>
-  <div class="stat"><div class="l">Claimed commission</div><div class="v">${esc(money(rewardSummary.claimed || rewardSummary.credited || 0))}</div></div>
-  <div class="stat"><div class="l">Total rewards received</div><div class="v">${esc(money(rewardSummary.total || rewardSummary.credited || 0))}</div></div>
+  <div class="stat"><div class="l">${esc(t("directRef"))}</div><div class="v">${esc(r.total_direct_referrals || 0)}</div></div>
+  <div class="stat"><div class="l">Available commission</div><div class="v">${esc(money(r.total_commission || 0))}</div></div>
+  <div class="stat"><div class="l">Claimed commission</div><div class="v">${esc(money(reward.credited_points || 0))}</div></div>
+  <div class="stat"><div class="l">Total rewards received</div><div class="v">${esc(money(reward.credited_points || 0))}</div></div>
   </div>`;
 
   const levelRows = (r.commission_levels || []).map(l => `<tr>
@@ -1868,9 +1869,12 @@ async function applyReferralFromUrl(){
     let code = (params.get("ref") || "").trim();
 
     if(!code && tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param){
-      const m = String(tg.initDataUnsafe.start_param)
-        .match(/^ref_([A-Za-z0-9_-]{1,80})$/i);
-      if(m) code = m[1];
+      let param = String(tg.initDataUnsafe.start_param).trim();
+      if(param.startsWith("ref_")) {
+        code = param.slice(4); // remove "ref_"
+      } else {
+        code = param;
+      }
     }
 
     if(!/^[A-Za-z0-9_-]{1,80}$/.test(code)) return;
@@ -2647,7 +2651,7 @@ function init(){
     try {
       const result = await api("claim_commission");
       toast(`Claimed ${money(result.claimed_points)} points (${(Number(result.claimed_points) / 100).toFixed(2)} USDT)`);
-      await refreshAll(true);
+      await manualRefresh(true); // FIX: refreshAll replaced with manualRefresh
     } catch(error) {
       button.disabled = false;
       toast(error.message);
