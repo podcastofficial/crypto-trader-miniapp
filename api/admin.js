@@ -1264,16 +1264,6 @@ async function reviewWalletTransaction(action, body, session, req) {
 
   const note = String(body.admin_note || "").trim().slice(0, 500);
 
-  // TEST mode permits only a clearly identified test deposit approval.
-  // Real deposits require independent on-chain verification.
-  if (
-    action === "deposit_approve" &&
-    process.env.WALLET_TEST_MODE !== "true"
-  ) {
-    throw new Error(
-      "Deposit approval is disabled. Verified on-chain processing is required."
-    );
-  }
 
   const client = await pool.connect();
 
