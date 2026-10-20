@@ -2317,9 +2317,12 @@ async function renderRounds() {
 
   attachFilterActions("rounds", renderRounds);
 
+  const f = state.filters.rounds || {};
   const data = await api("rounds", {
     page: state.pages.rounds || 1,
-    page_size: 20
+    page_size: 20,
+    q: f.q || "",
+    status: f.status || ""
   });
 
   $("viewBody").innerHTML = `
