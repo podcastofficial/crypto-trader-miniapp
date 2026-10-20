@@ -27,14 +27,46 @@ const RESULTS_CHANNEL = "@crypto_trader_results";
 
 async function notifyTelegram(text, chats = [process.env.ADMIN_CHAT_ID]) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) return;
+  if (!token) return { ok: false, error: "TELEGRAM_BOT_TOKEN is not configured." };
   chats = chats.filter(Boolean);
-  await Promise.allSettled(chats.map((chatId) => fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
-    signal: AbortSignal.timeout(10000)
-  })));
+  const results = await Promise.all(chats.map(async (chatId) => {
+    try {
+      const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
+        signal: AbortSignal.timeout(10000)
+      });
+      const payload = await response.json();
+      return { chatId, ok: response.ok && payload.ok, payload };
+    } catch (error) { return { chatId, ok: false, error: error.message }; }
+  }));
+  return { ok: results.every(item => item.ok), results };
+}
+
+async function telegramAdminAction(body, session, req) {
+  await ensureManagementTables();
+  if (body.mode === "history") {
+    const page = Math.max(1, Number(body.page) || 1);
+    const pageSize = Math.min(PAGE_SIZE_MAX, Math.max(1, Number(body.page_size) || 25));
+    const offset = (page - 1) * pageSize;
+    const rows = await query(`SELECT id,event_type,channel,message,status,telegram_message_id,error_message,attempt_count,created_at,sent_at FROM public.telegram_notifications ORDER BY id DESC LIMIT $1 OFFSET $2`, [pageSize, offset]);
+    return { ok: true, notifications: rows, page, page_size: pageSize };
+  }
+  const message = String(body.message || "").trim().slice(0, 4000);
+  const channel = String(body.channel || process.env.ADMIN_CHAT_ID || "").trim().slice(0, 200);
+  if (!message || !channel) throw new Error("Message and channel are required.");
+  const created = await query(`INSERT INTO public.telegram_notifications(event_type,channel,message,status,attempt_count) VALUES($1,$2,$3,'pending',1) RETURNING id`, [body.event_type === "test" ? "test" : "admin", channel, message]);
+  const result = await notifyTelegram(message, [channel]);
+  if (result.ok) {
+    const telegramId = result.results.find(item => item.ok)?.payload?.result?.message_id;
+    await query(`UPDATE public.telegram_notifications SET status='sent',telegram_message_id=$1,sent_at=NOW() WHERE id=$2`, [telegramId ? String(telegramId) : null, created[0].id]);
+  } else {
+    const error = result.results.map(item => item.error || item.payload?.description).filter(Boolean).join("; ");
+    await query(`UPDATE public.telegram_notifications SET status='failed',error_message=$1 WHERE id=$2`, [error.slice(0, 500), created[0].id]);
+  }
+  await audit(session.username, "telegram_notification", req, result.ok ? "success" : "failed", "telegram_notification", created[0].id);
+  if (!result.ok) throw new Error("Telegram delivery failed. Check notification history.");
+  return { ok: true, notification_id: created[0].id };
 }
 
 const STATUSES = new Set([
@@ -232,6 +264,12 @@ function ipAddress(req) {
       id BIGSERIAL PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
       kind TEXT NOT NULL, title TEXT NOT NULL, message TEXT NOT NULL, is_read BOOLEAN NOT NULL DEFAULT FALSE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`);
+    await query(`CREATE TABLE IF NOT EXISTS public.telegram_notifications (
+      id BIGSERIAL PRIMARY KEY, event_type TEXT NOT NULL, channel TEXT NOT NULL,
+      message TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', telegram_message_id TEXT,
+      error_message TEXT, attempt_count INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), sent_at TIMESTAMPTZ
     )`);
   }
 
@@ -1636,6 +1674,10 @@ module.exports = async function handler(req, res) {
 
       case "security":
         result = await securitySummary();
+        break;
+
+      case "telegram":
+        result = await telegramAdminAction(body, session, req);
         break;
 
       case "deposit_approve":
