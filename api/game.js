@@ -124,8 +124,6 @@ async function ensureRounds(client) {
 }
 
 // Settles rounds whose end time has passed.
-// settle_expired_round() is idempotent (row lock + SKIP LOCKED),
-// so running it here together with cron cannot pay twice.
 async function settleDueRounds(client) {
   try {
     const due = await client.query(
@@ -152,7 +150,6 @@ async function settleDueRounds(client) {
       }
     }
   } catch (error) {
-    // Never fail the page because of settlement; cron is the backup.
     console.error("Lazy settlement error:", error.message);
   }
 }
@@ -473,8 +470,6 @@ async function getReferralData(client, userId) {
   };
 }
 
-// Direct referrals with active/inactive status and reward status.
-// Active = placed at least one bet in the last 7 days.
 async function getReferralMembers(client, userId) {
   const members = await client.query(
     `SELECT
@@ -533,7 +528,6 @@ async function getReferralMembers(client, userId) {
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
-  // GET: current round and results that are safe to display.
   if (req.method === "GET") {
     const { page, pageSize, offset } = pageParams(req.query || {});
     let client;
@@ -783,9 +777,6 @@ module.exports = async function handler(req, res) {
       const amount = Number(amountText);
       const network = String(body.network || "Unknown Network").trim().slice(0, 80);
       
-      // FIX 1: Removed the BEP-20 only restriction
-      
-      // FIX 2: Relaxed transaction hash validation for TRON/other networks
       if (txHash.length < 20) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 400, { success: false, message: "Enter a valid transaction hash." });
@@ -823,7 +814,6 @@ module.exports = async function handler(req, res) {
         return json(res, 400, { success: false, message: "Minimum withdrawal is 500 points (5 USDT)." });
       }
       
-      // FIX 3: Relaxed destination address validation for TRON/other networks
       if (destination.length < 20) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 400, { success: false, message: "Enter a valid wallet address." });
@@ -840,7 +830,6 @@ module.exports = async function handler(req, res) {
         return json(res, 400, { success: false, message: "Insufficient available balance." });
       }
       
-      // FIX 4: Convert Points to USDT before saving to database!
       const netPoints = Math.floor(amount * (1 - withdrawalFeeRate) * 100) / 100;
       const netAmountUsdt = (netPoints / POINTS_PER_USDT).toFixed(6);
       
