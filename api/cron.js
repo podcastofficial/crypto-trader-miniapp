@@ -9,12 +9,13 @@ const RESULTS_CHANNEL = "@crypto_trader_results";
 async function notifyResults(text) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return;
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: RESULTS_CHANNEL, text, disable_web_page_preview: true }),
-    signal: AbortSignal.timeout(10000)
-  }).catch(() => {});
+  const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ chat_id: RESULTS_CHANNEL, text, disable_web_page_preview: true }),
+  signal: AbortSignal.timeout(10000)
+  }).catch((error) => { console.error("Telegram result notification failed:", error.message); return null; });
+  if (response && !response.ok) console.error("Telegram result notification rejected:", response.status, await response.text().catch(() => ""));
 }
 
 let pool;

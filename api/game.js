@@ -567,9 +567,9 @@ module.exports = async function handler(req, res) {
            AND result_number IS NOT NULL
            AND ends_at <= NOW()
          ORDER BY starts_at DESC
-         LIMIT $1 OFFSET $2`,
-        [pageSize, offset]
-      );
+  LIMIT $1 OFFSET $2`,
+  [pageSize, offset]
+  );
 
       const currentResult = await client.query(
         `SELECT id, round_code, status, starts_at,
@@ -660,11 +660,12 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    if (action === "notifications") {
-      const notifications = await client.query(`SELECT id,kind,title,message,is_read,created_at FROM public.user_notifications WHERE user_id=$1 ORDER BY id DESC LIMIT 50`, [user.id]);
-      await client.query("COMMIT"); transactionStarted = false;
-      return json(res, 200, { success: true, notifications: notifications.rows });
-    }
+  if (action === "notifications") {
+  const notifications = await client.query(`SELECT id,kind,title,message,is_read,created_at FROM public.user_notifications WHERE user_id=$1 ORDER BY id DESC LIMIT 50`, [user.id]);
+  await client.query(`UPDATE public.user_notifications SET is_read=TRUE WHERE user_id=$1 AND is_read=FALSE`, [user.id]);
+  await client.query("COMMIT"); transactionStarted = false;
+  return json(res, 200, { success: true, notifications: notifications.rows });
+  }
 
     if (action === "redeem_gift") {
       const code = String(body.code || "").trim().toUpperCase();

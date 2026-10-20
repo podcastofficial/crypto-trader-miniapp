@@ -34,7 +34,7 @@ header {
 .brand { font-size:18px; font-weight:900; letter-spacing:-.3px; }  
 .brand span { color:#facc15; }  
 .head-btns { display:flex; gap:8px; }  
-  .icon-btn { border:1px solid #3f3f46; background:linear-gradient(145deg,#292929,#202023); box-shadow:0 4px 12px #0005; }
+  .icon-btn { border:1px solid #3f3f46; background:linear-gradient(145deg,#292929,#202023); box-shadow:0 4px 12px #0005; color:#facc15; }
   .icon-btn {
   background:#29292c; color:#facc15; border:1px solid #3a3830;  
   border-radius:11px; padding:10px;  
@@ -262,8 +262,9 @@ label { font-weight:800; font-size:12px; }
 .pill.off { background:#351b1d; color:#fca5a5; }  
   
 /* BOTTOM NAV */  
-.bottom-nav {  
-  position:fixed; bottom:calc(8px + env(safe-area-inset-bottom)); left:50%;  
+  .bottom-nav {
+  position:fixed; bottom:calc(8px + env(safe-area-inset-bottom)); left:50%;
+  isolation:isolate;
   transform:translateX(-50%); width:calc(100% - 12px); max-width:588px;  
   display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0;  
   background:rgba(20,20,21,.97); border:1px solid #303034; border-radius:15px;  
@@ -489,7 +490,7 @@ label { font-weight:800; font-size:12px; }
   <div class="muted small" data-i18n="tgAccount">Telegram account</div>  
   <strong id="profileName">…</strong>  
   <p class="muted small" id="profileStatus">…</p>
-  <div class="profile-stats"><div><span>Joined</span><strong id="profileJoined">—</strong></div><div><span>Available points</span><strong id="profileAvailablePoints">—</strong></div><div><span>Commission claimed</span><strong id="profileCommission">—</strong></div></div>
+  <div class="profile-stats"><div><span>Joined</span><strong id="profileJoined">—</strong></div><div><span>Available points</span><strong id="profileAvailablePoints">—</strong></div><div><span>Total claimed commission</span><strong id="profileCommission">—</strong></div><div><span>Total rewards received</span><strong id="profileRewards">—</strong></div></div>
 
   <button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth">Retry Authentication</button>
   <div class="card" style="margin-top:14px"><div class="section-title">Gift code</div><div class="copybox"><input id="giftCodeInput" placeholder="Enter gift code"><button class="sec-btn" id="redeemGiftBtn" type="button">Redeem</button></div></div>
@@ -744,7 +745,7 @@ home:"ह���म", wallet:"वॉलेट", referral:"रेफरल", pr
 walletBalance:"वॉलेट बैलेंस", points:"पॉइंट्स", serverNote:"लाइव सर्वर वॉलेट · पॉइंट्स बैलेंस",  
 refresh:"रिफ्रेश", refreshed:"अपडेट हो गया।", refreshFailed:"रिफ्रेश नहीं हो सका। फिर कोशिश करें।",  
 currentPeriod:"मौजूदा पीरियड", roundLen:"3 मिनट का राउंड",  
-chooseNumber:"नंबर चुनें", chooseNumberHint:"टेस्ट-बेट विंडो खोलने के लिए नंबर चुनें।",  
+chooseNumber:"नंबर चुन���ं", chooseNumberHint:"टेस्ट-बेट विंडो खोलने के लिए नंबर चुनें।",  
 chooseColour:"रंग चुनें", red:"लाल", green:"हरा", violet:"बैंगनी",  
 bigSmall:"बड़ा / छोटा", big:"बड़ा (5–9)", small:"छोटा (0–4)",  
 resultHistory:"रिज़ल्ट हिस्ट्री", tradeHistory:"मेरी ट्रेड हिस्ट्री",  
@@ -780,7 +781,7 @@ txTitle:"ट्रांज़ैक्शन",
 tx_deposit:"डिपॉज़िट", tx_withdrawal:"विदड्रॉ", tx_bet:"बेट", tx_payout:"पेआउट", tx_refund:"रिफंड",  
 s_completed:"पूरा", s_confirmed:"कन्फर्म", s_pending:"पेंडिंग", s_rejected:"रिजेक्ट", s_failed:"फेल",  
 txPlaced:"लगाई गई",  
-cashNotice:"डिपॉज़िट और विदड्रॉ अभी चालू नहीं हैं। पेमेंट बैकएंड जुड़ने के बाद उपलब्ध होंगे। कोई पैसा या क्रिप्टो न भेजें।",  
+cashNotice:"डिपॉज़िट और विदड्रॉ अभी चालू नहीं हैं। ���ेमेंट बैकएंड जुड़ने के बाद उपलब्ध होंगे। कोई पैसा या क्रिप्टो न भेजें।",  
 close:"बंद करें",  
 refTitle:"रेफरल प्रोग्राम", yourLink:"आपका रेफरल लिंक", yourCode:"आपका रेफरल कोड",  
 copy:"कॉपी", share:"शेयर",  
@@ -1227,7 +1228,9 @@ function renderProfile(){
   const available = $("homePoints")?.textContent || "—";
   $("profileAvailablePoints").textContent = available;
   $("profileJoined").textContent = (tg?.initDataUnsafe?.user?.id ? "Telegram" : "—");
-  $("profileCommission").textContent = "0 points";
+  const rewardSummary = referralData?.reward_summary || referralData?.referral_rewards || {};
+  $("profileCommission").textContent = `${Number(rewardSummary.claimed || rewardSummary.credited || rewardSummary.total || 0).toFixed(2)} points`;
+  $("profileRewards").textContent = `${Number(rewardSummary.total || rewardSummary.credited || 0).toFixed(2)} points`;
   const input = $("profileDisplayName");  
   if(input && document.activeElement !== input) input.value = profName && profName.raw ? profName.raw : "";  
 }  
@@ -1519,8 +1522,9 @@ async function loadWallet(silent){
   
 async function openCash(kind){  
   $("cashTitle").textContent = (kind === "deposit" ? "⬇ " : "⬆ ") + t(kind === "deposit" ? "deposit" : "withdraw");  
-  $("cashDepositFields").style.display = kind === "deposit" ? "block" : "none";  
-  $("cashWithdrawFields").style.display = kind === "withdraw" ? "block" : "none";  
+  $("cashDepositFields").style.display = kind === "deposit" ? "block" : "none";
+  $("cashWithdrawFields").style.display = kind === "withdraw" ? "block" : "none";
+  $("depositTimer").style.display = kind === "deposit" ? "block" : "none";
   if(kind === "withdraw"){  
     const available = Number.isFinite(balance) ? Math.max(0, balance) : 0;  
     $("withdrawAvailableBalance").textContent = `${money(available)} Points · ${(available / 100).toFixed(2)} USDT`;  
@@ -2374,8 +2378,8 @@ function showPage(name){
     button.classList.toggle("active",button.dataset.page === name);  
   });  
   
-  if(name === "wallet") loadWallet();  
-  if(name === "referral") loadReferral();  
+  if(name === "wallet") loadWallet();
+  if(name === "referral" || name === "profile") loadReferral();
   window.scrollTo(0,0);  
 }  
   
@@ -2452,8 +2456,8 @@ async function loadNotifications() {
   if (!rows.length && (tradeData.bets || []).length) {
     rows = tradeData.bets.slice(0, 5).map(b => ({ title: "Trade activity", message: `${b.bet_type} bet ${b.status || "pending"}`, created_at: b.created_at, is_read: false }));
   }
-  $("notificationCount").textContent = rows.filter(item => !item.is_read).length;
-    $("notificationCount").hidden = !rows.some(item => !item.is_read);
+  $("notificationCount").textContent = 0;
+  $("notificationCount").hidden = true;
     list.innerHTML = rows.length ? rows.map(item => `<div class="notification-item"><strong>${esc(item.title)}</strong><small>${esc(item.message)} · ${new Date(item.created_at).toLocaleString()}</small></div>`).join("") : '<div class="empty">No activity yet.</div>';
   } catch (error) { console.warn("[v0] notifications unavailable", error.message); }
 }
