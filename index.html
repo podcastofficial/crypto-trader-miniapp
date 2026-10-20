@@ -505,7 +505,7 @@ label { font-weight:800; font-size:12px; }
     <button class="coin-choice" type="button" data-coin="SOL"><span class="coin-badge sol">S</span><span><strong>Solana</strong><small><span data-live-price="SOL">—</span> USDT</small></span></button>
   </div>
   <div class="section-title chooser-subtitle">Choose network</div>
-  <div class="network-grid" id="depositNetworkPicker"><button class="network-choice active" type="button" data-network="BSC BEP-20"><span class="network-icon">◎</span><span><strong>BSC</strong> BNB Smart Chain (BEP20)<small>Min. deposit &gt;0.01 USDT · Est. arrival 1 min</small></span><b>›</b></button></div>
+  <div class="network-grid" id="depositNetworkPicker"><button class="network-choice active" type="button" data-network="BSC BEP-20"><span class="network-icon">◎</span><span><strong>BSC</strong> BNB Smart Chain (BEP20)<small>Min. deposit 1 USDT · Est. arrival 1 min</small></span><b>›</b></button></div>
   <div class="notice">Only send the selected coin on the selected network. Deposits are credited after blockchain verification.</div>
   <button class="primary-btn" data-open-cash="deposit" type="button">Continue to deposit address</button>
   </div>
@@ -899,7 +899,7 @@ copy:"কপি", share:"শেয়ার",
 noLink:"রেফারেল লিংক এখনও পাওয়া যাচ্ছে না। আপনি কোড শেয়ার করতে পারেন।",  
 shareText:"Crypto Trader Pro-তে আমার সাথে যোগ দিন!",  
 directRef:"সরাসরি রেফারেল", totalComm:"মোট কমিশন", levels:"কমিশন লেভেল",  
-lvl:"লেভেল", rate:"রেট", cnt:"সংখ্যা", total:"মোট", comm:"কমিশন",  
+lvl:"লেভে��", rate:"রেট", cnt:"সংখ্যা", total:"মোট", comm:"কমিশন",
 haveCode:"রেফারেল কোড আ��ে?", enterCode:"রেফারেল কোড দিন", apply:"প্রয়োগ করুন",  
 referredBy:"আপনি একজন ইউজারের রেফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",  
 commHistory:"কমিশন হ��স্ট্রি", direct:"আপনার সরাসরি রেফারেল",  
@@ -1575,14 +1575,16 @@ async function loadWallet(silent){
 let selectedDepositCoin = "USDT";
   const liveCoinPrices = { USDT: 1, BNB: 0, ETH: 0, SOL: 0 };
   async function refreshDepositPrices(){
-    try {
-      const response = await fetch("https://api.binance.com/api/v3/ticker/price?symbols=BNBUSDT,ETHUSDT,SOLUSDT", { signal: AbortSignal.timeout(5000) });
-      const prices = await response.json();
-      prices.forEach(item => { const coin = item.symbol.replace("USDT", ""); liveCoinPrices[coin] = Number(item.price); document.querySelectorAll(`[data-live-price="${coin}"]`).forEach(el => { el.textContent = Number(item.price).toLocaleString(undefined, { maximumFractionDigits: 4 }); }); });
-      updateDepositSummary();
-    } catch (_) {}
+  try {
+  const response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=binancecoin,ethereum,solana&vs_currencies=usd", { signal: AbortSignal.timeout(7000) });
+  const prices = await response.json();
+  const values = { BNB: prices.binancecoin?.usd, ETH: prices.ethereum?.usd, SOL: prices.solana?.usd };
+  Object.entries(values).forEach(([coin, price]) => { if (!Number.isFinite(Number(price))) return; liveCoinPrices[coin] = Number(price); document.querySelectorAll(`[data-live-price="${coin}"]`).forEach(el => { el.textContent = Number(price).toLocaleString(undefined, { maximumFractionDigits: 4 }); }); });
+  updateDepositSummary();
+  } catch (_) { document.querySelectorAll("[data-live-price]").forEach(el => { if (el.textContent === "—") el.textContent = "Price unavailable"; }); }
   }
   document.querySelectorAll("#depositCoinPicker [data-coin]").forEach(button => button.addEventListener("click", () => { selectedDepositCoin = button.dataset.coin; document.querySelectorAll("#depositCoinPicker [data-coin]").forEach(item => item.classList.toggle("active", item === button)); updateDepositSummary(); }));
+  refreshDepositPrices();
   async function openCash(kind){
   $("cashTitle").textContent = (kind === "deposit" ? "⬇ " : "⬆ ") + t(kind === "deposit" ? "deposit" : "withdraw");  
   $("cashDepositFields").style.display = kind === "deposit" ? "block" : "none";
