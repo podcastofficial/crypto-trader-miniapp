@@ -253,9 +253,13 @@ function ipAddress(req) {
     } else if (action === "transfer_points") {
       const toUserId = String(body.to_user_id || "");
       const points = Number(body.points);
-      if (!/^\d{1,15}$/.test(toUserId) || !Number.isFinite(points) || points <= 0) throw new Error("Enter a valid target user and points.");
+      if (!/^\d{1,15}$/.test(toUserId) || toUserId === userId || !Number.isFinite(points) || points <= 0 || points > 100000000) {
+        throw new Error("Enter a valid different target user and points.");
+      }
       const client = await pool.connect();
       try { await client.query("BEGIN");
+        const recipient = await client.query(`SELECT id FROM public.users WHERE id=$1 FOR SHARE`, [toUserId]);
+        if (!recipient.rowCount) throw new Error("Target user not found.");
         const debit = await client.query(`UPDATE public.wallet_balances SET balance=balance-$1,updated_at=NOW() WHERE user_id=$2 AND balance >= $1 RETURNING balance`, [points, userId]);
         if (!debit.rowCount) throw new Error("Insufficient balance.");
         await client.query(`INSERT INTO public.wallet_balances(user_id,balance) VALUES($1,0) ON CONFLICT(user_id) DO NOTHING`, [toUserId]);

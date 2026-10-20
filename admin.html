@@ -1776,7 +1776,7 @@ function attachFilterActions(view, renderFunction) {
 
   if (search) {
     search.addEventListener("keydown", event => {
-      if (event.key === "Enter") {
+      if (event.key === "Enter" && !event.isComposing && event.keyCode !== 229) {
         state.filters[view] = getFilters(view);
         state.pages[view] = 1;
         renderFunction();
