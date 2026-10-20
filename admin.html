@@ -1073,7 +1073,8 @@ const VIEWS = [
       ["withdrawals", "↑", "Withdrawals"],
       ["rounds", "◷", "Game Rounds"],
       ["bets", "♠", "Bets"],
-      ["referrals", "♧", "Referrals"]
+      ["referrals", "♧", "Referrals"],
+      ["telegram", "✈", "Telegram Notifications"]
     ]
   },
   {
@@ -1374,6 +1375,10 @@ async function navigate(view) {
 
       case "referrals":
         await renderReferrals();
+        break;
+
+      case "telegram":
+        await renderTelegram();
         break;
 
       case "audit":
@@ -2447,7 +2452,36 @@ async function renderReferrals() {
   `;
 }
 
-async function renderAudit() {
+  async function renderTelegram() {
+    setPage("Telegram Notifications", "Send controlled test messages and review delivery history.");
+    const data = await api("telegram", { mode: "history", page: state.pages.telegram || 1, page_size: 25 });
+    $("viewBody").innerHTML = `
+      <div class="card">
+        <div class="card-head"><h3>Send test message</h3><span class="muted">Bot token stays server-side.</span></div>
+        <form id="telegramForm" class="toolbar">
+          <input id="telegramChannel" placeholder="Channel or chat ID" value="${escapeHtml("" )}" maxlength="200" required>
+          <input id="telegramMessage" placeholder="Message" maxlength="4000" required>
+          <button class="btn btn-primary" type="submit">Send test</button>
+        </form>
+      </div>
+      <div class="card"><div class="card-head"><h3>Notification history</h3><button class="btn small" id="refreshTelegram">Refresh</button></div>
+        ${table(["ID","Event","Channel","Status","Attempts","Sent","Error"], (data.notifications || []).map(item => [
+          escapeHtml(item.id), escapeHtml(item.event_type), escapeHtml(item.channel), badge(item.status),
+          escapeHtml(item.attempt_count), escapeHtml(formatDate(item.sent_at)), escapeHtml(item.error_message || "—")
+        ]))}
+      </div>`;
+    $("telegramForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        await api("telegram", { mode: "send", event_type: "test", channel: $("telegramChannel").value, message: $("telegramMessage").value });
+        toast("Telegram message sent.");
+        await renderTelegram();
+      } catch (error) { toast(error.message, true); }
+    });
+    $("refreshTelegram").addEventListener("click", () => renderTelegram());
+  }
+
+  async function renderAudit() {
   setPage(
     "Audit Logs",
     "Review recorded administrative actions.",
