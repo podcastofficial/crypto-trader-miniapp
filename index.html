@@ -436,8 +436,7 @@ label { font-weight:800; font-size:12px; }
     <div class="small muted" data-i18n="brandSub">Prediction Dashboard · UTC</div>
   </div>
   <div class="head-btns">
-    <button class="icon-btn" id="headerLang" type="button" aria-label="Language"><span class="header-symbol">🌐</span></button>
-    <button class="icon-btn notification-btn" id="notificationBell" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span id="notificationCount" hidden>0</span></button>
+      <button class="icon-btn notification-btn" id="notificationBell" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span id="notificationCount" hidden>0</span></button>
   <button class="icon-btn" id="headerProfile" type="button" aria-label="Profile"><span class="header-symbol">👤</span></button>
   </div>
 </header>
@@ -568,10 +567,7 @@ label { font-weight:800; font-size:12px; }
         <span>📳 <span data-i18n="vibration">Vibration</span></span>
         <button class="switch on" id="vibSwitch" type="button" role="switch" aria-checked="true"><i></i></button>
       </div>
-      <div class="setting-row">
-        <span>🌐 <span data-i18n="language">Language</span>: <strong id="curLangName" style="color:#facc15"></strong></span>
-        <button class="sec-btn" id="langOpenBtn" type="button" data-i18n="change">Change</button>
-      </div>
+
     </div>  <div class="card">
   <div class="section-title" data-i18n="about">About</div>
   <p data-i18n="aboutText">Server-controlled rounds and live points wallet.</p>
@@ -808,7 +804,7 @@ hi:{
 brandSub:"प्रिडिक्शन डैशबोर्ड · UTC",
 home:"होम", wallet:"वॉलेट", referral:"रेफरल", profile:"प्रोफ़ाइल",
 walletBalance:"वॉलेट बैलेंस", points:"पॉइंट्स", serverNote:"लाइव सर्वर वॉलेट · पॉइंट्स बैलेंस",
-refresh:"रिफ्रेश", refreshed:"अपडेट हो गया।", refreshFailed:"रिफ्रेश नहीं हो सका। फिर कोशिश करें।",
+refresh:"रिफ्रेश", refreshed:"अपडेट हो गया।", refreshFailed:"रि��्रेश नहीं हो सका। फिर कोशिश करें।",
 currentPeriod:"मौजूदा पीरियड", roundLen:"3 मिनट का राउंड",
 chooseNumber:"नंबर चुनें", chooseNumberHint:"टेस्ट-बेट विंडो खोलने के लिए नंबर चुनें।",
 chooseColour:"रंग चुनें", red:"लाल", green:"हरा", violet:"बैंगनी",
@@ -835,10 +831,10 @@ toastAmount:"कम से कम 10 पॉइंट डालें (अधि�
 toastChanged:"बेट की डिटेल बदल गई। फिर से सबमिट करें।",
 toastBetFail:"बेट नहीं लग सकी। डिटेल बदले बिना फिर कोशिश करें।",
 toastBetOk:"बेट स्वीकार हुई।", copied:"कॉपी हो गया।", copyFail:"कॉपी नहीं हो सका।",
-betOn:"बेट", serverRound:"सर्वर राउंड:", betAmount:"बेट अमाउंट (पॉइंट)",
+betOn:"बेट", serverRound:"सर्वर राउंड:", betAmount:"���ेट अमाउंट (पॉइंट)",
 betNote:"आपके लाइव पॉइंट्स से बेट की राशि कटेगी।", placeBet:"बेट लगाएँ",
 rTitle:"राउंड रिज़ल्ट", rPeriod:"पीरियड", rNote:"रिज़ल्ट गेम सर्वर से मिला है।",
-rContinue:"जा��ी रखें", cRedV:"लाल + बैंगनी", cGreenV:"हरा + बैंगनी", cRed:"लाल", cGreen:"हरा",
+rContinue:"जा��ी रखे���", cRedV:"लाल + बैंगनी", cGreenV:"हरा + बैंगनी", cRed:"लाल", cGreen:"हरा",
 sBig:"बड़ा (5–9)", sSmall:"छोटा (0–4)",
 bannerResult:"रिज़ल्ट {period}: {n} · {colour} · {size}",
 testBalance:"लाइव वॉलेट बैलेंस", deposit:"डिपॉज़िट", withdraw:"विदड्रॉ",
@@ -896,7 +892,7 @@ nUnavailable:"ব্যাকএন্ড পাওয়া যাচ্ছে 
 loadingRound:"সার্ভার রাউন্ড লোড হচ্ছে…",
 toastAuth:"আগে টেলিগ্রাম দিয়ে অথেন্টিকেট করুন।",
 toastLocked:"বেটিং বন্ধ। পরের রাউন্ডের অপেক্ষা করুন।",
-toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্���োচ্চ ২ দশমিক)।",
+toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্���োচ���চ ২ দশমিক)।",
 toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করুন।",
 toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদল������� আবার চেষ্টা করুন।",
 toastBetOk:"বেট গৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",
@@ -917,7 +913,7 @@ refTitle:"রেফারেল প্রোগ্রাম", yourLink:"আপ�
 copy:"কপি", share:"শেয়ার",
 noLink:"রেফারেল লিংক এখনও পাওয়া যাচ্ছে না। আপনি কোড শেয়ার করতে পারেন।",
 shareText:"Crypto Trader Pro-তে আমার সাথে যোগ দিন!",
-directRef:"সরাসরি রেফারেল", totalComm:"মোট কমিশন", levels:"কমিশন লেভেল",
+directRef:"সরাসরি রেফারেল", totalComm:"ম��ট কমিশন", levels:"কমিশন লেভেল",
 lvl:"লেভেল", rate:"রেট", cnt:"সংখ্যা", total:"মোট", comm:"কমিশন",
 haveCode:"রেফারেল কোড আছে?", enterCode:"রেফারেল কোড দিন", apply:"প্রয়োগ করুন",
 referredBy:"আপনি একজন ইউজারের র��ফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",
@@ -1049,7 +1045,15 @@ function haptic(kind){
   } catch(_) {}
 }
 
-/* ---------- STATE ---------- */
+  document.addEventListener("click", event => {
+  const target = event.target.closest("button, a, [role=button], [data-page]");
+  if(!target || target.disabled || target.closest("#sndSwitch, #vibSwitch")) return;
+  haptic("light");
+  if(settings.sound) playTickSound();
+  }, { passive: true });
+
+  /* ---------- STATE ---------- */
+
 let initData = "";
 let authed = false;
 let authBlock = null;
@@ -1567,19 +1571,25 @@ function renderWallet(){
 
   if(items.length){
     const body = items.map(x => {
-      const type = String(x.transaction_type || "");
+      const type = String(x.transaction_type || "").toLowerCase();
       const plus = type === "deposit" || type === "payout" || type === "refund";
-      return `<tr>
-        <td class="period">${esc(tk("tx_",type))}<div class="utc-time">${esc(dateUTC(x.created_at))}</div></td>
-        <td class="${plus ? "n-green" : "n-red"}">${plus ? "+" : "−"}${esc(money(x.amount))} <small class="usdt-value">(${esc(transactionUsdt(x))} USDT)</small></td>
-        <td>${esc(txStatusLabel(x))}</td>
-      </tr>`;
+      if (type === "bet") {
+        const bet = (tradeData.bets || []).find((candidate) => {
+          const stake = Number(candidate.stake || 0) + Number(candidate.fee || 0);
+          return Math.abs(stake - Number(x.amount || 0)) < 0.01 && Math.abs(new Date(candidate.created_at) - new Date(x.created_at)) < 10000;
+        });
+        if (bet) {
+          const view = tradeView(bet);
+          const selection = bet.bet_type === "Number" && bet.selection !== null && bet.selection !== undefined ? ` · ${bet.selection}` : "";
+          return `<div class="trade wallet-trade"><div class="trade-head" data-trade="1">
+            <span class="trade-period">${esc(fmtPeriod(bet.round_code))}</span><span class="trade-status ${view.cls}">${esc(view.label)}</span><span class="trade-amt ${view.cls}">${esc(signedCents(view.amt))}</span><span class="chev">⌄</span>
+          </div><div class="trade-body"><div class="kv"><span>${esc(t("dBet"))}</span><span>${esc(tk("bt_", bet.bet_type) + selection)}</span></div><div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(view.stakeC / 100))}</span></div><div class="kv"><span>${esc(t("dFee"))}</span><span>${esc(money(view.feeC / 100))}</span></div><div class="kv strong"><span>${esc(t("dActual"))}</span><span>${esc(money(view.actualC / 100))}</span></div><div class="kv"><span>${esc(t("dPayout"))}</span><span>${esc(money(view.returnedC / 100))}</span></div><div class="kv"><span>Result</span><span>${view.hasRes ? esc(resultDetails(bet.result_number)) : esc(t("waiting"))}</span></div><div class="kv"><span>${esc(t("dTime"))}</span><span>${esc(dateUTC(bet.created_at))}</span></div></div></div>`;
+        }
+      }
+      return `<div class="trade wallet-trade"><div class="trade-head"><span class="trade-period">${esc(tk("tx_",type))}<small class="utc-time">${esc(dateUTC(x.created_at))}</small></span><span class="trade-status ${plus ? "success" : "pending"}">${esc(txStatusLabel(x))}</span><span class="trade-amt ${plus ? "success" : "fail"}">${plus ? "+" : "−"}${esc(money(x.amount))}</span><span></span></div></div>`;
     }).join("");
 
-    html = `<div class="wrap"><table class="tbl">
-      <thead><tr>
-        <th>${esc(t("colType"))}</th><th>${esc(t("colAmount"))}</th><th>${esc(t("colStatus"))}</th>
-      </tr></thead><tbody>${body}</tbody></table></div>`;
+    html = `<div class="wallet-trades">${body}</div>`;
   } else {
     html = `<div class="empty">${esc(t(authed ? "noTx" : "needTg"))}</div>`;
   }
@@ -1785,7 +1795,7 @@ function renderReferral(){
   <div class="stat"><div class="l">${esc(t("directRef"))}</div><div class="v">${esc(r.total_direct_referrals || 0)}</div></div>
   <div class="stat"><div class="l">${esc(t("availableComm"))}</div><div class="v">${esc(money(r.total_commission || 0))}</div></div>
   <div class="stat"><div class="l">${esc(t("claimedComm"))}</div><div class="v">${esc(money(r.claimed_commission || 0))}</div></div>
-  <div class="stat"><div class="l">${esc(t("totalRewards"))}</div><div class="v">${esc(money(reward.credited_points || 0))}</div></div>
+  <div class="stat"><div class="l">${esc(t("totalRewards"))}</div><div class="v">${esc(money(Number(reward.credited_points || 0) + Number(reward.pending_points || 0)))}</div></div>
   </div>`;
 
   const levelRows = (r.commission_levels || []).map(l => `<tr>
@@ -1924,7 +1934,7 @@ Object.assign(I18N.bn,{
   mNoName:"ইউজারনেম নেই", mSumActive:"অ্যাকটিভ রেফারেল", mSumInactive:"ইনঅ্যাকটিভ রেফারেল",
   mSumPending:"পেন্ডিং রিওয়ার্ড", mSumReceived:"পাওয়া রিওয়ার্ড",
   mActiveNote:"অ্যাকটিভ = গত ৭ দিনে অন্তত একটি বেট দিয়েছে।",
-  mNoReward:"রিওয়ার্ড রেকর্ড নেই", mCreditedOn:"পাওয়ার তারিখ"
+  mNoReward:"রিওয়ার্ড ���েকর্ড নেই", mCreditedOn:"পাওয়ার তারিখ"
 });
 
 let membersData = null;
@@ -1971,7 +1981,7 @@ function membersCardHtml(){
     <div class="stat"><div class="l">${esc(t("mSumActive"))}</div><div class="v">${esc(s.active || 0)}</div></div>
     <div class="stat"><div class="l">${esc(t("mSumInactive"))}</div><div class="v">${esc((s.total || 0) - (s.active || 0))}</div></div>
     <div class="stat"><div class="l">${esc(t("mSumPending"))}</div><div class="v">${esc(money(s.pending_points))}</div></div>
-    <div class="stat"><div class="l">${esc(t("mSumReceived"))}</div><div class="v">${esc(money(s.credited_points))}</div></div>
+    <div class="stat"><div class="l">${esc(t("mSumReceived"))}</div><div class="v">${esc(money(Number(s.credited_points || 0) + Number(s.pending_points || 0)))}</div></div>
   </div>`;
 
   const tabs = ["all","active","inactive"].map(k =>
@@ -2607,9 +2617,6 @@ function init(){
   $("saveProfileBtn").onclick = saveProfile;
   $("saveWalletAddressBtn").onclick = saveWalletAddress;
   $("gameRulesBtn").onclick = () => $("gameRulesModal").classList.add("open");
-  $("headerLang").onclick = openLangModal;
-  $("langOpenBtn").onclick = openLangModal;
-  $("langSearch").addEventListener("input",() => renderLangList($("langSearch").value));
   $("authRetry").onclick = authenticate;
   $("redeemGiftBtn").onclick = async () => {
     const code = $("giftCodeInput").value.trim();
