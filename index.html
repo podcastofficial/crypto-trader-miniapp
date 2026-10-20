@@ -436,8 +436,7 @@ label { font-weight:800; font-size:12px; }
     <div class="small muted" data-i18n="brandSub">Prediction Dashboard · UTC</div>
   </div>
   <div class="head-btns">
-    <button class="icon-btn" id="headerLang" type="button" aria-label="Language"><span class="header-symbol">🌐</span></button>
-    <button class="icon-btn notification-btn" id="notificationBell" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span id="notificationCount" hidden>0</span></button>
+      <button class="icon-btn notification-btn" id="notificationBell" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span id="notificationCount" hidden>0</span></button>
   <button class="icon-btn" id="headerProfile" type="button" aria-label="Profile"><span class="header-symbol">👤</span></button>
   </div>
 </header>
@@ -568,10 +567,7 @@ label { font-weight:800; font-size:12px; }
         <span>📳 <span data-i18n="vibration">Vibration</span></span>
         <button class="switch on" id="vibSwitch" type="button" role="switch" aria-checked="true"><i></i></button>
       </div>
-      <div class="setting-row">
-        <span>🌐 <span data-i18n="language">Language</span>: <strong id="curLangName" style="color:#facc15"></strong></span>
-        <button class="sec-btn" id="langOpenBtn" type="button" data-i18n="change">Change</button>
-      </div>
+
     </div>  <div class="card">
   <div class="section-title" data-i18n="about">About</div>
   <p data-i18n="aboutText">Server-controlled rounds and live points wallet.</p>
@@ -808,7 +804,7 @@ hi:{
 brandSub:"प्रिडिक्शन डैशबोर्ड · UTC",
 home:"होम", wallet:"वॉलेट", referral:"रेफरल", profile:"प्रोफ़ाइल",
 walletBalance:"वॉलेट बैलेंस", points:"पॉइंट्स", serverNote:"लाइव सर्वर वॉलेट · पॉइंट्स बैलेंस",
-refresh:"रिफ्रेश", refreshed:"अपडेट हो गया।", refreshFailed:"रिफ्रेश नहीं हो सका। फिर कोशिश करें।",
+refresh:"रिफ्रेश", refreshed:"अपडेट हो गया।", refreshFailed:"रि��्रेश नहीं हो सका। फिर कोशिश करें।",
 currentPeriod:"मौजूदा पीरियड", roundLen:"3 मिनट का राउंड",
 chooseNumber:"नंबर चुनें", chooseNumberHint:"टेस्ट-बेट विंडो खोलने के लिए नंबर चुनें।",
 chooseColour:"रंग चुनें", red:"लाल", green:"हरा", violet:"बैंगनी",
@@ -835,7 +831,7 @@ toastAmount:"कम से कम 10 पॉइंट डालें (अधि�
 toastChanged:"बेट की डिटेल बदल गई। फिर से सबमिट करें।",
 toastBetFail:"बेट नहीं लग सकी। डिटेल बदले बिना फिर कोशिश करें।",
 toastBetOk:"बेट स्वीकार हुई।", copied:"कॉपी हो गया।", copyFail:"कॉपी नहीं हो सका।",
-betOn:"बेट", serverRound:"सर्वर राउंड:", betAmount:"बेट अमाउंट (पॉइंट)",
+betOn:"बेट", serverRound:"सर्वर राउंड:", betAmount:"���ेट अमाउंट (पॉइंट)",
 betNote:"आपके लाइव पॉइंट्स से बेट की राशि कटेगी।", placeBet:"बेट लगाएँ",
 rTitle:"राउंड रिज़ल्ट", rPeriod:"पीरियड", rNote:"रिज़ल्ट गेम सर्वर से मिला है।",
 rContinue:"जा��ी रखें", cRedV:"लाल + बैंगनी", cGreenV:"हरा + बैंगनी", cRed:"लाल", cGreen:"हरा",
@@ -917,7 +913,7 @@ refTitle:"রেফারেল প্রোগ্রাম", yourLink:"আপ�
 copy:"কপি", share:"শেয়ার",
 noLink:"রেফারেল লিংক এখনও পাওয়া যাচ্ছে না। আপনি কোড শেয়ার করতে পারেন।",
 shareText:"Crypto Trader Pro-তে আমার সাথে যোগ দিন!",
-directRef:"সরাসরি রেফারেল", totalComm:"মোট কমিশন", levels:"কমিশন লেভেল",
+directRef:"সরাসরি রেফারেল", totalComm:"ম��ট কমিশন", levels:"কমিশন লেভেল",
 lvl:"লেভেল", rate:"রেট", cnt:"সংখ্যা", total:"মোট", comm:"কমিশন",
 haveCode:"রেফারেল কোড আছে?", enterCode:"রেফারেল কোড দিন", apply:"প্রয়োগ করুন",
 referredBy:"আপনি একজন ইউজারের র��ফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",
@@ -1049,7 +1045,15 @@ function haptic(kind){
   } catch(_) {}
 }
 
-/* ---------- STATE ---------- */
+  document.addEventListener("click", event => {
+  const target = event.target.closest("button, a, [role=button], [data-page]");
+  if(!target || target.disabled || target.closest("#sndSwitch, #vibSwitch")) return;
+  haptic("light");
+  if(settings.sound) playTickSound();
+  }, { passive: true });
+
+  /* ---------- STATE ---------- */
+
 let initData = "";
 let authed = false;
 let authBlock = null;
@@ -1571,7 +1575,7 @@ function renderWallet(){
       const plus = type === "deposit" || type === "payout" || type === "refund";
       return `<tr>
         <td class="period">${esc(tk("tx_",type))}<div class="utc-time">${esc(dateUTC(x.created_at))}</div></td>
-        <td class="${plus ? "n-green" : "n-red"}">${plus ? "+" : "−"}${esc(money(x.amount))} <small class="usdt-value">(${esc(transactionUsdt(x))} USDT)</small></td>
+        <td class="${plus ? "n-green" : "n-red"}">${plus ? "+" : "−"}${esc(money(x.amount))} <small class="usdt-value">(${esc(transactionUsdt(x))} USDT)</small>${type === "bet" ? `<div class="utc-time">Fee 2%: ${esc(money(Number(x.amount || 0) * 0.02))} · Net: ${esc(money(Number(x.amount || 0) * 0.98))}</div>` : ""}</td>
         <td>${esc(txStatusLabel(x))}</td>
       </tr>`;
     }).join("");
@@ -1785,7 +1789,7 @@ function renderReferral(){
   <div class="stat"><div class="l">${esc(t("directRef"))}</div><div class="v">${esc(r.total_direct_referrals || 0)}</div></div>
   <div class="stat"><div class="l">${esc(t("availableComm"))}</div><div class="v">${esc(money(r.total_commission || 0))}</div></div>
   <div class="stat"><div class="l">${esc(t("claimedComm"))}</div><div class="v">${esc(money(r.claimed_commission || 0))}</div></div>
-  <div class="stat"><div class="l">${esc(t("totalRewards"))}</div><div class="v">${esc(money(reward.credited_points || 0))}</div></div>
+  <div class="stat"><div class="l">${esc(t("totalRewards"))}</div><div class="v">${esc(money(Number(reward.credited_points || 0) + Number(reward.pending_points || 0)))}</div></div>
   </div>`;
 
   const levelRows = (r.commission_levels || []).map(l => `<tr>
@@ -1971,7 +1975,7 @@ function membersCardHtml(){
     <div class="stat"><div class="l">${esc(t("mSumActive"))}</div><div class="v">${esc(s.active || 0)}</div></div>
     <div class="stat"><div class="l">${esc(t("mSumInactive"))}</div><div class="v">${esc((s.total || 0) - (s.active || 0))}</div></div>
     <div class="stat"><div class="l">${esc(t("mSumPending"))}</div><div class="v">${esc(money(s.pending_points))}</div></div>
-    <div class="stat"><div class="l">${esc(t("mSumReceived"))}</div><div class="v">${esc(money(s.credited_points))}</div></div>
+    <div class="stat"><div class="l">${esc(t("mSumReceived"))}</div><div class="v">${esc(money(Number(s.credited_points || 0) + Number(s.pending_points || 0)))}</div></div>
   </div>`;
 
   const tabs = ["all","active","inactive"].map(k =>
@@ -2607,9 +2611,6 @@ function init(){
   $("saveProfileBtn").onclick = saveProfile;
   $("saveWalletAddressBtn").onclick = saveWalletAddress;
   $("gameRulesBtn").onclick = () => $("gameRulesModal").classList.add("open");
-  $("headerLang").onclick = openLangModal;
-  $("langOpenBtn").onclick = openLangModal;
-  $("langSearch").addEventListener("input",() => renderLangList($("langSearch").value));
   $("authRetry").onclick = authenticate;
   $("redeemGiftBtn").onclick = async () => {
     const code = $("giftCodeInput").value.trim();
