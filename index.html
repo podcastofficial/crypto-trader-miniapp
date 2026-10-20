@@ -321,7 +321,9 @@ label { font-weight:800; font-size:12px; }
 .checkout-modal .deposit-submit-card .primary-btn { background:#f57c00; color:#fff; }
 .checkout-modal .deposit-submit-card .sec-btn { background:#fff; color:#25262a; border-color:#d9d9de; }
 .deposit-submit-card { margin:14px 0; padding:12px; border:1px solid #4a4a4f; border-radius:12px; background:#242429; }
-.deposit-submit-card .row { gap:10px; }
+  .deposit-submit-card .row { gap:10px; display:grid; grid-template-columns:106px minmax(0,1fr); align-items:stretch; }
+  .deposit-submit-card .row button { min-width:0; white-space:normal; }
+  .deposit-submit-card input { max-width:100%; box-sizing:border-box; }
 .deposit-submit-card input { margin-bottom:8px; }
 .deposit-submit-card #depositTimer { color:#facc15; font-variant-numeric:tabular-nums; }
   .deposit-chooser { min-height:calc(100svh - 190px); display:flex; flex-direction:column; justify-content:flex-start; background:#f8f8fb !important; color:#25262a !important; }
@@ -336,7 +338,8 @@ label { font-weight:800; font-size:12px; }
   .deposit-flow-mount #cashDepositFields { display:block !important; }
   .deposit-flow-mount .checkout-paying { display:flex; justify-content:space-between; align-items:center; font-size:24px; font-weight:700; padding:14px 0; }
   .deposit-flow-mount .checkout-summary { display:grid; gap:12px; margin-top:16px; }
-  .deposit-flow-mount .checkout-summary > div { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+  .deposit-flow-mount .checkout-summary > div { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+  .deposit-flow-mount .checkout-summary > div > strong { max-width:52%; overflow-wrap:anywhere; }
   .deposit-flow-mount .checkout-summary .copybox { display:flex; flex:1; max-width:62%; }
   .deposit-flow-mount .copybox input { background:#fff; color:#25262a; border-color:#d9d9de; }
   .deposit-flow-mount .sec-btn { background:#fff; color:#25262a; border-color:#d9d9de; }
@@ -384,7 +387,7 @@ label { font-weight:800; font-size:12px; }
 .toast {  
   display:none; position:fixed; left:50%; transform:translateX(-50%); bottom:100px;  
   width:max-content; max-width:90%; z-index:90; padding:13px 16px; border-radius:11px;  
-  background:#facc15; color:#171717; font-weight:800; box-shadow:0 8px 25px #0008;  
+  background:#facc15; color:#171717; font-weight:800; box-shadow:0 8px 25px #0008; bottom:88px; max-width:calc(100% - 32px);
   text-align:center; line-height:1.5;  
 }  
 .toast.show { display:block; }  
@@ -827,7 +830,7 @@ toastBetFail:"बेट नहीं लग सकी। डिटेल बद�
 toastBetOk:"बेट स्वीकार हुई।", copied:"कॉपी हो गया।", copyFail:"कॉपी नहीं हो सका।",  
 betOn:"बेट", serverRound:"सर्वर राउंड:", betAmount:"बेट अमाउंट (पॉइंट)",  
 betNote:"आपके लाइव पॉइंट्स से बेट की राशि कटेगी।", placeBet:"बेट लगाएँ",  
-rTitle:"राउंड रिज़ल्ट", rPeriod:"पीरियड", rNote:"रिज़ल्ट गेम सर्वर से मिला है।",  
+rTitle:"राउंड रिज़ल्ट", rPeriod:"पीर��यड", rNote:"रिज़ल्ट गेम सर्वर से मिला है।",
 rContinue:"जारी रखें", cRedV:"लाल + बैंगनी", cGreenV:"हरा + बैंगनी", cRed:"लाल", cGreen:"हरा",  
 sBig:"बड़ा (5–9)", sSmall:"छोटा (0–4)",  
 bannerResult:"रिज़ल्ट {period}: {n} · {colour} · {size}",  
@@ -886,7 +889,7 @@ nUnavailable:"ব্যাকএন্ড পাওয়া যাচ্ছে 
 loadingRound:"সার্ভার রাউন্ড লোড হচ্ছে…",  
 toastAuth:"আগে টেলিগ্রাম দিয়ে অথেন্টিকেট কর���ন।",
 toastLocked:"বেটিং বন্ধ। পরের রাউ��্ডের অপেক্ষা করুন।",  
-toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্বোচ্চ ২ দশমিক)।",  
+toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যা���াউন্ট দিন (সর্বোচ্চ ২ দশমিক)।",
 toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করু���।",  
 toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদলে আবার চেষ্টা করু���।",  
 toastBetOk:"ব���ট ��ৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",
@@ -907,7 +910,7 @@ refTitle:"রেফারেল প্রোগ্রাম", yourLink:"আপ�
 copy:"কপি", share:"শেয়ার",  
 noLink:"রেফারেল লিংক এখনও পাওয়া যাচ্ছে না। আপনি কোড শেয়ার করতে পারেন।",  
 shareText:"Crypto Trader Pro-তে আমার সাথে যোগ দিন!",  
-directRef:"সরাসরি রেফারেল", totalComm:"মোট কমিশন", levels:"কমিশন লেভেল",  
+directRef:"সরাসরি র���ফারেল", totalComm:"মোট কমিশন", levels:"কমিশন লেভেল",
 lvl:"লেভে��", rate:"রেট", cnt:"সংখ্যা", total:"মোট", comm:"কমিশন",
 haveCode:"রেফারেল কোড আ��ে?", enterCode:"রেফারেল ���োড দিন", apply:"প্রয়োগ করুন",
 referredBy:"আপনি একজন ইউজারের র���ফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",
@@ -1876,7 +1879,7 @@ Object.assign(I18N.bn,{
   mTitle:"আপনার রেফারেল", m_all:"সব", m_active:"অ্যাকটিভ", m_inactive:"ইনঅ্যাকটিভ",  
   mActive:"অ্যাক���িভ", mInactive:"ইনঅ্যাকটিভ", mPending:"পেন্ডিং", mReceived:"প���ওয়া গেছে",
   mJoined:"যোগ দিয়েছে", mLastPlayed:"শেষ খেলেছে", mNever:"কখনও খেলেনি",  
-  mNoName:"ইউজারনেম নেই", mSumActive:"অ্যাকটিভ রেফারেল", mSumInactive:"ইনঅ্যাকটিভ রেফ��রে��",  
+  mNoName:"ইউজারনেম নেই", mSumActive:"অ্যা��টিভ রেফারেল", mSumInactive:"ইনঅ্যাকটিভ রেফ��রে��",
   mSumPending:"পেন্ডিং রিওয়ার্ড", mSumReceived:"পাওয়া রিওয়ার্ড",  
   mActiveNote:"অ্যাকটিভ = গত ৭ দিনে অন্তত একটি বেট দিয়েছে।",  
   mNoReward:"রিওয়ার্ড রেকর্ড নেই", mCreditedOn:"পাওয়ার তারিখ"  
