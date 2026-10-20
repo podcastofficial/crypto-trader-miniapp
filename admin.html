@@ -867,6 +867,10 @@ tbody tr:hover { background: #19212b; }
   .page-header h2 { font-size: 25px; }
   .card { padding: 15px; }
 }
+
+/* Custom style for dropdown grid */
+.grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+@media (max-width: 600px) { .grid-4 { grid-template-columns: 1fr; } }
 </style>
 </head>
 
@@ -1487,7 +1491,7 @@ async function renderAnalytics() {
       ${table(
         ["Date", "Bets", "Stake", "Payout", "Net Stake - Payout", "Active Users", "New Users"],
         daily.map(d => [
-          escapeHtml(String(d.day || "��").slice(0, 10)),
+          escapeHtml(String(d.day || "—").slice(0, 10)),
           escapeHtml(statValue(d.bets, 0)),
           escapeHtml(money(d.stake)),
           escapeHtml(money(d.payout)),
@@ -2026,31 +2030,80 @@ async function renderWallets() {
   });
 }
 
+/* ======================================================
+   UPDATED: renderDepositAddresses WITH COIN/NETWORK DROPDOWNS
+   ====================================================== */
 async function renderDepositAddresses() {
   setPage("Deposit Addresses", "Manage up to 10 active coin and network deposit addresses shown to users.", '<button class="btn btn-primary" id="addDepositAddress">Add address</button>');
+  
   const data = await api("deposit_addresses");
   const rows = data.deposit_addresses || [];
+
+  // Saare requested Coins aur Networks yahan add kar diye gaye hain
+  const coinOptions = ["USDT", "TRON", "BNB", "ETHEREUM", "GRAM", "POLYGON", "BTC", "SOL"];
+  const networkOptions = ["BEP-20", "TRC-20", "ERC-20", "BSC", "Mainnet", "Polygon", "Solana"];
+
   const editor = (item = {}) => `<form class="card deposit-address-form" data-id="${escapeHtml(item.id || "")}">
     <div class="grid-4">
-      <input name="coin" placeholder="Coin e.g. USDT" value="${escapeHtml(item.coin || "")}" required maxlength="30">
-      <input name="network" placeholder="Network e.g. BSC BEP-20" value="${escapeHtml(item.network || "")}" required maxlength="60">
-      <input name="address" placeholder="Wallet address" value="${escapeHtml(item.address || "")}" required maxlength="150">
-      <input name="qr_payload" placeholder="QR payload (optional)" value="${escapeHtml(item.qr_payload || "")}" maxlength="300">
+      <select name="coin" required>
+        <option value="">Select Coin</option>
+        ${coinOptions.map(c => `<option value="${c}" ${item.coin === c ? 'selected' : ''}>${c}</option>`).join('')}
+      </select>
+      
+      <select name="network" required>
+        <option value="">Select Network</option>
+        ${networkOptions.map(n => `<option value="${n}" ${item.network === n ? 'selected' : ''}>${n}</option>`).join('')}
+      </select>
     </div>
-    <label><input type="checkbox" name="is_active" ${item.is_active !== false ? "checked" : ""}> Active</label>
-    <input name="sort_order" type="number" min="0" max="100" value="${Number(item.sort_order || 0)}" aria-label="Display order">
-    <button class="btn btn-primary" type="submit">Save</button>
-    ${item.id ? '<button class="btn btn-danger delete-deposit" type="button">Delete</button>' : ''}
+    
+    <input name="address" placeholder="Wallet address" value="${escapeHtml(item.address || "")}" required maxlength="150" style="margin-top:10px; width:100%;">
+    <input name="qr_payload" placeholder="QR payload (optional)" value="${escapeHtml(item.qr_payload || "")}" maxlength="300" style="margin-top:10px; width:100%;">
+    
+    <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
+       <label><input type="checkbox" name="is_active" ${item.is_active !== false ? "checked" : ""}> Active</label>
+       <input name="sort_order" type="number" min="0" max="100" value="${Number(item.sort_order || 0)}" aria-label="Display order" style="width: 80px;">
+    </div>
+
+    <button class="btn btn-primary" type="submit" style="margin-top:10px;">Save</button>
+    ${item.id ? '<button class="btn btn-danger delete-deposit" type="button" style="margin-top:10px;">Delete</button>' : ''}
   </form>`;
+
   $("viewBody").innerHTML = `${rows.map(editor).join("") || '<div class="notice">No addresses configured. Add your first coin/network below.</div>'}<div id="newDepositAddress"></div>`;
-  $("addDepositAddress").onclick = () => { if (rows.length >= 10) return toast("Maximum 10 deposit addresses allowed.", true); $("newDepositAddress").innerHTML = editor(); bindDepositForms(); };
+  
+  $("addDepositAddress").onclick = () => { 
+    if (rows.length >= 10) return toast("Maximum 10 deposit addresses allowed.", true); 
+    $("newDepositAddress").innerHTML = editor(); 
+    bindDepositForms(); 
+  };
+  
   bindDepositForms();
+
   function bindDepositForms() {
     document.querySelectorAll(".deposit-address-form").forEach(form => form.onsubmit = async event => {
-      event.preventDefault(); const f = new FormData(form);
-      try { await api("deposit_addresses", { mode: "save", id: form.dataset.id, coin: f.get("coin"), network: f.get("network"), address: f.get("address"), qr_payload: f.get("qr_payload"), is_active: f.get("is_active") === "on", sort_order: f.get("sort_order") }); await renderDepositAddresses(); } catch (error) { toast(error.message, true); }
+      event.preventDefault(); 
+      const f = new FormData(form);
+      try { 
+        await api("deposit_addresses", { 
+          mode: "save", 
+          id: form.dataset.id, 
+          coin: f.get("coin"), 
+          network: f.get("network"), 
+          address: f.get("address"), 
+          qr_payload: f.get("qr_payload"), 
+          is_active: f.get("is_active") === "on", 
+          sort_order: f.get("sort_order") 
+        }); 
+        await renderDepositAddresses(); 
+      } catch (error) { toast(error.message, true); }
     });
-    document.querySelectorAll(".delete-deposit").forEach(button => button.onclick = async () => { const form = button.closest("form"); try { await api("deposit_addresses", { mode: "delete", id: form.dataset.id }); await renderDepositAddresses(); } catch (error) { toast(error.message, true); } });
+    
+    document.querySelectorAll(".delete-deposit").forEach(button => button.onclick = async () => { 
+      const form = button.closest("form"); 
+      try { 
+        await api("deposit_addresses", { mode: "delete", id: form.dataset.id }); 
+        await renderDepositAddresses(); 
+      } catch (error) { toast(error.message, true); } 
+    });
   }
 }
 
@@ -2507,4 +2560,3 @@ $("logoutButton").addEventListener("click", async () => {
 
 </body>
 </html>
-
