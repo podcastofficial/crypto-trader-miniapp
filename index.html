@@ -490,7 +490,7 @@ label { font-weight:800; font-size:12px; }
   <div class="muted small" data-i18n="tgAccount">Telegram account</div>  
   <strong id="profileName">…</strong>  
   <p class="muted small" id="profileStatus">…</p>
-  <div class="profile-stats"><div><span>Joined</span><strong id="profileJoined">—</strong></div><div><span>Available points</span><strong id="profileAvailablePoints">—</strong></div><div><span>Total claimed commission</span><strong id="profileCommission">—</strong></div><div><span>Total rewards received</span><strong id="profileRewards">—</strong></div></div>
+  <div class="profile-stats"><div><span>Joined</span><strong id="profileJoined">—</strong></div><div><span>Available points</span><strong id="profileAvailablePoints">—</strong></div></div>
 
   <button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth">Retry Authentication</button>
   <div class="card" style="margin-top:14px"><div class="section-title">Gift code</div><div class="copybox"><input id="giftCodeInput" placeholder="Enter gift code"><button class="sec-btn" id="redeemGiftBtn" type="button">Redeem</button></div></div>
@@ -732,7 +732,7 @@ tgMissing:"Telegram initData missing", openOfficial:"Open the official Telegram 
 verified:"Telegram identity verified by server.", tgUser:"Telegram user {id}",  
 settings:"Settings", sound:"Sound", vibration:"Vibration", change:"Change",  
 searchLang:"Search language",  
-language:"Language", about:"About", aboutText:"Server-controlled rounds and live wallet.",  
+  language:"Language", about:"About", aboutText:"Server-controlled rounds and live wallet.", gameNotice:"Server-controlled game. Bets use your available points.",
 testingOnly:"Testing only.",  
   editProfile:"Edit Profile", manageWallet:"Add / Edit Wallet", displayName:"Display name",  
   profileTelegramNote:"Your Telegram username is managed by Telegram.", saveChanges:"Save Changes",  
@@ -744,7 +744,7 @@ brandSub:"प्रिडिक्शन डैशबोर्ड · UTC",
 home:"ह���म", wallet:"वॉलेट", referral:"रेफरल", profile:"प्रोफ़ाइल",  
 walletBalance:"वॉलेट बैलेंस", points:"पॉइंट्स", serverNote:"लाइव सर्वर वॉलेट · पॉइंट्स बैलेंस",  
 refresh:"रिफ्रेश", refreshed:"अपडेट हो गया।", refreshFailed:"रिफ्रेश नहीं हो सका। फिर कोशिश करें।",  
-currentPeriod:"मौजूदा पीरियड", roundLen:"3 मिनट का राउंड",  
+currentPeriod:"म��जूदा पीरियड", roundLen:"3 मिनट का राउंड",
 chooseNumber:"नंबर चुन���ं", chooseNumberHint:"टेस्ट-बेट विंडो खोलने के लिए नंबर चुनें।",  
 chooseColour:"रंग चुनें", red:"लाल", green:"हरा", violet:"बैंगनी",  
 bigSmall:"बड़ा / छोटा", big:"बड़ा (5–9)", small:"छोटा (0–4)",  
@@ -780,7 +780,7 @@ testBalance:"लाइव वॉलेट बैल��ंस", deposit:"ड�
 txTitle:"ट्रांज़ैक्शन",  
 tx_deposit:"डिपॉज़िट", tx_withdrawal:"विदड्रॉ", tx_bet:"बेट", tx_payout:"पेआउट", tx_refund:"रिफंड",  
 s_completed:"पूरा", s_confirmed:"कन्फर्म", s_pending:"पेंडिंग", s_rejected:"रिजेक्ट", s_failed:"फेल",  
-txPlaced:"लगाई गई",  
+txPlaced:"लग��ई गई",
 cashNotice:"डिपॉज़िट और विदड्रॉ अभी चालू नहीं हैं। ���ेमेंट बैकएंड जुड़ने के बाद उपलब्ध होंगे। कोई पैसा या क्रिप्टो न भेजें।",  
 close:"बंद करें",  
 refTitle:"रेफरल प्रोग्राम", yourLink:"आपका रेफरल लिंक", yourCode:"आपका रेफरल कोड",  
@@ -859,7 +859,7 @@ referredBy:"আপনি একজন ইউজারের রেফারে�
 commHistory:"কমিশন হ��স্ট্রি", direct:"আপনার সরাসরি রেফারেল",  
 rewardNote:"রেফারেল রিওয়ার্ড পয়েন্টের জন্য ������শ্চিত রিচার্জ দরক���র। রিচার্জ এখনও চালু নয়।",  
 needTg:"এটি দেখতে মি��ি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",  
-tgAccount:"টেলিগ্রাম অ্যাকাউন্ট", checkingTg:"টেলিগ্রাম যাচাই হচ্ছে…", authenticating:"টেলিগ্রাম দিয়ে অথেন্টিকেট হচ্ছে",  
+tgAccount:"টেলিগ্রাম অ্যাকাউন্ট", checkingTg:"টেলিগ্রাম যাচাই হচ্ছে…", authenticating:"টেলিগ্রাম দিয়ে অথেন্টিকেট ���চ্ছে",
 retryAuth:"আবার অথেন্টিকেট করুন", notTg:"টেলিগ্রামে খোলা হয়নি",  
 openInTg:"অথেন্টিকেট করতে মিনি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",  
 tgMissing:"টেলিগ্রাম initData পাওয়া যায়নি", openOfficial:"অফিসিয়াল টেলিগ্রাম মিনি অ্যাপ খুলুন।",  
@@ -915,8 +915,9 @@ document.documentElement.lang = lang;
 document.documentElement.dir = initialLangMeta && initialLangMeta.dir === "rtl" ? "rtl" : "ltr";  
   
 function t(key,vars){  
-  const d = dict(lang);  
-  let s = (d && d[key]) || I18N.en[key] || key;  
+  const d = dict(lang);
+  let s = d && d[key];
+  if (s == null || s === key) s = I18N.en[key] || key;
   if(vars){  
     for(const k in vars){ s = s.split("{" + k + "}").join(String(vars[k])); }  
   }  
@@ -1228,9 +1229,6 @@ function renderProfile(){
   const available = $("homePoints")?.textContent || "—";
   $("profileAvailablePoints").textContent = available;
   $("profileJoined").textContent = (tg?.initDataUnsafe?.user?.id ? "Telegram" : "—");
-  const rewardSummary = referralData?.reward_summary || referralData?.referral_rewards || {};
-  $("profileCommission").textContent = `${Number(rewardSummary.claimed || rewardSummary.credited || rewardSummary.total || 0).toFixed(2)} points`;
-  $("profileRewards").textContent = `${Number(rewardSummary.total || rewardSummary.credited || 0).toFixed(2)} points`;
   const input = $("profileDisplayName");  
   if(input && document.activeElement !== input) input.value = profName && profName.raw ? profName.raw : "";  
 }  
@@ -1675,10 +1673,13 @@ function renderReferral(){
     ? `<button class="primary-btn" id="claimCommissionBtn" type="button">Claim commission to wallet</button>`  
     : "";  
   const teamRows = (r.team_levels || []).map(l => `<div class="kv"><span>Level ${esc(l.level)}</span><strong>${esc(l.count)} members</strong></div>`).join("");  
-  const stats = `<div class="stats">  
-    <div class="stat"><div class="l">${esc(t("directRef"))}</div><div class="v">${esc(r.total_direct_referrals)}</div></div>  
-    <div class="stat"><div class="l">${esc(t("totalComm"))}</div><div class="v">${esc(money(r.total_commission))}</div></div>  
-  </div>`;  
+  const rewardSummary = r.reward_summary || r.referral_rewards || {};
+  const stats = `<div class="stats">
+  <div class="stat"><div class="l">${esc(t("directRef"))}</div><div class="v">${esc(r.total_direct_referrals)}</div></div>
+  <div class="stat"><div class="l">Available commission</div><div class="v">${esc(money(r.total_commission))}</div></div>
+  <div class="stat"><div class="l">Claimed commission</div><div class="v">${esc(money(rewardSummary.claimed || rewardSummary.credited || 0))}</div></div>
+  <div class="stat"><div class="l">Total rewards received</div><div class="v">${esc(money(rewardSummary.total || rewardSummary.credited || 0))}</div></div>
+  </div>`;
   
   const levelRows = (r.commission_levels || []).map(l => `<tr>  
     <td>L${esc(l.level)}</td><td>${esc(l.rate_percent)}%</td>  
@@ -2386,8 +2387,8 @@ function showPage(name){
 function renderLangList(filter){  
   const q = String(filter || "").trim().toLowerCase();  
   const list = LANGS.filter(l => !q ||  
-    l.name.toLowerCase().includes(q) ||  
-    l.en.toLowerCase().includes(q) ||  
+  String(l.name || "").toLowerCase().includes(q) ||
+  String(l.en || "").toLowerCase().includes(q) ||
     l.code.toLowerCase().includes(q));  
   
   $("langListModal").innerHTML = list.length  
@@ -2404,8 +2405,8 @@ function openLangModal(){
 }  
   
 function renderCurrentLang(){  
-  const meta = LANGS.find(l => l.code === lang);  
-  $("curLangName").textContent = meta ? meta.name : lang;  
+  const meta = LANGS.find(l => l.code === lang) || LANGS[0];
+  $("curLangName").textContent = meta ? `${meta.name} (${meta.en})` : "English";
 }  
   
 function rerender(){  
