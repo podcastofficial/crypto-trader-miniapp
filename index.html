@@ -808,7 +808,7 @@ walletBalance:"वॉलेट बैलेंस", points:"पॉइंट्�
 refresh:"रिफ्रेश", refreshed:"अपडेट हो गया।", refreshFailed:"रिफ्रेश नहीं हो सका। फिर कोशिश करें।",
 currentPeriod:"मौजूदा पीरियड", roundLen:"3 मिनट का राउंड",
 chooseNumber:"नंबर चुनें", chooseNumberHint:"टेस्ट-बेट विंडो खोलने के लिए नंबर चुनें।",
-chooseColour:"रंग चुनें", red:"लाल", green:"हरा", violet:"बैंगनी",
+chooseColour:"र���ग चुनें", red:"लाल", green:"हरा", violet:"बैंगनी",
 bigSmall:"बड़ा / छोटा", big:"बड़ा (5–9)", small:"छोटा (0–4)",
 resultHistory:"रिज़ल्ट हिस्ट्री", tradeHistory:"मेरी ट्रेड हिस्ट्री",
 colPeriod:"पीरियड", colNum:"नंबर", colBS:"B/S", colResult:"रिज़ल्ट",
@@ -835,7 +835,7 @@ toastBetOk:"बेट स्वीकार हुई।", copied:"कॉपी 
 betOn:"बेट", serverRound:"सर्वर राउंड:", betAmount:"बेट अमाउंट (पॉइंट)",
 betNote:"आपके लाइव पॉइंट्स से बेट की राशि कटेगी।", placeBet:"बेट लगाएँ",
 rTitle:"राउंड रिज़ल्ट", rPeriod:"पीरियड", rNote:"रिज़ल्ट गेम सर्वर से मिला है।",
-rContinue:"जारी रखें", cRedV:"लाल + बैंगनी", cGreenV:"हरा + बैंगनी", cRed:"लाल", cGreen:"हरा",
+rContinue:"ज����ी रखें", cRedV:"लाल + बैंगनी", cGreenV:"हरा + बैंगनी", cRed:"लाल", cGreen:"हरा",
 sBig:"बड़ा (5–9)", sSmall:"छोटा (0–4)",
 bannerResult:"रिज़ल्ट {period}: {n} · {colour} · {size}",
 testBalance:"लाइव वॉलेट बैलेंस", deposit:"डिपॉज़िट", withdraw:"विदड्रॉ",
@@ -893,9 +893,9 @@ nUnavailable:"ব্যাকএন্ড পাওয়া যাচ্ছে 
 loadingRound:"সার্ভার রাউন্ড লোড হচ্ছে…",
 toastAuth:"আগে টেলিগ্রাম দিয়ে অথেন্টিকেট করুন।",
 toastLocked:"বেটিং বন্ধ। পরের রাউন্ডের অপেক্ষা করুন।",
-toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্বোচ্চ ২ দশমিক)।",
+toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (স�����্���োচ্চ ২ দশমিক)।",
 toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করুন।",
-toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদল������� আবার চেষ্টা করুন।",
+toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদল������� আবার চ���ষ্টা করুন।",
 toastBetOk:"বেট গৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",
 betOn:"বেট", serverRound:"সার্ভার রাউন্ড:", betAmount:"বেট অ্যামাউন্ট (পয়েন্ট)",
 betNote:"আপনার লাইভ পয়েন্ট ব্যালেন্স থেকে বেটের টাকা কাটা হবে।", placeBet:"বেট দিন",
@@ -917,7 +917,7 @@ shareText:"Crypto Trader Pro-তে আমার সাথে যোগ দি�
 directRef:"সরাসরি রেফারেল", totalComm:"মোট কমিশন", levels:"কমিশন লেভেল",
 lvl:"লেভেল", rate:"রেট", cnt:"সংখ্যা", total:"মোট", comm:"কমিশন",
 haveCode:"রেফারেল কোড আছে?", enterCode:"রেফারেল কোড দিন", apply:"প্রয়োগ করুন",
-referredBy:"আপনি একজন ইউজারের রেফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",
+referredBy:"আপনি একজন ইউজারের র��ফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",
 commHistory:"কমিশন হিস্ট্রি", direct:"আপনার সরাসরি রেফারেল",
 rewardNote:"রেফার��ল ���ি���য়ার্ড পয়েন্টের জন্য নিশ্চিত রিচার্জ দরকার। রিচার্জ এখনও চালু নয়।",
 needTg:"এটি দেখতে মিনি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",
@@ -1776,7 +1776,8 @@ function renderReferral(){
     ? `<button class="primary-btn" id="claimCommissionBtn" type="button">Claim commission to wallet</button>`
     : "";
   const teamRows = (r.team_levels || []).map(l => `<div class="kv"><span>Level ${esc(l.level)}</span><strong>${esc(l.count)} members</strong></div>`).join("");
-  const rewardSummary = r.reward_summary || r.referral_rewards || {};
+  const rewardSummary = r.reward_summary || r.referral_rewards || r.reward || {};
+  const reward = rewardSummary;
   const stats = `<div class="stats">
   <div class="stat"><div class="l">${esc(t("directRef"))}</div><div class="v">${esc(r.total_direct_referrals)}</div></div>
   <div class="stat"><div class="l">Available commission</div><div class="v">${esc(money(r.total_commission))}</div></div>
