@@ -238,7 +238,7 @@ function ipAddress(req) {
   async function userManagement(body, session, req) {
     await ensureManagementTables();
     const userId = String(body.user_id || "");
-    if (!/^\\d{1,15}$/.test(userId)) throw new Error("Invalid user ID.");
+    if (!/^\d{1,15}$/.test(userId)) throw new Error("Invalid user ID.");
     const action = String(body.management_action || "");
     if (["block", "unblock"].includes(action)) {
       await query(`UPDATE public.users SET is_blocked=$1 WHERE id=$2`, [action === "block", userId]);
@@ -253,7 +253,7 @@ function ipAddress(req) {
     } else if (action === "transfer_points") {
       const toUserId = String(body.to_user_id || "");
       const points = Number(body.points);
-      if (!/^\\d{1,15}$/.test(toUserId) || !Number.isFinite(points) || points <= 0) throw new Error("Enter a valid target user and points.");
+      if (!/^\d{1,15}$/.test(toUserId) || !Number.isFinite(points) || points <= 0) throw new Error("Enter a valid target user and points.");
       const client = await pool.connect();
       try { await client.query("BEGIN");
         const debit = await client.query(`UPDATE public.wallet_balances SET balance=balance-$1,updated_at=NOW() WHERE user_id=$2 AND balance >= $1 RETURNING balance`, [points, userId]);
@@ -264,11 +264,11 @@ function ipAddress(req) {
         await client.query("COMMIT");
       } catch (error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); }
     } else if (action === "create_gift") {
-      const points = Number(body.points), maxUses = Math.max(1, Math.floor(Number(body.max_uses || 1)));
+      const points = Number(body.points), maxUses = Math.min(1000000, Math.max(1, Math.floor(Number(body.max_uses || 1))));
       if (!Number.isFinite(points) || points <= 0) throw new Error("Enter valid gift points.");
       const code = String(body.code || `GIFT-${crypto.randomBytes(4).toString("hex").toUpperCase()}`).trim().toUpperCase();
       const result = await query(`INSERT INTO public.gift_codes(code,points,max_uses,expires_at,created_by) VALUES($1,$2,$3,$4,$5) RETURNING code,points,max_uses,expires_at`, [code, points, maxUses, body.expires_at || null, session.username]);
-      return { ok: true, gift_code: result.rows[0] };
+      return { ok: true, gift_code: result[0] };
     } else throw new Error("Unknown user management action.");
     await audit(session.username, `user_${action}`, req, "success", "user", userId);
     return { ok: true };
