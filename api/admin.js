@@ -383,6 +383,7 @@ async function dashboard() {
   ] = await Promise.all([
     query(`SELECT
       (SELECT COUNT(*) FROM public.users) AS users,
+      (SELECT COUNT(*) FROM public.users WHERE is_blocked=TRUE) AS blocked_users,
       (SELECT COUNT(*) FROM public.bets) AS bets,
       (SELECT COALESCE(SUM(stake),0) FROM public.bets) AS total_stake,
       (SELECT COALESCE(SUM(fee),0) FROM public.bets) AS total_fees,
@@ -395,13 +396,28 @@ async function dashboard() {
         WHERE transaction_type='deposit'
         AND status IN ('confirmed','completed')) AS deposit_count,
       (SELECT COALESCE(SUM(amount),0) FROM public.transactions
+        WHERE transaction_type='deposit' AND status IN ('confirmed','completed')
+        AND created_at >= CURRENT_DATE) AS deposits_today,
+      (SELECT COUNT(*) FROM public.transactions
+        WHERE transaction_type='deposit' AND status='pending') AS pending_deposits,
+      (SELECT COALESCE(SUM(amount),0) FROM public.transactions
+        WHERE transaction_type='deposit' AND status='pending') AS pending_deposit_amount,
+      (SELECT COALESCE(SUM(amount),0) FROM public.transactions
         WHERE transaction_type='withdrawal'
         AND status IN ('confirmed','completed')) AS total_withdrawals,
       (SELECT COUNT(*) FROM public.transactions
         WHERE transaction_type='withdrawal'
         AND status IN ('confirmed','completed')) AS withdrawal_count,
+      (SELECT COALESCE(SUM(amount),0) FROM public.transactions
+        WHERE transaction_type='withdrawal' AND status IN ('confirmed','completed')
+        AND created_at >= CURRENT_DATE) AS withdrawals_today,
+      (SELECT COUNT(*) FROM public.transactions
+        WHERE transaction_type='withdrawal' AND status='pending') AS pending_withdrawals,
+      (SELECT COALESCE(SUM(amount),0) FROM public.transactions
+        WHERE transaction_type='withdrawal' AND status='pending') AS pending_withdrawal_amount,
       (SELECT COALESCE(SUM(commission_amount),0)
-        FROM public.referral_commissions) AS total_commissions`),
+        FROM public.referral_commissions) AS total_commissions,
+      (SELECT COUNT(*) FROM public.users WHERE referred_by IS NOT NULL) AS total_referrals`),
 
     query(`SELECT status, COUNT(*) AS count
       FROM public.game_rounds

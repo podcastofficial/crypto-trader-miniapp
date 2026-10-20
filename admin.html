@@ -1438,14 +1438,16 @@ async function renderDashboard() {
 
   $("viewBody").innerHTML = `
     <div class="grid stats-grid">
-      ${metricCard("Total Users", statValue(t.users, 0), "Registered accounts")}
+      ${metricCard("Total Users", statValue(t.users, 0), `${statValue(t.blocked_users, 0)} blocked`)}
       ${metricCard("Total Bets", statValue(t.bets, 0), "All recorded bets")}
       ${metricCard("Total Stake", money(t.total_stake), "Recorded bet stakes", "yellow")}
       ${metricCard("Total Payouts", money(t.total_payouts), "Recorded payouts", "green")}
       ${metricCard("Wallet Balance", money(t.total_wallet_balance), "Sum of wallet balances")}
       ${metricCard("Confirmed Deposits", money(t.total_deposits), `${statValue(t.deposit_count, 0)} transactions`, "green")}
+      ${metricCard("Deposits Today", money(t.deposits_today), `${statValue(t.pending_deposits, 0)} pending`, "green")}
       ${metricCard("Confirmed Withdrawals", money(t.total_withdrawals), `${statValue(t.withdrawal_count, 0)} transactions`, "red")}
-      ${metricCard("Referral Commissions", money(t.total_commissions), "Recorded commissions", "violet")}
+      ${metricCard("Withdrawals Today", money(t.withdrawals_today), `${statValue(t.pending_withdrawals, 0)} pending`, "red")}
+      ${metricCard("Referral Commissions", money(t.total_commissions), `${statValue(t.total_referrals, 0)} referrals`, "violet")}
     </div>
 
     <div class="card">
