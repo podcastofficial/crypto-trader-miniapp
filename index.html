@@ -518,7 +518,7 @@ label { font-weight:800; font-size:12px; }
 </section>
 <section class="page" id="page-deposit">
   <div class="section">
-    <div class="section-title">⬇ <span data-i18n="deposit">Deposit</span></div>
+    <div class="section-title deposit-page-heading"><button class="checkout-back deposit-page-back" id="depositPageBack" type="button" aria-label="Back to wallet">←</button><span>⬇ <span data-i18n="deposit">Deposit</span></span></div>
 <div class="card deposit-page-card deposit-chooser">
   <div id="depositFlowMount" class="deposit-flow-mount"></div>
   </div>
@@ -887,7 +887,7 @@ nConnecting:"ব্যাকএন্ডে সংযোগ হচ্ছে…",
 nConnected:"ব্যাকএন্ডে সংযুক্ত। প্রতিটি রাউন্ড শেষ হওয়ার ৩০ সেকেন্ড আগে বেটিং বন্ধ হয়।",  
 nUnavailable:"ব্যাকএন্ড পাওয়া যাচ্ছে না: {msg}",  
 loadingRound:"সার্ভার রাউন্ড লোড হচ্ছে…",  
-toastAuth:"আগে টেলিগ্রাম দিয়ে অথেন্টিকেট কর���ন।",
+toastAuth:"আ���ে টেলিগ্রাম দিয়ে অথেন্টিকেট কর���ন।",
 toastLocked:"বেটিং বন্ধ। পরের রাউ��্ডের অপেক্ষা করুন।",  
 toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যা���াউন্ট দিন (সর্বোচ্চ ২ দশমিক)।",
 toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করু���।",  
@@ -906,7 +906,7 @@ s_completed:"সম্পন্ন", s_confirmed:"নিশ্চিত", s_pend
 txPlaced:"দেওয়া হয়েছে",  
 cashNotice:"ডিপোজিট ও উইথড্র এখনও চালু হয়নি। পেমেন্ট ব্যাকএন্ড যুক্ত হলে পাওয়া যাবে। কোনো টাকা বা ক্রিপ্টো পাঠাবেন না।",  
 close:"বন্ধ করুন",  
-refTitle:"রেফারেল প্রোগ্রাম", yourLink:"আপনার রেফারেল লিংক", yourCode:"আপনার রেফারেল কোড",  
+refTitle:"রেফারেল প্রোগ্রাম", yourLink:"আপনার রেফারেল লিংক", yourCode:"আপনার রেফার���ল কোড",
 copy:"কপি", share:"শেয়ার",  
 noLink:"রেফারেল লিংক এখনও পাওয়া যাচ্ছে না। আপনি কোড শেয়ার করতে পারেন।",  
 shareText:"Crypto Trader Pro-তে আমার সাথে যোগ দিন!",  
@@ -1597,13 +1597,6 @@ let selectedDepositCoin = "USDT";
   }
   refreshDepositPrices();
   async function openCash(kind){
-  if (kind === "deposit") {
-    const mount = $("depositFlowMount");
-    const fields = $("cashDepositFields");
-    if (mount && fields && fields.parentElement !== mount) mount.appendChild(fields);
-    fields.style.display = "block";
-  }
-
   $("cashTitle").textContent = (kind === "deposit" ? "⬇ " : "⬆ ") + t(kind === "deposit" ? "deposit" : "withdraw");  
   $("cashDepositFields").style.display = kind === "deposit" ? "block" : "none";
   $("cashWithdrawFields").style.display = kind === "withdraw" ? "block" : "none";
@@ -2577,6 +2570,7 @@ function init(){
   $("confirmBet").onclick = confirmBet;
   $("resultPopupClose").onclick = closeResultPopup;  
   $("depositBtn").onclick = () => { showPage("deposit"); openCash("deposit"); };
+  $("depositPageBack").onclick = () => { clearInterval(depositTimerId); showPage("wallet"); };
   $("withdrawBtn").onclick = () => showPage("withdraw");
   $("homeDepositBtn").onclick = () => { showPage("deposit"); openCash("deposit"); };
   $("homeWithdrawBtn").onclick = () => showPage("withdraw");
