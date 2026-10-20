@@ -344,8 +344,10 @@ async function getReferralData(client, userId) {
     `SELECT
        referral_level,
        COUNT(*)::int AS commission_count,
-       COALESCE(SUM(commission_amount), 0)::numeric(20,2)
-         AS total_commission
+       COALESCE(SUM(commission_amount) FILTER (WHERE claimed_at IS NULL), 0)::numeric(20,2)
+         AS total_commission,
+       COALESCE(SUM(commission_amount) FILTER (WHERE claimed_at IS NOT NULL), 0)::numeric(20,2)
+         AS claimed_commission
      FROM public.referral_commissions
      WHERE referrer_user_id = $1
      GROUP BY referral_level
@@ -423,8 +425,14 @@ async function getReferralData(client, userId) {
       rate_percent: level === 1 ? 15 : level === 2 ? 10 : 5,
       commission_count: Number(row?.commission_count || 0),
       total_commission: String(row?.total_commission || "0.00"),
+      claimed_commission: String(row?.claimed_commission || "0.00"),
     };
   });
+
+  const claimedCommission = commissionTotals.rows.reduce(
+    (sum, row) => sum + Number(row.claimed_commission || 0),
+    0
+  );
 
   return {
     success: true,
@@ -443,6 +451,7 @@ async function getReferralData(client, userId) {
       total_commission: levels
         .reduce((sum, level) => sum + Number(level.total_commission), 0)
         .toFixed(2),
+      claimed_commission: claimedCommission.toFixed(2),
       reward: {
         reward_per_eligible_referral: 100,
         qualifying_recharge_points: 100,
@@ -460,7 +469,7 @@ async function getReferralData(client, userId) {
           rewardSummary.rows[0]?.credited_points || "0.00"
         ),
         message:
-          "Rewards require a confirmed qualifying recharge. Recharge is not enabled yet.",
+          "Earn 100 points for each direct referral after their qualifying recharge of 100 points is confirmed.",
       },
       wallet_balance: String(walletResult.rows[0]?.balance ?? "0.00"),
       direct_referrals: directReferrals.rows.map((row) => ({
