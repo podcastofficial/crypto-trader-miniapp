@@ -906,7 +906,7 @@ noLink:"রেফারেল লিংক এখনও পাওয়া য�
 shareText:"Crypto Trader Pro-তে আমার সাথে যোগ দিন!",  
 directRef:"সরাসরি রেফারেল", totalComm:"মোট কমিশন", levels:"কমিশন লেভেল",  
 lvl:"লেভে��", rate:"রেট", cnt:"সংখ্যা", total:"মোট", comm:"কমিশন",
-haveCode:"রেফারেল কোড আ��ে?", enterCode:"রেফারেল কোড দিন", apply:"প্রয়োগ করুন",  
+haveCode:"রেফারেল কোড আ��ে?", enterCode:"রেফারেল ��োড দিন", apply:"প্রয়োগ করুন",
 referredBy:"আপনি একজন ইউজারের র���ফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",
 commHistory:"কমিশন হ��স্ট্রি", direct:"আপনার সরাসরি রেফারেল",  
 rewardNote:"রেফারেল রিওয়ার্ড পয়েন��টের জন্য ������শ্চিত রিচার্জ দরক���র। রিচার্জ এখনও চালু নয়।",
@@ -1609,7 +1609,7 @@ let selectedDepositCoin = "USDT";
     $("withdrawAmount").value = available >= 500 ? "500" : "";  
     $("withdrawUsdtPreview").textContent = available >= 500 ? `${(Number($("withdrawAmount").value || 0) * 0.9 / 100).toFixed(2)} USDT after 10% fee` : "Minimum 5.00 USDT";
   }  
-  if(kind === "withdraw") $("cashModal").classList.add("open");
+  $("cashModal").classList.add("open");
   if(kind === "deposit"){
   refreshDepositPrices();
   startDepositTimer();
