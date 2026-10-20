@@ -714,7 +714,15 @@ async function listAction(action, body) {
     }
   }
 
+  if (action === "rounds" && body.q) {
+    addFilter(conditions, params, "r.round_code ILIKE ?", `%${String(body.q).trim().slice(0, 100)}%`);
+  }
+
   if (action === "bets") {
+    if (body.q) {
+      addFilter(conditions, params, "r.round_code ILIKE ?", `%${String(body.q).trim().slice(0, 100)}%`);
+    }
+
     if (body.user_id) {
       if (!/^\d{1,15}$/.test(String(body.user_id))) {
         throw new Error("Invalid user ID.");
