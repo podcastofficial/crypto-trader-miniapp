@@ -1252,7 +1252,7 @@ async function exportCsv(body) {
 }
 
 /* =========================
-   WALLET TRANSACTION REVIEW
+   WALLET TRANSACTION REVIEW (UPDATED: 1 USDT = 100 POINTS)
 ========================= */
 
 async function reviewWalletTransaction(action, body, session, req) {
@@ -1263,7 +1263,6 @@ async function reviewWalletTransaction(action, body, session, req) {
   }
 
   const note = String(body.admin_note || "").trim().slice(0, 500);
-
 
   const client = await pool.connect();
 
@@ -1311,14 +1310,14 @@ async function reviewWalletTransaction(action, body, session, req) {
     let newStatus;
 
     if (action === "deposit_approve") {
-      // TESTING ONLY. No blockchain transaction is verified here.
+      // === FIXED: 1 USDT = 100 Points ===
       await client.query(
         `INSERT INTO public.wallet_balances
           (user_id,balance,updated_at)
          VALUES ($1,$2::numeric,NOW())
          ON CONFLICT (user_id)
          DO UPDATE SET
-           balance = public.wallet_balances.balance + EXCLUDED.balance,
+           balance = public.wallet_balances.balance + (EXCLUDED.balance * 100),
            updated_at = NOW()`,
         [tx.user_id, tx.amount]
       );
@@ -1331,15 +1330,14 @@ async function reviewWalletTransaction(action, body, session, req) {
       // user-facing withdrawal request endpoint.
       newStatus = "confirmed";
     } else if (action === "withdrawal_reject") {
-      // Refund only when a user-facing endpoint has already
-      // reserved/debited the withdrawal amount.
+      // === FIXED: Refund 1 USDT = 100 Points ===
       await client.query(
         `INSERT INTO public.wallet_balances
           (user_id,balance,updated_at)
          VALUES ($1,$2::numeric,NOW())
          ON CONFLICT (user_id)
          DO UPDATE SET
-           balance = public.wallet_balances.balance + EXCLUDED.balance,
+           balance = public.wallet_balances.balance + (EXCLUDED.balance * 100),
            updated_at = NOW()`,
         [tx.user_id, tx.amount]
       );
@@ -1353,7 +1351,7 @@ async function reviewWalletTransaction(action, body, session, req) {
       await client.query(
         `INSERT INTO public.user_notifications(user_id,kind,title,message)
          VALUES($1,'withdrawal','Withdrawal approved',$2)`,
-        [tx.user_id, `Your withdrawal of ${(Number(tx.amount) / 100).toFixed(2)} USDT was approved and is ready for payout.`]
+        [tx.user_id, `Your withdrawal of ${Number(tx.amount).toFixed(2)} USDT was approved and is ready for payout.`]
       );
     }
 
@@ -1376,9 +1374,9 @@ async function reviewWalletTransaction(action, body, session, req) {
     await client.query("COMMIT");
 
     if (action === "withdrawal_approve") {
-      await notifyTelegram(`✅ Withdrawal approved\n👤 User: ${tx.username ? `@${tx.username}` : tx.telegram_id}\n💵 Amount: ${(Number(tx.amount) / 100).toFixed(2)} USDT\n📣 Manual payout approved`);
+      await notifyTelegram(`✅ Withdrawal approved\n👤 User: ${tx.username ? `@${tx.username}` : tx.telegram_id}\n💵 Amount: ${Number(tx.amount).toFixed(2)} USDT\n📣 Manual payout approved`);
     } else if (action === "deposit_approve") {
-      await notifyTelegram(`✅ Deposit approved\n👤 User: ${tx.username ? `@${tx.username}` : tx.telegram_id}\n💵 Amount credited: ${Number(tx.amount).toFixed(2)} points`);
+      await notifyTelegram(`✅ Deposit approved\n👤 User: ${tx.username ? `@${tx.username}` : tx.telegram_id}\n💵 Amount credited: ${Number(tx.amount) * 100} points (${Number(tx.amount).toFixed(2)} USDT)`);
     }
 
     await audit(
@@ -1397,7 +1395,7 @@ async function reviewWalletTransaction(action, body, session, req) {
       status: newStatus,
       message:
         action === "deposit_approve"
-          ? "TEST deposit approved. Blockchain verification was not performed."
+          ? `Deposit approved. ${Number(tx.amount) * 100} Points credited to user.`
           : action === "deposit_reject"
           ? "Deposit rejected."
           : action === "withdrawal_approve"
