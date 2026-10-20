@@ -753,7 +753,7 @@ stError:"BACKEND ERROR", stTelegram:"TELEGRAM REQUIRED", stAuth:"AUTH REQUIRED",
 nConnecting:"Connecting to backend…",
 nConnected:"Connected to backend. Betting closes 30 seconds before each round ends.",
 nUnavailable:"Backend unavailable: {msg}",
-loadingRound:"Loading server round���",
+loadingRound:"Loading server round����",
 toastAuth:"Authenticate through Telegram first.",
 toastLocked:"Betting is locked. Wait for the next round.",
 toastAmount:"Enter at least 10 points (max 2 decimals).",
@@ -876,7 +876,7 @@ resultHistory:"���েজাল্ট হিস্ট্রি", tradeHisto
 colPeriod:"পিরিয়ড", colNum:"নম্বর", colBS:"B/S", colResult:"রেজাল্���",
 colType:"ধরন", colAmount:"অ্যামাউন্ট", colStatus:"স্ট্যাটাস",
 range:"{from}-{to} / {total}",
-loading:"লোড হচ���ছে…", noRounds:"এখনও কোনো রেজাল্ট নেই।", noBets:"এখনও কোনো বেট নেই",
+loading:"লোড হচ���ছে…", noRounds:"এখনও কোন�� রেজাল্ট নেই।", noBets:"এখনও কোনো বেট নেই",
 noTx:"এখনও কোনো লেনদেন ���েই।", noRef:"এখনও কোনো রেফারেল নেই���", noLangs:"কোনো ভাষা পাওয়া যায়নি।",
 success:"সফল", fail:"ব্যর্থ", pending:"পেন্ডিং", cancelled:"বাতিল",
 dBet:"বেট", dStake:"বেট অ্যামাউন্ট", dFee:"ফি", dActual:"ট্র��ড অ্যামাউন্ট", dPayout:"পেআউট",
@@ -894,7 +894,7 @@ toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়ে�
 toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করু���।",
 toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদলে আবার চেষ্টা ���রু���।",
 toastBetOk:"ব���ট ��ৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",
-betOn:"বেট", serverRound:"সার্ভার রাউন্ড:", betAmount:"বেট অ্যামাউন্ট (পয়েন্ট)",
+betOn:"বেট", serverRound:"সার্ভার রাউন্ড:", betAmount:"ব��ট অ্যামাউন্ট (পয়েন্ট)",
 betNote:"আপনার লাইভ পয়েন্ট ব্যালেন্স থেকে বেটের টাকা কাটা হবে।", placeBet:"বেট দিন",
 rTitle:"রাউন্ড রেজাল্ট", rPeriod:"পিরিয়ড", rNote:"রেজাল্��� গেম সার্ভার থেক���� পাওয়া গেছে।",
 rContinue:"চালিয়ে যান", cRedV:"লাল + বেগুনি", cGreenV:"সবুজ + বেগুনি", cRed:"লাল", cGreen:"সবুজ",
@@ -1597,6 +1597,15 @@ let selectedDepositCoin = "USDT";
   } catch (_) { document.querySelectorAll("[data-live-price]").forEach(el => { if (el.textContent === "—") el.textContent = "Price unavailable"; }); }
   }
   refreshDepositPrices();
+  async function openDepositPage(){
+  showPage("deposit");
+  await openCash("deposit");
+  const fields = $("cashDepositFields");
+  const mount = $("depositFlowMount");
+  if (fields && mount) { mount.appendChild(fields); fields.style.display = "block"; }
+  $("cashModal").classList.remove("open");
+  }
+
   async function openCash(kind){
   $("cashTitle").textContent = (kind === "deposit" ? "⬇ " : "⬆ ") + t(kind === "deposit" ? "deposit" : "withdraw");
   $("cashDepositFields").style.display = kind === "deposit" ? "block" : "none";
@@ -2570,15 +2579,15 @@ function init(){
   };
   $("confirmBet").onclick = confirmBet;
   $("resultPopupClose").onclick = closeResultPopup;
-  $("depositBtn").onclick = () => { showPage("deposit"); openCash("deposit"); };
+  $("depositBtn").onclick = () => { openDepositPage().catch(error => toast(error.message, true)); };
   $("depositPageBack").onclick = () => { clearInterval(depositTimerId); showPage("wallet"); };
   $("withdrawBtn").onclick = () => showPage("withdraw");
-  $("homeDepositBtn").onclick = () => { showPage("deposit"); openCash("deposit"); };
+  $("homeDepositBtn").onclick = () => { openDepositPage().catch(error => toast(error.message, true)); };
   $("homeWithdrawBtn").onclick = () => showPage("withdraw");
   document.querySelectorAll("[data-open-cash]").forEach(button => { button.onclick = () => openCash(button.dataset.openCash); });
   $("depositAmount").addEventListener("input", updateDepositSummary);
   $("submitDeposit").onclick = submitDeposit;
-  $("cancelDeposit").onclick = () => { clearInterval(depositTimerId); $("cashModal").classList.remove("open"); };
+  $("cancelDeposit").onclick = () => { clearInterval(depositTimerId); showPage("wallet"); };
   $("submitWithdrawal").onclick = submitWithdrawal;
   $("withdrawAmount").addEventListener("input", () => {
   const points = Math.max(0, Number($("withdrawAmount").value) || 0);
