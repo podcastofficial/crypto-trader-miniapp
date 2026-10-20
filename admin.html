@@ -2237,7 +2237,7 @@ async function renderTransactions(view) {
       Approve means manual payout/credit. Reject/Refund returns reserved funds to the user. Deposit approval credits 100 points per USDT.
     </div>
     ${table(
-      ["ID", "User ID", "Type", "Amount", "Status", "Network", "Transaction Hash", "Created", "Updated", "Actions"],
+      ["ID", "User ID", "Type", "Amount", "Status", "Network", "Transaction Hash", "Payout TX", "Created", "Updated", "Actions"],
       (data.transactions || []).map(t => {
         let actionButtons = "—";
         
@@ -2256,8 +2256,9 @@ async function renderTransactions(view) {
           escapeHtml(money(t.amount)),
           badge(t.status),
           escapeHtml(t.network || "—"),
-          escapeHtml(t.tx_hash || "—"),
-          escapeHtml(formatDate(t.created_at)),
+escapeHtml(t.tx_hash || "—"),
+  escapeHtml(t.payout_tx_hash || "—"),
+  escapeHtml(formatDate(t.created_at)),
           escapeHtml(formatDate(t.updated_at)),
           actionButtons
         ];

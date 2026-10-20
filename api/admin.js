@@ -222,6 +222,7 @@ function ipAddress(req) {
 
   async function ensureManagementTables() {
     await query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT FALSE`);
+    await query(`ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS payout_tx_hash TEXT`);
     await query(`CREATE TABLE IF NOT EXISTS public.gift_codes (
       id BIGSERIAL PRIMARY KEY, code TEXT UNIQUE NOT NULL, points NUMERIC(20,2) NOT NULL,
       max_uses INTEGER NOT NULL DEFAULT 1, uses INTEGER NOT NULL DEFAULT 0,
@@ -247,7 +248,7 @@ function ipAddress(req) {
       if (!Number.isFinite(points) || points <= 0 || points > 100000000) throw new Error("Enter a valid points amount.");
       const delta = action === "add_fund" ? points : -points;
       const result = await query(`UPDATE public.wallet_balances SET balance=balance+$1, updated_at=NOW() WHERE user_id=$2 AND balance+$1 >= 0 RETURNING balance`, [delta, userId]);
-      if (!result.rowCount) throw new Error("Insufficient balance or user wallet not found.");
+      if (!result.length) throw new Error("Insufficient balance or user wallet not found.");
       await query(`INSERT INTO public.user_notifications (user_id,kind,title,message) VALUES ($1,'wallet','Balance updated',$2)`, [userId, `${action === "add_fund" ? "Added" : "Removed"} ${points} points by admin.`]);
     } else if (action === "transfer_points") {
       const toUserId = String(body.to_user_id || "");
@@ -507,7 +508,7 @@ const LISTS = {
 
   transactions: {
 select: `id,user_id,transaction_type,amount,status,
-  network,tx_hash,destination_address,admin_note,
+  network,tx_hash,payout_tx_hash,destination_address,admin_note,
   reviewed_at,reviewed_by,created_at,updated_at`,
 from: "public.transactions",
   order: "id DESC"
@@ -1269,6 +1270,7 @@ async function reviewWalletTransaction(action, body, session, req) {
   throw new Error("A valid payout transaction hash is required.");
   }
 
+  await ensureManagementTables();
   const client = await pool.connect();
 
   try {
@@ -1276,7 +1278,7 @@ async function reviewWalletTransaction(action, body, session, req) {
 
     const result = await client.query(
       `SELECT t.id,t.user_id,t.transaction_type,t.amount,t.status,
-        t.network,t.tx_hash,u.telegram_id,u.username,u.first_name,u.last_name
+        t.network,t.tx_hash,t.payout_tx_hash,u.telegram_id,u.username,u.first_name,u.last_name
        FROM public.transactions t
        JOIN public.users u ON u.id=t.user_id
        WHERE t.id=$1
@@ -1364,6 +1366,7 @@ async function reviewWalletTransaction(action, body, session, req) {
       `UPDATE public.transactions
 SET status=$1,
   admin_note=$2,
+  payout_tx_hash=CASE WHEN $5 <> '' THEN $5 ELSE payout_tx_hash END,
            reviewed_at=NOW(),
            reviewed_by=$3,
            updated_at=NOW()
@@ -1372,7 +1375,8 @@ SET status=$1,
 newStatus,
   reviewNote,
   session.username,
-  transactionId
+  transactionId,
+  payoutTxHash
       ]
     );
 
