@@ -251,6 +251,62 @@ select:focus {
   font-weight: 800;
 }
 
+/* --- NOTIFICATION BELL STYLES --- */
+.notif-btn {
+  position: relative;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: var(--text);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.notif-btn:hover { background: rgba(255,255,255,0.1); }
+.notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: var(--red);
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  border-radius: 50%;
+  padding: 2px 6px;
+  border: 2px solid #101010;
+}
+.notif-dropdown {
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  width: 320px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  z-index: 100;
+}
+.notif-header {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border);
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.notif-item {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item strong { display: block; margin-bottom: 4px; }
+.notif-item small { color: var(--muted); display: block; font-size: 11px; margin-top: 4px;}
+/* -------------------------------- */
+
 .layout {
   display: grid;
   grid-template-columns: 225px minmax(0, 1fr);
@@ -713,6 +769,11 @@ pre {
   .detail-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  
+  .notif-dropdown {
+    width: 290px;
+    right: 10px;
+  }
 }
 
 @media (max-width: 420px) {
@@ -948,11 +1009,29 @@ tbody tr:hover { background: #19212b; }
     <div class="topbar-right">
       <span class="admin-badge">ADMIN</span>
       <span id="adminUsername" class="small muted"></span>
+      
+      <!-- NOTIFICATION BELL -->
+      <button class="notif-btn" id="notifBell">
+        🔔
+        <span id="notifBadge" class="notif-badge hidden">0</span>
+      </button>
+
       <button class="btn btn-danger" id="logoutButton">
         Logout
       </button>
     </div>
   </header>
+
+  <!-- NOTIFICATION DROPDOWN -->
+  <div id="notifDropdown" class="notif-dropdown hidden">
+    <div class="notif-header">
+      <span>Pending Requests</span>
+      <button class="btn small" id="closeNotif" style="padding:4px 8px;">✕</button>
+    </div>
+    <div id="notifList">
+      <div class="empty">Loading...</div>
+    </div>
+  </div>
 
   <div class="layout">
 
@@ -1155,6 +1234,8 @@ function showApp(username) {
 
   renderNavigation();
   navigate("dashboard");
+  fetchNotifications(); // Start checking for notifications
+  setInterval(fetchNotifications, 30000); // Check every 30 seconds
 }
 
 function renderNavigation() {
@@ -2035,7 +2116,7 @@ async function renderWallets() {
    ====================================================== */
 async function renderDepositAddresses() {
   setPage("Deposit Addresses", "Manage up to 10 active coin and network deposit addresses shown to users.", '<button class="btn btn-primary" id="addDepositAddress">Add address</button>');
-  
+
   const data = await api("deposit_addresses");
   const rows = data.deposit_addresses || [];
 
@@ -2069,13 +2150,13 @@ async function renderDepositAddresses() {
   </form>`;
 
   $("viewBody").innerHTML = `${rows.map(editor).join("") || '<div class="notice">No addresses configured. Add your first coin/network below.</div>'}<div id="newDepositAddress"></div>`;
-  
+
   $("addDepositAddress").onclick = () => { 
     if (rows.length >= 10) return toast("Maximum 10 deposit addresses allowed.", true); 
     $("newDepositAddress").innerHTML = editor(); 
     bindDepositForms(); 
   };
-  
+
   bindDepositForms();
 
   function bindDepositForms() {
@@ -2096,7 +2177,7 @@ async function renderDepositAddresses() {
         await renderDepositAddresses(); 
       } catch (error) { toast(error.message, true); }
     });
-    
+
     document.querySelectorAll(".delete-deposit").forEach(button => button.onclick = async () => { 
       const form = button.closest("form"); 
       try { 
@@ -2107,6 +2188,9 @@ async function renderDepositAddresses() {
   }
 }
 
+/* ======================================================
+   UPDATED: renderTransactions WITH DEPOSIT APPROVE/REJECT
+   ====================================================== */
 async function renderTransactions(view) {
   const title = view === "deposits"
     ? "Deposits"
@@ -2116,7 +2200,7 @@ async function renderTransactions(view) {
 
   setPage(
     title,
-    "Read-only transaction records. Approval actions are not enabled.",
+    "Review and approve pending deposits and withdrawals.",
     '<button class="btn" id="exportTransactions">Export CSV</button>'
   );
 
@@ -2150,35 +2234,55 @@ async function renderTransactions(view) {
       userId: true
     })}
     <div class="notice warning">
-      Withdrawal actions reserve funds safely. Approve means manual payout is still required; Reject/Refund returns reserved funds to the user.
+      Approve means manual payout/credit. Reject/Refund returns reserved funds to the user. Deposit approval credits 100 points per USDT.
     </div>
     ${table(
       ["ID", "User ID", "Type", "Amount", "Status", "Network", "Transaction Hash", "Created", "Updated", "Actions"],
-      (data.transactions || []).map(t => [
-        escapeHtml(t.id),
-        escapeHtml(t.user_id),
-        badge(t.transaction_type),
-        escapeHtml(money(t.amount)),
-        badge(t.status),
-        escapeHtml(t.network || "—"),
-        escapeHtml(t.tx_hash || "—"),
-        escapeHtml(formatDate(t.created_at)),
-        escapeHtml(formatDate(t.updated_at)),
-        t.transaction_type === "withdrawal" && t.status === "pending" ? `<div class="row-actions"><button class="btn btn-primary review-tx" data-action="withdrawal_approve" data-id="${escapeHtml(t.id)}">Approve</button><button class="btn btn-danger review-tx" data-action="withdrawal_reject" data-id="${escapeHtml(t.id)}">Reject / Refund</button></div>` : "—"
-      ])
+      (data.transactions || []).map(t => {
+        let actionButtons = "—";
+        
+        if (t.status === "pending") {
+          if (t.transaction_type === "deposit") {
+            actionButtons = `<div class="row-actions"><button class="btn btn-primary review-tx" data-action="deposit_approve" data-id="${escapeHtml(t.id)}">Approve</button><button class="btn btn-danger review-tx" data-action="deposit_reject" data-id="${escapeHtml(t.id)}">Reject</button></div>`;
+          } else if (t.transaction_type === "withdrawal") {
+            actionButtons = `<div class="row-actions"><button class="btn btn-primary review-tx" data-action="withdrawal_approve" data-id="${escapeHtml(t.id)}">Approve</button><button class="btn btn-danger review-tx" data-action="withdrawal_reject" data-id="${escapeHtml(t.id)}">Reject / Refund</button></div>`;
+          }
+        }
+        
+        return [
+          escapeHtml(t.id),
+          escapeHtml(t.user_id),
+          badge(t.transaction_type),
+          escapeHtml(money(t.amount)),
+          badge(t.status),
+          escapeHtml(t.network || "—"),
+          escapeHtml(t.tx_hash || "—"),
+          escapeHtml(formatDate(t.created_at)),
+          escapeHtml(formatDate(t.updated_at)),
+          actionButtons
+        ];
+      })
     )}
     ${paginationHtml(data.pagination)}
   `;
 
   attachFilterActions(view, () => renderTransactions(view));
   attachPagination(view, data.pagination, () => renderTransactions(view));
+  
   document.querySelectorAll(".review-tx").forEach(button => button.addEventListener("click", async () => {
     const action = button.dataset.action;
-    const message = action === "withdrawal_approve" ? "Approve this withdrawal for manual payout?" : "Reject and refund this withdrawal?";
+    
+    let message = "Are you sure?";
+    if (action === "withdrawal_approve") message = "Approve this withdrawal for manual payout?";
+    if (action === "withdrawal_reject") message = "Reject and refund this withdrawal?";
+    if (action === "deposit_approve") message = "Approve this deposit? Points will be credited to the user.";
+    if (action === "deposit_reject") message = "Reject this deposit?";
+    
     if (!window.confirm(message)) return;
     try {
       await api(action, { transaction_id: button.dataset.id });
-      toast(action === "withdrawal_approve" ? "Withdrawal approved." : "Withdrawal rejected and refunded.");
+      toast("Action successful.");
+      fetchNotifications(); // Refresh notification count
       await renderTransactions(view);
     } catch (error) { toast(error.message, true); }
   }));
@@ -2487,6 +2591,58 @@ function renderSearch() {
     }
   });
 }
+
+/* 
+ * NOTIFICATION LOGIC 
+ */
+async function fetchNotifications() {
+  try {
+    const data = await api("transactions", { status: "pending", page_size: 50 });
+    const pendingTxs = (data.transactions || []).filter(t => 
+      t.transaction_type === "deposit" || t.transaction_type === "withdrawal"
+    );
+
+    const badge = $("notifBadge");
+    if (pendingTxs.length > 0) {
+      badge.textContent = pendingTxs.length > 9 ? "9+" : pendingTxs.length;
+      badge.classList.remove("hidden");
+    } else {
+      badge.classList.add("hidden");
+    }
+
+    const list = $("notifList");
+    if (pendingTxs.length === 0) {
+      list.innerHTML = '<div class="empty">No pending notifications.</div>';
+    } else {
+      list.innerHTML = pendingTxs.map(t => `
+        <div class="notif-item">
+          <strong class="${t.transaction_type === 'deposit' ? 'green' : 'red'}">
+            ${t.transaction_type.toUpperCase()} #${escapeHtml(t.id)}
+          </strong>
+          <div>User ${escapeHtml(t.user_id)} | ${money(t.amount)}</div>
+          <small>${formatDate(t.created_at)}</small>
+        </div>
+      `).join("");
+    }
+  } catch (error) {
+    console.error("Failed to fetch notifications", error);
+  }
+}
+
+$("notifBell").addEventListener("click", (e) => {
+  e.stopPropagation();
+  $("notifDropdown").classList.toggle("hidden");
+});
+$("closeNotif").addEventListener("click", () => $("notifDropdown").classList.add("hidden"));
+
+// Close dropdown when clicking outside
+document.addEventListener("click", (e) => {
+  const dropdown = $("notifDropdown");
+  const bell = $("notifBell");
+  if (!dropdown.classList.contains("hidden") && !dropdown.contains(e.target) && !bell.contains(e.target)) {
+    dropdown.classList.add("hidden");
+  }
+});
 
 /*
  * LOGIN FORM
