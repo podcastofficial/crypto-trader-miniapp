@@ -895,7 +895,7 @@ toastAuth:"আগে টেলিগ্রাম দিয়ে অথেন্
 toastLocked:"বেটিং বন্ধ। পরের রাউন্ডের অপেক্ষা করুন।",
 toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্বোচ্চ ২ দশমিক)।",
 toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করুন।",
-toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদল��� আবার চেষ্টা করুন।",
+toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদল����� আবার চেষ্টা করুন।",
 toastBetOk:"বেট গৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",
 betOn:"বেট", serverRound:"সার্ভার রাউন্ড:", betAmount:"বেট অ্যামাউন্ট (পয়েন্ট)",
 betNote:"আপনার লাইভ পয়েন্ট ব্যালেন্স থেকে বেটের টাকা কাটা হবে।", placeBet:"বেট দিন",
@@ -919,7 +919,7 @@ lvl:"লেভেল", rate:"রেট", cnt:"সংখ্যা", total:"মো
 haveCode:"রেফারেল কোড আছে?", enterCode:"রেফারেল কোড দিন", apply:"প্রয়োগ করুন",
 referredBy:"আপনি একজন ইউজারের রেফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",
 commHistory:"কমিশন হিস্ট্রি", direct:"আপনার সরাসরি রেফারেল",
-rewardNote:"রেফারেল রি���য়ার্ড পয়েন্টের জন্য নিশ্চিত রিচার্জ দরকার। রিচার্জ এখনও চালু নয়।",
+rewardNote:"রেফারেল ���ি���য়ার্ড পয়েন্টের জন্য নিশ্চিত রিচার্জ দরকার। রিচার্জ এখনও চালু নয়।",
 needTg:"এটি দেখতে মিনি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",
 tgAccount:"টেলিগ্রাম অ্যাকাউন্ট", checkingTg:"টেলিগ্রাম যাচাই হচ্ছে…", authenticating:"টেলিগ্রাম দিয়ে অথেন্টিকেট হচ্ছে",
 retryAuth:"আবার অথেন্টিকেট করুন", notTg:"টেলিগ্রামে খোলা হয়নি",
@@ -1137,7 +1137,15 @@ function dateUTC(value){
 function nowMs(){ return Date.now() + serverTimeOffset; }
 
 // Period number shown to users: YYYYMMDDHHMM (seconds are always 00).
-function fmtPeriod(code){ return String(code || "").slice(0,12); }
+function fmtPeriod(code){
+  const raw = String(code || "");
+  if (!/^\d{14}$/.test(raw)) return raw.slice(0,12);
+  const day = raw.slice(0,8);
+  const hour = Number(raw.slice(8,10));
+  const minute = Number(raw.slice(10,12));
+  const serial = Math.floor((hour * 60 + minute) / 3) + 1;
+  return `${day}${String(serial).padStart(4, "0")}`;
+}
 
 function p2(n){ return String(n).padStart(2,"0"); }
 
