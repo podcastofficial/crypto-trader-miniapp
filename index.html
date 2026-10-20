@@ -329,6 +329,15 @@ label { font-weight:800; font-size:12px; }
 .deposit-submit-card .row { gap:10px; }
 .deposit-submit-card input { margin-bottom:8px; }
 .deposit-submit-card #depositTimer { color:#facc15; font-variant-numeric:tabular-nums; }
+  .deposit-chooser { min-height:calc(100svh - 190px); display:flex; flex-direction:column; justify-content:center; }
+  .coin-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
+  .coin-choice { min-height:86px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border:1px solid #3f3f46; border-radius:14px; background:#242424; color:#f4f4f5; }
+  .coin-choice.active { border-color:#facc15; box-shadow:0 0 0 1px #facc15 inset; }
+  .coin-choice small { display:block; color:#a1a1aa; font-size:10px; }
+  .coin-badge { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; font-weight:900; color:#18181b; }
+  .coin-badge.usdt { background:#26a17b; color:white; } .coin-badge.bnb { background:#f3ba2f; } .coin-badge.eth { background:#8fa2ff; color:white; } .coin-badge.sol { background:#111827; color:#9dffdb; }
+  .chooser-subtitle { margin-top:18px; }
+  .network-grid { display:grid; gap:8px; }
   .network-choice { width:100%; display:grid; grid-template-columns:42px 1fr 18px; gap:10px; align-items:center; text-align:left; padding:16px; border:2px solid #facc15; border-radius:18px; background:#242424; color:#f4f4f5; }
   .network-choice small { display:block; margin-top:8px; color:#a1a1aa; line-height:1.7; }
   .network-icon { display:grid; place-items:center; width:36px; height:36px; border-radius:50%; background:#facc15; color:#18181b; font-weight:900; }
@@ -487,12 +496,19 @@ label { font-weight:800; font-size:12px; }
 <section class="page" id="page-deposit">
   <div class="section">
     <div class="section-title">⬇ <span data-i18n="deposit">Deposit</span></div>
-    <div class="card deposit-page-card">
-      <div class="section-title">Choose Network</div>
-      <button class="network-choice active" type="button" data-open-cash="deposit"><span class="network-icon">◎</span><span><strong>BSC</strong> BNB Smart Chain (BEP20)<small>Min. deposit &gt;0.01 USDT<br>Est. arrival 1 min</small></span><b>›</b></button>
-      <div class="notice">Only send USDT on the selected network. Deposits are credited after blockchain verification.</div>
-      <button class="primary-btn" data-open-cash="deposit" type="button">Continue to deposit address</button>
-    </div>
+  <div class="card deposit-page-card deposit-chooser">
+  <div class="section-title">Choose coin</div>
+  <div class="coin-grid" id="depositCoinPicker">
+    <button class="coin-choice active" type="button" data-coin="USDT"><span class="coin-badge usdt">₮</span><span><strong>USDT</strong><small>Stablecoin</small></span></button>
+    <button class="coin-choice" type="button" data-coin="BNB"><span class="coin-badge bnb">B</span><span><strong>BNB</strong><small><span data-live-price="BNB">—</span> USDT</small></span></button>
+    <button class="coin-choice" type="button" data-coin="ETH"><span class="coin-badge eth">◆</span><span><strong>Ethereum</strong><small><span data-live-price="ETH">—</span> USDT</small></span></button>
+    <button class="coin-choice" type="button" data-coin="SOL"><span class="coin-badge sol">S</span><span><strong>Solana</strong><small><span data-live-price="SOL">—</span> USDT</small></span></button>
+  </div>
+  <div class="section-title chooser-subtitle">Choose network</div>
+  <div class="network-grid" id="depositNetworkPicker"><button class="network-choice active" type="button" data-network="BSC BEP-20"><span class="network-icon">◎</span><span><strong>BSC</strong> BNB Smart Chain (BEP20)<small>Min. deposit &gt;0.01 USDT · Est. arrival 1 min</small></span><b>›</b></button></div>
+  <div class="notice">Only send the selected coin on the selected network. Deposits are credited after blockchain verification.</div>
+  <button class="primary-btn" data-open-cash="deposit" type="button">Continue to deposit address</button>
+  </div>
     <div class="card"><div class="section-title">Deposit History</div><div id="depositHistoryList"><div class="empty" data-i18n="loading">Loading…</div></div></div>
   </div>
 </section>
@@ -635,6 +651,7 @@ label { font-weight:800; font-size:12px; }
     <div><span>Blockchain</span><strong id="depositBlockchain">—</strong></div>
     <div><span>Subtotal</span><strong id="depositSubtotal">— USDT</strong></div>
     <div class="amount-due"><span>Amount Due</span><strong id="depositAmountDue">— USDT</strong></div>
+    <div><span>Coin quantity</span><div class="copybox"><input id="depositQuantity" readonly value="—"><button class="sec-btn" id="copyDepositQuantity" type="button">Copy</button></div></div>
   </div>
   <div class="deposit-submit-card">
     <p class="muted small">Copy the address, pay the exact amount, then submit your transaction hash. Blockchain verification checks the real received amount.</p>
@@ -658,6 +675,7 @@ label { font-weight:800; font-size:12px; }
     </div>  
     <div class="muted small">Minimum: 500 Points · 5 USDT</div>  
   </div>  
+  <div class="notice">A 10% withdrawal fee is deducted. For 1,000 points (10 USDT), you receive 9 USDT.</div>
   <label for="withdrawAmount">Amount (points)</label>  
   <input id="withdrawAmount" type="number" min="500" step="0.01" placeholder="500">  
   <div class="quick-amounts" role="group" aria-label="Withdrawal amount shortcuts">  
@@ -894,7 +912,7 @@ tgMissing:"টেলিগ্রাম initData পাওয়া যায়�
 verified:"সার্ভার টেলিগ্রাম পরিচয় যাচাই করেছে।", tgUser:"টেলিগ্রাম ইউজার {id}",  
 settings:"সেটিংস", sound:"সাউন্ড", vibration:"ভাইব্রেশন", change:"পরিবর্তন",  
 searchLang:"ভাষা খুঁজুন",  
-language:"ভাষা", about:"সম্পর্কে", aboutText:"সার্ভার-নিয়ন্ত্রিত রাউন্ড ও লাইভ পয়েন্টস ওয়ালেট।",  
+language:"ভাষা", about:"সম্পর্কে", aboutText:"সার্ভার-নিয়ন্ত্রিত রাউন্ড ও লাইভ পয়ে��্টস ওয়ালেট।",
 testingOnly:"শুধু টেস্টিং।"  
 }  
 };  
@@ -1554,7 +1572,18 @@ async function loadWallet(silent){
   }  
 }  
   
-async function openCash(kind){  
+let selectedDepositCoin = "USDT";
+  const liveCoinPrices = { USDT: 1, BNB: 0, ETH: 0, SOL: 0 };
+  async function refreshDepositPrices(){
+    try {
+      const response = await fetch("https://api.binance.com/api/v3/ticker/price?symbols=BNBUSDT,ETHUSDT,SOLUSDT", { signal: AbortSignal.timeout(5000) });
+      const prices = await response.json();
+      prices.forEach(item => { const coin = item.symbol.replace("USDT", ""); liveCoinPrices[coin] = Number(item.price); document.querySelectorAll(`[data-live-price="${coin}"]`).forEach(el => { el.textContent = Number(item.price).toLocaleString(undefined, { maximumFractionDigits: 4 }); }); });
+      updateDepositSummary();
+    } catch (_) {}
+  }
+  document.querySelectorAll("#depositCoinPicker [data-coin]").forEach(button => button.addEventListener("click", () => { selectedDepositCoin = button.dataset.coin; document.querySelectorAll("#depositCoinPicker [data-coin]").forEach(item => item.classList.toggle("active", item === button)); updateDepositSummary(); }));
+  async function openCash(kind){
   $("cashTitle").textContent = (kind === "deposit" ? "⬇ " : "⬆ ") + t(kind === "deposit" ? "deposit" : "withdraw");  
   $("cashDepositFields").style.display = kind === "deposit" ? "block" : "none";
   $("cashWithdrawFields").style.display = kind === "withdraw" ? "block" : "none";
@@ -1564,18 +1593,21 @@ async function openCash(kind){
     $("withdrawAvailableBalance").textContent = `${money(available)} Points · ${(available / 100).toFixed(2)} USDT`;  
     $("withdrawAmount").max = available.toFixed(2);  
     $("withdrawAmount").value = available >= 500 ? "500" : "";  
-    $("withdrawUsdtPreview").textContent = available >= 500 ? "5.00 USDT" : "Minimum 5.00 USDT";  
+    $("withdrawUsdtPreview").textContent = available >= 500 ? `${(Number($("withdrawAmount").value || 0) * 0.9 / 100).toFixed(2)} USDT after 10% fee` : "Minimum 5.00 USDT";
   }  
   $("cashModal").classList.add("open");  
   if(kind === "deposit"){
+  refreshDepositPrices();
   startDepositTimer();
   $("depositAmount").value = ""; $("depositTxHash").value = ""; $("depositSubmitStatus").textContent = "";
   try {
       const config = await api("wallet_config");  
       const options = Array.isArray(config.deposit_options) ? config.deposit_options : [];  
       const select = $("depositOption");  
-      select.innerHTML = options.map((item, index) => `<option value="${index}">${esc(item.coin)} · ${esc(item.network)}</option>`).join("");  
-      const setOption = () => {  
+  select.innerHTML = options.map((item, index) => `<option value="${index}">${esc(item.coin)} · ${esc(item.network)}</option>`).join("");
+  const selectedIndex = options.findIndex(item => String(item.coin || "").toUpperCase() === selectedDepositCoin);
+  if (selectedIndex >= 0) select.value = String(selectedIndex);
+  const setOption = () => {
         const item = options[Number(select.value)] || options[0];  
         const address = item?.address || "";  
         $("depositAddress").value = address || "Deposit address is not configured";  
@@ -1623,9 +1655,12 @@ async function openCash(kind){
 }  
   
   function updateDepositSummary() {
-    const amount = Number($("depositAmount")?.value || 0);
-    const value = amount > 0 ? `${amount.toFixed(2)} USDT` : "— USDT";
-    $("depositTotalPrice").textContent = value;
+  const amount = Number($("depositAmount")?.value || 0);
+  const price = liveCoinPrices[selectedDepositCoin] || 1;
+  const quantity = amount > 0 ? (amount / price).toFixed(selectedDepositCoin === "USDT" ? 2 : 8) : "—";
+  if ($("depositQuantity")) $("depositQuantity").value = quantity;
+  const value = amount > 0 ? `${amount.toFixed(2)} USDT` : "— USDT";
+  $("depositTotalPrice").textContent = value;
     $("depositSubtotal").textContent = value;
     $("depositAmountDue").textContent = value;
   }
@@ -2563,9 +2598,11 @@ function init(){
       const percent = button.dataset.percent === "max" ? 100 : Number(button.dataset.percent);  
       const amount = Math.floor((available * percent / 100) * 100) / 100;  
       $("withdrawAmount").value = amount >= 500 ? amount.toFixed(2) : "";  
-      $("withdrawUsdtPreview").textContent = amount >= 500 ? `${(amount / 100).toFixed(2)} USDT` : "Minimum 5.00 USDT";  
+      $("withdrawUsdtPreview").textContent = amount >= 500 ? `${(amount * 0.9 / 100).toFixed(2)} USDT after 10% fee` : "Minimum 5.00 USDT";
     });  
   });  
+  $("copyDepositQuantity").onclick = async () => { try { await navigator.clipboard.writeText($("depositQuantity").value); toast("Quantity copied"); } catch (_) {} };
+  $("depositAmount").addEventListener("input", updateDepositSummary);
   $("copyDepositAddress").onclick = async () => {  
     const value = $("depositAddress").value;  
     if(value && await copyText(value)) toast("Deposit address copied.");  
