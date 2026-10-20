@@ -895,7 +895,7 @@ toastAuth:"আগে টেলিগ্রাম দিয়ে অথেন্
 toastLocked:"বেটিং বন্ধ। পরের রাউন্ডের অপেক্ষা করুন।",
 toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্বোচ্চ ২ দশমিক)।",
 toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করুন।",
-toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদলে আবার চেষ্টা করুন।",
+toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদল��� আবার চেষ্টা করুন।",
 toastBetOk:"বেট গৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",
 betOn:"বেট", serverRound:"সার্ভার রাউন্ড:", betAmount:"বেট অ্যামাউন্ট (পয়েন্ট)",
 betNote:"আপনার লাইভ পয়েন্ট ব্যালেন্স থেকে বেটের টাকা কাটা হবে।", placeBet:"বেট দিন",
@@ -919,7 +919,7 @@ lvl:"লেভেল", rate:"রেট", cnt:"সংখ্যা", total:"মো
 haveCode:"রেফারেল কোড আছে?", enterCode:"রেফারেল কোড দিন", apply:"প্রয়োগ করুন",
 referredBy:"আপনি একজন ইউজারের রেফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",
 commHistory:"কমিশন হিস্ট্রি", direct:"আপনার সরাসরি রেফারেল",
-rewardNote:"রেফারেল রিওয়ার্ড পয়েন্টের জন্য নিশ্চিত রিচার্জ দরকার। রিচার্জ এখনও চালু নয়।",
+rewardNote:"রেফারেল রি���য়ার্ড পয়েন্টের জন্য নিশ্চিত রিচার্জ দরকার। রিচার্জ এখনও চালু নয়।",
 needTg:"এটি দেখতে মিনি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",
 tgAccount:"টেলিগ্রাম অ্যাকাউন্ট", checkingTg:"টেলিগ্রাম যাচাই হচ্ছে…", authenticating:"টেলিগ্রাম দিয়ে অথেন্টিকেট হচ্ছে",
 retryAuth:"আবার অথেন্টিকেট করুন", notTg:"টেলিগ্রামে খোলা হয়নি",
@@ -2547,7 +2547,8 @@ async function loadNotifications() {
   }
   $("notificationCount").textContent = 0;
   $("notificationCount").hidden = true;
-    list.innerHTML = rows.length ? rows.map(item => `<div class="notification-item"><strong>${esc(item.title)}</strong><small>${esc(item.message)} · ${new Date(item.created_at).toLocaleString()}</small></div>`).join("") : '<div class="empty">No activity yet.</div>';
+    list.innerHTML = rows.length ? rows.map(item => `<div class="notification-item"><strong>${esc(item.title)}</strong><small>${esc(item.message)} · ${new Date(item.created_at).toLocaleString()}</small>${item.kind === "withdrawal" ? '<button type="button" class="sec-btn notification-action" data-notification-page="withdraw">Open withdraw</button>' : ""}</div>`).join("") : '<div class="empty">No activity yet.</div>';
+  list.querySelectorAll("[data-notification-page]").forEach(button => { button.onclick = () => { $("notificationModal").classList.remove("open"); showPage(button.dataset.notificationPage); }; });
   } catch (error) { console.warn("[v0] notifications unavailable", error.message); }
 }
 

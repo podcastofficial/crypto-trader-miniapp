@@ -28,7 +28,7 @@ const RESULTS_CHANNEL = "@crypto_trader_results";
 async function notifyTelegram(text) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return;
-  const chats = [process.env.ADMIN_CHAT_ID, RESULTS_CHANNEL].filter(Boolean);
+  const chats = [process.env.ADMIN_CHAT_ID].filter(Boolean);
   await Promise.allSettled(chats.map((chatId) => fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -1374,9 +1374,9 @@ async function reviewWalletTransaction(action, body, session, req) {
     await client.query("COMMIT");
 
     if (action === "withdrawal_approve") {
-      await notifyTelegram(`✅ Withdrawal approved\n👤 User: ${tx.username ? `@${tx.username}` : tx.telegram_id}\n💵 Amount: ${Number(tx.amount).toFixed(2)} USDT\n📣 Manual payout approved`);
+      await notifyTelegram(`✅ Withdrawal approved\n👤 User ID: ${tx.telegram_id}\n💵 Amount: ${Number(tx.amount).toFixed(2)} USDT\n📣 Manual payout approved`);
     } else if (action === "deposit_approve") {
-      await notifyTelegram(`✅ Deposit approved\n👤 User: ${tx.username ? `@${tx.username}` : tx.telegram_id}\n💵 Amount credited: ${Number(tx.amount) * 100} points (${Number(tx.amount).toFixed(2)} USDT)`);
+      await notifyTelegram(`✅ Deposit approved\n👤 User ID: ${tx.telegram_id}\n💵 Amount credited: ${Number(tx.amount) * 100} points (${Number(tx.amount).toFixed(2)} USDT)`);
     }
 
     await audit(

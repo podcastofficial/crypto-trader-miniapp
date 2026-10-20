@@ -17,7 +17,7 @@ const MIN_WITHDRAW_POINTS = 500;
 const ROUND_LOCK_KEY = 739184205; // same lock key as api/cron.js
 const RESULTS_CHANNEL = "@crypto_trader_results";
 
-async function notifyTelegram(text, chats = [process.env.ADMIN_CHAT_ID, RESULTS_CHANNEL]) {
+async function notifyTelegram(text, chats = [process.env.ADMIN_CHAT_ID]) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return;
   await Promise.allSettled(chats.filter(Boolean).map((chatId) => fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -213,13 +213,15 @@ function verifyTelegramInitData(initData) {
 }
 
 async function getUser(client, telegramUser) {
+  await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS first_name TEXT`);
+  await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS last_name TEXT`);
   const result = await client.query(
-    `INSERT INTO public.users (telegram_id, username)
-     VALUES ($1, $2)
-     ON CONFLICT (telegram_id)
-     DO UPDATE SET username = EXCLUDED.username
-     RETURNING id, telegram_id, username, referral_code, referred_by, (xmax = 0) AS is_new`,
-    [String(telegramUser.id), telegramUser.username || null]
+    `INSERT INTO public.users (telegram_id, username, first_name, last_name)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (telegram_id)
+       DO UPDATE SET username = EXCLUDED.username, first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name
+       RETURNING id, telegram_id, username, first_name, last_name, referral_code, referred_by, (xmax = 0) AS is_new`,
+    [String(telegramUser.id), telegramUser.username || null, telegramUser.first_name || null, telegramUser.last_name || null]
   );
 
   const user = result.rows[0];
@@ -842,7 +844,8 @@ module.exports = async function handler(req, res) {
       );
       
       await client.query("COMMIT"); transactionStarted = false;
-      await notifyTelegram(`📤 Withdrawal requested\n👤 User ID: ${user.telegram_id}\n💵 Gross: ${(amount / POINTS_PER_USDT).toFixed(2)} USDT\n💸 Fee: 10%\n✅ Net: ${netAmountUsdt} USDT\n🏦 Wallet: ${destination}\n⏳ Status: Pending approval`);
+      const displayName = [user.first_name, user.last_name].filter(Boolean).join(" ") || "User";
+  await notifyTelegram(`📤 Withdrawal requested\n👤 Name: ${displayName}\n💵 Gross: ${(amount / POINTS_PER_USDT).toFixed(2)} USDT\n💸 Fee: 10%\n✅ Net: ${netAmountUsdt} USDT\n🏦 Wallet: ${destination}\n⏳ Status: Pending approval`, [process.env.ADMIN_CHAT_ID, RESULTS_CHANNEL]);
       
       return json(res, 200, { success: true, withdrawal: tx.rows[0], balance: result.rows[0].balance });
     }
