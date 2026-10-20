@@ -49,24 +49,25 @@ function pageParams(input = {}) {
 // Makes sure the current round and a few future rounds exist,
 // so the game never depends on the cron timing.
 // Safe to run many times: unique round_code + advisory lock.
-  async function ensureRounds(client) {
+async function ensureRounds(client) {
   try {
-  await client.query(`CREATE TABLE IF NOT EXISTS public.game_rounds (
-    id BIGSERIAL PRIMARY KEY,
-    round_code TEXT UNIQUE NOT NULL,
-    status TEXT NOT NULL DEFAULT 'open',
-    starts_at TIMESTAMPTZ NOT NULL,
-    betting_closes_at TIMESTAMPTZ NOT NULL,
-    ends_at TIMESTAMPTZ NOT NULL,
-    result_number INTEGER,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    settled_at TIMESTAMPTZ
-  )`);
-  await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS betting_closes_at TIMESTAMPTZ`);
-  await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS result_number INTEGER`);
-  await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
-  await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS settled_at TIMESTAMPTZ`);
-  const check = await client.query(`
+    await client.query(`CREATE TABLE IF NOT EXISTS public.game_rounds (
+      id BIGSERIAL PRIMARY KEY,
+      round_code TEXT UNIQUE NOT NULL,
+      status TEXT NOT NULL DEFAULT 'open',
+      starts_at TIMESTAMPTZ NOT NULL,
+      betting_closes_at TIMESTAMPTZ NOT NULL,
+      ends_at TIMESTAMPTZ NOT NULL,
+      result_number INTEGER,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      settled_at TIMESTAMPTZ
+    )`);
+    await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS betting_closes_at TIMESTAMPTZ`);
+    await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS result_number INTEGER`);
+    await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
+    await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS settled_at TIMESTAMPTZ`);
+    
+    const check = await client.query(`
       SELECT
         EXISTS (
           SELECT 1 FROM public.game_rounds
@@ -540,8 +541,6 @@ module.exports = async function handler(req, res) {
     try {
       client = await pool.connect();
 
-      // Rounds must exist and finished rounds must be settled
-      // before we answer, so players never wait for cron.
       await ensureRounds(client);
       await settleDueRounds(client);
 
@@ -549,7 +548,6 @@ module.exports = async function handler(req, res) {
         "SELECT NOW() AS server_time"
       );
 
-      // Only expose results after the round's scheduled end time.
       const countResult = await client.query(
         `SELECT COUNT(*)::int AS total
          FROM public.game_rounds
@@ -693,7 +691,6 @@ module.exports = async function handler(req, res) {
         [user.id]
       );
 
-      // Hide the result and settlement information until the round ends.
       const result = await client.query(
         `SELECT
            b.id,
@@ -781,45 +778,57 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === "submit_deposit") {
-      const txHash = String(body.tx_hash || "").trim().toLowerCase();
+      const txHash = String(body.tx_hash || "").trim();
       const amountText = String(body.amount_usdt || "").trim();
       const amount = Number(amountText);
-      const network = String(body.network || "BSC BEP-20").trim().slice(0, 80);
-  if (network !== "BSC BEP-20") return json(res, 400, { success: false, message: "Only BSC BEP-20 USDT deposits are supported." });
-      if (!/^0x[a-f0-9]{64}$/.test(txHash)) {
+      const network = String(body.network || "Unknown Network").trim().slice(0, 80);
+      
+      // FIX 1: Removed the BEP-20 only restriction
+      
+      // FIX 2: Relaxed transaction hash validation for TRON/other networks
+      if (txHash.length < 20) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 400, { success: false, message: "Enter a valid transaction hash." });
       }
+      
       if (!Number.isFinite(amount) || amount < 1 || amount > 1000000) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 400, { success: false, message: "Minimum deposit is 1 USDT." });
       }
+      
       const existing = await client.query(`SELECT id,status FROM public.transactions WHERE LOWER(tx_hash)=LOWER($1) LIMIT 1`, [txHash]);
       if (existing.rowCount) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 409, { success: false, message: "This transaction hash has already been submitted." });
       }
+      
       const submitted = await client.query(`INSERT INTO public.transactions (user_id,transaction_type,amount,status,network,tx_hash,created_at,updated_at) VALUES ($1,'deposit',$2::numeric,'pending',$3,$4,NOW(),NOW()) RETURNING id,amount,status,network,tx_hash,created_at`, [user.id, amount.toFixed(6), network, txHash]);
+      
       await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'deposit','Deposit submitted',$2)`, [user.id, `Transaction submitted for admin approval. Balance will be credited only after approval.`]).catch(() => {});
-  await client.query("COMMIT"); transactionStarted = false;
-  await notifyTelegram(`💰 Deposit submitted\n👤 User ID: ${user.telegram_id}\n🔗 TX: ${txHash}\n🌐 Network: ${network}\n⏳ Status: Pending verification`);
-  return json(res, 200, { success: true, deposit: submitted.rows[0], message: "Submitted for admin approval. Credit will be added only after verification." });
+      
+      await client.query("COMMIT"); transactionStarted = false;
+      await notifyTelegram(`💰 Deposit submitted\n👤 User ID: ${user.telegram_id}\n🔗 TX: ${txHash}\n🌐 Network: ${network}\n⏳ Status: Pending verification`);
+      
+      return json(res, 200, { success: true, deposit: submitted.rows[0], message: "Submitted for admin approval. Credit will be added only after verification." });
     }
 
     if (action === "request_withdrawal") {
       const amountText = String(body.amount || "").trim();
       const amount = Number(amountText);
-      const destination = String(body.destination_address || "").trim().toLowerCase();
+      const destination = String(body.destination_address || "").trim();
       const withdrawalFeeRate = 0.10;
-      const netAmount = Math.floor(amount * (1 - withdrawalFeeRate) * 100) / 100;
+      
       if (!/^\d{1,18}(\.\d{1,2})?$/.test(amountText) || !Number.isFinite(amount) || amount < MIN_WITHDRAW_POINTS) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 400, { success: false, message: "Minimum withdrawal is 500 points (5 USDT)." });
       }
-      if (!/^0x[a-f0-9]{40}$/.test(destination)) {
+      
+      // FIX 3: Relaxed destination address validation for TRON/other networks
+      if (destination.length < 20) {
         await client.query("ROLLBACK"); transactionStarted = false;
-        return json(res, 400, { success: false, message: "Enter a valid BSC wallet address." });
+        return json(res, 400, { success: false, message: "Enter a valid wallet address." });
       }
+      
       const result = await client.query(
         `UPDATE public.wallet_balances
          SET balance = balance - $1::numeric, updated_at = NOW()
@@ -830,16 +839,23 @@ module.exports = async function handler(req, res) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 400, { success: false, message: "Insufficient available balance." });
       }
+      
+      // FIX 4: Convert Points to USDT before saving to database!
+      const netPoints = Math.floor(amount * (1 - withdrawalFeeRate) * 100) / 100;
+      const netAmountUsdt = (netPoints / POINTS_PER_USDT).toFixed(6);
+      
       const tx = await client.query(
         `INSERT INTO public.transactions
           (user_id, transaction_type, amount, status, network, destination_address, created_at, updated_at)
          VALUES ($1, 'withdrawal', $2, 'pending', 'BSC', $3, NOW(), NOW())
          RETURNING id, amount, status, destination_address, created_at`,
-        [user.id, netAmount.toFixed(2), destination]
+        [user.id, netAmountUsdt, destination]
       );
-  await client.query("COMMIT"); transactionStarted = false;
-  await notifyTelegram(`📤 Withdrawal requested\n👤 User ID: ${user.telegram_id}\n💵 Gross: ${(amount / POINTS_PER_USDT).toFixed(2)} USDT\n💸 Fee: 10%\n✅ Net: ${(netAmount / POINTS_PER_USDT).toFixed(2)} USDT (${netAmount.toFixed(2)} points)\n🏦 Wallet: ${destination}\n⏳ Status: Pending approval`);
-  return json(res, 200, { success: true, withdrawal: tx.rows[0], balance: result.rows[0].balance });
+      
+      await client.query("COMMIT"); transactionStarted = false;
+      await notifyTelegram(`📤 Withdrawal requested\n👤 User ID: ${user.telegram_id}\n💵 Gross: ${(amount / POINTS_PER_USDT).toFixed(2)} USDT\n💸 Fee: 10%\n✅ Net: ${netAmountUsdt} USDT\n🏦 Wallet: ${destination}\n⏳ Status: Pending approval`);
+      
+      return json(res, 200, { success: true, withdrawal: tx.rows[0], balance: result.rows[0].balance });
     }
 
     if (action === "wallet_history") {
