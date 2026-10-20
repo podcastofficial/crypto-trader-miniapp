@@ -809,6 +809,8 @@ module.exports = async function handler(req, res) {
       const amountText = String(body.amount || "").trim();
       const amount = Number(amountText);
       const destination = String(body.destination_address || "").trim().toLowerCase();
+      const withdrawalFeeRate = 0.10;
+      const netAmount = Math.floor(amount * (1 - withdrawalFeeRate) * 100) / 100;
       if (!/^\d{1,18}(\.\d{1,2})?$/.test(amountText) || !Number.isFinite(amount) || amount < MIN_WITHDRAW_POINTS) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 400, { success: false, message: "Minimum withdrawal is 500 points (5 USDT)." });
@@ -832,10 +834,10 @@ module.exports = async function handler(req, res) {
           (user_id, transaction_type, amount, status, network, destination_address, created_at, updated_at)
          VALUES ($1, 'withdrawal', $2, 'pending', 'BSC', $3, NOW(), NOW())
          RETURNING id, amount, status, destination_address, created_at`,
-        [user.id, amount.toFixed(2), destination]
+        [user.id, netAmount.toFixed(2), destination]
       );
   await client.query("COMMIT"); transactionStarted = false;
-  await notifyTelegram(`📤 Withdrawal requested\n👤 User ID: ${user.telegram_id}\n💵 Amount: ${(amount / POINTS_PER_USDT).toFixed(2)} USDT (${amount.toFixed(2)} points)\n🏦 Wallet: ${destination}\n⏳ Status: Pending approval`);
+  await notifyTelegram(`📤 Withdrawal requested\n👤 User ID: ${user.telegram_id}\n💵 Gross: ${(amount / POINTS_PER_USDT).toFixed(2)} USDT\n💸 Fee: 10%\n✅ Net: ${(netAmount / POINTS_PER_USDT).toFixed(2)} USDT (${netAmount.toFixed(2)} points)\n🏦 Wallet: ${destination}\n⏳ Status: Pending approval`);
   return json(res, 200, { success: true, withdrawal: tx.rows[0], balance: result.rows[0].balance });
     }
 
