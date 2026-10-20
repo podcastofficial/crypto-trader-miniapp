@@ -324,7 +324,18 @@ label { font-weight:800; font-size:12px; }
 .deposit-submit-card .row { gap:10px; }
 .deposit-submit-card input { margin-bottom:8px; }
 .deposit-submit-card #depositTimer { color:#facc15; font-variant-numeric:tabular-nums; }
-  .deposit-chooser { min-height:calc(100svh - 190px); display:flex; flex-direction:column; justify-content:center; }
+  .deposit-chooser { min-height:calc(100svh - 190px); display:flex; flex-direction:column; justify-content:flex-start; }
+  .deposit-flow-mount { width:100%; }
+  .deposit-flow-mount .checkout-topbar { display:flex; margin-bottom:14px; }
+  .deposit-flow-mount .checkout-security { margin-top:0; }
+  .deposit-flow-mount .deposit-submit-card { margin-bottom:0; }
+  .deposit-flow-mount #cashDepositFields { display:block !important; }
+  .deposit-flow-mount .checkout-paying { display:flex; justify-content:space-between; align-items:center; font-size:24px; font-weight:700; padding:14px 0; }
+  .deposit-flow-mount .checkout-summary { display:grid; gap:12px; margin-top:16px; }
+  .deposit-flow-mount .checkout-summary > div { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+  .deposit-flow-mount .checkout-summary .copybox { display:flex; flex:1; max-width:62%; }
+  .deposit-flow-mount .checkout-summary input { width:100%; min-width:0; }
+  .deposit-flow-mount select { width:100%; min-height:52px; font-size:16px; border:1px solid #d9d9de; border-radius:14px; padding:0 14px; background:#fff; color:#25262a; }
   #depositInlineFields { width:100%; margin-top:16px; }
   #depositInlineFields #depositTimer, #depositInlineFields .checkout-topbar, #depositInlineFields .checkout-security { display:none !important; }
   #depositInlineFields .checkout-paying { margin-top:0; }
@@ -496,10 +507,7 @@ label { font-weight:800; font-size:12px; }
   <div class="section">
     <div class="section-title">⬇ <span data-i18n="deposit">Deposit</span></div>
 <div class="card deposit-page-card deposit-chooser">
-  <div class="section-title">Select coin and network</div>
-  <label for="depositOption">Coin and network</label>
-  <select id="depositOption" aria-label="Select deposit coin and network"></select>
-  <div class="notice">Only send the selected coin on the selected network. Minimum deposit is 1 USDT.</div>
+  <div id="depositFlowMount" class="deposit-flow-mount"></div>
   </div>
     <div class="card"><div class="section-title">Deposit History</div><div id="depositHistoryList"><div class="empty" data-i18n="loading">Loading…</div></div></div>
   </div>
@@ -792,7 +800,7 @@ dBet:"बेट", dStake:"बेट अमाउंट", dFee:"फीस", dActu
 dResult:"रिज़ल्ट", dTime:"समय", waiting:"इंतज़ार", bkFee:"फीस ({pct}%)",  
 bt_Number:"नंबर", bt_Red:"लाल", bt_Green:"हरा", bt_Violet:"बैंगनी", bt_Big:"बड़ा", bt_Small:"छोटा",  
 stConnecting:"कनेक्ट हो रहा है", stSyncing:"सिंक हो रहा है", stOpen:"बेटिंग खुली है", stLocked:"बेटिंग बंद है",  
-stError:"बैकएंड एरर", stTelegram:"टेलीग्राम ज़रूरी", stAuth:"ऑथ ज़रूरी",  
+stError:"���ैकएंड एरर", stTelegram:"टेलीग्राम ज़रूरी", stAuth:"ऑथ ज़रूरी",
 nConnecting:"बैकएंड से कनेक्ट हो रहा है…",  
 nConnected:"बैकएंड से जुड़ गया। हर राउंड खत्म होने से 30 सेकंड पहले बेटिंग बंद हो जाती है।",  
 nUnavailable:"बैकएंड उपलब्ध नहीं: {msg}",  
@@ -874,7 +882,7 @@ rTitle:"রাউন্ড রেজাল্ট", rPeriod:"পিরিয়�
 rContinue:"চালিয়ে যান", cRedV:"লাল + বেগুনি", cGreenV:"সবুজ + বেগুনি", cRed:"লাল", cGreen:"সবুজ",  
 sBig:"বড় (5–9)", sSmall:"ছোট (0–4)",  
 bannerResult:"রেজাল্ট {period}: {n} · {colour} · {size}",  
-testBalance:"লাইভ পয়েন্ট ব্যালেন্স", deposit:"ডিপোজিট", withdraw:"উইথড্র",  
+testBalance:"লাইভ পয়েন্ট ব্যালেন্স", deposit:"ডিপ��জিট", withdraw:"উইথড্র",
 txTitle:"ল��ন��েন",  
 tx_deposit:"ডিপোজিট", tx_withdrawal:"উইথড্র", tx_bet:"বেট", tx_payout:"পেআউট", tx_refund:"রিফান্ড",  
 s_completed:"সম্পন্ন", s_confirmed:"নিশ্চিত", s_pending:"পেন্ডিং", s_rejected:"প্রত্যাখ্যাত", s_failed:"ব্যর্থ",  
@@ -1570,9 +1578,14 @@ let selectedDepositCoin = "USDT";
   updateDepositSummary();
   } catch (_) { document.querySelectorAll("[data-live-price]").forEach(el => { if (el.textContent === "—") el.textContent = "Price unavailable"; }); }
   }
-  document.querySelectorAll("#depositCoinPicker [data-coin]").forEach(button => button.addEventListener("click", () => { selectedDepositCoin = button.dataset.coin; document.querySelectorAll("#depositCoinPicker [data-coin]").forEach(item => item.classList.toggle("active", item === button)); updateDepositSummary(); }));
   refreshDepositPrices();
   async function openCash(kind){
+  if (kind === "deposit") {
+    const mount = $("depositFlowMount");
+    const fields = $("cashDepositFields");
+    if (mount && fields && fields.parentElement !== mount) mount.appendChild(fields);
+    fields.style.display = "block";
+  }
 
   $("cashTitle").textContent = (kind === "deposit" ? "⬇ " : "⬆ ") + t(kind === "deposit" ? "deposit" : "withdraw");  
   $("cashDepositFields").style.display = kind === "deposit" ? "block" : "none";
@@ -2545,9 +2558,9 @@ function init(){
   };
   $("confirmBet").onclick = confirmBet;
   $("resultPopupClose").onclick = closeResultPopup;  
-  $("depositBtn").onclick = () => showPage("deposit");
+  $("depositBtn").onclick = () => { showPage("deposit"); openCash("deposit"); };
   $("withdrawBtn").onclick = () => showPage("withdraw");
-  $("homeDepositBtn").onclick = () => showPage("deposit");
+  $("homeDepositBtn").onclick = () => { showPage("deposit"); openCash("deposit"); };
   $("homeWithdrawBtn").onclick = () => showPage("withdraw");
   document.querySelectorAll("[data-open-cash]").forEach(button => { button.onclick = () => openCash(button.dataset.openCash); });
   $("depositAmount").addEventListener("input", updateDepositSummary);
