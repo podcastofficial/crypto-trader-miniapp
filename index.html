@@ -495,15 +495,11 @@ label { font-weight:800; font-size:12px; }
 <section class="page" id="page-deposit">
   <div class="section">
     <div class="section-title">⬇ <span data-i18n="deposit">Deposit</span></div>
-  <div class="card deposit-page-card deposit-chooser">
-  <div class="section-title">Choose coin</div>
-<div class="coin-grid" id="depositCoinPicker">
-  <button class="coin-choice active" type="button" data-coin="USDT"><span class="coin-badge usdt">₮</span><span><strong>USDT</strong><small>Supported asset</small></span></button>
-  </div>
-  <div class="section-title chooser-subtitle">Choose network</div>
-  <div class="network-grid" id="depositNetworkPicker"><button class="network-choice active" type="button" data-network="BSC BEP-20"><span class="network-icon">◎</span><span><strong>BSC</strong> BNB Smart Chain (BEP20)<small>Minimum deposit 1 USDT · Est. arrival 1 min</small></span><b>›</b></button></div>
-  <div class="notice">Only send USDT on BSC (BEP20). Deposits are credited after blockchain verification.</div>
-  <div id="depositInlineFields"></div>
+<div class="card deposit-page-card deposit-chooser">
+  <div class="section-title">Select coin and network</div>
+  <label for="depositOption">Coin and network</label>
+  <select id="depositOption" aria-label="Select deposit coin and network"></select>
+  <div class="notice">Only send the selected coin on the selected network. Minimum deposit is 1 USDT.</div>
   </div>
     <div class="card"><div class="section-title">Deposit History</div><div id="depositHistoryList"><div class="empty" data-i18n="loading">Loading…</div></div></div>
   </div>
@@ -635,8 +631,6 @@ label { font-weight:800; font-size:12px; }
   <div id="cashDepositFields" style="display:none">
   <div class="checkout-security">Only send the exact amount on the selected blockchain. Payment is verified on-chain before points are credited.</div>
   <div class="checkout-paying"><span>Paying With</span><span><img id="depositAssetLogo" class="checkout-coin-logo" alt="Selected cryptocurrency logo" src="https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/usdt.png"><strong id="depositAssetName">USDT</strong></span></div>
-  <label for="depositOption">Coin and network</label>
-  <select id="depositOption"></select>
   <div class="deposit-address-panel">
   <div class="muted small" id="depositNetworkHint">Deposit address</div>
   <div class="copybox"><input id="depositAddress" readonly placeholder="Loading address..."><button class="sec-btn" id="copyDepositAddress" type="button">Copy</button></div>
@@ -1579,13 +1573,7 @@ let selectedDepositCoin = "USDT";
   document.querySelectorAll("#depositCoinPicker [data-coin]").forEach(button => button.addEventListener("click", () => { selectedDepositCoin = button.dataset.coin; document.querySelectorAll("#depositCoinPicker [data-coin]").forEach(item => item.classList.toggle("active", item === button)); updateDepositSummary(); }));
   refreshDepositPrices();
   async function openCash(kind){
-  if (kind === "deposit") {
-    const inline = $("depositInlineFields");
-    const fields = $("cashDepositFields");
-    if (inline && fields && fields.parentElement !== inline) inline.appendChild(fields);
-    fields.style.display = "block";
-    $("cashModal").classList.remove("open");
-  }
+
   $("cashTitle").textContent = (kind === "deposit" ? "⬇ " : "⬆ ") + t(kind === "deposit" ? "deposit" : "withdraw");  
   $("cashDepositFields").style.display = kind === "deposit" ? "block" : "none";
   $("cashWithdrawFields").style.display = kind === "withdraw" ? "block" : "none";
@@ -2557,9 +2545,9 @@ function init(){
   };
   $("confirmBet").onclick = confirmBet;
   $("resultPopupClose").onclick = closeResultPopup;  
-  $("depositBtn").onclick = () => { showPage("deposit"); openCash("deposit"); };
+  $("depositBtn").onclick = () => showPage("deposit");
   $("withdrawBtn").onclick = () => showPage("withdraw");
-  $("homeDepositBtn").onclick = () => { showPage("deposit"); openCash("deposit"); };
+  $("homeDepositBtn").onclick = () => showPage("deposit");
   $("homeWithdrawBtn").onclick = () => showPage("withdraw");
   document.querySelectorAll("[data-open-cash]").forEach(button => { button.onclick = () => openCash(button.dataset.openCash); });
   $("depositAmount").addEventListener("input", updateDepositSummary);
