@@ -834,7 +834,7 @@ toastBetOk:"बेट स्वीकार हुई।", copied:"कॉपी 
 betOn:"बेट", serverRound:"सर्वर राउंड:", betAmount:"���ेट अमाउंट (पॉइंट)",
 betNote:"आपके लाइव पॉइंट्स से बेट की राशि कटेगी।", placeBet:"बेट लगाएँ",
 rTitle:"राउंड रिज़ल्ट", rPeriod:"पीरियड", rNote:"रिज़ल्ट गेम सर्वर से मिला है।",
-rContinue:"जा��ी रखे���", cRedV:"लाल + बैंगनी", cGreenV:"हरा + बैंगनी", cRed:"लाल", cGreen:"हरा",
+rContinue:"जा��ी रखे�����", cRedV:"लाल + बैंगनी", cGreenV:"हरा + बैंगनी", cRed:"लाल", cGreen:"हरा",
 sBig:"बड़ा (5–9)", sSmall:"छोटा (0–4)",
 bannerResult:"रिज़ल्ट {period}: {n} · {colour} · {size}",
 testBalance:"लाइव वॉलेट बैलेंस", deposit:"डिपॉज़िट", withdraw:"विदड्रॉ",
@@ -892,7 +892,7 @@ nUnavailable:"ব্যাকএন্ড পাওয়া যাচ্ছে 
 loadingRound:"সার্ভার রাউন্ড লোড হচ্ছে…",
 toastAuth:"আগে টেলিগ্রাম দিয়ে অথেন্টিকেট করুন।",
 toastLocked:"বেটিং বন্ধ। পরের রাউন্ডের অপেক্ষা করুন।",
-toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্���োচ���চ ২ দশমিক)।",
+toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্������চ���চ ২ দশমিক)।",
 toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করুন।",
 toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদল������� আবার চেষ্টা করুন।",
 toastBetOk:"বেট গৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",
@@ -1922,7 +1922,7 @@ Object.assign(I18N.hi,{
   mTitle:"आपके रेफरल", m_all:"सभी", m_active:"एक्टिव", m_inactive:"इनएक्टिव",
   mActive:"एक्टिव", mInactive:"इनएक्टिव", mPending:"पेंडिंग", mReceived:"मिला",
   mJoined:"जुड़े", mLastPlayed:"आखिरी बार खेला", mNever:"कभी नहीं खेला",
-  mNoName:"यूज़रनेम नहीं", mSumActive:"एक्टिव रेफरल", mSumInactive:"इनएक्टिव रेफरल",
+  mNoName:"यूज़रनेम नहीं", mSumActive:"��क्टिव रेफरल", mSumInactive:"इनएक्टिव रेफरल",
   mSumPending:"पेंडिंग रिवॉर्ड", mSumReceived:"मिला हुआ रिवॉर्ड",
   mActiveNote:"एक्टिव = पिछले 7 दिन में कम से कम एक बेट लगाई।",
   mNoReward:"रिवॉर्ड रिकॉर्ड नहीं", mCreditedOn:"मिलने की तारीख"
@@ -2524,10 +2524,11 @@ function openLangModal(){
   $("langModal").classList.add("open");
 }
 
-function renderCurrentLang(){
+  function renderCurrentLang(){
   const meta = LANGS.find(l => l.code === lang) || LANGS[0];
-  $("curLangName").textContent = meta ? `${meta.name} (${meta.en})` : "English";
-}
+  const currentLanguage = $("curLangName");
+  if(currentLanguage) currentLanguage.textContent = meta ? `${meta.name} (${meta.en})` : "English";
+  }
 
 function rerender(){
   applyStatic();
