@@ -1,2864 +1,774 @@
-<!DOCTYPE html>  <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b0b0c">
-<title>Crypto Trader Pro</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="/languages.js" onerror="void 0"></script>
-  <style>
-:root {
-  --bg:#0b0b0c; --card:#151516; --text:#f5f5f5; --muted:#a1a1aa;
-  --border:#29292c; --primary:#facc15; --green:#22c55e; --red:#ef3038; --violet:#a855f7;
-}
-* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html,body {
-  margin:0; min-height:100%; background:#0b0b0c; color:var(--text);
-  color-scheme:dark; font:14px Arial,Helvetica,sans-serif;
-}
-body { background:radial-gradient(ellipse at top,#19171b 0,#0b0b0c 46%); }
-button,input,select { font:inherit; }
-button { border:0; cursor:pointer; }
-button:disabled { opacity:.45; cursor:not-allowed; }
-button.busy { opacity:.6; pointer-events:none; }
-
-.app {
-  max-width:600px; margin:auto; min-height:100vh;
-  padding-bottom:calc(100px + env(safe-area-inset-bottom));
-}
-header {
-  background:#141415; border-bottom:1px solid #29292c; color:#f5f5f5;
-  padding:15px 16px; display:flex; align-items:center;
-  justify-content:space-between; gap:10px;
-}
-.brand { font-size:18px; font-weight:900; letter-spacing:-.3px; }
-.brand span { color:#facc15; }
-.head-btns { display:flex; gap:8px; }
-  .header-symbol { display:inline-block; color:#facc15; filter:saturate(1.25); }
-  .icon-btn { border:1px solid #3f3f46; background:linear-gradient(145deg,#292929,#202023); box-shadow:0 4px 12px #0005; color:#facc15; }
-  .icon-btn {
-  background:#29292c; color:#facc15; border:1px solid #3a3830;
-  border-radius:11px; padding:10px;
-}
-.page { display:none; color:#f5f5f5; }
-.page.active { display:block; }
-.section { padding:0 14px; margin-bottom:15px; }
-.section-title { font-size:17px; font-weight:900; margin:7px 0 13px; color:#fafafa; }
-.card, .timer-card {
-  background:#151516; border:1px solid #303034; border-radius:16px;
-  padding:16px; margin-bottom:13px; box-shadow:0 8px 24px #0005;
-  color:#f5f5f5; overflow-wrap:anywhere;
-}
-.muted, .period, .utc-time { color:#a1a1aa; }
-.small { font-size:12px; }
-.row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-
-/* WALLET CARD */
-.balance-card {
-  margin:15px; padding:21px; border-radius:19px;
-  background:linear-gradient(135deg,#191919,#242018);
-  border:1px solid #4a3e18; box-shadow:0 8px 28px #0006; color:#fff;
-}
-.balance-label { color:#d4d4d8; font-size:12px; }
-.balance-value { color:#facc15; font-size:27px; font-weight:900; margin:9px 0; overflow-wrap:anywhere; }
-.balance-sub { color:#bdbdc3; font-size:12px; }
-  .actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:16px; }
-  .refresh-corner-btn { border:1px solid #806b16; border-radius:12px; background:#292929; color:#facc15; padding:7px 9px; font-weight:800; line-height:1; }
-  .refresh-corner-btn small { display:block; font-size:9px; margin-top:3px; color:#f4f4f5; }
-  .rules-corner-btn { border:1px solid #806b16; border-radius:999px; background:#2b2614; color:#facc15; padding:5px 10px; font-size:11px; font-weight:800; }
-  .rules-modal p { color:#d4d4d8; line-height:1.55; font-size:14px; }
-  .payout-example { background:#211f16; border:1px solid #665519; border-radius:12px; padding:13px; line-height:1.85; color:#facc15; }
-  .wallet-actions { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) 48px; gap:10px; margin-top:16px; align-items:stretch; }
-  .deposit-action { background:#16a34a; border-color:#15803d; color:#fff; }
-  .withdraw-action { background:#dc2626; border-color:#b91c1c; color:#fff; }
-  .refresh-icon-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; border:1px solid #555; border-radius:11px; background:#292929; color:#facc15; font-size:22px; font-weight:900; cursor:pointer; }
-  .refresh-icon-btn small { font-size:8px; line-height:1; color:#d4d4d8; font-weight:700; }
-  .usdt-value { color:#22c55e; font-weight:900; }
-  .profile-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px; }
-  .profile-stats div { border:1px solid #333; border-radius:12px; padding:10px 8px; background:#1d1d1f; }
-  .profile-stats span { display:block; color:#a1a1aa; font-size:10px; }
-  .profile-stats strong { display:block; color:#facc15; font-size:13px; margin-top:4px; }
-  .faq-card { margin-top:14px; }
-  .faq-card p { color:#bdbdc3; font-size:13px; line-height:1.5; margin:8px 0; }
-  .faq-card details { border-top:1px solid #3a3a3a; padding:10px 0; }
-  .faq-card summary { cursor:pointer; font-weight:800; }
-  .faq-card details:first-of-type { border-top:0; }
-  .quick-amounts { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:9px 0 7px; }
-  .quick-amounts .sec-btn { padding:9px 6px; font-size:12px; }
-.action-btn {
-  padding:13px 8px; background:#facc15; color:#171717;
-  border:1px solid #eab308; border-radius:11px; font-weight:800;
-}
-.action-btn.alt { background:#292929; color:#facc15; border-color:#444; }
-
-/* TIMER */
-.timer-card { text-align:center; padding:18px 16px; }
-.timer-card .row { color:#d4d4d8; }
-.period { font-size:14px; overflow-wrap:anywhere; margin-top:8px; font-variant-numeric:tabular-nums; }
-.ring { position:relative; width:124px; height:124px; margin:14px auto; }
-.ring svg { width:100%; height:100%; transform:rotate(-90deg); }
-.ring-bg { fill:none; stroke:#333338; stroke-width:8; }
-.ring-fg {
-  fill:none; stroke:#facc15; stroke-width:8; stroke-linecap:round;
-  transition:stroke-dashoffset 1s linear,stroke .3s;
-}
-.ring-fg.locked { stroke:#ef4444; }
-.timer-text {
-  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  font-size:29px; color:#fff; font-variant-numeric:tabular-nums;
-}
-.status {
-  display:inline-block; padding:7px 12px; border-radius:20px;
-  background:#173b27; color:#4ade80; border:1px solid #245b39;
-  font-weight:800; font-size:11px;
-}
-.status.locked { background:#351b1d; color:#fca5a5; border-color:#6d292d; }
-.notice {
-  background:#201d14; color:#e9d7a0; border:1px solid #51421a;
-  padding:12px; border-radius:11px; font-size:12px; line-height:1.7;
-  margin-top:12px; overflow-wrap:anywhere;
-}
-
-/* BETTING */
-.number-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:9px; margin:15px 0; }
-.number-btn {
-  min-width:0; min-height:48px; border-radius:12px; border:0;
-  color:#fff; font-size:19px; font-weight:900; box-shadow:0 3px 12px #0005;
-}
-.number-btn.red { background:#e32932; }
-.number-btn.green { background:#20b85a; color:#071b0e; }
-.number-btn.num-zero { background:linear-gradient(135deg,#a855f7 0 50%,#e32932 50%); }
-.number-btn.num-five { background:linear-gradient(135deg,#a855f7 0 50%,#20b85a 50%); }
-.option-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin:13px 0; }
-.option-btn {
-  min-height:48px; padding:8px 4px; border-radius:11px; color:#fff;
-  font-weight:900; box-shadow:0 3px 12px #0005;
-}
-.option-btn.red { background:#e32932; }
-.option-btn.green { background:#20b85a; color:#071b0e; }
-.option-btn.violet { background:#a34df2; }
-.big-small { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-.big-small button {
-  border:0; min-height:48px; border-radius:11px; font-weight:900; color:#fff;
-  box-shadow:0 3px 12px #0005;
-}
-.big-small .orange { background:#f97316; }
-.big-small .blue { background:#14b8a6; }
-.primary-btn {
-  width:100%; padding:14px; border-radius:11px; background:#facc15; color:#171717;
-  font-weight:900; min-height:46px; box-shadow:0 5px 16px #facc151c;
-}
-.sec-btn {
-  padding:11px 14px; border-radius:10px; background:#29292c; color:#facc15;
-  border:1px solid #3a3a40; font-weight:800;
-}
-
-/* INPUTS */
-input, select {
-  display:block; width:100%; min-width:0; padding:13px; margin:7px 0 13px;
-  border:1px solid #3a3a40; border-radius:10px; background:#202023; color:#fff;
-}
-label { font-weight:800; font-size:12px; }
-.utc-time { font-size:11px; margin-top:4px; line-height:1.5; }
-
-/* TABLES */
-.wrap { overflow-x:auto; }
-.tbl { width:100%; border-collapse:collapse; }
-.tbl th {
-  color:#a1a1aa; font-weight:700; font-size:11px; padding:8px 4px;
-  text-align:center; border-bottom:1px solid #303034; white-space:nowrap;
-}
-.tbl td {
-  padding:11px 4px; text-align:center; border-bottom:1px solid #222225;
-  font-size:13px; font-variant-numeric:tabular-nums;
-}
-.tbl th:first-child, .tbl td.period { text-align:left; }
-.tbl td.period { font-size:12px; color:#f5f5f5; }
-.dot { display:inline-block; width:14px; height:14px; border-radius:50%; margin:0 2px; vertical-align:middle; }
-.dot.red { background:#e32932; }
-.dot.green { background:#20b85a; }
-.dot.violet { background:#a855f7; }
-.n-red { color:#ef4444; font-weight:900; }
-.n-green { color:#22c55e; font-weight:900; }
-.bs-b { color:#f97316; font-weight:900; }
-.bs-s { color:#14b8a6; font-weight:900; }
-.pager { display:flex; align-items:center; justify-content:flex-end; gap:10px; padding-top:12px; }
-.pager .info { color:#a1a1aa; font-size:12px; margin-right:auto; }
-.pager button {
-  width:38px; height:38px; border-radius:50%; background:#29292c;
-  color:#f5f5f5; font-size:20px; line-height:1;
-}
-
-/* TRADE ROWS */
-.trade { border-bottom:1px solid #222225; }
-.trade-head {
-  display:grid; grid-template-columns:minmax(0,1.5fr) auto minmax(0,1fr) 18px;
-  align-items:center; gap:8px; padding:12px 2px; cursor:pointer;
-}
-.trade-period { font-size:12px; font-variant-numeric:tabular-nums; }
-.trade-status { font-weight:800; font-size:13px; }
-.trade-amt { font-weight:800; font-size:13px; text-align:right; font-variant-numeric:tabular-nums; }
-  .notification-btn { position:relative; width:42px; height:42px; display:grid; place-items:center; }
-  .notification-btn svg { width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-  #notificationCount { position:absolute; top:-3px; right:-3px; min-width:16px; height:16px; border-radius:999px; background:#ef4444; color:#fff; font-size:10px; line-height:16px; font-weight:800; }
-  .notification-item { padding:11px 0; border-bottom:1px solid #2b2b31; }
-  .notification-item strong, .notification-item small { display:block; }
-  .notification-item small { color:#a1a1aa; margin-top:4px; }
-  .success { color:#22c55e; }
-.fail { color:#ef4444; }
-.pending { color:#facc15; }
-.cancelled { color:#94a3b8; }
-.chev { color:#a1a1aa; transition:transform .2s; text-align:right; }
-.trade.open .chev { transform:rotate(180deg); }
-.trade-body { display:none; padding:0 2px 12px; }
-.trade.open .trade-body { display:block; }
-.kv { display:flex; justify-content:space-between; gap:10px; padding:4px 0; font-size:12px; }
-.kv span:first-child { color:#a1a1aa; }
-.kv.strong span:last-child { color:#facc15; font-weight:800; }
-.empty { text-align:center; padding:20px 7px; color:#a1a1aa; line-height:1.7; }
-
-/* REFERRAL */
-.copybox { display:flex; gap:8px; align-items:center; }
-.copybox input { margin:0; font-size:12px; }
-.copybox button { flex:none; }
-.stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-bottom:13px; }
-.stat { background:#19191b; border:1px solid #303034; border-radius:12px; padding:12px; }
-.stat .l { color:#a1a1aa; font-size:11px; }
-.stat .v { color:#facc15; font-size:20px; font-weight:900; margin-top:4px; }
-
-/* SETTINGS */
-.setting-row {
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
-  padding:12px 0; border-bottom:1px solid #222225; font-weight:800;
-}
-.setting-row:last-child { border-bottom:0; }
-.switch {
-  width:52px; height:30px; border-radius:30px; background:#3a3a40;
-  position:relative; flex:none; transition:background .2s;
-}
-.switch i {
-  position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%;
-  background:#fff; transition:transform .2s;
-}
-.switch.on { background:#22c55e; }
-.switch.on i { transform:translateX(22px); }
-
-/* REFERRAL MEMBERS */
-.tabs { display:flex; gap:6px; margin:12px 0; }
-.tab {
-  flex:1; padding:9px 4px; border-radius:10px; background:#202023;
-  color:#b4b4bc; border:1px solid #2d2d31; font-weight:800; font-size:12px;
-}
-.tab.on { background:#302911; color:#facc15; border-color:#51421a; }
-.member {
-  padding:12px; margin-bottom:9px; background:#19191b;
-  border:1px solid #303034; border-radius:12px;
-}
-.pill {
-  display:inline-block; padding:4px 9px; border-radius:999px; font-size:11px;
-  font-weight:800; background:#2d2d31; color:#b4b4bc;
-}
-.pill.ok { background:#143d27; color:#4ade80; }
-.pill.wait { background:#44330e; color:#facc15; }
-.pill.off { background:#351b1d; color:#fca5a5; }
-
-/* BOTTOM NAV */
-  .bottom-nav {
-  position:fixed; bottom:calc(8px + env(safe-area-inset-bottom)); left:50%;
-  isolation:isolate;
-  transform:translateX(-50%); width:calc(100% - 12px); max-width:588px;
-  display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0;
-  background:rgba(20,20,21,.97); border:1px solid #303034; border-radius:15px;
-  padding:7px 6px; z-index:20; box-shadow:0 8px 28px #000a; backdrop-filter:blur(16px);
-}
-.nav-btn {
-  min-width:0; min-height:53px; padding:5px 2px; border-radius:11px;
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:4px; background:#202023; color:#b4b4bc; border:1px solid #2d2d31;
-  font-size:11px; font-weight:900;
-}
-.nav-icon { display:block; font-size:20px; line-height:1.2; }
-.nav-btn.active {
-  background:#302911; color:#facc15; box-shadow:inset 0 -3px 0 #facc15; border-color:#51421a;
-}
-
-/* MODALS */
-.modal-backdrop {
-  display:none; position:fixed; inset:0; z-index:50; background:#000b;
-  backdrop-filter:blur(5px); align-items:center; justify-content:center; padding:15px;
-}
-.modal-backdrop.open { display:flex; }
-.modal {
-  background:#171719; color:#f5f5f5; border:1px solid #38383d;
-  box-shadow:0 20px 70px #000b; width:100%; max-width:430px; max-height:90%;
-  overflow:auto; padding:19px; border-radius:17px;
-}
-.modal-title { font-size:18px; font-weight:900; }
-.close-btn { padding:9px 12px; border-radius:9px; background:#29292c; color:#f5f5f5; }
-.amount-presets { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; margin:12px 0; }
-.amount-presets button {
-  background:#302911; color:#facc15; border:1px solid #51421a;
-  padding:12px 3px; border-radius:9px; font-weight:900;
-}
-
-  .checkout-modal { background:#f8f8fb; color:#25262a; max-width:640px; }
-.checkout-topbar { display:flex; align-items:center; justify-content:space-between; padding-bottom:18px; border-bottom:1px solid #d9d9de; font-size:20px; }
-.checkout-back { border:0; background:transparent; font-size:34px; color:#25262a; line-height:1; cursor:pointer; }
-.checkout-security { margin:16px 0; padding:12px 14px; border-radius:10px; background:#fff3df; color:#8a4a00; font-size:13px; }
-.checkout-paying { display:flex; align-items:center; justify-content:space-between; padding:16px 0; border-bottom:1px solid #333; font-size:24px; }
-.checkout-paying > span:last-child { display:flex; align-items:center; gap:10px; }
-.checkout-coin-logo { width:42px; height:42px; object-fit:contain; }
-.checkout-modal select, .checkout-modal input { background:#fff; color:#25262a; border-color:#d9d9de; }
-.checkout-summary { display:grid; gap:13px; padding:16px 0; font-size:16px; }
-.checkout-summary div { display:flex; justify-content:space-between; gap:16px; }
-.checkout-summary .amount-due { font-size:18px; font-weight:800; margin-top:4px; }
-.checkout-summary strong { text-align:right; }
-  .checkout-modal { max-height:calc(100dvh - 26px); overflow:auto; }
-  .checkout-modal .checkout-security { margin:10px 0; padding:9px 12px; }
-  .checkout-modal .checkout-paying { padding:9px 0; }
-  .checkout-modal .checkout-summary { gap:7px; padding:9px 0; }
-  .checkout-modal label, .checkout-modal input, .checkout-modal select { margin-top:6px; }
-.checkout-modal .deposit-submit-card { background:transparent; border:0; padding:0; }
-.checkout-modal .deposit-submit-card .primary-btn { background:#f57c00; color:#fff; }
-.checkout-modal .deposit-submit-card .sec-btn { background:#fff; color:#25262a; border-color:#d9d9de; }
-.deposit-submit-card { margin:14px 0; padding:12px; border:1px solid #4a4a4f; border-radius:12px; background:#242429; }
-  .deposit-submit-card .row { gap:10px; display:grid; grid-template-columns:106px minmax(0,1fr); align-items:stretch; }
-  .deposit-submit-card .row button { min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .deposit-submit-card input { width:100%; max-width:100%; min-width:0; box-sizing:border-box; margin-bottom:8px; }
-  .deposit-submit-card .row { min-width:0; }
-  .deposit-submit-card .row .primary-btn { min-width:0; overflow-wrap:anywhere; }
-.deposit-submit-card #depositTimer { color:#facc15; font-variant-numeric:tabular-nums; }
-  .deposit-chooser { min-height:calc(100svh - 190px); display:flex; flex-direction:column; justify-content:flex-start; overflow:visible; background:#f8f8fb !important; color:#25262a !important; }
-  .deposit-flow-mount, .deposit-flow-mount #cashDepositFields { background:#f8f8fb !important; color:#25262a !important; }
-  .deposit-flow-mount .checkout-paying { border-bottom-color:#d9d9de; }
-  .deposit-flow-mount .deposit-submit-card { background:#fff !important; border-color:#d9d9de !important; }
-  .deposit-flow-mount .muted, .deposit-flow-mount label { color:#555862; }
-  .deposit-flow-mount { width:100%; }
-  .deposit-flow-mount .checkout-topbar { display:flex; margin-bottom:14px; }
-  .deposit-flow-mount .checkout-security { margin-top:0; }
-  .deposit-flow-mount .deposit-submit-card { margin-bottom:0; }
-  .deposit-flow-mount #cashDepositFields { display:block !important; }
-  .deposit-flow-mount .checkout-paying { display:flex; justify-content:space-between; align-items:center; font-size:24px; font-weight:700; padding:14px 0; }
-  .deposit-flow-mount .checkout-summary { display:grid; gap:12px; margin-top:16px; }
-  .deposit-flow-mount .checkout-summary > div { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
-  .deposit-flow-mount .checkout-summary > div > strong { max-width:52%; overflow-wrap:anywhere; }
-  .deposit-flow-mount .checkout-summary .copybox { display:flex; flex:1; max-width:62%; }
-  .deposit-flow-mount .copybox input { background:#fff; color:#25262a; border-color:#d9d9de; }
-  .deposit-flow-mount .sec-btn { background:#fff; color:#25262a; border-color:#d9d9de; }
-  .deposit-flow-mount .checkout-summary input { width:100%; min-width:0; }
-  .deposit-flow-mount select { width:100%; min-height:52px; font-size:16px; border:1px solid #d9d9de; border-radius:14px; padding:0 14px; background:#fff; color:#25262a; }
-  .deposit-selector-field { margin:14px 0 16px; }
-  .deposit-selector-field label { display:block; margin-bottom:7px; font-weight:700; }
-  #depositInlineFields { width:100%; margin-top:16px; }
-  #depositInlineFields #depositTimer, #depositInlineFields .checkout-topbar, #depositInlineFields .checkout-security { display:none !important; }
-  #depositInlineFields .checkout-paying { margin-top:0; }
-  #depositInlineFields .deposit-submit-card { margin-top:12px; }
-  .deposit-address-panel { margin:12px 0 4px; }
-  .deposit-address-panel .copybox { margin-top:7px; }
-  .deposit-address-panel input { min-width:0; font-size:12px; }
-  .deposit-qr-image { display:block; width:190px; height:190px; margin:12px auto; padding:8px; background:#fff; border:1px solid #d9d9de; border-radius:14px; }
-  .deposit-qr-image[hidden] { display:none; }
-  .coin-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
-  .coin-choice { min-height:86px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border:1px solid #3f3f46; border-radius:14px; background:#242424; color:#f4f4f5; }
-  .coin-choice.active { border-color:#facc15; box-shadow:0 0 0 1px #facc15 inset; }
-  .coin-choice small { display:block; color:#a1a1aa; font-size:10px; }
-  .coin-badge { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; font-weight:900; color:#18181b; }
-  .coin-badge.usdt { background:#26a17b; color:white; } .coin-badge.bnb { background:#f3ba2f; } .coin-badge.eth { background:#8fa2ff; color:white; } .coin-badge.sol { background:#111827; color:#9dffdb; }
-  .chooser-subtitle { margin-top:18px; }
-  .network-grid { display:grid; gap:8px; }
-  .network-choice { width:100%; display:grid; grid-template-columns:42px 1fr 18px; gap:10px; align-items:center; text-align:left; padding:16px; border:2px solid #facc15; border-radius:18px; background:#242424; color:#f4f4f5; }
-  .network-choice small { display:block; margin-top:8px; color:#a1a1aa; line-height:1.7; }
-  .network-icon { display:grid; place-items:center; width:36px; height:36px; border-radius:50%; background:#facc15; color:#18181b; font-weight:900; }
-  .deposit-page-card .notice, .withdraw-page-card .notice { margin:16px 0; }
-  .deposit-asset-card { display:flex; align-items:center; gap:11px; margin:10px 0; padding:10px 12px; border:1px solid #4a4a4f; border-radius:12px; background:#242429; }
-.deposit-asset-logo { display:grid; place-items:center; width:38px; height:38px; border-radius:50%; background:#f5c84b; color:#171717; font-weight:900; font-size:13px; }
-.deposit-asset-card strong, .deposit-asset-card small { display:block; }
-.deposit-asset-card small { margin-top:2px; color:#a6a6ad; font-size:12px; }
-
-.amount-stepper { display:grid; grid-template-columns:45px minmax(0,1fr) 45px; gap:8px; }
-.amount-stepper button { border-radius:9px; background:#29292c; color:#facc15; font-size:21px; }
-.amount-stepper input { margin:0; text-align:center; }
-.breakdown { margin-top:12px; padding:10px 12px; background:#19191b; border:1px solid #303034; border-radius:11px; }
-.lang-list { display:grid; gap:8px; margin-top:12px; max-height:50vh; overflow:auto; }
-.lang-btn {
-  padding:13px; border-radius:11px; background:#202023; color:#f5f5f5;
-  border:1px solid #38383d; font-weight:800; text-align:left;
-}
-.lang-btn.active { border-color:#facc15; color:#facc15; background:#302911; }
-
-.toast {
-  display:none; position:fixed; left:50%; transform:translateX(-50%); bottom:100px;
-  width:max-content; max-width:calc(100% - 32px); z-index:90; padding:13px 16px; border-radius:11px;
-  background:#facc15; color:#171717; font-weight:800; box-shadow:0 8px 25px #0008; bottom:88px;
-  text-align:center; line-height:1.5;
-}
-.toast.show { display:block; }
-
-.banner {
-  position:fixed; left:50%; top:12px; transform:translate(-50%,-140%);
-  width:calc(100% - 24px); max-width:560px; z-index:95; padding:12px 14px;
-  border-radius:13px; background:#1d1b15; border:1px solid #facc15; color:#f5f5f5;
-  font-weight:800; box-shadow:0 10px 30px #000a; transition:transform .3s;
-  display:flex; align-items:center; gap:10px; pointer-events:none;
-}
-.banner.show { transform:translate(-50%,0); }
-
-/* RESULT POPUP */
-.result-modal-number {
-  width:100px; height:100px; border-radius:50%; display:flex; align-items:center;
-  justify-content:center; color:#fff; font-size:48px; font-weight:900;
-  margin:20px auto; box-shadow:0 8px 24px #0008; border:5px solid #ffffff;
-}
-.result-modal-title { text-align:center; font-size:23px; font-weight:900; }
-.result-modal-sub { text-align:center; color:#a1a1aa; font-size:12px; line-height:1.7; overflow-wrap:anywhere; }
-.result-modal-badges { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin:14px 0; }
-.result-modal-badges span {
-  padding:8px 13px; border-radius:999px; background:#302911;
-  color:#facc15; font-size:11px; font-weight:900;
-}
-.result-modal .primary-btn { margin-top:8px; }
-
-@media(max-width:380px) {
-  .nav-btn { font-size:10px; }
-  .section { padding:0 10px; }
-  .balance-card { margin:10px; }
-  .card { padding:13px; }
-  .ring { width:110px; height:110px; }
-  .option-grid, .number-grid { gap:7px; }
-  .option-btn { font-size:12px; }
-  .number-btn { min-height:45px; }
-}
-
-/* Profile option rows retain original palette; dark black profile backdrop */
-#page-profile { background:#000 !important; }
-#page-profile .profile-menu-card { background:#080808 !important; border-color:#292929 !important; }
-#page-profile .profile-option {
- width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px;
- text-align:left; margin-top:8px; padding:12px; border-radius:12px; cursor:pointer;
- background:#111 !important; color:#f5f5f5 !important; border:1px solid #2d2d2d !important; box-shadow:none !important;
-}
-#page-profile .profile-option > span { display:block; line-height:1.45; font-weight:700; }
-#page-profile .profile-option small { display:block; color:#a3a3a3 !important; font-size:11px; font-weight:500; margin-top:2px; }
-#page-profile .profile-option b { color:#facc15 !important; font-size:22px; font-weight:500; }
-.bottom-nav { grid-template-columns:repeat(5,minmax(0,1fr)); }
-#page-activity .card { margin-bottom:12px; }
-</style>  </head>  <body>
-<div class="banner" id="banner" role="status" aria-live="polite"></div>
-<div class="app">  <header>
-  <div>
-    <div class="brand">CRYPTO <span>TRADER PRO</span></div>
-    <div class="small muted" data-i18n="brandSub">Prediction Dashboard · UTC</div>
-  </div>
-  <div class="head-btns">
-      <button class="icon-btn notification-btn" id="notificationBell" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span id="notificationCount" hidden>0</span></button>
-  <button class="icon-btn" id="headerProfile" type="button" aria-label="Profile"><span class="header-symbol">👤</span></button>
-  </div>
-</header>
-<div class="modal-backdrop" id="notificationModal" role="dialog" aria-modal="true" aria-labelledby="notificationTitle">
-  <div class="modal"><div class="row"><h2 id="notificationTitle">Activity notifications</h2><button class="icon-btn" id="closeNotifications" type="button" aria-label="Close">×</button></div><div id="notificationList" class="notification-list"><div class="empty">Loading…</div></div></div>
-</div>  <!-- HOME (GAME) -->  <section class="page active" id="page-home">    <div class="balance-card">
-  <div class="row"><div class="balance-label" data-i18n="walletBalance">WALLET BALANCE</div><button class="rules-corner-btn" id="gameRulesBtn" type="button">Rules</button></div>
-  <div class="balance-value"><span id="homePoints">—</span> <span data-i18n="points">Points</span></div>
-    <div class="balance-sub"><span id="homeUsdt">—</span> USDT · 100 Points = 1 USDT</div>
-  <div class="actions">
-  <button class="action-btn deposit-action" data-page-go="wallet" type="button" id="homeDepositBtn">Deposit</button>
-  <button class="action-btn withdraw-action" data-page-go="wallet" type="button" id="homeWithdrawBtn">Withdraw</button>
-  <button class="refresh-corner-btn" data-refresh="1" type="button" aria-label="Refresh balance" title="Refresh balance">↻ <small>Refresh</small></button>
-  </div>
-  </div>    <div class="section">
-    <div class="timer-card">
-      <div class="row">
-        <span class="muted small" data-i18n="currentPeriod">Current Period</span>
-        <span class="muted small" data-i18n="roundLen">3-minute round</span>
-      </div>
-      <div class="period" id="periodId">—</div>
-      <div class="ring">
-        <svg viewBox="0 0 120 120" aria-hidden="true">
-          <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
-          <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="52" stroke-dasharray="326.73" stroke-dashoffset="0"></circle>
-        </svg>
-        <div class="timer-text" id="timer">--:--</div>
-      </div>
-      <span class="status" id="betStatus">…</span>
-      <div class="notice" id="serverNotice">…</div>
-    </div>  <div class="card">
-  <div class="section-title">🔢 <span data-i18n="chooseNumber">Choose a Number</span></div>
-  <div class="muted small" data-i18n="chooseNumberHint">Select a number to open the betting window.</div>
-  <div class="number-grid" id="numberGrid"></div>
-  <div class="section-title">🎨 <span data-i18n="chooseColour">Choose a Colour</span></div>
-  <div class="option-grid">
-    <button class="option-btn red" data-bet="Red" type="button">🔴 <span data-i18n="red">Red</span></button>
-    <button class="option-btn green" data-bet="Green" type="button">🟢 <span data-i18n="green">Green</span></button>
-    <button class="option-btn violet" data-bet="Violet" type="button">🟣 <span data-i18n="violet">Violet</span></button>
-  </div>
-
-  <div class="section-title">📊 <span data-i18n="bigSmall">Big / Small</span></div>
-  <div class="big-small">
-    <button class="orange" data-bet="Big" type="button">🟠 <span data-i18n="big">Big (5–9)</span></button>
-    <button class="blue" data-bet="Small" type="button">🔵 <span data-i18n="small">Small (0–4)</span></button>
-  </div>
-</div>
-
-<div class="card">
-  <div class="section-title">🎯 <span data-i18n="resultHistory">Result History</span></div>
-  <div id="resultTable"><div class="empty" data-i18n="loading">Loading…</div></div>
-</div>
-
-<div class="card">
-  <div class="section-title">📋 <span data-i18n="tradeHistory">My Trade History</span></div>
-  <div id="tradeList"><div class="empty" data-i18n="loading">Loading…</div></div>
-</div>
-
-  </div>
-</section>  <!-- WALLET -->  <section class="page" id="page-wallet">
-  <div class="section">
-    <div class="section-title">💰 <span data-i18n="wallet">Wallet</span></div>  <div class="card">
-  <div class="muted small" data-i18n="testBalance">Live wallet balance</div>
-  <div style="font-size:27px;font-weight:900;margin:9px 0;color:#facc15">
-    <span id="walletPoints">—</span> <span data-i18n="points">Points</span><div class="balance-sub usdt-value" id="walletUsdt">— USDT · 100 Points = 1 USDT</div>
-  </div>
-  <div class="wallet-actions">
-  <button class="action-btn deposit-action" data-page="deposit" id="depositBtn" type="button">⬇ <span data-i18n="deposit">Deposit</span></button>
-  <button class="action-btn withdraw-action" data-page="withdraw" id="withdrawBtn" type="button">⬆ <span data-i18n="withdraw">Withdraw</span></button>
-  <button class="refresh-icon-btn" data-refresh="1" type="button" aria-label="Refresh wallet" title="Refresh wallet">↻<small>Refresh</small></button>
-  </div>
-</div>
-
-<div class="card">
-  <div class="section-title" data-i18n="txTitle">Transactions</div>
-  <div id="walletList"><div class="empty" data-i18n="loading">Loading…</div></div>
-</div>
-
-  </div>
-</section>
-<section class="page" id="page-deposit">
-  <div class="section">
-    <div class="section-title deposit-page-heading"><button class="checkout-back deposit-page-back" id="depositPageBack" type="button" aria-label="Back to wallet">←</button><span>⬇ <span data-i18n="deposit">Deposit</span></span></div>
-<div class="card deposit-page-card deposit-chooser">
-  <div id="depositFlowMount" class="deposit-flow-mount"></div>
-  </div>
-    <div class="card"><div class="section-title">Deposit History</div><div id="depositHistoryList"><div class="empty" data-i18n="loading">Loading…</div></div></div>
-  </div>
-</section>
-<section class="page" id="page-withdraw">
-  <div class="section">
-    <div class="section-title">⬆ <span data-i18n="withdraw">Withdraw</span></div>
-    <div class="card withdraw-page-card">
-      <div class="notice">Withdrawals are reviewed by admin. Minimum withdrawal: 500 points (5 USDT).</div>
-      <div class="muted small">Available balance</div><strong id="withdrawPageBalance">—</strong>
-      <button class="primary-btn" data-open-cash="withdraw" type="button" style="margin-top:14px">Continue to withdraw</button>
-    </div>
-    <div class="card"><div class="section-title">Withdraw History</div><div id="withdrawHistoryList"><div class="empty" data-i18n="loading">Loading…</div></div></div>
-  </div>
-</section>
-  <!-- REFERRAL -->  <section class="page" id="page-referral">
-  <div class="section">
-    <div class="section-title">👥 <span data-i18n="refTitle">Referral Program</span></div>
-    <div id="referralBody"><div class="empty" data-i18n="loading">Loading…</div></div>
-  </div>
-</section>  <!-- PROFILE -->
-<section class="page" id="page-profile">
-  <div class="section">
-    <div class="section-title">👤 <span data-i18n="profile">Profile</span></div>
-    <div class="card">
-      <div class="muted small" data-i18n="tgAccount">Telegram account</div>
-      <strong id="profileName">…</strong><p class="muted small" id="profileStatus">…</p>
-      <div class="profile-stats"><div><span>Joined</span><strong id="profileJoined">—</strong></div><div><span>Available points</span><strong id="profileAvailablePoints">—</strong></div></div>
-      <button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth">Retry Authentication</button>
-      <div class="card" style="margin-top:14px"><div class="section-title">🎁 Gift Code</div><div class="copybox"><input id="giftCodeInput" placeholder="Enter gift code"><button class="sec-btn" id="redeemGiftBtn" type="button">Redeem</button></div></div>
-      <div class="actions" style="margin-top:12px"><button class="action-btn" id="editProfileBtn" type="button" data-i18n="editProfile">Edit Profile</button><button class="action-btn alt" id="walletAddressBtn" type="button" data-i18n="manageWallet">Add / Edit Wallet</button></div>
-    </div>
-    <div class="card profile-menu-card" style="margin-top:14px">
-      <div class="section-title">Profile Options</div>
-      <button class="setting-row profile-option" type="button" data-page-go="deposit"><span>📥 Deposit<small>Add funds to your account</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" data-page-go="withdraw"><span>📤 Withdraw<small>Request a withdrawal</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" data-page-go="wallet"><span>💰 Wallet<small>Balance and wallet transactions</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" data-page-go="activity"><span>📜 Activity &amp; History<small>Bets, deposits, withdrawals and rewards</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" id="profileGiftOption"><span>🎁 Gift Code<small>Redeem a code</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" data-page-go="referral"><span>👥 My Referrals<small>Referral link and rewards</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" id="profileLanguageOption"><span>🌐 Language<small>Choose display language</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" id="profileNotificationOption"><span>🔔 Notifications<small>Sound and notification preferences</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" id="profileSettingsOption"><span>⚙️ Settings<small>Sound, vibration and app preferences</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" id="profileSupportOption"><span>🎧 Help &amp; Support<small>Support information</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" id="profileLogoutOption"><span>🚪 Logout<small>Close this session</small></span><b>›</b></button>
-    </div>
-    <div class="card" style="margin-top:14px"><div class="section-title" data-i18n="settings">Settings</div>
-      <div class="setting-row"><span>🔊 <span data-i18n="sound">Sound</span></span><button class="switch on" id="sndSwitch" type="button" role="switch" aria-checked="true"><i></i></button></div>
-      <div class="setting-row"><span>📳 <span data-i18n="vibration">Vibration</span></span><button class="switch on" id="vibSwitch" type="button" role="switch" aria-checked="true"><i></i></button></div>
-    </div>
-    <div class="card"><div class="section-title" data-i18n="about">About</div><p data-i18n="aboutText">Server-controlled rounds and live points wallet.</p><div class="notice" data-i18n="gameNotice">Server-controlled game. Bets use your available points.</div></div>
-    <div class="card faq-card"><div class="section-title">Game FAQ</div><details><summary>How do I play?</summary><p>Pick a number, colour, or Big/Small option before betting closes, then confirm your points stake.</p></details><details><summary>When do I win?</summary><p>Winning bets settle automatically after the server publishes the result.</p></details><details><summary>How are payouts calculated?</summary><p>100 points on Red/Green can return 200 points, a number can return 900 points, and Violet can return 450 points if the result matches.</p></details><details><summary>Can I cancel a bet?</summary><p>Bets cannot be cancelled after confirmation.</p></details></div>
-  </div>
-</section>
-<!-- ACTIVITY -->
-<section class="page" id="page-activity">
- <div class="section">
-  <div class="section-title">📜 Activity &amp; History</div>
-  <div class="card"><div class="section-title">Betting / Trade History</div><div class="muted small">Your existing trade history is available on the Home page.</div><button class="primary-btn" type="button" data-page-go="home">Open Home / Trade History</button></div>
-  <div class="card" style="margin-top:12px"><div class="section-title">Deposit &amp; Withdrawal History</div><div id="activityWalletHistory" class="empty">Loading transaction history…</div></div>
-  <div class="card" style="margin-top:12px"><div class="section-title">Referral &amp; Commission History</div><div id="activityReferralHistory" class="empty">Loading referral history…</div></div>
- </div>
-</section>
-<!-- NAVIGATION -->
-<nav class="bottom-nav" aria-label="Main navigation">
- <button class="nav-btn active" data-page="home" type="button"><span class="nav-icon">🏠</span><span data-i18n="home">Home</span></button>
- <button class="nav-btn" data-page="deposit" type="button"><span class="nav-icon">📥</span><span>Deposit</span></button>
- <button class="nav-btn" data-page="withdraw" type="button"><span class="nav-icon">📤</span><span>Withdraw</span></button>
- <button class="nav-btn" data-page="activity" type="button"><span class="nav-icon">📜</span><span>Activity</span></button>
- <button class="nav-btn" data-page="profile" type="button"><span class="nav-icon">👤</span><span data-i18n="profile">Profile</span></button>
-</nav>  </div>  <!-- BET MODAL -->  <div class="modal-backdrop" id="betModal">
-  <div class="modal">
-    <div class="row">
-      <div class="modal-title" id="betModalTitle">…</div>
-      <button class="close-btn" data-close="betModal" type="button">✕</button>
-    </div>
-    <p class="muted small" id="betModalPeriod"></p>  <label for="betAmount" data-i18n="betAmount">Bet Amount (Points)</label>
-<div class="amount-presets">
-  <button data-amount="10" type="button">10</button>
-  <button data-amount="50" type="button">50</button>
-  <button data-amount="100" type="button">100</button>
-  <button data-amount="500" type="button">500</button>
-</div>
-<div class="amount-stepper">
-  <button id="minusAmount" type="button">−</button>
-  <input id="betAmount" type="number" min="10" step="0.01" value="100" inputmode="decimal">
-  <button id="plusAmount" type="button">+</button>
-</div>
-
-<div class="breakdown" id="betBreakdown"></div>
-
-<div class="notice" data-i18n="betNote">A bet deducts points from your available balance.</div>
-<button class="primary-btn" id="confirmBet" type="button" style="margin-top:14px" data-i18n="placeBet">Place Bet</button>
-
-  </div>
-  </div>  <div class="modal-backdrop" id="gameRulesModal" role="dialog" aria-modal="true" aria-labelledby="gameRulesTitle"><div class="modal rules-modal"><div class="row"><div class="modal-title" id="gameRulesTitle">Game Rules & Payouts</div><button class="close-btn" data-close="gameRulesModal" type="button" aria-label="Close">✕</button></div><p>1. Select a number, colour, or Big/Small before betting closes.<br>2. Enter your stake and confirm the bet.<br>3. The server publishes the round result after the timer ends.<br>4. Winning bets are credited automatically; predictions are not guaranteed.</p><div class="payout-example"><strong>100 points examples</strong><br>🔴/🟢 Red or Green: 100 × 2 = <b>200 points</b><br>🔢 Number 0–9: 100 × 9 = <b>900 points</b><br>🟣 Violet: 100 × 4.5 = <b>450 points</b><br>📊 Big/Small: 100 × 2 = <b>200 points</b></div><p class="muted small">Potential payout is shown before confirmation. A prediction is only an informational estimate, never a guaranteed result.</p></div></div>  <!-- PROFILE EDIT MODAL -->  <div class="modal-backdrop" id="profileModal">
-  <div class="modal">
-    <div class="row"><div class="modal-title" data-i18n="editProfile">Edit Profile</div><button class="close-btn" data-close="profileModal" type="button">✕</button></div>
-  <label for="profileDisplayName" data-i18n="displayName">Display name</label>
-  <input id="profileDisplayName" type="text" maxlength="64" autocomplete="name">
-  <label for="profileAvatar" style="margin-top:12px">Profile image</label>
-  <input id="profileAvatar" type="file" accept="image/png,image/jpeg,image/webp">
-  <div class="notice" data-i18n="profileTelegramNote">Your Telegram username is managed by Telegram.</div>
-    <button class="primary-btn" id="saveProfileBtn" type="button" style="margin-top:14px" data-i18n="saveChanges">Save Changes</button>
-  </div>
-</div>  <!-- WALLET ADDRESS MODAL -->  <div class="modal-backdrop" id="walletAddressModal">
-  <div class="modal">
-    <div class="row"><div class="modal-title" data-i18n="manageWallet">Add / Edit Wallet</div><button class="close-btn" data-close="walletAddressModal" type="button">✕</button></div>
-    <!-- UPDATED LABEL AND MAXLENGTH FOR ALL NETWORKS -->
-    <label for="walletAddressInput" data-i18n="walletAddress">Wallet Address (BEP-20 / TRC-20 etc.)</label>
-    <input id="walletAddressInput" type="text" maxlength="100" inputmode="text" autocomplete="off" placeholder="0x… or T…">
-    <div class="notice" data-i18n="walletAddressNote">Use only your own valid wallet address.</div>
-    <button class="primary-btn" id="saveWalletAddressBtn" type="button" style="margin-top:14px" data-i18n="saveChanges">Save Changes</button>
-  </div>
-</div>  <!-- RESULT POPUP -->  <div class="modal-backdrop" id="resultModal" role="dialog" aria-modal="true" aria-labelledby="resultPopupTitle">
-  <div class="modal result-modal">
-    <div class="result-modal-title" id="resultPopupTitle">🎉 <span data-i18n="rTitle">ROUND RESULT</span></div>
-    <div class="result-modal-sub" id="resultPopupPeriod">—</div>
-    <div class="result-modal-number" id="resultPopupNumber">—</div>
-    <div class="result-modal-badges">
-      <span id="resultPopupColor">—</span>
-      <span id="resultPopupSize">—</span>
-    </div>
-    <div class="result-modal-sub" data-i18n="rNote">The result was received from the game server.</div>
-    <button class="primary-btn" id="resultPopupClose" type="button" data-i18n="rContinue">CONTINUE</button>
-  </div>
-</div>  <!-- DEPOSIT / WITHDRAW MODAL -->  <div class="modal-backdrop" id="cashModal">
-  <div class="modal checkout-modal">
-  <div class="checkout-topbar"><button class="checkout-back" data-close="cashModal" type="button" aria-label="Back">←</button><strong id="cashTitle">Deposit</strong><strong id="depositTimer" aria-live="polite">30:00</strong></div>
-  <div id="cashDepositFields" style="display:none">
-  <div class="checkout-security">Only send the exact amount on the selected blockchain. Payment is verified on-chain before points are credited.</div>
-  <div class="checkout-paying"><span>Paying With</span><span><img id="depositAssetLogo" class="checkout-coin-logo" alt="Selected cryptocurrency logo" src="https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/usdt.png"><strong id="depositAssetName">USDT</strong></span></div>
-  <div class="deposit-selector-field">
-  <label for="depositOption">Coin and network</label>
-  <select id="depositOption" aria-label="Select deposit coin and network"></select>
-  </div>
-  <div class="deposit-address-panel">
-  <div class="muted small" id="depositNetworkHint">Deposit address</div>
-  <img id="depositQrImage" class="deposit-qr-image" alt="QR code for deposit address" hidden>
-  <div class="copybox"><input id="depositAddress" readonly placeholder="Loading address..."><button class="sec-btn" id="copyDepositAddress" type="button">Copy</button></div>
-  </div>
-  <div class="checkout-summary">
-    <div><span>Total Price</span><strong id="depositTotalPrice">— USDT</strong></div>
-    <div><span>Blockchain</span><strong id="depositBlockchain">—</strong></div>
-    <div><span>Subtotal</span><strong id="depositSubtotal">— USDT</strong></div>
-  <div class="amount-due"><span>Amount Due</span><strong id="depositAmountDue">— USDT</strong></div>
-  </div>
-  <div class="deposit-submit-card">
-    <p class="muted small">Enter the amount you sent and transaction hash. Your request goes to admin for verification; balance is added only after approval.</p>
-    <label for="depositAmount">Amount sent (USDT)</label>
-    <input id="depositAmount" type="number" min="1" step="0.000001" placeholder="10.00" inputmode="decimal">
-    <label for="depositTxHash">Transaction hash</label>
-    <!-- UPDATED MAXLENGTH AND PLACEHOLDER -->
-    <input id="depositTxHash" type="text" maxlength="100" placeholder="Tx Hash (0x... or TRON)" autocomplete="off" spellcheck="false">
-    <div class="row" style="margin-top:10px"><button class="sec-btn" id="cancelDeposit" type="button">Cancel</button><button class="primary-btn" id="submitDeposit" type="button">Submit payment</button></div>
-    <div class="muted small" id="depositSubmitStatus" role="status"></div>
-  </div>
-      <p class="muted small">Minimum deposit: 1 USDT. Credit rate: 100 points per USDT.</p>
-    </div>
-  <div id="cashWithdrawFields" style="display:none">
-  <div class="notice">Withdrawals are reviewed and approved by admin. Points stay reserved until completed or rejected.</div>
-  <div class="row" style="align-items:flex-end;margin-bottom:10px">
-    <div>
-      <div class="muted small">Available balance</div>
-      <strong id="withdrawAvailableBalance">— Points · — USDT</strong>
-    </div>
-    <div class="muted small">Minimum: 500 Points · 5 USDT</div>
-  </div>
-  <div class="notice">A 10% withdrawal fee is deducted. For 1,000 points (10 USDT), you receive 9 USDT.</div>
-  <label for="withdrawAmount">Amount (points)</label>
-  <input id="withdrawAmount" type="number" min="500" step="0.01" placeholder="500">
-  <div class="quick-amounts" role="group" aria-label="Withdrawal amount shortcuts">
-    <button type="button" class="sec-btn withdraw-preset" data-percent="25">25%</button>
-    <button type="button" class="sec-btn withdraw-preset" data-percent="50">50%</button>
-    <button type="button" class="sec-btn withdraw-preset" data-percent="100">100%</button>
-    <button type="button" class="sec-btn withdraw-preset" data-percent="max">Max</button>
-  </div>
-  <div class="muted small" id="withdrawUsdtPreview">5.00 USDT</div>
-      <!-- UPDATED LABEL, MAXLENGTH AND PLACEHOLDER FOR WITHDRAWAL -->
-      <label for="withdrawAddress">Wallet Address (BEP-20 / TRC-20 etc.)</label>
-      <input id="withdrawAddress" type="text" maxlength="100" placeholder="0x... or T..." autocomplete="off">
-      <button class="primary-btn" id="submitWithdrawal" type="button" style="margin-top:14px">Request withdrawal</button>
-    </div>
-    <button class="primary-btn" data-close="cashModal" type="button" style="margin-top:14px" data-i18n="close">Close</button>
-  </div>
-</div>  <!-- LANGUAGE MODAL -->  <div class="modal-backdrop" id="langModal">
-  <div class="modal">
-    <div class="row">
-      <div class="modal-title">🌐 <span data-i18n="language">Language</span></div>
-      <button class="close-btn" data-close="langModal" type="button">✕</button>
-    </div>
-    <input id="langSearch" type="search" autocomplete="off" style="margin:12px 0 0" data-i18n-ph="searchLang" placeholder="Search language">
-    <div class="lang-list" id="langListModal"></div>
-  </div>
-</div>  <div class="toast" id="toast" role="status" aria-live="polite"></div>  <script>
-(function(){
 "use strict";
 
-const $ = id => document.getElementById(id);
-const tg = window.Telegram && window.Telegram.WebApp;
-const PAGE = 10;
-const ROUND_POLL = 3000;
-const USER_POLL = 6000;
-const ROUND_SECONDS = 180;
-const BETTING_SECONDS = 150;
-const FEE_PERCENT = 2;      // display only; the server calculates the real fee
-const RING_LENGTH = 326.73; // 2 * PI * 52
+const crypto = require("crypto");
+const { Pool } = require("pg");
 
-/* ---------- LANGUAGES ---------- */
-const I18N = {
-en:{
-brandSub:"Prediction Dashboard · UTC",
-home:"Home", wallet:"Wallet", referral:"Referral", profile:"Profile",
-walletBalance:"WALLET BALANCE", points:"Points", serverNote:"Live server wallet · Points balance",
-refresh:"Refresh", refreshed:"Updated.", refreshFailed:"Could not refresh. Try again.",
-currentPeriod:"Current Period", roundLen:"3-minute round",
-chooseNumber:"Choose a Number", chooseNumberHint:"Select a number to open the betting window.",
-chooseColour:"Choose a Colour", red:"Red", green:"Green", violet:"Violet",
-bigSmall:"Big / Small", big:"Big (5–9)", small:"Small (0–4)",
-resultHistory:"Result History", tradeHistory:"My Trade History",
-colPeriod:"Period", colNum:"Num", colBS:"B/S", colResult:"Result",
-colType:"Type", colAmount:"Amount", colStatus:"Status",
-range:"{from}-{to} of {total}",
-loading:"Loading…", noRounds:"No results yet.", noBets:"No bets recorded yet.",
-noTx:"No transactions yet.", noRef:"No referrals yet.", noLangs:"No language found.",
-success:"Success", fail:"Fail", pending:"Pending", cancelled:"Cancelled",
-dBet:"Bet", dStake:"Bet amount", dFee:"Fee", dActual:"Trade amount", dPayout:"Payout",
-dResult:"Result", dTime:"Time", waiting:"waiting", bkFee:"Fee ({pct}%)",
-bt_Number:"Number", bt_Red:"Red", bt_Green:"Green", bt_Violet:"Violet", bt_Big:"Big", bt_Small:"Small",
-stConnecting:"CONNECTING", stSyncing:"SYNCING", stOpen:"BETTING OPEN", stLocked:"BETTING LOCKED",
-stError:"BACKEND ERROR", stTelegram:"TELEGRAM REQUIRED", stAuth:"AUTH REQUIRED",
-nConnecting:"Connecting to backend…",
-nConnected:"Connected to backend. Betting closes 30 seconds before each round ends.",
-nUnavailable:"Backend unavailable: {msg}",
-loadingRound:"Loading server round...",
-toastAuth:"Authenticate through Telegram first.",
-toastLocked:"Betting is locked. Wait for the next round.",
-toastAmount:"Enter at least 10 points (max 2 decimals).",
-toastChanged:"Bet details changed. Please submit again.",
-toastBetFail:"Unable to place bet. Retry without changing the details.",
-toastBetOk:"Bet accepted.", copied:"Copied.", copyFail:"Copy failed.",
-betOn:"Bet on", serverRound:"Server round:", betAmount:"Bet Amount (Points)",
-    betNote:"A bet deducts points from your available balance.", placeBet:"Place Bet",
-rTitle:"ROUND RESULT", rPeriod:"Period", rNote:"The result was received from the game server.",
-rContinue:"CONTINUE", cRedV:"RED + VIOLET", cGreenV:"GREEN + VIOLET", cRed:"RED", cGreen:"GREEN",
-sBig:"BIG (5–9)", sSmall:"SMALL (0–4)",
-bannerResult:"Result {period}: {n} · {colour} · {size}",
-testBalance:"Live points balance", deposit:"Deposit", withdraw:"Withdraw",
-txTitle:"Transactions",
-tx_deposit:"Deposit", tx_withdrawal:"Withdrawal", tx_bet:"Bet", tx_payout:"Payout", tx_refund:"Refund",
-s_completed:"Completed", s_confirmed:"Confirmed", s_pending:"Pending", s_rejected:"Rejected", s_failed:"Failed",
-txPlaced:"Placed",
-cashNotice:"Deposits stay pending until an admin verifies and approves the transaction.",
-close:"Close",
-refTitle:"Referral Program", yourLink:"Your referral link", yourCode:"Your referral code",
-copy:"Copy", share:"Share",
-noLink:"Referral link is not available yet. You can still share your code.",
-shareText:"Join me on Crypto Trader Pro!",
-directRef:"Direct referrals", totalComm:"Total commission", levels:"Commission levels",
-lvl:"Level", rate:"Rate", cnt:"Count", total:"Total", comm:"Commission",
-haveCode:"Have a referral code?", enterCode:"Enter referral code", apply:"Apply",
-referredBy:"You were referred by a user. Code already applied.",
-commHistory:"Commission history", direct:"Your direct referrals",
-availableComm:"Available commission", claimedComm:"Claimed commission", totalRewards:"Total rewards received",
-rewardPromo:"Earn 100 points per referral. Your referral receives credit after completing a qualifying recharge.",
-rewardNote:"Earn 100 points for each direct referral after their qualifying recharge of 100 points is confirmed.",
-needTg:"Open the Mini App inside Telegram to see this.",
-tgAccount:"Telegram account", checkingTg:"Checking Telegram…", authenticating:"Authenticating with Telegram",
-retryAuth:"Retry Authentication", notTg:"Not opened in Telegram",
-openInTg:"Open the Mini App inside Telegram to authenticate.",
-tgMissing:"Telegram initData missing", openOfficial:"Open the official Telegram Mini App.",
-verified:"Telegram identity verified by server.", tgUser:"Telegram user {id}",
-settings:"Settings", sound:"Sound", vibration:"Vibration", change:"Change",
-searchLang:"Search language",
-  language:"Language", about:"About", aboutText:"Crypto Trader is a server-controlled prediction game where you can place points-based bets on numbers, colours, and Big or Small outcomes. Results are published automatically, and your wallet, deposits, withdrawals, and referral rewards are tracked securely.", gameNotice:"Each 100 points equals 1 USDT. Play responsibly and review the game rules before placing a bet.",
-testingOnly:"Testing only.",
-  editProfile:"Edit Profile", manageWallet:"Add / Edit Wallet", displayName:"Display name",
-  profileTelegramNote:"Your Telegram username is managed by Telegram.", saveChanges:"Save Changes",
-  walletAddress:"Wallet Address (BEP-20 / TRC-20 etc.)", walletAddressNote:"Use only your own valid wallet address.",
-  profileSaved:"Telegram controls this profile name.", walletSaved:"Wallet address saved.", invalidWallet:"Enter a valid wallet address."
-  },
-hi:{
-brandSub:"प्रिडिक्शन डैशबोर्ड · UTC",
-home:"होम", wallet:"वॉलेट", referral:"रेफरल", profile:"प्रोफ़ाइल",
-walletBalance:"वॉलेट बैलेंस", points:"पॉइंट्स", serverNote:"लाइव सर्वर वॉलेट · पॉइंट्स बैलेंस",
-refresh:"रिफ्रेश", refreshed:"अपडेट हो गया।", refreshFailed:"रि��्रेश नहीं हो सका। फिर कोशिश करें।",
-currentPeriod:"मौजूदा पीरियड", roundLen:"3 मिनट का राउंड",
-chooseNumber:"नंबर चुनें", chooseNumberHint:"टेस्ट-बेट विंडो खोलने के लिए नंबर चुनें।",
-chooseColour:"रंग चुनें", red:"लाल", green:"हरा", violet:"बैंगनी",
-bigSmall:"बड़ा / छोटा", big:"बड़ा (5–9)", small:"छोटा (0–4)",
-resultHistory:"रिज़ल्ट हिस्ट्री", tradeHistory:"मेरी ट्रेड हिस्ट्री",
-colPeriod:"पीरियड", colNum:"नंबर", colBS:"B/S", colResult:"रिज़ल्ट",
-colType:"प्रकार", colAmount:"अमाउंट", colStatus:"स्टेटस",
-range:"{from}-{to} / {total}",
-loading:"लोड हो रहा है…", noRounds:"अभी कोई रिज़ल्ट नहीं।", noBets:"अभी कोई बेट नहीं।",
-noTx:"अभी कोई ट्रांज़ैक्शन नहीं।", noRef:"अभी कोई रेफरल नहीं।", noLangs:"कोई भाषा नहीं मिली।",
-success:"सफल", fail:"असफल", pending:"पेंडिंग", cancelled:"रद्द",
-dBet:"बेट", dStake:"बेट अमाउंट", dFee:"फीस", dActual:"ट्रेड अमाउंट", dPayout:"पेआउट",
-dResult:"रिज़ल्ट", dTime:"समय", waiting:"इंतज़ार", bkFee:"फीस ({pct}%)",
-bt_Number:"नंबर", bt_Red:"लाल", bt_Green:"हरा", bt_Violet:"बैंगनी", bt_Big:"बड़ा", bt_Small:"छोटा",
-stConnecting:"कनेक्ट हो रहा है", stSyncing:"सिंक हो रहा है", stOpen:"बेटिंग खुली है", stLocked:"बेटिंग बंद है",
-stError:"बैकएंड एरर", stTelegram:"टेलीग्राम ज़रूरी", stAuth:"ऑथ ज़रूरी",
-nConnecting:"बैकएंड से कनेक्ट हो रहा है…",
-nConnected:"बैकएंड से जुड़ गया। हर राउंड खत्म होने से 30 सेकंड पहले बेटिंग बंद हो जाती है।",
-nUnavailable:"बैकएंड उपलब्ध नहीं: {msg}",
-loadingRound:"सर्वर राउंड लोड हो रहा है…",
-toastAuth:"पहले टेलीग्राम से ऑथेंटिकेट करें।",
-toastLocked:"बेटिंग बंद है। अगले राउंड का इंतज़ार करें।",
-toastAmount:"कम से कम 10 पॉइंट डालें (अधिकतम 2 दशमलव)।",
-toastChanged:"बेट की डिटेल बदल गई। फिर से सबमिट करें।",
-toastBetFail:"बेट नहीं लग सकी। डिटेल बदले बिना फिर कोशिश करें।",
-toastBetOk:"बेट स्वीकार हुई।", copied:"कॉपी हो गया।", copyFail:"कॉपी नहीं हो सका।",
-betOn:"बेट", serverRound:"सर्वर राउंड:", betAmount:"���ेट अमाउंट (पॉइंट)",
-betNote:"आपके लाइव पॉइंट्स से बेट की राशि कटेगी।", placeBet:"बेट लगाएँ",
-rTitle:"राउंड रिज़ल्ट", rPeriod:"पीरियड", rNote:"रिज़ल्ट गेम सर्वर से मिला है।",
-rContinue:"जा��ी रखे�����", cRedV:"लाल + बैंगनी", cGreenV:"हरा + बैंगनी", cRed:"लाल", cGreen:"हरा",
-sBig:"बड़ा (5–9)", sSmall:"छोटा (0–4)",
-bannerResult:"रिज़ल्ट {period}: {n} · {colour} · {size}",
-testBalance:"लाइव वॉलेट बैलेंस", deposit:"डिपॉज़िट", withdraw:"विदड्रॉ",
-txTitle:"ट्रांज़ैक्शन",
-tx_deposit:"डिपॉज़िट", tx_withdrawal:"विदड्रॉ", tx_bet:"बेट", tx_payout:"पेआउट", tx_refund:"रिफंड",
-s_completed:"पूरा", s_confirmed:"कन्फर्म", s_pending:"पेंडिंग", s_rejected:"रिजेक्ट", s_failed:"फेल",
-txPlaced:"लगाई गई",
-cashNotice:"डिपॉज़िट और विदड्रॉ अभी चालू नहीं हैं। पेमेंट बैकएंड जुड़ने के बाद उपलब्ध होंगे। कोई पैसा या क्रिप्टो न भेजें।",
-close:"बंद करें",
-refTitle:"रेफरल प्रोग्राम", yourLink:"आपका रेफरल लिंक", yourCode:"आपका रेफरल कोड",
-copy:"कॉपी", share:"शेयर",
-noLink:"रेफरल लिंक अभी उपलब्ध नहीं है। आप अपना कोड शेयर कर सकते हैं।",
-shareText:"Crypto Trader Pro पर मेरे साथ जुड़ें!",
-directRef:"डायरेक्ट रेफरल", totalComm:"कुल कमीशन", levels:"कमीशन लेवल",
-lvl:"लेवल", rate:"रेट", cnt:"गिनती", total:"कुल", comm:"कमीशन",
-haveCode:"रेफरल कोड है?", enterCode:"रेफरल कोड डालें", apply:"लागू करें",
-referredBy:"आप किसी यूज़र के रेफरल से आए हैं। कोड पहले से लागू है।",
-commHistory:"कमीशन हिस्ट्री", direct:"आपके डायरेक्ट रेफरल",
-rewardNote:"रेफरल रिवॉर्ड पॉइंट्स के लिए कन्फर्म्ड रिचार्ज ज़रूरी है। रिचार्ज अभी चालू नहीं है।",
-needTg:"इसे देखने के लिए मिनी ऐप टेलीग्राम के अंदर खोलें।",
-tgAccount:"टेलीग्राम अकाउंट", checkingTg:"टेलीग्राम जाँच रहा है…", authenticating:"टेलीग्राम से ऑथेंटिकेट हो रहा है",
-retryAuth:"फिर से ऑथेंटिकेट करें", notTg:"टेलीग्राम में नहीं खुला",
-openInTg:"ऑथेंटिकेट करने के लिए मिनी ऐप टेलीग्राम के अंदर खोलें।",
-tgMissing:"टेलीग्राम initData नहीं मिला", openOfficial:"आधिकारिक टेलीग्राम मिनी ऐप खोलें।",
-verified:"सर्वर ने टेलीग्राम पहचान सत्यापित की।", tgUser:"टेलीग्राम यूज़र {id}",
-settings:"सेटिंग्स", sound:"साउंड", vibration:"वाइब्रेशन", change:"बदलें",
-searchLang:"भाषा खोजें",
-language:"भाषा", about:"जानकारी", aboutText:"सर्वर-नियंत्रित राउंड और लाइव वॉलेट।",
-testingOnly:"लाइव गेम सर्वर।"
-},
-bn:{
-brandSub:"প্রেডিকশন ড্যাশবোর্ড · UTC",
-home:"হোম", wallet:"ওয়ালেট", referral:"রেফারেল", profile:"প্রোফাইল",
-walletBalance:"ওয়ালেট ব্যালেন্স", points:"পয়েন্টস", serverNote:"সার্ভার ডাটাবেস · লাইভ পয়েন্টস",
-refresh:"রিফ্রেশ", refreshed:"আপডেট হয়েছে।", refreshFailed:"রিফ্রেশ করা যায়নি। আবার চেষ্টা করুন।",
-currentPeriod:"বর্তমান পিরিয়ড", roundLen:"৩ মিনিটের রাউন্ড",
-chooseNumber:"নম্বর বেছে নিন", chooseNumberHint:"বেটিং উইন্ডো খুলতে একটি নম্বর বেছে নিন।",
-chooseColour:"রং বেছে নিন", red:"লাল", green:"সবুজ", violet:"বেগুনি",
-bigSmall:"বড় / ছোট", big:"বড় (5–9)", small:"ছোট (0–4)",
-resultHistory:"রেজাল্ট হিস্ট্রি", tradeHistory:"আমার ট্রেড হিস্ট্রি",
-colPeriod:"পিরিয়ড", colNum:"নম্বর", colBS:"B/S", colResult:"রেজাল্ট",
-colType:"ধরন", colAmount:"অ্যামাউন্ট", colStatus:"স্ট্যাটাস",
-range:"{from}-{to} / {total}",
-loading:"লোড হচ্ছে…", noRounds:"এখনও কোনো রেজাল্ট নেই।", noBets:"এখনও কোনো বেট নেই",
-noTx:"এখনও কোনো লেনদেন নেই।", noRef:"এখনও কোনো রেফারেল নেই", noLangs:"কোনো ভাষা পাওয়া যায়নি।",
-success:"সফল", fail:"ব্যর্থ", pending:"পেন্ডিং", cancelled:"বাতিল",
-dBet:"বেট", dStake:"বেট অ্যামাউন্ট", dFee:"ফি", dActual:"ট্রেড অ্যামাউন্ট", dPayout:"পেআউট",
-dResult:"রেজাল্ট", dTime:"সময়", waiting:"অপেক্ষায়", bkFee:"ফি ({pct}%)",
-bt_Number:"নম্বর", bt_Red:"লাল", bt_Green:"সবুজ", bt_Violet:"বেগুনি", bt_Big:"বড়", bt_Small:"ছোট",
-stConnecting:"সংযোগ হচ্ছে", stSyncing:"সিঙ্ক হচ্ছে", stOpen:"বেটিং চালু", stLocked:"বেটিং বন্ধ",
-stError:"ব্যাকএন্ড ত্রুটি", stTelegram:"টেলিগ্রাম প্রয়োজন", stAuth:"অথ প্রয়োজন",
-nConnecting:"ব্যাকএন্ডে সংযোগ হচ্ছে…",
-nConnected:"ব্যাকএন্ডে সংযুক্ত। প্রতিটি রাউন্ড শেষ হওয়ার ৩০ সেকেন্ড আগে বেটিং বন্ধ হয়।",
-nUnavailable:"ব্যাকএন্ড পাওয়া যাচ্ছে না: {msg}",
-loadingRound:"সার্ভার রাউন্ড লোড হচ্ছে…",
-toastAuth:"আগে টেলিগ্রাম দিয়ে অথেন্টিকেট করুন।",
-toastLocked:"বেটিং বন্ধ। পরের রাউন্ডের অপেক্ষা করুন।",
-toastAmount:"০.০১ থেকে ১০০০ টেস্ট পয়েন্টের মধ্যে অ্যামাউন্ট দিন (সর্������চ���চ ২ দশমিক)।",
-toastChanged:"বেটের তথ্য বদলেছে। আবার সাবমিট করুন।",
-toastBetFail:"বেট দেওয়া যায়নি। তথ্য না বদল������� আবার চেষ্টা করুন।",
-toastBetOk:"বেট গৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি করা যায়নি।",
-betOn:"বেট", serverRound:"সার্ভার রাউন্ড:", betAmount:"বেট অ্যামাউন্ট (পয়েন্ট)",
-betNote:"আপনার লাইভ পয়েন্ট ব্যালেন্স থেকে বেটের টাকা কাটা হবে।", placeBet:"বেট দিন",
-rTitle:"রাউন্ড রেজাল্ট", rPeriod:"পিরিয়ড", rNote:"রেজাল্ট গেম সার্ভার থেকে পাওয়া গেছে।",
-rContinue:"চালিয়ে যান", cRedV:"লাল + বেগুনি", cGreenV:"সবুজ + বেগুনি", cRed:"লাল", cGreen:"সবুজ",
-sBig:"বড় (5–9)", sSmall:"ছোট (0–4)",
-bannerResult:"রেজাল্ট {period}: {n} · {colour} · {size}",
-testBalance:"লাইভ পয়েন্ট ব্যালেন্স", deposit:"ডিপোজিট", withdraw:"উইথড্র",
-txTitle:"লেনদেন",
-tx_deposit:"ডিপোজিট", tx_withdrawal:"উইথড্র", tx_bet:"বেট", tx_payout:"পেআউট", tx_refund:"রিফান্ড",
-s_completed:"সম্পন্ন", s_confirmed:"নিশ্চিত", s_pending:"পেন্ডিং", s_rejected:"প্রত্যাখ্যাত", s_failed:"ব্যর্থ",
-txPlaced:"দেওয়া হয়েছে",
-cashNotice:"ডিপোজিট ও উইথড্র এখনও চালু হয়নি। পেমেন্ট ব্যাকএন্ড যুক্ত হলে পাওয়া যাবে। কোনো টাকা বা ক্রিপ্টো পাঠাবেন না।",
-close:"বন্ধ করুন",
-refTitle:"রেফারেল প্রোগ্রাম", yourLink:"আপনার রেফারেল লিংক", yourCode:"আপনার রেফারেল কোড",
-copy:"কপি", share:"শেয়ার",
-noLink:"রেফারেল লিংক এখনও পাওয়া যাচ্ছে না। আপনি কোড শেয়ার করতে পারেন।",
-shareText:"Crypto Trader Pro-তে আমার সাথে যোগ দিন!",
-directRef:"সরাসরি রেফারেল", totalComm:"ম��ট কমিশন", levels:"কমিশন লেভেল",
-lvl:"লেভেল", rate:"রেট", cnt:"সংখ্যা", total:"মোট", comm:"কমিশন",
-haveCode:"রেফারেল কোড আছে?", enterCode:"রেফারেল কোড দিন", apply:"প্রয়োগ করুন",
-referredBy:"আপনি একজন ইউজারের র��ফারেলে এসেছেন। কোড আগেই প্রয়োগ হয়েছে।",
-commHistory:"কমিশন হিস্ট্রি", direct:"আপনার সরাসরি রেফারেল",
-rewardNote:"রেফার��ল ���ি���য়ার্ড পয়েন্টের জন্য নিশ্চিত রিচার্জ দরকার। রিচার্জ এখনও চালু নয়।",
-needTg:"এটি দেখতে মিনি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",
-tgAccount:"টেলিগ্রাম অ্যাকাউন্ট", checkingTg:"টেলিগ্রাম যাচাই হচ্ছে…", authenticating:"টেলিগ্রাম দিয়ে অথেন্টিকেট হচ্ছে",
-retryAuth:"আবার অথেন্টিকেট করুন", notTg:"টেলিগ্রামে খোলা হয়নি",
-openInTg:"অথেন্টিকেট করতে মিনি অ্যাপ টেলিগ্রামের ভিতরে খুলুন।",
-tgMissing:"টেলিগ্রাম initData পাওয়া যায়নি", openOfficial:"অফিসিয়াল টেলিগ্রাম মিনি অ্যাপ খুলুন।",
-verified:"সার্ভার টেলিগ্রাম পরিচয় যাচাই করেছে।", tgUser:"টেলিগ্রাম ইউজার {id}",
-settings:"সেটিংস", sound:"সাউন্ড", vibration:"ভাইব্রেশন", change:"পরিবর্তন",
-searchLang:"ভাষা খুঁজুন",
-language:"ভাষা", about:"সম্পর্কে", aboutText:"সার্ভার-নিয়ন্ত্রিত রাউন্ড ও লাইভ পয়েন্টস ওয়ালেট।",
-testingOnly:"শুধু টেস্টিং।"
-}
-};
-
-// More languages can be added from /languages.js:
-// window.CTP_LANGS_EXTRA = { ur:{ name:"اردو", en:"Urdu", dir:"rtl", s:{ ...keys... } } };
-const EXTRA = (window.CTP_LANGS_EXTRA && typeof window.CTP_LANGS_EXTRA === "object")
-  ? window.CTP_LANGS_EXTRA : {};
-
-const LANGS = [
-  {code:"en",name:"English",en:"English"},
-  {code:"hi",name:"हिन्दी",en:"Hindi"},
-  {code:"bn",name:"বাংলা",en:"Bengali"}
-].concat(Object.keys(EXTRA).filter(c => !I18N[c] && EXTRA[c] && EXTRA[c].s).map(c => ({
-  code:c,
-  name:EXTRA[c].name || c,
-  en:EXTRA[c].en || "",
-  dir:EXTRA[c].dir || "ltr"
-})));
-
-  function dict(code){
-  return I18N[code] || (EXTRA[code] && EXTRA[code].s) || null;
-  }
-
-  // Extra language packs can intentionally translate only part of the UI.
-  // Always fall back to English so every control remains usable.
-  function hasLanguage(code){ return !!dict(code); }
-
-
-function pickLang(){
-  try {
-    const saved = localStorage.getItem("ctp_lang");
-    if(saved && dict(saved)) return saved;
-  } catch(_) {}
-  try {
-    const c = String(tg && tg.initDataUnsafe && tg.initDataUnsafe.user &&
-                     tg.initDataUnsafe.user.language_code || "").slice(0,2);
-    if(dict(c)) return c;
-  } catch(_) {}
-  return "en";
+if (!process.env.DATABASE_URL) {
+  console.error("DATABASE_URL is not configured.");
 }
 
-let lang = pickLang();
-const initialLangMeta = LANGS.find(l => l.code === lang);
-document.documentElement.lang = lang;
-document.documentElement.dir = initialLangMeta && initialLangMeta.dir === "rtl" ? "rtl" : "ltr";
-
-function t(key,vars){
-  const d = dict(lang);
-  let s = d && d[key];
-  if (s == null || s === key) s = I18N.en[key] || key;
-  if(vars){
-    for(const k in vars){ s = s.split("{" + k + "}").join(String(vars[k])); }
-  }
-  return s;
-}
-
-function tk(prefix,value){
-  const k = prefix + value;
-  return I18N.en[k] !== undefined ? t(k) : String(value ?? "");
-}
-
-function applyStatic(){
-  const meta = LANGS.find(l => l.code === lang);
-  document.documentElement.lang = lang;
-  document.documentElement.dir = (meta && meta.dir) || "ltr";
-  document.querySelectorAll("[data-i18n]").forEach(el => {
-    el.textContent = t(el.dataset.i18n);
-  });
-  document.querySelectorAll("[data-i18n-ph]").forEach(el => {
-    el.placeholder = t(el.dataset.i18nPh);
-  });
-}
-
-/* ---------- SETTINGS (sound / vibration) ---------- */
-const settings = {sound:true,vibrate:true};
-
-function loadSettings(){
-  try {
-    const raw = localStorage.getItem("ctp_settings");
-    if(raw){
-      const o = JSON.parse(raw);
-      settings.sound = o.sound !== false;
-      settings.vibrate = o.vibrate !== false;
-    }
-  } catch(_) {}
-}
-
-function saveSettings(){
-  try { localStorage.setItem("ctp_settings",JSON.stringify(settings)); } catch(_) {}
-}
-
-function renderSettings(){
-  [["sndSwitch","sound"],["vibSwitch","vibrate"]].forEach(([id,key]) => {
-    const el = $(id);
-    el.classList.toggle("on",settings[key]);
-    el.setAttribute("aria-checked",settings[key] ? "true" : "false");
-  });
-}
-
-function haptic(kind){
-  if(!settings.vibrate) return;
-  try {
-    if(tg && tg.HapticFeedback){
-      if(kind === "success" || kind === "warning" || kind === "error"){
-        tg.HapticFeedback.notificationOccurred(kind);
-      } else {
-        tg.HapticFeedback.impactOccurred(kind === "heavy" ? "heavy" : "light");
-      }
-      return;
-    }
-  } catch(_) {}
-  try {
-    if(navigator.vibrate) navigator.vibrate(kind === "success" ? [30,40,30] : 25);
-  } catch(_) {}
-}
-
-  document.addEventListener("click", event => {
-  const target = event.target.closest("button, a, [role=button], [data-page]");
-  if(!target || target.disabled || target.closest("#sndSwitch, #vibSwitch")) return;
-  haptic("light");
-  if(settings.sound) playTickSound();
-  }, { passive: true });
-
-  /* ---------- STATE ---------- */
-
-let initData = "";
-let authed = false;
-let authBlock = null;
-let user = null;
-let balance = null;
-let currentRound = null;
-let latestRounds = [];
-let resultPage = 1;
-let resultData = {rounds:[],total:0};
-let tradePage = 1;
-let tradeData = {bets:[],total:0};
-let walletPage = 1;
-let walletData = {items:[],total:0};
-let referralData = null;
-let commPage = 1;
-let commData = {items:[],total:0};
-let activePage = "home";
-let currentBet = null;
-let pendingBetRequest = null;
-let toastTimer = null;
-let bannerTimer = null;
-let serverTimeOffset = 0;
-let roundsLoaded = false;
-let roundsFailed = false;
-let roundsBusy = false;
-let userBusy = false;
-let roundsOk = false;
-let userOk = false;
-let lastRoundsSync = 0;
-let lastUserSync = 0;
-let lastRingFrac = 1;
-
-let firstResultShown = false;
-const seenResults = new Set();
-const queuedResults = new Set();
-const playedRounds = new Set();
-let resultPopupQueue = [];
-let resultPopupOpen = false;
-
-let audioContext = null;
-let audioUnlocked = false;
-let lastTickSecond = -1;
-let previousBettingOpen = null;
-let lastDisplayedRoundCode = "";
-
-let statusKey = "stConnecting";
-let notice = {key:"nConnecting",vars:null};
-let profName = {k:"checkingTg"};
-let profStatus = {k:"authenticating"};
-
-/* ---------- HELPERS ---------- */
-function toast(message){
-  $("toast").textContent = message;
-  $("toast").classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => $("toast").classList.remove("show"),3500);
-}
-
-function esc(value){
-  return String(value ?? "").replace(/[&<>"']/g,c => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  }[c]));
-}
-
-function money(value){
-  const n = Number(value);
-  return Number.isFinite(n)
-    ? n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})
-    : "—";
-}
-
-function cents(value){ return Math.round(Number(value || 0) * 100); }
-
-function signedCents(c){
-  const sign = c > 0 ? "+" : c < 0 ? "−" : "";
-  return sign + money(Math.abs(c) / 100);
-}
-
-function dateUTC(value){
-  const d = new Date(value);
-  if(Number.isNaN(d.getTime())) return "";
-  return d.toLocaleString("en-GB",{
-    timeZone:"UTC", day:"2-digit", month:"2-digit", year:"numeric",
-    hour:"2-digit", minute:"2-digit", second:"2-digit", hourCycle:"h23"
-  }) + " UTC";
-}
-
-function nowMs(){ return Date.now() + serverTimeOffset; }
-
-// Period number shown to users: YYYYMMDDHHMM (seconds are always 00).
-function fmtPeriod(code){
-  const raw = String(code || "");
-  if (!/^\d{14}$/.test(raw)) return raw.slice(0,12);
-  const day = raw.slice(0,8);
-  const hour = Number(raw.slice(8,10));
-  const minute = Number(raw.slice(10,12));
-  const serial = Math.floor((hour * 60 + minute) / 3) + 1;
-  return `${day}${String(serial).padStart(4, "0")}`;
-}
-
-function p2(n){ return String(n).padStart(2,"0"); }
-
-function slotInfo(ms){
-  const size = ROUND_SECONDS * 1000;
-  const startMs = Math.floor(ms / size) * size;
-  const d = new Date(startMs);
-  const code = d.getUTCFullYear() + p2(d.getUTCMonth() + 1) + p2(d.getUTCDate()) +
-               p2(d.getUTCHours()) + p2(d.getUTCMinutes()) + p2(d.getUTCSeconds());
-  return {code,startMs,closesMs:startMs + BETTING_SECONDS * 1000,endsMs:startMs + size};
-}
-
-// Round end time derived from the 14-digit round code (UTC start + 180 s).
-function codeEnded(code){
-  const m = String(code || "").match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/);
-  if(!m) return true;
-  const start = Date.UTC(+m[1],+m[2] - 1,+m[3],+m[4],+m[5],+m[6]);
-  return nowMs() >= start + ROUND_SECONDS * 1000;
-}
-
-function revealed(r){
-  return r && r.result_number !== null && r.result_number !== undefined &&
-         new Date(r.ends_at).getTime() <= nowMs();
-}
-
-function numClass(n){
-  return n === 0 ? "num-zero" : n === 5 ? "num-five" : n % 2 === 0 ? "red" : "green";
-}
-
-function numTone(n){ return n % 2 === 0 ? "n-red" : "n-green"; }
-
-function dotsHtml(n){
-  const c = n === 0 ? ["red","violet"] :
-            n === 5 ? ["green","violet"] :
-            n % 2 === 0 ? ["red"] : ["green"];
-  return c.map(x => `<span class="dot ${x}"></span>`).join("");
-}
-
-function popupColourName(n){
-  return n === 0 ? t("cRedV") : n === 5 ? t("cGreenV") :
-         n % 2 === 0 ? t("cRed") : t("cGreen");
-}
-
-function popupBg(n){
-  return n === 0 ? "linear-gradient(135deg,#dc2626 50%,#a855f7 50%)" :
-         n === 5 ? "linear-gradient(135deg,#16a34a 50%,#a855f7 50%)" :
-         n % 2 === 0 ? "#dc2626" : "#16a34a";
-}
-
-function txt(o){ return o.raw !== undefined ? o.raw : t(o.k,o.v); }
-
-function makeRequestId(){
-  if(window.crypto && typeof window.crypto.randomUUID === "function"){
-    return window.crypto.randomUUID();
-  }
-  if(window.crypto && window.crypto.getRandomValues){
-    const bytes = new Uint8Array(16);
-    window.crypto.getRandomValues(bytes);
-    bytes[6] = (bytes[6] & 15) | 64;
-    bytes[8] = (bytes[8] & 63) | 128;
-    const h = Array.from(bytes,b => b.toString(16).padStart(2,"0")).join("");
-    return h.slice(0,8) + "-" + h.slice(8,12) + "-" + h.slice(12,16) + "-" +
-           h.slice(16,20) + "-" + h.slice(20);
-  }
-  throw new Error("Secure request IDs are not supported");
-}
-
-async function copyText(text){
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch(_) {
-    try {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      const ok = document.execCommand("copy");
-      ta.remove();
-      return ok;
-    } catch(_) { return false; }
-  }
-}
-
-/* ---------- API ---------- */
-async function parseResponse(response){
-  const contentType = response.headers.get("content-type") || "";
-  let data = null;
-
-  if(contentType.includes("application/json")){
-    try { data = await response.json(); } catch(_) {}
-  } else {
-    const body = await response.text().catch(() => "");
-    if(body.trim()) console.error("[v0] API returned non-JSON:", response.status, body.slice(0,200));
-  }
-
-  if(!response.ok || !data || !data.success){
-    const message = data && data.message
-      ? data.message
-      : data && data.detail
-        ? `${data.message || "Backend request failed"}: ${data.detail}`
-        : `Backend request failed (HTTP ${response.status}).`;
-    throw new Error(message);
-  }
-
-  return data;
-}
-
-async function api(action,extra = {}){
-  if(!initData) throw new Error(t("openInTg"));
-  const response = await fetch("/api/game",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    cache:"no-store",
-    body:JSON.stringify({initData,action,...extra})
-  });
-  return parseResponse(response);
-}
-
-async function getRounds(page){
-  const t0 = Date.now();
-  const response = await fetch("/api/game?page=" + page + "&page_size=" + PAGE,{
-    method:"GET",
-    cache:"no-store"
-  });
-  const t1 = Date.now();
-  const data = await parseResponse(response);
-  data._mid = (t0 + t1) / 2;
-  return data;
-}
-
-/* ---------- STATUS / NOTICE / PROFILE ---------- */
-function setStatus(key){
-  statusKey = key;
-  const el = $("betStatus");
-  el.textContent = t(key);
-  el.classList.toggle("locked",
-    key === "stLocked" || key === "stError" || key === "stTelegram" || key === "stAuth");
-}
-
-function setNotice(key,vars){
-  notice = {key,vars:vars || null};
-  $("serverNotice").textContent = t(key,vars);
-}
-
-function renderProfile(){
-  $("profileName").textContent = txt(profName);
-  $("profileStatus").textContent = txt(profStatus);
-  const available = $("homePoints")?.textContent || "—";
-  $("profileAvailablePoints").textContent = available;
-  $("profileJoined").textContent = (tg?.initDataUnsafe?.user?.id ? "Telegram" : "—");
-  const input = $("profileDisplayName");
-  if(input && document.activeElement !== input) input.value = profName && profName.raw ? profName.raw : "";
-}
-
-function openProfileModal(){
-  if(!authed){ toast(t("toastAuth")); return; }
-  renderProfile();
-  $("profileModal").classList.add("open");
-}
-
-function openWalletAddressModal(){
-  if(!authed){ toast(t("toastAuth")); return; }
-  $("walletAddressModal").classList.add("open");
-}
-
-async function saveProfile(){
-  const value = $("profileDisplayName").value.trim();
-  if(!value){ toast(t("displayName")); return; }
-  const userId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id;
-  if(!userId){ toast(t("openInTg")); return; }
-  try {
-  const response = await fetch("/api/profile",{
-  method:"POST",
-  headers:{"Content-Type":"application/json","x-telegram-id":String(userId)},
-  body:JSON.stringify({displayName:value})
-  });
-  const data = await response.json().catch(() => null);
-  const avatar = $("profileAvatar").files && $("profileAvatar").files[0];
-  if (avatar) {
-    if (avatar.size > 2 * 1024 * 1024) { toast("Image must be under 2 MB."); return; }
-    const reader = new FileReader();
-    const imageData = await new Promise(resolve => { reader.onload = () => resolve(reader.result); reader.readAsDataURL(avatar); });
-    const avatarResponse = await fetch("/api/profile-avatar", { method:"POST", headers:{"Content-Type":"application/json","x-telegram-id":String(userId)}, body:JSON.stringify({file:imageData}) });
-    const avatarData = await avatarResponse.json().catch(() => null);
-    if (!avatarResponse.ok || !avatarData?.success) { toast(avatarData?.message || "Could not upload image."); return; }
-  }
-    if(!response.ok || !data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; }
-    profName = {raw:data.displayName};
-    renderProfile();
-    toast(t("profileSaved"));
-    $("profileModal").classList.remove("open");
-  } catch(_) {
-    toast(t("refreshFailed"));
-  }
-}
-
-async function saveWalletAddress(){
-  const value = $("walletAddressInput").value.trim();
-  // Flexible validation
-  if(value.length < 20){ toast(t("invalidWallet")); return; }
-  const userId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id;
-  if(!userId){ toast(t("openInTg")); return; }
-  try {
-    const response = await fetch("/api/set-deposit-wallet",{
-      method:"POST", headers:{"Content-Type":"application/json","x-telegram-id":String(userId)},
-      body:JSON.stringify({walletAddress:value})
-    });
-    const data = await response.json().catch(() => null);
-    if(!response.ok || !data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; }
-    toast(t("walletSaved"));
-    $("walletAddressModal").classList.remove("open");
-  } catch(_) {
-    toast(t("refreshFailed"));
-  }
-}
-
-function updateBalance(value){
-  balance = Number(value);
-  const usdt = (balance / 100).toFixed(2);
-  $("homePoints").textContent = money(balance);
-  $("walletPoints").textContent = money(balance);
-  $("homeUsdt").textContent = usdt + " USDT";
-  $("walletUsdt").textContent = usdt + " USDT · 100 Points = 1 USDT";
-  const withdrawBalance = $("withdrawAvailableBalance");
-  if(withdrawBalance) withdrawBalance.textContent = `${money(balance)} Points · ${usdt} USDT`;
-  }
-
-/* ---------- SOUND ---------- */
-function unlockAudio(){
-  try {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if(!AC) return;
-    if(!audioContext) audioContext = new AC();
-    if(audioContext.state === "suspended") audioContext.resume();
-    audioUnlocked = true;
-  } catch(_) {}
-}
-
-function playTone(freq=700,duration=.09,type="sine",volume=.045,delay=0){
-  if(!settings.sound || !audioUnlocked || !audioContext) return;
-  try {
-    const osc = audioContext.createOscillator();
-    const gain = audioContext.createGain();
-    const start = audioContext.currentTime + delay;
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq,start);
-    gain.gain.setValueAtTime(.0001,start);
-    gain.gain.exponentialRampToValueAtTime(volume,start+.012);
-    gain.gain.exponentialRampToValueAtTime(.0001,start+duration);
-    osc.connect(gain);
-    gain.connect(audioContext.destination);
-    osc.start(start);
-    osc.stop(start+duration+.02);
-  } catch(_) {}
-}
-
-function playBetSound(){ playTone(880,.09,"sine",.06); playTone(1175,.12,"sine",.05,.09); }
-function playTickSound(){ playTone(950,.045,"square",.018); }
-function playLockSound(){ playTone(620,.13,"triangle",.06); playTone(420,.2,"triangle",.05,.13); }
-function playPing(){ playTone(1000,.08,"sine",.05); playTone(1300,.1,"sine",.04,.09); }
-function playResultSound(){
-  playTone(660,.12,"sine",.06);
-  playTone(880,.12,"sine",.06,.13);
-  playTone(1175,.2,"sine",.06,.26);
-}
-
-/* ---------- PAGER ---------- */
-function pager(id,page,total){
-  if(!total) return "";
-  const from = (page - 1) * PAGE + 1;
-  const to = Math.min(page * PAGE,total);
-  return `<div class="pager">
-    <span class="info">${esc(t("range",{from,to,total}))}</span>
-    <button type="button" data-pager="${id}" data-dir="-1" aria-label="Previous"${page <= 1 ? " disabled" : ""}>‹</button>
-    <button type="button" data-pager="${id}" data-dir="1" aria-label="Next"${page * PAGE >= total ? " disabled" : ""}>›</button>
-  </div>`;
-}
-
-/* ---------- RESULT HISTORY ---------- */
-function renderResults(){
-  const rows = (resultData.rounds || []).filter(revealed);
-  let html;
-
-  if(rows.length){
-    const body = rows.map(r => {
-      const n = Number(r.result_number);
-      return `<tr>
-        <td class="period">${esc(fmtPeriod(r.round_code))}</td>
-        <td class="${numTone(n)}">${esc(n)}</td>
-        <td class="${n >= 5 ? "bs-b" : "bs-s"}">${n >= 5 ? "B" : "S"}</td>
-        <td>${dotsHtml(n)}</td>
-      </tr>`;
-    }).join("");
-
-    html = `<div class="wrap"><table class="tbl">
-      <thead><tr>
-        <th>${esc(t("colPeriod"))}</th><th>${esc(t("colNum"))}</th>
-        <th>${esc(t("colBS"))}</th><th>${esc(t("colResult"))}</th>
-      </tr></thead><tbody>${body}</tbody></table></div>`;
-  } else {
-    html = `<div class="empty">${esc(t(roundsLoaded ? "noRounds" : "loading"))}</div>`;
-  }
-
-  $("resultTable").innerHTML = html + pager("results",resultPage,resultData.total);
-}
-
-async function loadResults(){
-  try {
-    const d = await getRounds(resultPage);
-    resultData = {rounds:d.rounds || [],total:Number(d.rounds_page && d.rounds_page.total || 0)};
-    renderResults();
-  } catch(error) {
-    toast(error.message);
-  }
-}
-
-/* ---------- TRADE HISTORY ---------- */
-  // The database payout is the net profit after the fee; display the fee-adjusted stake and net payout.
-function tradeView(b){
-  const ended = codeEnded(b.round_code);
-  const status = ended ? String(b.status || "pending").toLowerCase() : "pending";
-  const stakeC = cents(b.stake);
-  const feeC = cents(b.fee);
-  const actualC = stakeC - feeC;
-  const profitC = ended ? cents(b.payout) : 0;
-  const returnedC = profitC > 0 ? profitC : 0;
-  const hasRes = ended && b.result_number !== null && b.result_number !== undefined;
-
-  let cls = "pending", label = t("pending"), amt = null;
-
-  if(status === "cancelled"){
-    cls = "cancelled"; label = t("cancelled");
-  } else if(status !== "pending"){
-    if(profitC > 0){
-      cls = "success"; label = t("success"); amt = returnedC;
-    } else {
-      cls = "fail"; label = t("fail"); amt = -actualC;
-    }
-  }
-
-  return {cls,label,amt,stakeC,feeC,actualC,profitC,returnedC,hasRes};
-}
-
-  function resultDetails(value){
-    const n = Number(value);
-    if(!Number.isInteger(n) || n < 0 || n > 9) return "—";
-    const colour = n === 0 || n === 5 ? (n === 0 ? "Red + Violet" : "Green + Violet") : (n % 2 === 0 ? "Red" : "Green");
-    return `${colour} · ${n} · ${n >= 5 ? "Big" : "Small"}`;
-  }
-
-  function renderTrades(){
-  const list = tradeData.bets || [];
-  let html;
-
-  if(list.length){
-    html = list.map(b => {
-      const v = tradeView(b);
-      const sel = b.bet_type === "Number" && b.selection !== null && b.selection !== undefined
-        ? " · " + b.selection : "";
-
-      return `<div class="trade">
-        <div class="trade-head" data-trade="1">
-          <span class="trade-period">${esc(fmtPeriod(b.round_code))}</span>
-          <span class="trade-status ${v.cls}">${esc(v.label)}</span>
-          <span class="trade-amt ${v.cls}">${v.amt === null ? "" : esc(signedCents(v.amt))}</span>
-          <span class="chev">⌄</span>
-        </div>
-        <div class="trade-body">
-          <div class="kv"><span>${esc(t("dBet"))}</span><span>${esc(tk("bt_",b.bet_type) + sel)}</span></div>
-          <div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(v.stakeC / 100))}</span></div>
-          <div class="kv"><span>${esc(t("dFee"))}</span><span>${esc(money(v.feeC / 100))}</span></div>
-          <div class="kv strong"><span>${esc(t("dActual"))}</span><span>${esc(money(v.actualC / 100))}</span></div>
-          <div class="kv"><span>${esc(t("dPayout"))}</span><span>${esc(money(v.returnedC / 100))}</span></div>
-          <div class="kv"><span>Profit</span><span>${esc(money(v.profitC / 100))}</span></div>
-          <div class="kv"><span>Result</span><span>${v.hasRes ? esc(resultDetails(b.result_number)) : esc(t("waiting"))}</span></div>
-          <div class="kv"><span>${esc(t("dTime"))}</span><span>${esc(dateUTC(b.created_at))}</span></div>
-        </div>
-      </div>`;
-    }).join("");
-  } else {
-    html = `<div class="empty">${esc(t(authed ? "noBets" : "needTg"))}</div>`;
-  }
-
-  $("tradeList").innerHTML = html + pager("trades",tradePage,tradeData.total);
-}
-
-async function loadTrades(silent){
-  if(!authed) return;
-  try {
-    const d = await api("my_bets",{page:tradePage,page_size:PAGE});
-    tradeData = {bets:d.bets || [],total:Number(d.pagination && d.pagination.total || 0)};
-    renderTrades();
-  } catch(error) {
-    if(!silent) toast(error.message);
-  }
-}
-
-/* ---------- WALLET ---------- */
-function txStatusLabel(x){
-  if(x.transaction_type === "bet" && x.status === "completed") return t("txPlaced");
-  return tk("s_",x.status);
-}
-
-function transactionUsdt(x){
-  const type = String(x.transaction_type || "").toLowerCase();
-  const amount = Number(x.amount || 0);
-  return (type === "deposit" || type === "withdrawal" ? amount : amount / 100).toFixed(2);
-}
-
-function renderWallet(){
-  const items = walletData.items || [];
-  let html;
-
-  if(items.length){
-    const body = items.map(x => {
-      const type = String(x.transaction_type || "").toLowerCase();
-      const plus = type === "deposit" || type === "payout" || type === "refund";
-      if (type === "bet") {
-        const bet = (tradeData.bets || []).find((candidate) => {
-          const stake = Number(candidate.stake || 0) + Number(candidate.fee || 0);
-          return Math.abs(stake - Number(x.amount || 0)) < 0.01 && Math.abs(new Date(candidate.created_at) - new Date(x.created_at)) < 10000;
-        });
-        if (bet) {
-          const view = tradeView(bet);
-          const selection = bet.bet_type === "Number" && bet.selection !== null && bet.selection !== undefined ? ` · ${bet.selection}` : "";
-          return `<div class="trade wallet-trade"><div class="trade-head" data-trade="1">
-            <span class="trade-period">${esc(fmtPeriod(bet.round_code))}</span><span class="trade-status ${view.cls}">${esc(view.label)}</span><span class="trade-amt ${view.cls}">${esc(signedCents(view.amt))}</span><span class="chev">⌄</span>
-          </div><div class="trade-body"><div class="kv"><span>${esc(t("dBet"))}</span><span>${esc(tk("bt_", bet.bet_type) + selection)}</span></div><div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(view.stakeC / 100))}</span></div><div class="kv"><span>${esc(t("dFee"))}</span><span>${esc(money(view.feeC / 100))}</span></div><div class="kv strong"><span>${esc(t("dActual"))}</span><span>${esc(money(view.actualC / 100))}</span></div><div class="kv"><span>${esc(t("dPayout"))}</span><span>${esc(money(view.returnedC / 100))}</span></div><div class="kv"><span>Result</span><span>${view.hasRes ? esc(resultDetails(bet.result_number)) : esc(t("waiting"))}</span></div><div class="kv"><span>${esc(t("dTime"))}</span><span>${esc(dateUTC(bet.created_at))}</span></div></div></div>`;
-        }
-      }
-      return `<div class="trade wallet-trade"><div class="trade-head"><span class="trade-period">${esc(tk("tx_",type))}<small class="utc-time">${esc(dateUTC(x.created_at))}</small></span><span class="trade-status ${plus ? "success" : "pending"}">${esc(txStatusLabel(x))}</span><span class="trade-amt ${plus ? "success" : "fail"}">${plus ? "+" : "−"}${esc(money(x.amount))}</span><span></span></div></div>`;
-    }).join("");
-
-    html = `<div class="wallet-trades">${body}</div>`;
-  } else {
-    html = `<div class="empty">${esc(t(authed ? "noTx" : "needTg"))}</div>`;
-  }
-
-  $("walletList").innerHTML = html + pager("wallet",walletPage,walletData.total);
-  const historyTable = (type) => {
-    const filtered = items.filter(x => String(x.transaction_type || "").toLowerCase() === type);
-    if (!filtered.length) return `<div class="empty">No ${type} history yet.</div>`;
-    return `<div class="wrap"><table class="tbl"><thead><tr><th>Type</th><th>Amount</th><th>Status</th></tr></thead><tbody>${filtered.map(x => `<tr><td>${esc(tk("tx_", x.transaction_type))}<div class="utc-time">${esc(dateUTC(x.created_at))}</div></td><td>${esc(money(x.amount))} <small class="usdt-value">(${esc(transactionUsdt(x))} USDT)</small></td><td>${esc(txStatusLabel(x))}</td></tr>`).join("")}</tbody></table></div>`;
-  };
-  $("depositHistoryList").innerHTML = historyTable("deposit");
-  $("withdrawHistoryList").innerHTML = historyTable("withdrawal");
-  $("withdrawPageBalance").textContent = `${money(Math.max(0, Number(balance || 0)))} Points · ${(Math.max(0, Number(balance || 0)) / 100).toFixed(2)} USDT`;
-}
-
-async function loadWallet(silent){
-  if(!authed){ renderWallet(); return; }
-  try {
-    const d = await api("wallet_history",{page:walletPage,page_size:PAGE});
-    walletData = {items:d.transactions || [],total:Number(d.pagination && d.pagination.total || 0)};
-    renderWallet();
-  } catch(error) {
-    if(!silent) toast(error.message);
-  }
-}
-
-let selectedDepositCoin = "USDT";
-  const liveCoinPrices = { USDT: 1, BNB: 0, ETH: 0, SOL: 0 };
-  async function refreshDepositPrices(){
-  try {
-  const response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=binancecoin,ethereum,solana&vs_currencies=usd", { signal: AbortSignal.timeout(7000) });
-  const prices = await response.json();
-  const values = { BNB: prices.binancecoin?.usd, ETH: prices.ethereum?.usd, SOL: prices.solana?.usd };
-  Object.entries(values).forEach(([coin, price]) => { if (!Number.isFinite(Number(price))) return; liveCoinPrices[coin] = Number(price); document.querySelectorAll(`[data-live-price="${coin}"]`).forEach(el => { el.textContent = Number(price).toLocaleString(undefined, { maximumFractionDigits: 4 }); }); });
-  updateDepositSummary();
-  } catch (_) { document.querySelectorAll("[data-live-price]").forEach(el => { if (el.textContent === "—") el.textContent = "Price unavailable"; }); }
-  }
-  refreshDepositPrices();
-  async function openDepositPage(){
-  showPage("deposit");
-  await openCash("deposit");
-  const fields = $("cashDepositFields");
-  const mount = $("depositFlowMount");
-  if (fields && mount) { mount.appendChild(fields); fields.style.display = "block"; }
-  $("cashModal").classList.remove("open");
-  }
-
-  async function openCash(kind){
-  $("cashTitle").textContent = (kind === "deposit" ? "⬇ " : "⬆ ") + t(kind === "deposit" ? "deposit" : "withdraw");
-  $("cashDepositFields").style.display = kind === "deposit" ? "block" : "none";
-  $("cashWithdrawFields").style.display = kind === "withdraw" ? "block" : "none";
-  $("depositTimer").style.display = kind === "deposit" ? "block" : "none";
-  if(kind === "withdraw"){
-    const available = Number.isFinite(balance) ? Math.max(0, balance) : 0;
-    $("withdrawAvailableBalance").textContent = `${money(available)} Points · ${(available / 100).toFixed(2)} USDT`;
-    $("withdrawAmount").max = available.toFixed(2);
-    $("withdrawAmount").value = available >= 500 ? "500" : "";
-    $("withdrawUsdtPreview").textContent = available >= 500 ? `${(Number($("withdrawAmount").value || 0) * 0.9 / 100).toFixed(2)} USDT after 10% fee` : "Minimum 5.00 USDT";
-  }
-  $("cashModal").classList.add("open");
-  if(kind === "deposit"){
-  refreshDepositPrices();
-  startDepositTimer();
-  $("depositAmount").value = ""; $("depositTxHash").value = ""; $("depositSubmitStatus").textContent = "";
-  try {
-      const config = await api("wallet_config");
-      const options = Array.isArray(config.deposit_options) ? config.deposit_options : [];
-      const select = $("depositOption");
-  select.innerHTML = options.map((item, index) => `<option value="${index}">${esc(item.coin)} · ${esc(item.network)}</option>`).join("");
-  const selectedIndex = options.findIndex(item => String(item.coin || "").toUpperCase() === selectedDepositCoin);
-  if (selectedIndex >= 0) select.value = String(selectedIndex);
-  const setOption = () => {
-  const item = options[Number(select.value)] || options[0];
-  selectedDepositCoin = String(item?.coin || "USDT").toUpperCase();
-  const address = item?.address || "";
-  $("depositAddress").value = address || "Deposit address is not configured";
-  const qr = $("depositQrImage");
-  if (qr && address) { qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(address)}`; qr.hidden = false; }
-  else if (qr) { qr.removeAttribute("src"); qr.hidden = true; }
-        const coinLabel = item?.coin || "asset";
-        const networkLabel = item?.network || "network";
-        const logoKey = coinLabel.toLowerCase().replace(/[^a-z]/g, "");
-        const logoMap = { usdt: "usdt", tether: "usdt", bnb: "bnb", eth: "eth", ethereum: "eth", solana: "sol", sol: "sol", tron: "trx", trx: "trx", polygon: "matic", matic: "matic", btc: "btc", bitcoin: "btc" };
-        const logo = logoMap[logoKey] || "usdt";
-        const logoUrls = { usdt: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/usdt.png", bnb: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/bnb.png", eth: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/eth.png", sol: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/sol.png", trx: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/trx.png", matic: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/matic.png", btc: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/btc.png" };
-        $("depositAssetLogo").src = logoUrls[logo] || logoUrls.usdt;
-        $("depositAssetLogo").alt = `${coinLabel} logo`;
-        $("depositAssetName").textContent = item ? coinLabel : "Select an asset";
-        $("depositNetworkHint").textContent = item ? `Only send ${coinLabel} on ${networkLabel}. Sending another coin or network may permanently lose funds.` : "No active deposit address configured";
-        $("depositBlockchain").textContent = networkLabel;
-        updateDepositSummary();
-      };
-      select.onchange = setOption;
-      setOption();
-    } catch(error) { toast(error.message); }
-  }
-}
-
-  function updateDepositSummary() {
-  const amount = Number($("depositAmount")?.value || 0);
-  const value = amount > 0 ? `${amount.toFixed(2)} USDT` : "— USDT";
-  $("depositTotalPrice").textContent = value;
-    $("depositSubtotal").textContent = value;
-    $("depositAmountDue").textContent = value;
-  }
-  let depositTimerId = null;
-  function startDepositTimer() {
-    clearInterval(depositTimerId);
-    const expiresAt = Date.now() + 30 * 60 * 1000;
-    const tick = () => {
-      const remaining = Math.max(0, expiresAt - Date.now());
-      const seconds = Math.floor(remaining / 1000);
-      $("depositTimer").textContent = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
-      if (!remaining) { clearInterval(depositTimerId); $("submitDeposit").disabled = true; $("depositSubmitStatus").textContent = "Payment session expired. Close and start a new session."; }
-    };
-    $("submitDeposit").disabled = false; $("depositSubmitStatus").textContent = ""; tick(); depositTimerId = setInterval(tick, 1000);
-  }
-
-  // UPDATED submitDeposit to accept all network hashes
-  async function submitDeposit(){
-    const amount = Number($("depositAmount").value);
-    const txHash = $("depositTxHash").value.trim();
-    const option = $("depositOption").selectedOptions[0]?.textContent || "USDT · BEP-20";
-    
-    if (!Number.isFinite(amount) || amount < 1) return toast("Enter the amount you sent in USDT.");
-    
-    // Flexible validation for EVM (0x...) and TRON (T...) etc.
-    if (txHash.length < 20) return toast("Enter a valid transaction hash.");
-    
-    const button = $("submitDeposit"); button.disabled = true;
-    try {
-      const result = await api("submit_deposit", { amount_usdt: amount.toFixed(6), tx_hash: txHash, network: option });
-      $("depositSubmitStatus").textContent = result.message || "Submitted for verification.";
-      toast("Deposit request sent to admin for approval.");
-      $("depositAmount").value = "";
-      $("depositTxHash").value = "";
-      await syncUser();
-    } catch (error) { button.disabled = false; toast(error.message, true); }
-  }
-
-  // UPDATED submitWithdrawal to accept all network addresses
-  async function submitWithdrawal(){
-  const amount = Number($("withdrawAmount").value);
-  const address = $("withdrawAddress").value.trim();
-  
-  if(!Number.isFinite(amount) || amount < 500){ toast("Minimum withdrawal is 500 points (5 USDT)."); return; }
-  
-  // Flexible address validation for EVM and TRON
-  if(address.length < 20) { toast("Enter a valid wallet address."); return; }
-  
-  const button = $("submitWithdrawal"); button.disabled = true;
-  try {
-    await api("request_withdrawal", {amount: amount.toFixed(2), destination_address: address});
-    toast("Withdrawal request submitted for admin approval.");
-    $("cashModal").classList.remove("open");
-    $("withdrawAmount").value = ""; $("withdrawAddress").value = "";
-    await refreshAll(true);
-  } catch(error) { toast(error.message); }
-  finally { button.disabled = false; }
-}
-
-/* ---------- REFERRAL ---------- */
-function renderReferral(){
-  const box = $("referralBody");
-
-  if(!authed){
-    box.innerHTML = `<div class="card"><div class="empty">${esc(t("needTg"))}</div></div>`;
-    return;
-  }
-
-  if(!referralData){
-    box.innerHTML = `<div class="card"><div class="empty">${esc(t("loading"))}</div></div>`;
-    return;
-  }
-
-  const r = referralData;
-  const link = r.referral_link;
-
-  const linkCard = `<div class="card">
-    <label>${esc(t("yourLink"))}</label>
-    ${link
-      ? `<div class="copybox" style="margin-top:7px">
-           <input type="text" readonly value="${esc(link)}">
-           <button class="sec-btn" type="button" data-copy="link">${esc(t("copy"))}</button>
-         </div>
-         <button class="primary-btn" type="button" data-share="1" style="margin-top:12px">📤 ${esc(t("share"))}</button>`
-      : `<div class="notice">${esc(t("noLink"))}</div>`}
-    <label style="display:block;margin-top:14px">${esc(t("yourCode"))}</label>
-    <div class="copybox" style="margin-top:7px">
-      <input type="text" readonly value="${esc(r.referral_code || "")}">
-      <button class="sec-btn" type="button" data-copy="code">${esc(t("copy"))}</button>
-    </div>
-    <div class="notice" style="margin-top:12px">${esc(t("rewardPromo"))}</div>
-  </div>`;
-
-  const claimButton = Number(r.total_commission || 0) > 0
-    ? `<button class="primary-btn" id="claimCommissionBtn" type="button">Claim commission to wallet</button>`
-    : `<div class="muted small">No commission available to claim.</div>`;
-  const teamRows = (r.team_levels || []).map(l => `<div class="kv"><span>Level ${esc(l.level)}</span><strong>${esc(l.count)} members</strong></div>`).join("");
-  
-  const reward = r.reward || {};
-  const stats = `<div class="stats">
-  <div class="stat"><div class="l">${esc(t("directRef"))}</div><div class="v">${esc(r.total_direct_referrals || 0)}</div></div>
-  <div class="stat"><div class="l">${esc(t("availableComm"))}</div><div class="v">${esc(money(r.total_commission || 0))}</div></div>
-  <div class="stat"><div class="l">${esc(t("claimedComm"))}</div><div class="v">${esc(money(r.claimed_commission || 0))}</div></div>
-  <div class="stat"><div class="l">${esc(t("totalRewards"))}</div><div class="v">${esc(money(Number(reward.credited_points || 0) + Number(reward.pending_points || 0)))}</div></div>
-  </div>`;
-
-  const levelRows = (r.commission_levels || []).map(l => `<tr>
-    <td>L${esc(l.level)}</td><td>${esc(l.rate_percent)}%</td>
-    <td>${esc(l.commission_count)}</td><td>${esc(money(l.total_commission))}</td>
-  </tr>`).join("");
-
-  const levelsCard = `<div class="card">
-    <div class="section-title">${esc(t("levels"))}</div>
-    <div class="notice"><strong>Team · 3 levels</strong>${teamRows}<div style="margin-top:12px">${claimButton}</div></div>
-    <div class="wrap"><table class="tbl"><thead><tr>
-      <th>${esc(t("lvl"))}</th><th>${esc(t("rate"))}</th><th>${esc(t("cnt"))}</th><th>${esc(t("total"))}</th>
-    </tr></thead><tbody>${levelRows}</tbody></table></div>
-    <div class="notice">${esc(t("rewardNote"))}</div>
-  </div>`;
-
-  const applyCard = r.referred_by
-    ? `<div class="card"><div class="muted small">${esc(t("referredBy"))}</div></div>`
-    : `<div class="card">
-         <div class="section-title">${esc(t("haveCode"))}</div>
-         <input id="refCodeInput" type="text" maxlength="100" autocomplete="off" placeholder="${esc(t("enterCode"))}">
-         <button class="primary-btn" type="button" data-apply-ref="1">${esc(t("apply"))}</button>
-       </div>`;
-
-  const commRows = (commData.items || []).map(c => `<tr>
-    <td class="period">${esc(fmtPeriod(c.round_code) || "—")}<div class="utc-time">${esc(dateUTC(c.created_at))}</div></td>
-    <td>L${esc(c.referral_level)}</td>
-    <td class="n-green">+${esc(money(c.commission_amount))}</td>
-  </tr>`).join("");
-
-  const commCard = `<div class="card">
-    <div class="section-title">${esc(t("commHistory"))}</div>
-    ${commRows
-      ? `<div class="wrap"><table class="tbl"><thead><tr>
-           <th>${esc(t("colPeriod"))}</th><th>${esc(t("lvl"))}</th><th>${esc(t("comm"))}</th>
-         </tr></thead><tbody>${commRows}</tbody></table></div>`
-      : `<div class="empty">${esc(t("noTx"))}</div>`}
-    ${pager("comm",commPage,commData.total)}
-  </div>`;
-
-  box.innerHTML = linkCard + stats + membersCardHtml() + levelsCard + applyCard + commCard;
-}
-
-async function loadReferral(silent){
-  if(!authed){ renderReferral(); return; }
-  try {
-    const d = await api("referral_data");
-    referralData = d.referral;
-    const h = await api("referral_history",{page:commPage,page_size:PAGE});
-    commData = {items:h.commissions || [],total:Number(h.pagination && h.pagination.total || 0)};
-    renderReferral();
-  } catch(error) {
-    if(!silent) toast(error.message);
-  }
-}
-
-async function loadCommissions(){
-  try {
-    const h = await api("referral_history",{page:commPage,page_size:PAGE});
-    commData = {items:h.commissions || [],total:Number(h.pagination && h.pagination.total || 0)};
-    renderReferral();
-  } catch(error) {
-    toast(error.message);
-  }
-}
-
-async function applyReferral(){
-  const input = $("refCodeInput");
-  const code = input ? input.value.trim() : "";
-  if(!code){ toast(t("enterCode")); return; }
-  try {
-    await api("apply_referral",{referral_code:code});
-    toast(t("refreshed"));
-    await loadReferral();
-  } catch(error) {
-    toast(error.message);
-  }
-}
-
-// Referral link: bot forwards the code as ?ref=CODE (or start_param).
-async function applyReferralFromUrl(){
-  try {
-    const params = new URLSearchParams(window.location.search);
-    let code = (params.get("ref") || "").trim();
-
-    if(!code && tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param){
-      let param = String(tg.initDataUnsafe.start_param).trim();
-      if(param.startsWith("ref_")) {
-        code = param.slice(4); // remove "ref_"
-      } else {
-        code = param;
-      }
-    }
-
-    if(!/^[A-Za-z0-9_-]{1,80}$/.test(code)) return;
-
-    try {
-      if(sessionStorage.getItem("ctp_ref_done") === code) return;
-    } catch(_) {}
-
-    try {
-      await api("apply_referral",{referral_code:code});
-      referralData = null;
-      try { sessionStorage.setItem("ctp_ref_done",code); } catch(_) {}
-    } catch(error) {
-      if(/already|invalid|own|relationship/i.test(error.message || "")){
-        try { sessionStorage.setItem("ctp_ref_done",code); } catch(_) {}
-      }
-    }
-  } catch(_) {}
-}
-
-/* ---------- REFERRAL MEMBERS (active / inactive, rewards) ---------- */
-Object.assign(I18N.en,{
-  mTitle:"Your referrals", m_all:"All", m_active:"Active", m_inactive:"Inactive",
-  mActive:"Active", mInactive:"Inactive", mPending:"Pending", mReceived:"Received",
-  mJoined:"Joined", mLastPlayed:"Last played", mNever:"Never played",
-  mNoName:"No username", mSumActive:"Active referrals", mSumInactive:"Inactive referrals",
-  mSumPending:"Pending reward", mSumReceived:"Reward received",
-  mActiveNote:"Active = placed a bet in the last 7 days.",
-  mNoReward:"No reward record", mCreditedOn:"Received on"
-});
-Object.assign(I18N.hi,{
-  mTitle:"आपके रेफरल", m_all:"सभी", m_active:"एक्टिव", m_inactive:"इनएक्टिव",
-  mActive:"एक्टिव", mInactive:"इनएक्टिव", mPending:"पेंडिंग", mReceived:"मिला",
-  mJoined:"जुड़े", mLastPlayed:"आखिरी बार खेला", mNever:"कभी नहीं खेला",
-  mNoName:"यूज़रनेम नहीं", mSumActive:"��क्टिव रेफरल", mSumInactive:"इनएक्टिव रेफरल",
-  mSumPending:"पेंडिंग रिवॉर्ड", mSumReceived:"मिला हुआ रिवॉर्ड",
-  mActiveNote:"एक्टिव = पिछले 7 दिन में कम से कम एक बेट लगाई।",
-  mNoReward:"रिवॉर्ड रिकॉर्ड नहीं", mCreditedOn:"मिलने की तारीख"
-});
-Object.assign(I18N.bn,{
-  mTitle:"আপনার রেফারেল", m_all:"সব", m_active:"অ্যাকটিভ", m_inactive:"ইনঅ্যাকটিভ",
-  mActive:"অ্যাকটিভ", mInactive:"ইনঅ্যাকটিভ", mPending:"পেন্ডিং", mReceived:"পাওয়া গেছে",
-  mJoined:"যোগ দিয়েছে", mLastPlayed:"শেষ খেলেছে", mNever:"কখনও খেলেনি",
-  mNoName:"ইউজারনেম নেই", mSumActive:"অ্যাকটিভ রেফারেল", mSumInactive:"ইনঅ্যাকটিভ রেফারেল",
-  mSumPending:"পেন্ডিং রিওয়ার্ড", mSumReceived:"পাওয়া রিওয়ার্ড",
-  mActiveNote:"অ্যাকটিভ = গত ৭ দিনে অন্তত একটি বেট দিয়েছে।",
-  mNoReward:"রিওয়ার্ড ���েকর্ড নেই", mCreditedOn:"পাওয়ার তারিখ"
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+  max: 3,
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 10000
 });
 
-let membersData = null;
-let membersFor = null;
-let membersLoading = false;
-let membersFilter = "all";
+pool.on("error", err =>
+  console.error("DB pool error:", err.code || err.name)
+);
 
-async function loadMembers(){
-  membersLoading = true;
-  try {
-    membersData = await api("referral_members");
-  } catch(error) {
-    membersData = {error:error.message};
-  } finally {
-    membersLoading = false;
-    renderReferral();
-  }
+const COOKIE = "admin_session";
+const SESSION_SECONDS = 7200;
+
+function json(res, status, data) {
+  res.statusCode = status;
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store, max-age=0");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  res.end(JSON.stringify(data));
 }
 
-function membersCardHtml(){
-  // Reload whenever the referral data was refreshed.
-  if(membersFor !== referralData && !membersLoading){
-    membersFor = referralData;
-    loadMembers();
-  }
+function validRequest(req) {
+  if (req.headers["x-admin-request"] !== "1") return false;
 
-  const title = `<div class="section-title">${esc(t("mTitle"))}</div>`;
-
-  if(!membersData){
-    return `<div class="card">${title}<div class="empty">${esc(t("loading"))}</div></div>`;
-  }
-
-  if(membersData.error){
-    return `<div class="card">${title}<div class="empty">${esc(membersData.error)}</div></div>`;
-  }
-
-  const s = membersData.summary || {};
-  const all = membersData.members || [];
-  const list = all.filter(m =>
-    membersFilter === "all" ||
-    (membersFilter === "active" ? m.is_active : !m.is_active));
-
-  const stats = `<div class="stats">
-    <div class="stat"><div class="l">${esc(t("mSumActive"))}</div><div class="v">${esc(s.active || 0)}</div></div>
-    <div class="stat"><div class="l">${esc(t("mSumInactive"))}</div><div class="v">${esc((s.total || 0) - (s.active || 0))}</div></div>
-    <div class="stat"><div class="l">${esc(t("mSumPending"))}</div><div class="v">${esc(money(s.pending_points))}</div></div>
-    <div class="stat"><div class="l">${esc(t("mSumReceived"))}</div><div class="v">${esc(money(Number(s.credited_points || 0) + Number(s.pending_points || 0)))}</div></div>
-  </div>`;
-
-  const tabs = ["all","active","inactive"].map(k =>
-    `<button type="button" class="tab${membersFilter === k ? " on" : ""}" data-mfilter="${k}">${esc(t("m_" + k))}</button>`
-  ).join("");
-
-  const rows = list.map(m => {
-    const active = !!m.is_active;
-
-    const reward = m.reward_status === "credited"
-      ? `<span class="pill ok">${esc(t("mReceived"))} +${esc(money(m.reward_points))}</span>
-         <div class="utc-time">${esc(t("mCreditedOn"))}: ${esc(dateUTC(m.credited_at))}</div>`
-      : m.reward_status === "pending"
-        ? `<span class="pill wait">${esc(t("mPending"))} · ${esc(money(m.reward_points))}</span>`
-        : `<span class="pill">${esc(t("mNoReward"))}</span>`;
-
-    return `<div class="member">
-      <div class="row">
-        <strong>${esc(m.username ? "@" + m.username : t("mNoName"))}</strong>
-        <span class="pill ${active ? "ok" : "off"}">${esc(t(active ? "mActive" : "mInactive"))}</span>
-      </div>
-      <div class="utc-time">${esc(t("mJoined"))}: ${esc(dateUTC(m.created_at))}</div>
-      <div class="utc-time">${esc(t("mLastPlayed"))}: ${esc(m.last_bet_at ? dateUTC(m.last_bet_at) : t("mNever"))}</div>
-      <div style="margin-top:8px">${reward}</div>
-    </div>`;
-  }).join("");
-
-  return `<div class="card">
-    ${title}
-    ${stats}
-    <div class="notice" style="margin-top:0">${esc(t("mActiveNote"))} ${esc(t("rewardNote"))}</div>
-    <div class="tabs">${tabs}</div>
-    ${rows || `<div class="empty">${esc(t("noRef"))}</div>`}
-  </div>`;
-}
-
-document.addEventListener("click",event => {
-  const b = event.target.closest("[data-mfilter]");
-  if(!b) return;
-  membersFilter = b.dataset.mfilter;
-  renderReferral();
-});
-
-/* ---------- RESULT POPUP / BANNER ---------- */
-function queuePopup(round){
-  if(queuedResults.has(round.round_code)) return;
-  queuedResults.add(round.round_code);
-  resultPopupQueue.push(round);
-  showNextResultPopup();
-}
-
-function showNextResultPopup(){
-  if(resultPopupOpen || !resultPopupQueue.length) return;
-
-  const round = resultPopupQueue.shift();
-  const n = Number(round.result_number);
-
-  if(!Number.isInteger(n) || n < 0 || n > 9){
-    showNextResultPopup();
-    return;
-  }
-
-  resultPopupOpen = true;
-
-  $("resultPopupPeriod").textContent = t("rPeriod") + " " + fmtPeriod(round.round_code);
-  $("resultPopupNumber").textContent = String(n);
-  $("resultPopupNumber").style.background = popupBg(n);
-  $("resultPopupColor").textContent = "🎨 " + popupColourName(n);
-  $("resultPopupSize").textContent = n >= 5 ? "📈 " + t("sBig") : "📉 " + t("sSmall");
-  $("resultModal").classList.add("open");
-
-  playResultSound();
-  haptic("success");
-}
-
-function closeResultPopup(){
-  $("resultModal").classList.remove("open");
-  resultPopupOpen = false;
-  if(resultPopupQueue.length) setTimeout(showNextResultPopup,250);
-}
-
-function showBanner(round){
-  const n = Number(round.result_number);
-  if(!Number.isInteger(n) || n < 0 || n > 9) return;
-
-  const text = t("bannerResult",{
-    period:fmtPeriod(round.round_code),
-    n:n,
-    colour:popupColourName(n),
-    size:tk("bt_",n >= 5 ? "Big" : "Small")
-  });
-
-  $("banner").innerHTML = `<span>${dotsHtml(n)}</span><span>${esc(text)}</span>`;
-  $("banner").classList.add("show");
-  clearTimeout(bannerTimer);
-  bannerTimer = setTimeout(() => $("banner").classList.remove("show"),4500);
-}
-
-// Rules:
-//  1) one popup when the game is opened (latest declared result),
-//  2) afterwards a popup only for rounds where this user placed a bet,
-//  3) a small notification banner for every new result.
-function detectResults(){
-  if(!authed) return;
-
-  const rev = latestRounds.filter(revealed);
-  if(!rev.length) return;
-
-  if(!firstResultShown){
-    firstResultShown = true;
-    rev.forEach(r => seenResults.add(r.round_code));
-    queuePopup(rev[0]);
-    return;
-  }
-
-  const fresh = rev
-    .filter(r => !seenResults.has(r.round_code))
-    .sort((a,b) => new Date(a.ends_at) - new Date(b.ends_at));
-
-  if(!fresh.length) return;
-
-  fresh.forEach(r => seenResults.add(r.round_code));
-
-  const played = fresh.filter(r => playedRounds.has(r.round_code));
-  played.forEach(queuePopup);
-
-  showBanner(fresh[fresh.length - 1]);
-  if(!played.length){ playPing(); haptic("light"); }
-
-  syncUser(true);
-}
-
-/* ---------- ROUND CONTROL ---------- */
-function getActiveRound(){
-  const r = currentRound;
-  if(!r) return null;
-  const now = nowMs();
-  const starts = new Date(r.starts_at).getTime();
-  const ends = new Date(r.ends_at).getTime();
-  return Number.isFinite(starts) && Number.isFinite(ends) && now >= starts && now < ends
-    ? r : null;
-}
-
-function isBettingOpen(round){
-  if(!round || round.status !== "open") return false;
-  const now = nowMs();
-  const starts = new Date(round.starts_at).getTime();
-  const closes = new Date(round.betting_closes_at).getTime();
-  const ends = new Date(round.ends_at).getTime();
-  return Number.isFinite(starts) && Number.isFinite(closes) && Number.isFinite(ends) &&
-         now >= starts && now < closes && now < ends;
-}
-
-async function syncRounds(){
-  if(roundsBusy) return roundsOk;
-  roundsBusy = true;
-
-  try {
-    const d = await getRounds(1);
-
-    const serverMs = new Date(d.server_time).getTime();
-    if(Number.isFinite(serverMs)) serverTimeOffset = serverMs - d._mid;
-
-    currentRound = d.current_round || null;
-    latestRounds = d.rounds || [];
-    roundsLoaded = true;
-    roundsFailed = false;
-    roundsOk = true;
-
-    if(resultPage === 1){
-      resultData = {rounds:latestRounds,total:Number(d.rounds_page && d.rounds_page.total || 0)};
-      renderResults();
-    }
-
-    detectResults();
-    setNotice("nConnected");
-  } catch(error) {
-    roundsFailed = true;
-    roundsOk = false;
-    setNotice("nUnavailable",{msg:error.message});
-  } finally {
-    lastRoundsSync = Date.now();
-    roundsBusy = false;
-    updateRoundDisplay();
-  }
-
-  return roundsOk;
-}
-
-async function syncUser(){
-  if(!authed) return false;
-  if(userBusy) return userOk;
-  userBusy = true;
-
-  try {
-    const [balData,betData] = await Promise.all([
-      api("balance"),
-      api("my_bets",{page:tradePage,page_size:PAGE})
-    ]);
-
-    updateBalance(balData.balance);
-    tradeData = {bets:betData.bets || [],total:Number(betData.pagination && betData.pagination.total || 0)};
-    renderTrades();
-
-    if(activePage === "wallet") await loadWallet(true);
-    userOk = true;
-  } catch(error) {
-    userOk = false;
-  } finally {
-    lastUserSync = Date.now();
-    userBusy = false;
-  }
-
-  return userOk;
-}
-
-function setRing(frac,locked){
-  const el = $("ringFg");
-  // Refill instantly when a new round starts; deplete smoothly otherwise.
-  el.style.transition = frac > lastRingFrac + 0.01 ? "none" : "";
-  el.style.strokeDashoffset = String(RING_LENGTH * (1 - frac));
-  el.classList.toggle("locked",locked);
-  lastRingFrac = frac;
-}
-
-function updateRoundDisplay(){
-  const server = getActiveRound();
-  let info = null;
-
-  if(server){
-    info = {
-      code:server.round_code,
-      endsMs:new Date(server.ends_at).getTime(),
-      open:isBettingOpen(server),
-      virtual:false
-    };
-  } else if(roundsLoaded){
-    // The server round is not loaded yet: show the real slot from server time.
-    const s = slotInfo(nowMs());
-    info = {code:s.code,endsMs:s.endsMs,open:false,virtual:true};
-  }
-
-  if(!info){
-    $("periodId").textContent = t("loadingRound");
-    $("timer").textContent = "--:--";
-    setRing(0,true);
-    setStatus(authBlock || (roundsFailed ? "stError" : "stConnecting"));
-    updateBetButtons(false);
-    previousBettingOpen = false;
-    lastTickSecond = -1;
-    return;
-  }
-
-  const left = Math.max(0,Math.ceil((info.endsMs - nowMs()) / 1000));
-
-  $("periodId").textContent = fmtPeriod(info.code);
-  $("timer").textContent =
-    String(Math.floor(left / 60)).padStart(2,"0") + ":" + String(left % 60).padStart(2,"0");
-
-  setRing(Math.min(1,left / ROUND_SECONDS),!info.open);
-  setStatus(authBlock || (info.virtual ? "stSyncing" : info.open ? "stOpen" : "stLocked"));
-  updateBetButtons(info.open && authed);
-
-  if(previousBettingOpen === true && !info.open){
-    playLockSound();
-    haptic("light");
-  }
-  previousBettingOpen = info.open;
-
-  if(left <= 30 && left > 0 && left !== lastTickSecond){
-    playTickSound();
-    lastTickSecond = left;
-  } else if(left > 30 || left === 0){
-    lastTickSecond = -1;
-  }
-
-  if(lastDisplayedRoundCode !== info.code){
-    lastDisplayedRoundCode = info.code;
-    lastTickSecond = -1;
-    previousBettingOpen = info.open;
-  }
-}
-
-function updateBetButtons(enabled){
-  document.querySelectorAll("[data-bet],.number-btn").forEach(button => {
-    button.disabled = !enabled;
-  });
-}
-
-function poll(){
-  if(document.hidden) return;
-
-  const now = Date.now();
-
-  if(!roundsBusy){
-    const r = currentRound;
-    const ended = r && nowMs() >= new Date(r.ends_at).getTime();
-
-    // In the first 30 seconds of a round, keep asking until the
-    // previous round's result has arrived.
-    const slot = slotInfo(nowMs());
-    const prevCode = slotInfo(slot.startMs - 1).code;
-    const prevMissing = roundsLoaded &&
-      nowMs() - slot.startMs < 30000 &&
-      !latestRounds.some(x => x.round_code === prevCode && revealed(x));
-
-    const due = now - lastRoundsSync >= ROUND_POLL ||
-      ((ended || prevMissing) && now - lastRoundsSync >= 1000);
-
-    if(due) syncRounds();
-  }
-
-  if(authed && !userBusy && now - lastUserSync >= USER_POLL){
-    syncUser();
-  }
-}
-
-async function manualRefresh(button){
-  if(button) button.classList.add("busy");
-
-  try {
-    if(!authed){
-      await authenticate();
-    } else {
-      const okRounds = await syncRounds();
-      const okUser = await syncUser();
-
-      if(resultPage !== 1) await loadResults();
-      if(activePage === "wallet") await loadWallet(true);
-      if(activePage === "referral") await loadReferral(true);
-
-      toast(okRounds && okUser ? t("refreshed") : t("refreshFailed"));
-    }
-  } catch(error) {
-    toast(error.message || t("refreshFailed"));
-  } finally {
-    if(button) button.classList.remove("busy");
-  }
-}
-
-/* ---------- AUTH ---------- */
-async function authenticate(){
-  try {
-    if(!tg){
-      authed = false;
-      authBlock = "stTelegram";
-      profName = {k:"notTg"};
-      profStatus = {k:"openInTg"};
-      renderProfile();
-      renderTrades();
-      syncRounds();
-      return;
-    }
-
-    tg.ready();
-    tg.expand();
-    initData = tg.initData || "";
-
-    if(!initData){
-      authed = false;
-      authBlock = "stAuth";
-      profName = {k:"tgMissing"};
-      profStatus = {k:"openOfficial"};
-      renderProfile();
-      renderTrades();
-      syncRounds();
-      return;
-    }
-
-    const response = await fetch("/api/auth",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({initData})
-    });
-
-    const data = await parseResponse(response);
-
-    authed = true;
-    authBlock = null;
-  user = data.user;
-  if (typeof loadNotifications === "function") await loadNotifications().catch(() => {});
-
-    profName = user.username ? {raw:"@" + user.username} : {k:"tgUser",v:{id:user.telegram_id}};
-    profStatus = {k:"verified"};
-    renderProfile();
-
-  try {
-    await syncRounds();
-    await syncUser();
-    await applyReferralFromUrl();
-  } catch (error) {
-    console.warn("[v0] post-auth sync failed", error.message);
-    authBlock = "stConnecting";
-    renderProfile();
-    toast("Account authenticated; syncing game data…");
-  }
-  } catch(error) {
-  authed = false;
-  authBlock = "stAuth";
-  profStatus = {raw:error.message};
-  renderProfile();
-  toast(error.message);
-  }
-  }
-
-/* ---------- BETTING ---------- */
-function renderBreakdown(){
-  const text = $("betAmount").value.trim();
-  const ok = /^\d{1,18}(\.\d{1,2})?$/.test(text);
-  const stakeC = ok ? cents(text) : 0;
-  const feeC = Math.floor((stakeC * FEE_PERCENT + 50) / 100); // round half up
-  const actualC = stakeC - feeC;
-
-  $("betBreakdown").innerHTML = `
-    <div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(stakeC / 100))}</span></div>
-    <div class="kv"><span>${esc(t("bkFee",{pct:FEE_PERCENT}))}</span><span>−${esc(money(feeC / 100))}</span></div>
-    <div class="kv strong"><span>${esc(t("dActual"))}</span><span>${esc(money(actualC / 100))}</span></div>`;
-}
-
-function openBet(type,selection = null){
-  if(!authed){ toast(t("toastAuth")); return; }
-
-  const round = getActiveRound();
-
-  if(!isBettingOpen(round)){
-    toast(t("toastLocked"));
-    syncRounds();
-    return;
-  }
-
-  haptic("light");
-
-  currentBet = {type,selection,roundCode:round.round_code};
-  pendingBetRequest = null;
-
-  $("betModalTitle").textContent =
-    t("betOn") + " " + tk("bt_",type) + (selection === null ? "" : " " + selection);
-  $("betModalPeriod").textContent = t("serverRound") + " " + fmtPeriod(round.round_code);
-  $("betAmount").value = "100";
-  renderBreakdown();
-  $("confirmBet").disabled = false;
-  $("betModal").classList.add("open");
-}
-
-async function confirmBet(){
-  if(!currentBet || !authed) return;
-
-  const stakeText = $("betAmount").value.trim();
-  const stake = Number(stakeText);
-
-  if(!/^\d{1,18}(\.\d{1,2})?$/.test(stakeText) ||
-     !Number.isFinite(stake) || stake < 10){
-    toast(t("toastAmount"));
-    return;
-  }
-
-  const btn = $("confirmBet");
-  btn.disabled = true;
-
-  try {
-    if(!pendingBetRequest){
-      pendingBetRequest = {
-        requestId:makeRequestId(),
-        roundCode:currentBet.roundCode,
-        betType:currentBet.type,
-        selection:currentBet.type === "Number" ? currentBet.selection : null,
-        stake:stakeText
-      };
-    }
-
-    const r = pendingBetRequest;
-
-    if(r.roundCode !== currentBet.roundCode ||
-       r.betType !== currentBet.type ||
-       r.selection !== (currentBet.type === "Number" ? currentBet.selection : null) ||
-       r.stake !== stakeText){
-      pendingBetRequest = null;
-      toast(t("toastChanged"));
-      return;
-    }
-
-    await api("place_bet",{
-      round_code:r.roundCode,
-      bet_type:r.betType,
-      selection:r.selection,
-      stake:r.stake,
-      request_id:r.requestId
-    });
-
-    playedRounds.add(r.roundCode);
-    pendingBetRequest = null;
-    $("betModal").classList.remove("open");
-    playBetSound();
-    haptic("success");
-    toast(t("toastBetOk"));
-
-    tradePage = 1;
-    await syncUser();
-  } catch(error) {
-    haptic("error");
-    toast(error.message || t("toastBetFail"));
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-/* ---------- NAVIGATION / LANGUAGE ---------- */
-function showPage(name){
-  activePage = name;
-
-  document.querySelectorAll(".page").forEach(page => {
-    page.classList.toggle("active",page.id === "page-" + name);
-  });
-  document.querySelectorAll(".nav-btn").forEach(button => {
-    button.classList.toggle("active",button.dataset.page === name);
-  });
-
-  if(name === "wallet" || name === "deposit" || name === "withdraw") loadWallet();
-  if(name === "referral" || name === "profile") loadReferral();
-  if(name === "activity") loadActivityPage();
-  window.scrollTo(0,0);
-}
-
-async function loadActivityPage(){
-  const walletEl = $("activityWalletHistory");
-  const referralEl = $("activityReferralHistory");
-  if(!authed){
-    if(walletEl) walletEl.textContent = "Authenticate through Telegram to view activity.";
-    if(referralEl) referralEl.textContent = "Authenticate through Telegram to view referral activity.";
-    return;
-  }
-  try {
-    const d = await api("wallet_history",{page:1,page_size:20});
-    const items = d.transactions || [];
-    if(walletEl) walletEl.innerHTML = items.length ? items.map(x =>
-      `<div class="setting-row"><span><strong>${esc(String(x.transaction_type || "transaction").replace(/_/g," "))}</strong><small>${esc(x.created_at || "")} · ${esc(x.status || "unknown")}</small></span><b>${esc(String(x.amount ?? "—"))} Points</b></div>`
-    ).join("") : '<div class="empty">No wallet transactions yet.</div>';
-  } catch(e) { if(walletEl) walletEl.textContent = "Could not load wallet history."; }
-  try {
-    const h = await api("referral_history",{page:1,page_size:20});
-    const items = h.commissions || [];
-    if(referralEl) referralEl.innerHTML = items.length ? items.map(x =>
-      `<div class="setting-row"><span><strong>Referral commission</strong><small>${esc(x.created_at || "")} · ${esc(x.status || "recorded")}</small></span><b>${esc(String(x.amount ?? x.points ?? "—"))} Points</b></div>`
-    ).join("") : '<div class="empty">No referral commissions yet.</div>';
-  } catch(e) { if(referralEl) referralEl.textContent = "Could not load referral history."; }
-}
-
-function renderLangList(filter){
-  const q = String(filter || "").trim().toLowerCase();
-  const list = LANGS.filter(l => !q ||
-  String(l.name || "").toLowerCase().includes(q) ||
-  String(l.en || "").toLowerCase().includes(q) ||
-    l.code.toLowerCase().includes(q));
-
-  $("langListModal").innerHTML = list.length
-    ? list.map(l =>
-        `<button class="lang-btn${l.code === lang ? " active" : ""}" type="button" data-lang="${esc(l.code)}">${esc(l.name)}${l.en && l.en !== l.name ? " · " + esc(l.en) : ""}</button>`
-      ).join("")
-    : `<div class="empty">${esc(t("noLangs"))}</div>`;
-}
-
-function openLangModal(){
-  $("langSearch").value = "";
-  renderLangList("");
-  $("langModal").classList.add("open");
-}
-
-  function renderCurrentLang(){
-  const meta = LANGS.find(l => l.code === lang) || LANGS[0];
-  const currentLanguage = $("curLangName");
-  if(currentLanguage) currentLanguage.textContent = meta ? `${meta.name} (${meta.en})` : "English";
-  }
-
-function rerender(){
-  applyStatic();
-  renderCurrentLang();
-  renderSettings();
-  renderProfile();
-  setStatus(statusKey);
-  setNotice(notice.key,notice.vars);
-  renderResults();
-  renderTrades();
-  renderWallet();
-  renderReferral();
-  updateRoundDisplay();
-}
-
-  function setLanguage(code){
-  if(!dict(code)) return;
-  lang = code;
-  const meta = LANGS.find(l => l.code === code);
-  document.documentElement.lang = code;
-  document.documentElement.dir = meta && meta.dir === "rtl" ? "rtl" : "ltr";
-  try { localStorage.setItem("ctp_lang",code); } catch(_) {}
-  $("langModal").classList.remove("open");
-  rerender();
-  }
-
-
-/* ---------- INIT ---------- */
-function renderNumbers(){
-  const box = $("numberGrid");
-  box.innerHTML = "";
-  for(let n = 0; n <= 9; n++){
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "number-btn " + numClass(n);
-    button.textContent = n;
-    button.onclick = () => openBet("Number",n);
-    box.appendChild(button);
-  }
-}
-
-async function loadNotifications() {
-  try {
-    const data = await api("notifications");
-    const list = $("notificationList");
-  let rows = data.notifications || [];
-  if (!rows.length && (tradeData.bets || []).length) {
-    rows = tradeData.bets.slice(0, 5).map(b => ({ title: "Trade activity", message: `${b.bet_type} bet ${b.status || "pending"}`, created_at: b.created_at, is_read: false }));
-  }
-  $("notificationCount").textContent = 0;
-  $("notificationCount").hidden = true;
-    list.innerHTML = rows.length ? rows.map(item => `<div class="notification-item"><strong>${esc(item.title)}</strong><small>${esc(item.message)} · ${new Date(item.created_at).toLocaleString()}</small>${item.kind === "withdrawal" ? '<button type="button" class="sec-btn notification-action" data-notification-page="withdraw">Open withdraw</button>' : ""}</div>`).join("") : '<div class="empty">No activity yet.</div>';
-  list.querySelectorAll("[data-notification-page]").forEach(button => { button.onclick = () => { $("notificationModal").classList.remove("open"); showPage(button.dataset.notificationPage); }; });
-  } catch (error) { console.warn("[v0] notifications unavailable", error.message); }
-}
-
-function init(){
-  loadSettings();
-
-  document.addEventListener("pointerdown",unlockAudio,{passive:true});
-  document.addEventListener("keydown",unlockAudio);
-
-  renderNumbers();
-  applyStatic();
-  renderCurrentLang();
-  renderSettings();
-  renderProfile();
-  setStatus("stConnecting");
-  setNotice("nConnecting");
-
-  document.querySelectorAll(".nav-btn").forEach(button => {
-    button.onclick = () => showPage(button.dataset.page);
-  });
-  document.querySelectorAll("[data-page-go]").forEach(button => {
-    button.onclick = () => showPage(button.dataset.pageGo);
-  });
-  document.querySelectorAll("[data-refresh]").forEach(button => {
-    button.onclick = () => manualRefresh(button);
-  });
-
-  $("notificationBell").onclick = async () => { $("notificationModal").classList.add("open"); await loadNotifications(); };
-  setInterval(() => { if (initData) loadNotifications(); }, 30000);
-  $("closeNotifications").onclick = () => $("notificationModal").classList.remove("open");
-  $("headerProfile").onclick = () => showPage("profile");
-  $("editProfileBtn").onclick = openProfileModal;
-  $("walletAddressBtn").onclick = openWalletAddressModal;
-  $("saveProfileBtn").onclick = saveProfile;
-  $("saveWalletAddressBtn").onclick = saveWalletAddress;
-  $("gameRulesBtn").onclick = () => $("gameRulesModal").classList.add("open");
-  $("authRetry").onclick = authenticate;
-  $("redeemGiftBtn").onclick = async () => {
-    const code = $("giftCodeInput").value.trim();
-    if (!code) return toast("Enter a gift code.");
-    try { const result = await api("redeem_gift", { code }); toast(`Gift redeemed: ${result.points} points added.`); $("giftCodeInput").value = ""; await loadNotifications(); await loadWallet(true); }
-    catch (error) { toast(error.message, true); }
-  };
-  $("confirmBet").onclick = confirmBet;
-  $("resultPopupClose").onclick = closeResultPopup;
-  $("depositBtn").onclick = () => { openDepositPage().catch(error => toast(error.message, true)); };
-  $("depositPageBack").onclick = () => { clearInterval(depositTimerId); showPage("wallet"); };
-  $("withdrawBtn").onclick = () => showPage("withdraw");
-  $("homeDepositBtn").onclick = () => { openDepositPage().catch(error => toast(error.message, true)); };
-  $("homeWithdrawBtn").onclick = () => showPage("withdraw");
-  document.querySelectorAll("[data-open-cash]").forEach(button => { button.onclick = () => openCash(button.dataset.openCash); });
-  $("depositAmount").addEventListener("input", updateDepositSummary);
-  $("submitDeposit").onclick = submitDeposit;
-  $("cancelDeposit").onclick = () => { clearInterval(depositTimerId); showPage("wallet"); };
-  $("submitWithdrawal").onclick = submitWithdrawal;
-  $("withdrawAmount").addEventListener("input", () => {
-  const points = Math.max(0, Number($("withdrawAmount").value) || 0);
-  $("withdrawUsdtPreview").textContent = `${(points * 0.9 / 100).toFixed(2)} USDT after 10% fee`;
-  });
-  document.querySelectorAll(".withdraw-preset").forEach((button) => {
-    button.addEventListener("click", () => {
-      const available = Math.max(0, Number(balance) || 0);
-      const percent = button.dataset.percent === "max" ? 100 : Number(button.dataset.percent);
-      const amount = Math.floor((available * percent / 100) * 100) / 100;
-      $("withdrawAmount").value = amount >= 500 ? amount.toFixed(2) : "";
-      $("withdrawUsdtPreview").textContent = amount >= 500 ? `${(amount * 0.9 / 100).toFixed(2)} USDT after 10% fee` : "Minimum 5.00 USDT";
-    });
-  });
-  $("depositAmount").addEventListener("input", updateDepositSummary);
-  $("copyDepositAddress").onclick = async () => {
-    const value = $("depositAddress").value;
-    if(value && await copyText(value)) toast("Deposit address copied.");
-  };
-  document.addEventListener("click", async (event) => {
-    if(!event.target.closest("#claimCommissionBtn")) return;
-    const button = event.target.closest("#claimCommissionBtn");
-    button.disabled = true;
+  if (req.headers.origin) {
     try {
-      const result = await api("claim_commission");
-      toast(`Claimed ${money(result.claimed_points)} points (${(Number(result.claimed_points) / 100).toFixed(2)} USDT)`);
-      await manualRefresh(true); // FIX: refreshAll replaced with manualRefresh
-    } catch(error) {
-      button.disabled = false;
-      toast(error.message);
-    }
-  });
-
-  $("sndSwitch").onclick = () => {
-    settings.sound = !settings.sound;
-    saveSettings();
-    renderSettings();
-    if(settings.sound) playPing();
-  };
-  $("vibSwitch").onclick = () => {
-    settings.vibrate = !settings.vibrate;
-    saveSettings();
-    renderSettings();
-    if(settings.vibrate) haptic("success");
-  };
-
-  $("resultModal").addEventListener("click",event => {
-    if(event.target === $("resultModal")) closeResultPopup();
-  });
-
-  document.querySelectorAll("[data-bet]").forEach(button => {
-    button.onclick = () => openBet(button.dataset.bet);
-  });
-  document.querySelectorAll("[data-close]").forEach(button => {
-    button.onclick = () => $(button.dataset.close).classList.remove("open");
-  });
-  document.querySelectorAll(".modal-backdrop").forEach(modal => {
-    modal.addEventListener("click",event => {
-      if(event.target === modal && modal.id !== "resultModal"){
-        modal.classList.remove("open");
+      if (new URL(req.headers.origin).host !== req.headers.host) {
+        return false;
       }
-    });
-  });
-
-  document.querySelectorAll("[data-amount]").forEach(button => {
-    button.onclick = () => {
-      $("betAmount").value = button.dataset.amount;
-      pendingBetRequest = null;
-      renderBreakdown();
-    };
-  });
-  $("minusAmount").onclick = () => {
-    $("betAmount").value = Math.max(10,(Number($("betAmount").value) || 10) - 10).toFixed(2);
-    pendingBetRequest = null;
-    renderBreakdown();
-  };
-  $("plusAmount").onclick = () => {
-    $("betAmount").value = ((Number($("betAmount").value) || 10) + 10).toFixed(2);
-    pendingBetRequest = null;
-    renderBreakdown();
-  };
-  $("betAmount").addEventListener("input",() => {
-    pendingBetRequest = null;
-    renderBreakdown();
-  });
-
-  // Delegated clicks: pagers, trade rows, language, copy/share/apply.
-  document.addEventListener("click",async event => {
-    const pg = event.target.closest("[data-pager]");
-    if(pg && !pg.disabled){
-      const dir = Number(pg.dataset.dir);
-      const id = pg.dataset.pager;
-      if(id === "results"){ resultPage = Math.max(1,resultPage + dir); loadResults(); }
-      else if(id === "trades"){ tradePage = Math.max(1,tradePage + dir); loadTrades(); }
-      else if(id === "wallet"){ walletPage = Math.max(1,walletPage + dir); loadWallet(); }
-      else if(id === "comm"){ commPage = Math.max(1,commPage + dir); loadCommissions(); }
-      return;
+    } catch {
+      return false;
     }
+  }
 
-    const tr = event.target.closest("[data-trade]");
-    if(tr){ tr.parentElement.classList.toggle("open"); return; }
+  return true;
+}
 
-    const lb = event.target.closest("[data-lang]");
-    if(lb){ setLanguage(lb.dataset.lang); return; }
+async function query(sql, params = []) {
+  const result = await pool.query(sql, params);
+  return result.rows;
+}
 
-    const cp = event.target.closest("[data-copy]");
-    if(cp && referralData){
-      const value = cp.dataset.copy === "link" ? referralData.referral_link : referralData.referral_code;
-      const ok = value ? await copyText(value) : false;
-      toast(ok ? t("copied") : t("copyFail"));
-      return;
-    }
+function ipAddress(req) {
+  return String(
+    req.headers["x-forwarded-for"] ||
+    req.socket?.remoteAddress ||
+    ""
+  ).split(",")[0].trim().slice(0, 100);
+}
 
-    const sh = event.target.closest("[data-share]");
-    if(sh && referralData && referralData.referral_link){
-      const url = "https://t.me/share/url?url=" + encodeURIComponent(referralData.referral_link) +
-                  "&text=" + encodeURIComponent(t("shareText"));
+function safeEqual(a, b) {
+  const x = Buffer.from(String(a ?? ""));
+  const y = Buffer.from(String(b ?? ""));
+  return x.length === y.length && crypto.timingSafeEqual(x, y);
+}
+
+function getConfig() {
+  const username = process.env.ADMIN_USERNAME;
+  const password = process.env.ADMIN_PASSWORD;
+  const secret = process.env.ADMIN_SESSION_SECRET;
+
+  if (
+    !username ||
+    !password ||
+    password.length < 12 ||
+    !secret ||
+    secret.length < 32
+  ) {
+    throw new Error("Admin environment configuration is invalid.");
+  }
+
+  return { username, password };
+}
+
+function sign(value) {
+  return crypto
+    .createHmac("sha256", process.env.ADMIN_SESSION_SECRET)
+    .update(value)
+    .digest("base64url");
+}
+
+function createSession(username) {
+  const payload = Buffer.from(JSON.stringify({
+    username,
+    exp: Math.floor(Date.now() / 1000) + SESSION_SECONDS,
+    nonce: crypto.randomBytes(16).toString("hex")
+  })).toString("base64url");
+
+  return `${payload}.${sign(payload)}`;
+}
+
+function readCookie(req, name) {
+  for (const item of String(req.headers.cookie || "").split(";")) {
+    const i = item.indexOf("=");
+    if (i < 0) continue;
+    if (item.slice(0, i).trim() === name) {
       try {
-        if(tg && tg.openTelegramLink) tg.openTelegramLink(url);
-        else window.open(url,"_blank");
-      } catch(_) { window.open(url,"_blank"); }
-      return;
+        return decodeURIComponent(item.slice(i + 1).trim());
+      } catch {
+        return "";
+      }
     }
-
-    const ap = event.target.closest("[data-apply-ref]");
-    if(ap){ applyReferral(); }
-  });
-
-  document.addEventListener("visibilitychange",() => {
-    if(!document.hidden){
-      syncRounds();
-      syncUser();
-    }
-  });
-
-  renderResults();
-  renderTrades();
-  renderWallet();
-  renderReferral();
-
-  authenticate();
-  if(!tg) syncRounds();
-
-  setInterval(updateRoundDisplay,1000);
-  setInterval(poll,1000);
+  }
+  return "";
 }
 
-init();
+function verifySession(token) {
+  if (!token || typeof token !== "string") return null;
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [payload, signature] = parts;
+  if (!safeEqual(signature, sign(payload))) return null;
 
-})();
-</script>  
-<script>
-document.addEventListener("DOMContentLoaded", function () {
- const byId = id => document.getElementById(id);
- byId("profileGiftOption")?.addEventListener("click", function () {
-   byId("giftCodeInput")?.scrollIntoView({behavior:"smooth",block:"center"});
-   byId("giftCodeInput")?.focus();
- });
- byId("profileLanguageOption")?.addEventListener("click", function () {
-   const modal=byId("langModal");
-   if(modal){modal.classList.add("open");return;}
-   const button=document.querySelector('[data-open="langModal"],#languageBtn,.lang-btn');
-   if(button)button.click();else alert("Language selector is not available in this view.");
- });
- byId("profileNotificationOption")?.addEventListener("click", function () {
-   const modal=byId("notificationModal");
-   if(modal){modal.classList.add("open");return;}
-   byId("sndSwitch")?.scrollIntoView({behavior:"smooth",block:"center"});
- });
- byId("profileSettingsOption")?.addEventListener("click", function () {
-   byId("sndSwitch")?.scrollIntoView({behavior:"smooth",block:"center"});
- });
- byId("profileSupportOption")?.addEventListener("click", function () {
-   const link=document.querySelector('a[href*="t.me/"][data-support],a.support-link');
-   if(link)window.open(link.href,"_blank","noopener");else alert("Support link has not been configured.");
- });
- byId("profileLogoutOption")?.addEventListener("click", function () {
-   alert("Close the Mini App from Telegram to end this session.");
- });
-});
-</script>
+  try {
+    const session = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    if (
+      !session.username ||
+      !Number.isFinite(session.exp) ||
+      session.exp <= Date.now() / 1000 ||
+      !safeEqual(session.username, process.env.ADMIN_USERNAME)
+    ) {
+      return null;
+    }
+    return session;
+  } catch {
+    return null;
+  }
+}
 
-</body>
-  </html>
+function setCookie(res, value, maxAge) {
+  res.setHeader(
+    "Set-Cookie",
+    `${COOKIE}=${encodeURIComponent(value)}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}`
+  );
+}
+
+async function ensureCoreTables() {
+  await query(`CREATE TABLE IF NOT EXISTS public.users (
+    id BIGSERIAL PRIMARY KEY,
+    telegram_id TEXT,
+    username TEXT,
+    first_name TEXT,
+    last_name TEXT,
+    profile_picture TEXT,
+    wallet_address TEXT,
+    country TEXT,
+    language TEXT,
+    referred_by TEXT,
+    referral_code TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+
+  await query(`CREATE TABLE IF NOT EXISTS public.wallet_balances (
+    user_id BIGINT PRIMARY KEY,
+    balance NUMERIC(30,2) NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+
+  await query(`CREATE TABLE IF NOT EXISTS public.transactions (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    transaction_type TEXT NOT NULL,
+    amount NUMERIC(20,2) NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'pending',
+    network TEXT,
+    tx_hash TEXT,
+    payout_tx_hash TEXT,
+    destination_address TEXT,
+    admin_note TEXT,
+    reviewed_at TIMESTAMPTZ,
+    reviewed_by TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+
+  await query(`CREATE TABLE IF NOT EXISTS public.user_profiles (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT UNIQUE NOT NULL,
+    username TEXT,
+    first_name TEXT,
+    last_name TEXT,
+    bio TEXT,
+    avatar_url TEXT,
+    wallet_address TEXT,
+    country TEXT,
+    language TEXT,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+
+  await query(`CREATE TABLE IF NOT EXISTS public.user_notifications (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    kind TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+
+  await query(`CREATE TABLE IF NOT EXISTS public.admin_login_attempts (
+    id BIGSERIAL PRIMARY KEY,
+    ip TEXT,
+    success BOOLEAN NOT NULL DEFAULT FALSE,
+    attempted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+
+  await query(`CREATE TABLE IF NOT EXISTS public.admin_audit_log (
+    id BIGSERIAL PRIMARY KEY,
+    admin_username TEXT,
+    action TEXT,
+    target_type TEXT,
+    target_id TEXT,
+    outcome TEXT,
+    ip TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+
+  await query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS profile_picture TEXT`);
+  await query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS wallet_address TEXT`);
+  await query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS country TEXT`);
+  await query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS language TEXT`);
+}
+
+async function loginAllowed(req) {
+  const ip = ipAddress(req);
+
+  const rows = await query(
+    `SELECT COUNT(*) FILTER (
+       WHERE success = FALSE
+       AND attempted_at > NOW() - INTERVAL '15 minutes'
+     ) AS failed_ip
+     FROM public.admin_login_attempts
+     WHERE ip = $1`,
+    [ip]
+  );
+
+  const globalRows = await query(
+    `SELECT COUNT(*) AS failed_global
+     FROM public.admin_login_attempts
+     WHERE success = FALSE
+     AND attempted_at > NOW() - INTERVAL '15 minutes'`
+  );
+
+  return (
+    Number(rows[0]?.failed_ip || 0) < 5 &&
+    Number(globalRows[0]?.failed_global || 0) < 30
+  );
+}
+
+async function recordLogin(req, success) {
+  try {
+    await pool.query(
+      `INSERT INTO public.admin_login_attempts (ip, success, attempted_at)
+       VALUES ($1,$2,NOW())`,
+      [ipAddress(req), !!success]
+    );
+  } catch (error) {
+    console.error("Login attempt logging failed:", error.code || error.name);
+  }
+}
+
+async function audit(username, action, req, outcome = "success", targetType = null, targetId = null) {
+  try {
+    await pool.query(
+      `INSERT INTO public.admin_audit_log
+       (admin_username, action, target_type, target_id, outcome, ip, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,NOW())`,
+      [
+        String(username || "unknown").slice(0, 200),
+        String(action).slice(0, 100),
+        targetType ? String(targetType).slice(0, 100) : null,
+        targetId == null ? null : String(targetId).slice(0, 100),
+        String(outcome).slice(0, 50),
+        ipAddress(req)
+      ]
+    );
+  } catch (error) {
+    console.error("Admin audit write failed:", error.code || error.name);
+  }
+}
+
+async function adminLogin(req, res) {
+  let settings;
+  try {
+    settings = getConfig();
+  } catch {
+    return json(res, 500, { message: "Admin configuration error. Check Vercel environment settings." });
+  }
+
+  const body = req.body || {};
+
+  if (!(await loginAllowed(req))) {
+    await recordLogin(req, false);
+    await audit("unknown", "login_rate_limited", req, "blocked");
+    return json(res, 429, { message: "Too many login attempts. Try again in 15 minutes." });
+  }
+
+  const ok =
+    safeEqual(body.username, settings.username) &&
+    safeEqual(body.password, settings.password);
+
+  await recordLogin(req, ok);
+
+  if (!ok) {
+    await audit("unknown", "login", req, "failed");
+    return json(res, 401, { message: "Invalid username or password." });
+  }
+
+  setCookie(res, createSession(settings.username), SESSION_SECONDS);
+  await audit(settings.username, "login", req);
+  return json(res, 200, { ok: true });
+}
+
+async function adminLogout(req, res) {
+  setCookie(res, "", 0);
+  return json(res, 200, { ok: true });
+}
+
+async function handleAdmin(req, res) {
+  const body = req.body || {};
+  const action = String(body.action || "").trim();
+
+  if (action === "login") return adminLogin(req, res);
+  if (action === "logout") return adminLogout(req, res);
+
+  const session = verifySession(readCookie(req, COOKIE));
+  if (!session) {
+    return json(res, 401, { message: "Session expired. Please sign in again." });
+  }
+
+  try {
+    if (action === "me") {
+      return json(res, 200, { ok: true, username: session.username });
+    }
+
+    if (action === "dashboard") {
+      return json(res, 200, { ok: true, message: "Dashboard ok" });
+    }
+
+    if (action === "security") {
+      const rows = await query(`
+        SELECT id, ip, success, attempted_at
+        FROM public.admin_login_attempts
+        ORDER BY attempted_at DESC
+        LIMIT 50
+      `);
+
+      return json(res, 200, { ok: true, attempts: rows });
+    }
+
+    return json(res, 400, { message: "Unknown admin action." });
+  } catch (error) {
+    console.error("Admin error:", error);
+    return json(res, 400, { message: "Admin request failed." });
+  }
+}
+
+async function handleProfile(req, res) {
+  const body = req.body || {};
+  const action = String(body.action || "").trim();
+  const userId = String(body.user_id || "").trim();
+
+  if (!/^\d{1,15}$/.test(userId)) {
+    return json(res, 400, { message: "Invalid user ID." });
+  }
+
+  await ensureCoreTables();
+
+  if (action === "get") {
+    const rows = await query(
+      `SELECT u.id, u.telegram_id, u.username, u.first_name, u.last_name,
+              u.profile_picture, u.wallet_address, u.country, u.language,
+              w.balance,
+              COALESCE(p.bio, '') AS bio,
+              COALESCE(p.avatar_url, u.profile_picture, '') AS avatar_url
+       FROM public.users u
+       LEFT JOIN public.wallet_balances w ON w.user_id = u.id
+       LEFT JOIN public.user_profiles p ON p.user_id = u.id
+       WHERE u.id = $1
+       LIMIT 1`,
+      [userId]
+    );
+
+    return json(res, 200, {
+      ok: true,
+      profile: rows[0] || null
+    });
+  }
+
+  if (action === "save") {
+    const username = String(body.username || "").trim().slice(0, 80);
+    const firstName = String(body.first_name || "").trim().slice(0, 80);
+    const lastName = String(body.last_name || "").trim().slice(0, 80);
+    const bio = String(body.bio || "").trim().slice(0, 500);
+    const avatarUrl = String(body.avatar_url || "").trim().slice(0, 500);
+    const walletAddress = String(body.wallet_address || "").trim().slice(0, 200);
+    const country = String(body.country || "").trim().slice(0, 80);
+    const language = String(body.language || "").trim().slice(0, 40);
+
+    await query(
+      `INSERT INTO public.user_profiles (
+         user_id, username, first_name, last_name, bio, avatar_url, wallet_address, country, language, updated_at
+       )
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())
+       ON CONFLICT (user_id)
+       DO UPDATE SET
+         username = EXCLUDED.username,
+         first_name = EXCLUDED.first_name,
+         last_name = EXCLUDED.last_name,
+         bio = EXCLUDED.bio,
+         avatar_url = EXCLUDED.avatar_url,
+         wallet_address = EXCLUDED.wallet_address,
+         country = EXCLUDED.country,
+         language = EXCLUDED.language,
+         updated_at = NOW()`,
+      [userId, username || null, firstName || null, lastName || null, bio || null, avatarUrl || null, walletAddress || null, country || null, language || null]
+    );
+
+    await query(
+      `UPDATE public.users
+       SET username = COALESCE(NULLIF($2, ''), username),
+           first_name = COALESCE(NULLIF($3, ''), first_name),
+           last_name = COALESCE(NULLIF($4, ''), last_name),
+           profile_picture = COALESCE(NULLIF($5, ''), profile_picture),
+           wallet_address = COALESCE(NULLIF($6, ''), wallet_address),
+           country = COALESCE(NULLIF($7, ''), country),
+           language = COALESCE(NULLIF($8, ''), language)
+       WHERE id = $1`,
+      [userId, username, firstName, lastName, avatarUrl, walletAddress, country, language]
+    );
+
+    return json(res, 200, { ok: true, message: "Profile saved." });
+  }
+
+  if (action === "wallet") {
+    const walletAddress = String(body.wallet_address || "").trim().slice(0, 200);
+    if (!walletAddress) return json(res, 400, { message: "Wallet address is required." });
+
+    await query(
+      `INSERT INTO public.user_profiles (user_id, wallet_address, updated_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (user_id)
+       DO UPDATE SET wallet_address = EXCLUDED.wallet_address, updated_at = NOW()`,
+      [userId, walletAddress]
+    );
+
+    await query(`UPDATE public.users SET wallet_address = $2 WHERE id = $1`, [userId, walletAddress]);
+
+    return json(res, 200, { ok: true, wallet_address: walletAddress });
+  }
+
+  if (action === "avatar") {
+    const avatarUrl = String(body.avatar_url || "").trim().slice(0, 500);
+    if (!avatarUrl) return json(res, 400, { message: "Avatar URL is required." });
+
+    await query(
+      `INSERT INTO public.user_profiles (user_id, avatar_url, updated_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (user_id)
+       DO UPDATE SET avatar_url = EXCLUDED.avatar_url, updated_at = NOW()`,
+      [userId, avatarUrl]
+    );
+
+    await query(`UPDATE public.users SET profile_picture = $2 WHERE id = $1`, [userId, avatarUrl]);
+
+    return json(res, 200, { ok: true, avatar_url: avatarUrl });
+  }
+
+  return json(res, 400, { message: "Unsupported profile action." });
+}
+
+async function handleDeposit(req, res) {
+  const body = req.body || {};
+  const action = String(body.action || "").trim();
+  const userId = String(body.user_id || "").trim();
+
+  if (!/^\d{1,15}$/.test(userId)) {
+    return json(res, 400, { message: "Invalid user ID." });
+  }
+
+  await ensureCoreTables();
+
+  if (action === "create") {
+    const amount = Number(body.amount);
+    const network = String(body.network || "BSC").trim().slice(0, 50);
+    const txHash = String(body.tx_hash || "").trim();
+
+    if (!Number.isFinite(amount) || amount <= 0 || amount > 100000000) {
+      return json(res, 400, { message: "Enter a valid deposit amount." });
+    }
+
+    if (!/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
+      return json(res, 400, { message: "A valid transaction hash is required." });
+    }
+
+    const existing = await query(
+      `SELECT id, status
+       FROM public.transactions
+       WHERE user_id=$1 AND transaction_type='deposit' AND LOWER(tx_hash)=LOWER($2)
+       LIMIT 1`,
+      [userId, txHash]
+    );
+
+    if (existing.length) {
+      return json(res, 200, { ok: true, transaction: existing[0], message: "Deposit already submitted." });
+    }
+
+    const rows = await query(
+      `INSERT INTO public.transactions (
+         user_id, transaction_type, amount, status, network, tx_hash, created_at, updated_at
+       )
+       VALUES ($1,'deposit',$2,'pending',$3,$4,NOW(),NOW())
+       RETURNING id, user_id, transaction_type, amount, status, network, tx_hash, created_at`,
+      [userId, amount.toFixed(2), network, txHash]
+    );
+
+    return json(res, 200, { ok: true, transaction: rows[0], message: "Deposit submitted." });
+  }
+
+  if (action === "history") {
+    const rows = await query(
+      `SELECT id, transaction_type, amount, status, network, tx_hash, payout_tx_hash, destination_address, admin_note, created_at, updated_at
+       FROM public.transactions
+       WHERE user_id=$1 AND transaction_type='deposit'
+       ORDER BY id DESC
+       LIMIT 50`,
+      [userId]
+    );
+
+    return json(res, 200, { ok: true, deposits: rows });
+  }
+
+  if (action === "verify") {
+    const txHash = String(body.tx_hash || "").trim();
+    if (!/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
+      return json(res, 400, { message: "Invalid transaction hash." });
+    }
+
+    const rows = await query(
+      `SELECT id, user_id, transaction_type, amount, status, network, tx_hash, created_at
+       FROM public.transactions
+       WHERE user_id=$1 AND transaction_type='deposit' AND LOWER(tx_hash)=LOWER($2)
+       LIMIT 1`,
+      [userId, txHash]
+    );
+
+    if (!rows.length) {
+      return json(res, 200, { ok: false, found: false, message: "Deposit not found." });
+    }
+
+    return json(res, 200, { ok: true, found: true, transaction: rows[0] });
+  }
+
+  return json(res, 400, { message: "Unsupported deposit action." });
+}
+
+async function handleWithdrawal(req, res) {
+  const body = req.body || {};
+  const action = String(body.action || "").trim();
+  const userId = String(body.user_id || "").trim();
+
+  if (!/^\d{1,15}$/.test(userId)) {
+    return json(res, 400, { message: "Invalid user ID." });
+  }
+
+  await ensureCoreTables();
+
+  if (action === "request") {
+    const amount = Number(body.amount);
+    const destination = String(body.destination_address || "").trim();
+    const network = String(body.network || "BSC").trim().slice(0, 50);
+
+    if (!Number.isFinite(amount) || amount <= 0 || amount > 100000000) {
+      return json(res, 400, { message: "Enter a valid withdrawal amount." });
+    }
+
+    if (!destination) {
+      return json(res, 400, { message: "Withdrawal address is required." });
+    }
+
+    const balanceRows = await query(
+      `SELECT COALESCE(balance,0) AS balance
+       FROM public.wallet_balances
+       WHERE user_id=$1`,
+      [userId]
+    );
+
+    const balance = Number(balanceRows[0]?.balance || 0);
+
+    if (balance < amount) {
+      return json(res, 400, { message: "Insufficient balance." });
+    }
+
+    const pendingRows = await query(
+      `SELECT id
+       FROM public.transactions
+       WHERE user_id=$1
+         AND transaction_type='withdrawal'
+         AND status='pending'
+       LIMIT 1`,
+      [userId]
+    );
+
+    if (pendingRows.length) {
+      return json(res, 400, { message: "You already have a pending withdrawal." });
+    }
+
+    const rows = await query(
+      `INSERT INTO public.transactions (
+         user_id, transaction_type, amount, status, network, destination_address, created_at, updated_at
+       )
+       VALUES ($1,'withdrawal',$2,'pending',$3,$4,NOW(),NOW())
+       RETURNING id, user_id, transaction_type, amount, status, network, destination_address, created_at`,
+      [userId, amount.toFixed(2), network, destination]
+    );
+
+    const locked = await query(
+      `UPDATE public.wallet_balances
+       SET balance = balance - $2,
+           updated_at = NOW()
+       WHERE user_id = $1
+       RETURNING balance`,
+      [userId, amount]
+    );
+
+    if (!locked.length) {
+      await query(`DELETE FROM public.transactions WHERE id=$1`, [rows[0].id]);
+      return json(res, 400, { message: "Unable to reserve balance." });
+    }
+
+    return json(res, 200, { ok: true, transaction: rows[0], message: "Withdrawal request created." });
+  }
+
+  if (action === "history") {
+    const rows = await query(
+      `SELECT id, transaction_type, amount, status, network, tx_hash, payout_tx_hash, destination_address, admin_note, created_at, updated_at
+       FROM public.transactions
+       WHERE user_id=$1 AND transaction_type='withdrawal'
+       ORDER BY id DESC
+       LIMIT 50`,
+      [userId]
+    );
+
+    return json(res, 200, { ok: true, withdrawals: rows });
+  }
+
+  return json(res, 400, { message: "Unsupported withdrawal action." });
+}
+
+async function handleTransfer(req, res) {
+  const body = req.body || {};
+  const fromUserId = String(body.from_user_id || "").trim();
+  const toUserId = String(body.to_user_id || "").trim();
+  const amount = Number(body.amount);
+
+  if (!/^\d{1,15}$/.test(fromUserId) || !/^\d{1,15}$/.test(toUserId)) {
+    return json(res, 400, { message: "Invalid user ID." });
+  }
+
+  if (fromUserId === toUserId) {
+    return json(res, 400, { message: "Sender and recipient cannot be the same user." });
+  }
+
+  if (!Number.isFinite(amount) || amount <= 0 || amount > 100000000) {
+    return json(res, 400, { message: "Enter a valid amount." });
+  }
+
+  await ensureCoreTables();
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const debit = await client.query(
+      `UPDATE public.wallet_balances
+       SET balance = balance - $1,
+           updated_at = NOW()
+       WHERE user_id = $2 AND balance >= $1
+       RETURNING balance`,
+      [amount, fromUserId]
+    );
+
+    if (!debit.rowCount) {
+      throw new Error("Insufficient balance.");
+    }
+
+    await client.query(
+      `INSERT INTO public.wallet_balances (user_id, balance, updated_at)
+       VALUES ($1, 0, NOW())
+       ON CONFLICT (user_id) DO NOTHING`,
+      [toUserId]
+    );
+
+    await client.query(
+      `UPDATE public.wallet_balances
+       SET balance = balance + $1,
+           updated_at = NOW()
+       WHERE user_id = $2`,
+      [amount, toUserId]
+    );
+
+    await client.query(
+      `INSERT INTO public.user_notifications (user_id, kind, title, message)
+       VALUES ($1, 'transfer', 'Points received', $2),
+              ($3, 'transfer', 'Points sent', $4)`,
+      [toUserId, `You received ${amount} points.`, fromUserId, `You sent ${amount} points.`]
+    );
+
+    await client.query("COMMIT");
+
+    return json(res, 200, {
+      ok: true,
+      message: "Transfer completed.",
+      from_user_id: fromUserId,
+      to_user_id: toUserId,
+      amount
+    });
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    console.error("Transfer API error:", error.message);
+    return json(res, 400, { message: error.message || "Transfer failed." });
+  } finally {
+    client.release();
+  }
+}
+
+module.exports = async function handler(req, res) {
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+    return json(res, 405, { message: "Method not allowed." });
+  }
+
+  if (!validRequest(req)) {
+    return json(res, 403, { message: "Request rejected." });
+  }
+
+  const body = req.body || {};
+  const type = String(body.type || "").trim();
+
+  try {
+    switch (type) {
+      case "admin":
+        return await handleAdmin(req, res);
+      case "profile":
+        return await handleProfile(req, res);
+      case "deposit":
+        return await handleDeposit(req, res);
+      case "withdrawal":
+        return await handleWithdrawal(req, res);
+      case "transfer":
+        return await handleTransfer(req, res);
+      default:
+        return json(res, 400, { message: "Unsupported API type." });
+    }
+  } catch (error) {
+    console.error("Unified API error:", error);
+    return json(res, 500, { message: "Server error." });
+  }
+};
