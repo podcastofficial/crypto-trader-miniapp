@@ -31,7 +31,7 @@ header { background:#141415; border-bottom:1px solid #29292c; color:#f5f5f5; pad
 .page { display:none; color:#f5f5f5; }
 .page.active { display:block; }
 .section { padding:0 14px; margin-bottom:15px; }
-.section-title { font-size:17px; font-weight:900; margin:7px 0 13px; color:#fafafa; }
+.section-title { font-size:17px; font-weight:900; margin:7px 0 13px; color:#fafafa; display:flex; align-items:center; gap:8px; }
 .card, .timer-card { background:#151516; border:1px solid #303034; border-radius:16px; padding:16px; margin-bottom:13px; box-shadow:0 8px 24px #0005; color:#f5f5f5; overflow-wrap:anywhere; }
 .muted, .period, .utc-time { color:#a1a1aa; }
 .small { font-size:12px; }
@@ -172,78 +172,19 @@ label { font-weight:800; font-size:12px; }
 .multiplier-btn { padding:11px 2px; border-radius:9px; background:#29292c; color:#facc15; border:1px solid #3a3a40; font-weight:900; font-size:13px; cursor:pointer; }
 .multiplier-btn.active { background:#facc15; color:#171717; border-color:#facc15; }
 .multiplier-label { margin-bottom:6px; }
-.checkout-modal { background:#f8f8fb; color:#25262a; max-width:640px; max-height:calc(100dvh - 26px); overflow:auto; }
-.checkout-topbar { display:flex; align-items:center; justify-content:space-between; padding-bottom:18px; border-bottom:1px solid #d9d9de; font-size:20px; }
-.checkout-back { border:0; background:transparent; font-size:34px; color:#25262a; line-height:1; cursor:pointer; }
-.checkout-security { margin:16px 0; padding:12px 14px; border-radius:10px; background:#fff3df; color:#8a4a00; font-size:13px; }
-.checkout-paying { display:flex; align-items:center; justify-content:space-between; padding:16px 0; border-bottom:1px solid #333; font-size:24px; }
-.checkout-paying > span:last-child { display:flex; align-items:center; gap:10px; }
+.deposit-asset-card { display:flex; align-items:center; gap:11px; margin:10px 0; padding:10px 12px; border:1px solid #4a4a4f; border-radius:12px; background:#242429; }
 .checkout-coin-logo { width:42px; height:42px; object-fit:contain; }
-.checkout-modal select, .checkout-modal input { background:#fff; color:#25262a; border-color:#d9d9de; }
-.checkout-summary { display:grid; gap:13px; padding:16px 0; font-size:16px; }
-.checkout-summary div { display:flex; justify-content:space-between; gap:16px; }
-.checkout-summary .amount-due { font-size:18px; font-weight:800; margin-top:4px; }
-.checkout-summary strong { text-align:right; }
-.checkout-modal .checkout-security { margin:10px 0; padding:9px 12px; }
-.checkout-modal .checkout-paying { padding:9px 0; }
-.checkout-modal .checkout-summary { gap:7px; padding:9px 0; }
-.checkout-modal label, .checkout-modal input, .checkout-modal select { margin-top:6px; }
-.checkout-modal .deposit-submit-card { background:transparent; border:0; padding:0; }
-.checkout-modal .deposit-submit-card .primary-btn { background:#f57c00; color:#fff; }
-.checkout-modal .deposit-submit-card .sec-btn { background:#fff; color:#25262a; border-color:#d9d9de; }
-.deposit-submit-card { margin:14px 0; padding:12px; border:1px solid #4a4a4f; border-radius:12px; background:#242429; }
-.deposit-submit-card .row { gap:10px; display:grid; grid-template-columns:106px minmax(0,1fr); align-items:stretch; }
-.deposit-submit-card .row button { min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.deposit-submit-card input { width:100%; max-width:100%; min-width:0; box-sizing:border-box; margin-bottom:8px; }
-.deposit-submit-card .row { min-width:0; }
-.deposit-submit-card .row .primary-btn { min-width:0; overflow-wrap:anywhere; }
-.deposit-submit-card #depositTimer { color:#facc15; font-variant-numeric:tabular-nums; }
-.deposit-chooser { min-height:calc(100svh - 190px); display:flex; flex-direction:column; justify-content:flex-start; overflow:visible; background:#f8f8fb !important; color:#25262a !important; }
-.deposit-flow-mount, .deposit-flow-mount #cashDepositFields { background:#f8f8fb !important; color:#25262a !important; }
-.deposit-flow-mount .checkout-paying { border-bottom-color:#d9d9de; }
-.deposit-flow-mount .deposit-submit-card { background:#fff !important; border-color:#d9d9de !important; }
-.deposit-flow-mount .muted, .deposit-flow-mount label { color:#555862; }
-.deposit-flow-mount { width:100%; }
-.deposit-flow-mount .checkout-topbar { display:flex; margin-bottom:14px; }
-.deposit-flow-mount .checkout-security { margin-top:0; }
-.deposit-flow-mount .deposit-submit-card { margin-bottom:0; }
-.deposit-flow-mount #cashDepositFields { display:block !important; }
-.deposit-flow-mount .checkout-paying { display:flex; justify-content:space-between; align-items:center; font-size:24px; font-weight:700; padding:14px 0; }
-.deposit-flow-mount .checkout-summary { display:grid; gap:12px; margin-top:16px; }
-.deposit-flow-mount .checkout-summary > div { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
-.deposit-flow-mount .checkout-summary > div > strong { max-width:52%; overflow-wrap:anywhere; }
-.deposit-flow-mount .checkout-summary .copybox { display:flex; flex:1; max-width:62%; }
-.deposit-flow-mount .copybox input { background:#fff; color:#25262a; border-color:#d9d9de; }
-.deposit-flow-mount .sec-btn { background:#fff; color:#25262a; border-color:#d9d9de; }
-.deposit-flow-mount .checkout-summary input { width:100%; min-width:0; }
-.deposit-flow-mount select { width:100%; min-height:52px; font-size:16px; border:1px solid #d9d9de; border-radius:14px; padding:0 14px; background:#fff; color:#25262a; }
+.deposit-asset-card strong, .deposit-asset-card small { display:block; }
+.deposit-asset-card small { margin-top:2px; color:#a6a6ad; font-size:12px; }
 .deposit-selector-field { margin:14px 0 16px; }
 .deposit-selector-field label { display:block; margin-bottom:7px; font-weight:700; }
-#depositInlineFields { width:100%; margin-top:16px; }
-#depositInlineFields #depositTimer, #depositInlineFields .checkout-topbar, #depositInlineFields .checkout-security { display:none !important; }
-#depositInlineFields .checkout-paying { margin-top:0; }
-#depositInlineFields .deposit-submit-card { margin-top:12px; }
 .deposit-address-panel { margin:12px 0 4px; }
 .deposit-address-panel .copybox { margin-top:7px; }
 .deposit-address-panel input { min-width:0; font-size:12px; }
-.deposit-qr-image { display:block; width:190px; height:190px; margin:12px auto; padding:8px; background:#fff; border:1px solid #d9d9de; border-radius:14px; }
+.deposit-qr-image { display:block; width:220px; height:220px; margin:12px auto; padding:8px; background:#fff; border:1px solid #d9d9de; border-radius:14px; }
 .deposit-qr-image[hidden] { display:none; }
-.coin-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
-.coin-choice { min-height:86px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; border:1px solid #3f3f46; border-radius:14px; background:#242424; color:#f4f4f5; }
-.coin-choice.active { border-color:#facc15; box-shadow:0 0 0 1px #facc15 inset; }
-.coin-choice small { display:block; color:#a1a1aa; font-size:10px; }
-.coin-badge { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; font-weight:900; color:#18181b; }
-.coin-badge.usdt { background:#26a17b; color:white; } .coin-badge.bnb { background:#f3ba2f; } .coin-badge.eth { background:#8fa2ff; color:white; } .coin-badge.sol { background:#111827; color:#9dffdb; }
-.chooser-subtitle { margin-top:18px; }
-.network-grid { display:grid; gap:8px; }
-.network-choice { width:100%; display:grid; grid-template-columns:42px 1fr 18px; gap:10px; align-items:center; text-align:left; padding:16px; border:2px solid #facc15; border-radius:18px; background:#242424; color:#f4f4f5; }
-.network-choice small { display:block; margin-top:8px; color:#a1a1aa; line-height:1.7; }
-.network-icon { display:grid; place-items:center; width:36px; height:36px; border-radius:50%; background:#facc15; color:#18181b; font-weight:900; }
-.deposit-page-card .notice, .withdraw-page-card .notice { margin:16px 0; }
-.deposit-asset-card { display:flex; align-items:center; gap:11px; margin:10px 0; padding:10px 12px; border:1px solid #4a4a4f; border-radius:12px; background:#242429; }
-.deposit-asset-logo { display:grid; place-items:center; width:38px; height:38px; border-radius:50%; background:#f5c84b; color:#171717; font-weight:900; font-size:13px; }
-.deposit-asset-card strong, .deposit-asset-card small { display:block; }
-.deposit-asset-card small { margin-top:2px; color:#a6a6ad; font-size:12px; }
+.deposit-submit-card { margin:14px 0; padding:12px; border:1px solid #4a4a4f; border-radius:12px; background:#242429; }
+.deposit-submit-card input { margin-bottom:8px; }
 .amount-stepper { display:grid; grid-template-columns:45px minmax(0,1fr) 45px; gap:8px; }
 .amount-stepper button { border-radius:9px; background:#29292c; color:#facc15; font-size:21px; }
 .amount-stepper input { margin:0; text-align:center; }
@@ -261,7 +202,6 @@ label { font-weight:800; font-size:12px; }
 .result-modal-badges { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin:14px 0; }
 .result-modal-badges span { padding:8px 13px; border-radius:999px; background:#302911; color:#facc15; font-size:11px; font-weight:900; }
 .result-modal .primary-btn { margin-top:8px; }
-/* PROFILE MENU */
 .profile-menu-list { display:flex; flex-direction:column; gap:0; }
 .profile-menu-item { display:flex; align-items:center; gap:12px; padding:13px 6px; background:transparent; border-bottom:1px solid #222225; color:#f5f5f5; text-align:left; width:100%; cursor:pointer; }
 .profile-menu-item:last-child { border-bottom:0; }
@@ -272,6 +212,7 @@ label { font-weight:800; font-size:12px; }
 .profile-menu-item .pm-text small { font-size:11px; color:#a1a1aa; font-weight:500; }
 .profile-menu-item .chev { color:#6b6b72; font-size:20px; }
 .profile-menu-item.danger .pm-text strong { color:#fca5a5; }
+.back-btn { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; background:#29292c; color:#facc15; font-size:20px; font-weight:900; margin-right:8px; }
 @media(max-width:380px) {
   .nav-btn { font-size:10px; }
   .section { padding:0 10px; }
@@ -289,6 +230,7 @@ label { font-weight:800; font-size:12px; }
   .amount-presets button { padding:9px 1px; font-size:11px; }
   .multiplier-row { gap:4px; }
   .multiplier-btn { padding:9px 1px; font-size:11px; }
+  .deposit-qr-image { width:180px; height:180px; }
 }
 </style>
 </head>
@@ -308,24 +250,24 @@ label { font-weight:800; font-size:12px; }
       <button class="icon-btn" id="headerProfile" type="button" aria-label="Profile"><span class="header-symbol">👤</span></button>
     </div>
   </header>
-  
+
   <div class="modal-backdrop" id="notificationModal" role="dialog" aria-modal="true" aria-labelledby="notificationTitle">
     <div class="modal"><div class="row"><h2 id="notificationTitle">Activity notifications</h2><button class="icon-btn" id="closeNotifications" type="button" aria-label="Close">×</button></div><div id="notificationList" class="notification-list"><div class="empty">Loading…</div></div></div>
   </div>
 
-  <!-- HOME (GAME) -->
+  <!-- HOME -->
   <section class="page active" id="page-home">
     <div class="balance-card">
       <div class="row"><div class="balance-label" data-i18n="walletBalance">WALLET BALANCE</div><button class="rules-corner-btn" id="gameRulesBtn" type="button">Rules</button></div>
       <div class="balance-value"><span id="homePoints">—</span> <span data-i18n="points">Points</span></div>
       <div class="balance-sub"><span id="homeUsdt">—</span> USDT · 100 Points = 1 USDT</div>
       <div class="actions">
-        <button class="action-btn deposit-action" data-page-go="wallet" type="button" id="homeDepositBtn">Deposit</button>
-        <button class="action-btn withdraw-action" data-page-go="wallet" type="button" id="homeWithdrawBtn">Withdraw</button>
+        <button class="action-btn deposit-action" data-page-go="deposit" type="button" id="homeDepositBtn">Deposit</button>
+        <button class="action-btn withdraw-action" data-page-go="withdraw" type="button" id="homeWithdrawBtn">Withdraw</button>
         <button class="refresh-corner-btn" data-refresh="1" type="button" aria-label="Refresh balance" title="Refresh balance">↻ <small>Refresh</small></button>
       </div>
     </div>
-    
+
     <div class="section">
       <div class="timer-card">
         <div class="row">
@@ -343,7 +285,7 @@ label { font-weight:800; font-size:12px; }
         <span class="status" id="betStatus">…</span>
         <div class="notice" id="serverNotice">…</div>
       </div>
-      
+
       <div class="card">
         <div class="section-title">🔢 <span data-i18n="chooseNumber">Choose a Number</span></div>
         <div class="muted small" data-i18n="chooseNumberHint">Select a number to open the betting window.</div>
@@ -383,8 +325,8 @@ label { font-weight:800; font-size:12px; }
           <span id="walletPoints">—</span> <span data-i18n="points">Points</span><div class="balance-sub usdt-value" id="walletUsdt">— USDT · 100 Points = 1 USDT</div>
         </div>
         <div class="wallet-actions">
-          <button class="action-btn deposit-action" data-page="deposit" id="depositBtn" type="button">⬇ <span data-i18n="deposit">Deposit</span></button>
-          <button class="action-btn withdraw-action" data-page="withdraw" id="withdrawBtn" type="button">⬆ <span data-i18n="withdraw">Withdraw</span></button>
+          <button class="action-btn deposit-action" data-page="deposit" type="button" id="depositBtn">⬇ <span data-i18n="deposit">Deposit</span></button>
+          <button class="action-btn withdraw-action" data-page="withdraw" type="button" id="withdrawBtn">⬆ <span data-i18n="withdraw">Withdraw</span></button>
           <button class="refresh-icon-btn" data-refresh="1" type="button" aria-label="Refresh wallet" title="Refresh wallet">↻<small>Refresh</small></button>
         </div>
       </div>
@@ -404,25 +346,76 @@ label { font-weight:800; font-size:12px; }
     </div>
   </section>
 
+  <!-- DEPOSIT PAGE (INLINE) -->
   <section class="page" id="page-deposit">
     <div class="section">
-      <div class="section-title deposit-page-heading"><button class="checkout-back deposit-page-back" id="depositPageBack" type="button" aria-label="Back to wallet">←</button><span>⬇ <span data-i18n="deposit">Deposit</span></span></div>
-      <div class="card deposit-page-card deposit-chooser">
-        <div id="depositFlowMount" class="deposit-flow-mount"></div>
+      <div class="section-title">
+        <button class="back-btn" id="depositPageBack" type="button">←</button>
+        <span>⬇ <span data-i18n="deposit">Deposit</span></span>
       </div>
-      <div class="card"><div class="section-title">Deposit History</div><div id="depositHistoryList"><div class="empty" data-i18n="loading">Loading…</div></div></div>
+      <div class="card">
+        <div class="deposit-asset-card">
+          <img id="depositAssetLogoPage" class="checkout-coin-logo" src="https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/usdt.png" alt="">
+          <div>
+            <strong id="depositAssetNamePage">USDT</strong>
+            <small id="depositNetworkHintPage">Select coin and network</small>
+          </div>
+        </div>
+        <div class="deposit-selector-field">
+          <label for="depositOptionPage">Coin and network</label>
+          <select id="depositOptionPage"></select>
+        </div>
+        <div class="deposit-address-panel">
+          <img id="depositQrImagePage" class="deposit-qr-image" alt="Deposit QR" hidden>
+          <button class="sec-btn" id="downloadQrBtn" type="button" style="width:100%;margin:10px 0">⬇ Download QR Code</button>
+          <div class="copybox">
+            <input id="depositAddressPage" readonly placeholder="Loading address...">
+            <button class="sec-btn" id="copyDepositAddressPage" type="button">Copy</button>
+          </div>
+        </div>
+        <div class="notice" style="margin-top:14px">
+          Only send the exact amount on the selected blockchain. Balance is credited after admin verification.
+        </div>
+        <div class="deposit-submit-card" style="margin-top:14px">
+          <label for="depositAmountPage">Amount sent (USDT)</label>
+          <input id="depositAmountPage" type="number" min="1" step="0.000001" placeholder="10.00" inputmode="decimal">
+          <label for="depositTxHashPage">Transaction hash</label>
+          <input id="depositTxHashPage" type="text" maxlength="100" placeholder="Tx Hash (0x... or TRON)" autocomplete="off" spellcheck="false">
+          <button class="primary-btn" id="submitDepositPage" type="button" style="margin-top:10px">Submit payment</button>
+          <div class="muted small" id="depositSubmitStatusPage" role="status" style="margin-top:8px"></div>
+        </div>
+        <p class="muted small">Minimum deposit: 1 USDT. Credit rate: 100 points per USDT.</p>
+      </div>
+      <div class="card"><div class="section-title">Deposit History</div><div id="depositHistoryList"><div class="empty">Loading…</div></div></div>
     </div>
   </section>
 
+  <!-- WITHDRAW PAGE (INLINE) -->
   <section class="page" id="page-withdraw">
     <div class="section">
-      <div class="section-title">⬆ <span data-i18n="withdraw">Withdraw</span></div>
-      <div class="card withdraw-page-card">
-        <div class="notice">Withdrawals are reviewed by admin. Minimum withdrawal: 500 points (5 USDT).</div>
-        <div class="muted small">Available balance</div><strong id="withdrawPageBalance">—</strong>
-        <button class="primary-btn" data-open-cash="withdraw" type="button" style="margin-top:14px">Continue to withdraw</button>
+      <div class="section-title">
+        <button class="back-btn" id="withdrawPageBack" type="button">←</button>
+        <span>⬆ <span data-i18n="withdraw">Withdraw</span></span>
       </div>
-      <div class="card"><div class="section-title">Withdraw History</div><div id="withdrawHistoryList"><div class="empty" data-i18n="loading">Loading…</div></div></div>
+      <div class="card">
+        <div class="notice">Withdrawals are reviewed by admin. Minimum: 500 points (5 USDT). A 10% fee applies.</div>
+        <div class="muted small" style="margin-top:12px">Available balance</div>
+        <strong id="withdrawPageBalance" style="font-size:20px;display:block;margin:6px 0 14px">—</strong>
+        <label for="withdrawAmountPage">Amount (points)</label>
+        <input id="withdrawAmountPage" type="number" min="500" step="0.01" placeholder="500">
+        <div class="quick-amounts" role="group">
+          <button class="sec-btn withdraw-preset-page" data-percent="25" type="button">25%</button>
+          <button class="sec-btn withdraw-preset-page" data-percent="50" type="button">50%</button>
+          <button class="sec-btn withdraw-preset-page" data-percent="100" type="button">100%</button>
+          <button class="sec-btn withdraw-preset-page" data-percent="max" type="button">Max</button>
+        </div>
+        <div class="muted small" id="withdrawUsdtPreviewPage">5.00 USDT</div>
+        <label for="withdrawAddressPage" style="margin-top:14px">Wallet Address (locked from profile)</label>
+        <input id="withdrawAddressPage" type="text" readonly placeholder="Add wallet in Profile first">
+        <div class="muted small" style="margin-top:6px;margin-bottom:14px">To change address, update it in Profile → Add / Edit Wallet.</div>
+        <button class="primary-btn" id="submitWithdrawalPage" type="button">Request withdrawal</button>
+      </div>
+      <div class="card"><div class="section-title">Withdraw History</div><div id="withdrawHistoryList"><div class="empty">Loading…</div></div></div>
     </div>
   </section>
 
@@ -434,12 +427,10 @@ label { font-weight:800; font-size:12px; }
     </div>
   </section>
 
-  <!-- PROFILE (MENU) -->
+  <!-- PROFILE -->
   <section class="page" id="page-profile">
     <div class="section">
       <div class="section-title">👤 <span data-i18n="profile">Profile</span></div>
-      
-      <!-- Profile header card -->
       <div class="card">
         <div class="muted small" data-i18n="tgAccount">Telegram account</div>
         <strong id="profileName">…</strong>
@@ -455,7 +446,6 @@ label { font-weight:800; font-size:12px; }
         <button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth" style="margin-top:10px; display:none">Retry Authentication</button>
       </div>
 
-      <!-- Profile menu -->
       <div class="card">
         <div class="profile-menu-list">
           <button class="profile-menu-item" data-profile-action="wallet" type="button">
@@ -508,7 +498,6 @@ label { font-weight:800; font-size:12px; }
     </div>
   </section>
 
-  <!-- NAVIGATION -->
   <nav class="bottom-nav" aria-label="Main navigation">
     <button class="nav-btn active" data-page="home" type="button"><span class="nav-icon">🏠</span><span data-i18n="home">Home</span></button>
     <button class="nav-btn" data-page="wallet" type="button"><span class="nav-icon">💰</span><span data-i18n="wallet">Wallet</span></button>
@@ -614,9 +603,9 @@ label { font-weight:800; font-size:12px; }
   <div class="modal">
     <div class="row"><div class="modal-title" data-i18n="editProfile">Edit Profile</div><button class="close-btn" data-close="profileModal" type="button">✕</button></div>
     <div style="text-align:center; margin-bottom: 15px;">
-        <div style="width: 80px; height: 80px; border-radius: 50%; background: #29292c; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 40px; border: 2px solid #facc15;">
-            👨‍💻
-        </div>
+      <div style="width: 80px; height: 80px; border-radius: 50%; background: #29292c; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 40px; border: 2px solid #facc15;">
+        👨‍💻
+      </div>
     </div>
     <label for="profileDisplayName" data-i18n="displayName">Display name</label>
     <input id="profileDisplayName" type="text" maxlength="64" autocomplete="name">
@@ -629,9 +618,9 @@ label { font-weight:800; font-size:12px; }
 <div class="modal-backdrop" id="walletAddressModal">
   <div class="modal">
     <div class="row"><div class="modal-title" data-i18n="manageWallet">Add / Edit Wallet</div><button class="close-btn" data-close="walletAddressModal" type="button">✕</button></div>
-    <label for="walletAddressInput" data-i18n="walletAddress">Wallet Address (BEP-20 / TRC-20 etc.)</label>
-    <input id="walletAddressInput" type="text" maxlength="100" inputmode="text" autocomplete="off" placeholder="0x… or T…">
-    <div class="notice" data-i18n="walletAddressNote">Use only your own valid wallet address.</div>
+    <label for="walletAddressInput" data-i18n="walletAddress">Wallet Address (BEP-20)</label>
+    <input id="walletAddressInput" type="text" maxlength="100" inputmode="text" autocomplete="off" placeholder="0x…">
+    <div class="notice" data-i18n="walletAddressNote">Use only your own valid wallet address. This will be locked for withdrawals.</div>
     <button class="primary-btn" id="saveWalletAddressBtn" type="button" style="margin-top:14px" data-i18n="saveChanges">Save Changes</button>
   </div>
 </div>
@@ -645,60 +634,6 @@ label { font-weight:800; font-size:12px; }
     <div class="result-modal-badges"><span id="resultPopupColor">—</span><span id="resultPopupSize">—</span></div>
     <div class="result-modal-sub" data-i18n="rNote">The result was received from the game server.</div>
     <button class="primary-btn" id="resultPopupClose" type="button" data-i18n="rContinue">CONTINUE</button>
-  </div>
-</div>
-
-<!-- DEPOSIT / WITHDRAW MODAL -->
-<div class="modal-backdrop" id="cashModal">
-  <div class="modal checkout-modal">
-    <div class="checkout-topbar"><button class="checkout-back" data-close="cashModal" type="button" aria-label="Back">←</button><strong id="cashTitle">Deposit</strong><strong id="depositTimer" aria-live="polite">30:00</strong></div>
-    <div id="cashDepositFields" style="display:none">
-      <div class="checkout-security">Only send the exact amount on the selected blockchain. Payment is verified on-chain before points are credited.</div>
-      <div class="checkout-paying"><span>Paying With</span><span><img id="depositAssetLogo" class="checkout-coin-logo" alt="Selected cryptocurrency logo" src="https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/usdt.png"><strong id="depositAssetName">USDT</strong></span></div>
-      <div class="deposit-selector-field"><label for="depositOption">Coin and network</label><select id="depositOption" aria-label="Select deposit coin and network"></select></div>
-      <div class="deposit-address-panel">
-        <div class="muted small" id="depositNetworkHint">Deposit address</div>
-        <img id="depositQrImage" class="deposit-qr-image" alt="QR code for deposit address" hidden>
-        <div class="copybox"><input id="depositAddress" readonly placeholder="Loading address..."><button class="sec-btn" id="copyDepositAddress" type="button">Copy</button></div>
-      </div>
-      <div class="checkout-summary">
-        <div><span>Total Price</span><strong id="depositTotalPrice">— USDT</strong></div>
-        <div><span>Blockchain</span><strong id="depositBlockchain">—</strong></div>
-        <div><span>Subtotal</span><strong id="depositSubtotal">— USDT</strong></div>
-        <div class="amount-due"><span>Amount Due</span><strong id="depositAmountDue">— USDT</strong></div>
-      </div>
-      <div class="deposit-submit-card">
-        <p class="muted small">Enter the amount you sent and transaction hash. Your request goes to admin for verification; balance is added only after approval.</p>
-        <label for="depositAmount">Amount sent (USDT)</label>
-        <input id="depositAmount" type="number" min="1" step="0.000001" placeholder="10.00" inputmode="decimal">
-        <label for="depositTxHash">Transaction hash</label>
-        <input id="depositTxHash" type="text" maxlength="100" placeholder="Tx Hash (0x... or TRON)" autocomplete="off" spellcheck="false">
-        <div class="row" style="margin-top:10px"><button class="sec-btn" id="cancelDeposit" type="button">Cancel</button><button class="primary-btn" id="submitDeposit" type="button">Submit payment</button></div>
-        <div class="muted small" id="depositSubmitStatus" role="status"></div>
-      </div>
-      <p class="muted small">Minimum deposit: 1 USDT. Credit rate: 100 points per USDT.</p>
-    </div>
-    <div id="cashWithdrawFields" style="display:none">
-      <div class="notice">Withdrawals are reviewed and approved by admin. Points stay reserved until completed or rejected.</div>
-      <div class="row" style="align-items:flex-end;margin-bottom:10px">
-        <div><div class="muted small">Available balance</div><strong id="withdrawAvailableBalance">— Points · — USDT</strong></div>
-        <div class="muted small">Minimum: 500 Points · 5 USDT</div>
-      </div>
-      <div class="notice">A 10% withdrawal fee is deducted. For 1,000 points (10 USDT), you receive 9 USDT.</div>
-      <label for="withdrawAmount">Amount (points)</label>
-      <input id="withdrawAmount" type="number" min="500" step="0.01" placeholder="500">
-      <div class="quick-amounts" role="group" aria-label="Withdrawal amount shortcuts">
-        <button type="button" class="sec-btn withdraw-preset" data-percent="25">25%</button>
-        <button type="button" class="sec-btn withdraw-preset" data-percent="50">50%</button>
-        <button type="button" class="sec-btn withdraw-preset" data-percent="100">100%</button>
-        <button type="button" class="sec-btn withdraw-preset" data-percent="max">Max</button>
-      </div>
-      <div class="muted small" id="withdrawUsdtPreview">5.00 USDT</div>
-      <label for="withdrawAddress">Wallet Address (BEP-20 / TRC-20 etc.)</label>
-      <input id="withdrawAddress" type="text" maxlength="100" placeholder="0x... or T..." autocomplete="off">
-      <button class="primary-btn" id="submitWithdrawal" type="button" style="margin-top:14px">Request withdrawal</button>
-    </div>
-    <button class="primary-btn" data-close="cashModal" type="button" style="margin-top:14px" data-i18n="close">Close</button>
   </div>
 </div>
 
@@ -752,6 +687,7 @@ document.addEventListener("click", event => { const target = event.target.closes
 let initData = "", authed = false, authBlock = null, user = null, balance = null, currentRound = null, latestRounds = [];
 let resultPage = 1, resultData = {rounds:[],total:0}, tradePage = 1, tradeData = {bets:[],total:0}, walletPage = 1, walletData = {items:[],total:0}, referralData = null, commPage = 1, commData = {items:[],total:0}, activePage = "home", currentBet = null, pendingBetRequest = null, toastTimer = null, bannerTimer = null, serverTimeOffset = 0, roundsLoaded = false, roundsFailed = false, roundsBusy = false, userBusy = false, roundsOk = false, userOk = false, lastRoundsSync = 0, lastUserSync = 0, lastRingFrac = 1, activeTxFilter = "all";
 let betStep = 100, betMultiplier = 1;
+let savedWalletAddress = null;
 let appConfig = { sound_button_enabled:true, channel_button_enabled:false, channel_url:"", support_button_enabled:false, support_url:"", support_type:"whatsapp" };
 let firstResultShown = false; const seenResults = new Set(), queuedResults = new Set(), playedRounds = new Set(); let resultPopupQueue = [], resultPopupOpen = false;
 let audioContext = null, audioUnlocked = false, lastTickSecond = -1, previousBettingOpen = null, lastDisplayedRoundCode = "";
@@ -781,12 +717,12 @@ async function api(action,extra = {}){ if(!initData) throw new Error(t("openInTg
 async function getRounds(page){ const t0 = Date.now(); const response = await fetch("/api/game?page=" + page + "&page_size=" + PAGE,{ method:"GET", cache:"no-store" }); const t1 = Date.now(); const data = await parseResponse(response); data._mid = (t0 + t1) / 2; return data; }
 function setStatus(key){ statusKey = key; const el = $("betStatus"); el.textContent = t(key); el.classList.toggle("locked", key === "stLocked" || key === "stError" || key === "stTelegram" || key === "stAuth"); }
 function setNotice(key,vars){ notice = {key,vars:vars || null}; $("serverNotice").textContent = t(key,vars); }
-function renderProfile(){ $("profileName").textContent = txt(profName); $("profileStatus").textContent = txt(profStatus); const available = $("homePoints")?.textContent || "—"; $("profileAvailablePoints").textContent = available; $("profileJoined").textContent = (tg?.initDataUnsafe?.user?.id ? "Telegram" : "—"); const input = $("profileDisplayName"); if(input && document.activeElement !== input) input.value = profName && profName.raw ? profName.raw : ""; }
+function renderProfile(){ $("profileName").textContent = txt(profName); $("profileStatus").textContent = txt(profStatus); const available = $("homePoints")?.textContent || "—"; $("profileAvailablePoints").textContent = available; $("profileJoined").textContent = (tg?.initDataUnsafe?.user?.id ? "Telegram" : "—"); const input = $("profileDisplayName"); if(input && document.activeElement !== input) input.value = profName && profName.raw ? profName.raw : ""; const retry = $("authRetry"); if (retry) retry.style.display = authBlock ? "" : "none"; }
 function openProfileModal(){ if(!authed){ toast(t("toastAuth")); return; } renderProfile(); $("profileModal").classList.add("open"); }
-function openWalletAddressModal(){ if(!authed){ toast(t("toastAuth")); return; } $("walletAddressModal").classList.add("open"); }
+function openWalletAddressModal(){ if(!authed){ toast(t("toastAuth")); return; } $("walletAddressInput").value = savedWalletAddress || ""; $("walletAddressModal").classList.add("open"); }
 async function saveProfile(){ const value = $("profileDisplayName").value.trim(); if(!value){ toast(t("displayName")); return; } const userId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id; if(!userId){ toast(t("openInTg")); return; } try { const response = await fetch("/api/profile",{ method:"POST", headers:{"Content-Type":"application/json","x-telegram-id":String(userId)}, body:JSON.stringify({displayName:value}) }); const data = await response.json().catch(() => null); if(!response.ok || !data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; } profName = {raw:data.displayName}; renderProfile(); toast(t("profileSaved")); $("profileModal").classList.remove("open"); } catch(_) { toast(t("refreshFailed")); } }
-async function saveWalletAddress(){ const value = $("walletAddressInput").value.trim(); if(value.length < 20){ toast(t("invalidWallet")); return; } const userId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id; if(!userId){ toast(t("openInTg")); return; } try { const data = await api("save_wallet", { walletAddress: value }); if(!data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; } toast(t("walletSaved")); $("walletAddressModal").classList.remove("open"); } catch(_) { toast(t("refreshFailed")); } }
-function updateBalance(value){ balance = Number(value); const usdt = (balance / 100).toFixed(2); $("homePoints").textContent = money(balance); $("walletPoints").textContent = money(balance); $("homeUsdt").textContent = usdt + " USDT"; $("walletUsdt").textContent = usdt + " USDT · 100 Points = 1 USDT"; const withdrawBalance = $("withdrawAvailableBalance"); if(withdrawBalance) withdrawBalance.textContent = `${money(balance)} Points · ${usdt} USDT`; }
+async function saveWalletAddress(){ const value = $("walletAddressInput").value.trim(); if(value.length < 20){ toast(t("invalidWallet")); return; } if(!/^0x[a-fA-F0-9]{40}$/.test(value)){ toast("Only BEP-20 addresses (0x…) are supported."); return; } try { const data = await api("save_wallet", { walletAddress: value }); if(!data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; } savedWalletAddress = value; toast(t("walletSaved")); $("walletAddressModal").classList.remove("open"); populateWithdrawPage(); } catch(err) { toast(err.message || t("refreshFailed")); } }
+function updateBalance(value){ balance = Number(value); const usdt = (balance / 100).toFixed(2); $("homePoints").textContent = money(balance); $("walletPoints").textContent = money(balance); $("homeUsdt").textContent = usdt + " USDT"; $("walletUsdt").textContent = usdt + " USDT · 100 Points = 1 USDT"; if (activePage === "withdraw") populateWithdrawPage(); }
 function unlockAudio(){ try { const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; if(!audioContext) audioContext = new AC(); if(audioContext.state === "suspended") audioContext.resume(); audioUnlocked = true; } catch(_) {} }
 function playTone(freq=700,duration=.09,type="sine",volume=.045,delay=0){ if(!settings.sound || !audioUnlocked || !audioContext) return; try { const osc = audioContext.createOscillator(); const gain = audioContext.createGain(); const start = audioContext.currentTime + delay; osc.type = type; osc.frequency.setValueAtTime(freq,start); gain.gain.setValueAtTime(.0001,start); gain.gain.exponentialRampToValueAtTime(volume,start+.012); gain.gain.exponentialRampToValueAtTime(.0001,start+duration); osc.connect(gain); gain.connect(audioContext.destination); osc.start(start); osc.stop(start+duration+.02); } catch(_) {} }
 function playBetSound(){ playTone(880,.09,"sine",.06); playTone(1175,.12,"sine",.05,.09); }
@@ -803,19 +739,127 @@ function renderTrades(){ const list = tradeData.bets || []; let html; if(list.le
 async function loadTrades(silent){ if(!authed) return; try { const d = await api("my_bets",{page:tradePage,page_size:PAGE}); tradeData = {bets:d.bets || [],total:Number(d.pagination && d.pagination.total || 0)}; renderTrades(); } catch(error) { if(!silent) toast(error.message); } }
 function txStatusLabel(x){ if(x.transaction_type === "bet" && x.status === "completed") return t("txPlaced"); return tk("s_",x.status); }
 function transactionUsdt(x){ const type = String(x.transaction_type || "").toLowerCase(); const amount = Number(x.amount || 0); return (type === "deposit" || type === "withdrawal" ? amount : amount / 100).toFixed(2); }
-function renderWallet(){ const items = walletData.items || []; const filteredItems = items.filter(x => activeTxFilter === "all" || String(x.transaction_type || "").toLowerCase() === activeTxFilter); let html; if(filteredItems.length){ const body = filteredItems.map(x => { const type = String(x.transaction_type || "").toLowerCase(); const plus = type === "deposit" || type === "payout" || type === "refund" || type === "reward" || type === "commission"; if (type === "bet") { const bet = (tradeData.bets || []).find(c => { const stake = Number(c.stake || 0) + Number(c.fee || 0); return Math.abs(stake - Number(x.amount || 0)) < 0.01 && Math.abs(new Date(c.created_at) - new Date(x.created_at)) < 10000; }); if (bet) { const view = tradeView(bet); const selection = bet.bet_type === "Number" && bet.selection !== null && bet.selection !== undefined ? ` · ${bet.selection}` : ""; return `<div class="trade wallet-trade"><div class="trade-head" data-trade="1"><span class="trade-period">${esc(fmtPeriod(bet.round_code))}</span><span class="trade-status ${view.cls}">${esc(view.label)}</span><span class="trade-amt ${view.cls}">${esc(signedCents(view.amt))}</span><span class="chev">⌄</span></div><div class="trade-body"><div class="kv"><span>${esc(t("dBet"))}</span><span>${esc(tk("bt_", bet.bet_type) + selection)}</span></div><div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(view.stakeC / 100))}</span></div><div class="kv"><span>${esc(t("dFee"))}</span><span>${esc(money(view.feeC / 100))}</span></div><div class="kv strong"><span>${esc(t("dActual"))}</span><span>${esc(money(view.actualC / 100))}</span></div><div class="kv"><span>${esc(t("dPayout"))}</span><span>${esc(money(view.returnedC / 100))}</span></div><div class="kv"><span>Result</span><span>${view.hasRes ? esc(resultDetails(bet.result_number)) : esc(t("waiting"))}</span></div><div class="kv"><span>${esc(t("dTime"))}</span><span>${esc(dateUTC(bet.created_at))}</span></div></div></div>`; } } return `<div class="trade wallet-trade"><div class="trade-head" data-trade="1"><span class="trade-period">${esc(tk("tx_",type))}<small class="utc-time" style="display:block; margin-top:2px;">${esc(dateUTC(x.created_at))}</small></span><span class="trade-status ${plus ? "success" : "pending"}">${esc(txStatusLabel(x))}</span><span class="trade-amt ${plus ? "success" : "fail"}">${plus ? "+" : "−"}${esc(money(x.amount))}</span><span class="chev">⌄</span></div><div class="trade-body"><div class="kv"><span>Type</span><span>${esc(tk("tx_",type))}</span></div><div class="kv"><span>Amount</span><span>${esc(money(x.amount))} (${esc(transactionUsdt(x))} USDT)</span></div><div class="kv"><span>Status</span><span>${esc(txStatusLabel(x))}</span></div><div class="kv"><span>Date</span><span>${esc(dateUTC(x.created_at))}</span></div></div></div>`; }).join(""); html = `<div class="wallet-trades">${body}</div>`; } else { html = `<div class="empty">${esc(t(authed ? "noTx" : "needTg"))}</div>`; } $("walletList").innerHTML = html + pager("wallet",walletPage,walletData.total); const historyTable = (type) => { const filtered = items.filter(x => String(x.transaction_type || "").toLowerCase() === type); if (!filtered.length) return `<div class="empty">No ${type} history yet.</div>`; return `<div class="wrap"><table class="tbl"><thead><tr><th>Type</th><th>Amount</th><th>Status</th></tr></thead><tbody>${filtered.map(x => `<tr><td>${esc(tk("tx_", x.transaction_type))}<div class="utc-time">${esc(dateUTC(x.created_at))}</div></td><td>${esc(money(x.amount))} <small class="usdt-value">(${esc(transactionUsdt(x))} USDT)</small></td><td>${esc(txStatusLabel(x))}</td></tr>`).join("")}</tbody></table></div>`; }; $("depositHistoryList").innerHTML = historyTable("deposit"); $("withdrawHistoryList").innerHTML = historyTable("withdrawal"); $("withdrawPageBalance").textContent = `${money(Math.max(0, Number(balance || 0)))} Points · ${(Math.max(0, Number(balance || 0)) / 100).toFixed(2)} USDT`; }
+function renderWallet(){ const items = walletData.items || []; const filteredItems = items.filter(x => activeTxFilter === "all" || String(x.transaction_type || "").toLowerCase() === activeTxFilter); let html; if(filteredItems.length){ const body = filteredItems.map(x => { const type = String(x.transaction_type || "").toLowerCase(); const plus = type === "deposit" || type === "payout" || type === "refund" || type === "reward" || type === "commission" || type === "signup_bonus"; if (type === "bet") { const bet = (tradeData.bets || []).find(c => { const stake = Number(c.stake || 0) + Number(c.fee || 0); return Math.abs(stake - Number(x.amount || 0)) < 0.01 && Math.abs(new Date(c.created_at) - new Date(x.created_at)) < 10000; }); if (bet) { const view = tradeView(bet); const selection = bet.bet_type === "Number" && bet.selection !== null && bet.selection !== undefined ? ` · ${bet.selection}` : ""; return `<div class="trade wallet-trade"><div class="trade-head" data-trade="1"><span class="trade-period">${esc(fmtPeriod(bet.round_code))}</span><span class="trade-status ${view.cls}">${esc(view.label)}</span><span class="trade-amt ${view.cls}">${esc(signedCents(view.amt))}</span><span class="chev">⌄</span></div><div class="trade-body"><div class="kv"><span>${esc(t("dBet"))}</span><span>${esc(tk("bt_", bet.bet_type) + selection)}</span></div><div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(view.stakeC / 100))}</span></div><div class="kv"><span>${esc(t("dFee"))}</span><span>${esc(money(view.feeC / 100))}</span></div><div class="kv strong"><span>${esc(t("dActual"))}</span><span>${esc(money(view.actualC / 100))}</span></div><div class="kv"><span>${esc(t("dPayout"))}</span><span>${esc(money(view.returnedC / 100))}</span></div><div class="kv"><span>Result</span><span>${view.hasRes ? esc(resultDetails(bet.result_number)) : esc(t("waiting"))}</span></div><div class="kv"><span>${esc(t("dTime"))}</span><span>${esc(dateUTC(bet.created_at))}</span></div></div></div>`; } } return `<div class="trade wallet-trade"><div class="trade-head" data-trade="1"><span class="trade-period">${esc(tk("tx_",type))}<small class="utc-time" style="display:block; margin-top:2px;">${esc(dateUTC(x.created_at))}</small></span><span class="trade-status ${plus ? "success" : "pending"}">${esc(txStatusLabel(x))}</span><span class="trade-amt ${plus ? "success" : "fail"}">${plus ? "+" : "−"}${esc(money(x.amount))}</span><span class="chev">⌄</span></div><div class="trade-body"><div class="kv"><span>Type</span><span>${esc(tk("tx_",type))}</span></div><div class="kv"><span>Amount</span><span>${esc(money(x.amount))} (${esc(transactionUsdt(x))} USDT)</span></div><div class="kv"><span>Status</span><span>${esc(txStatusLabel(x))}</span></div><div class="kv"><span>Date</span><span>${esc(dateUTC(x.created_at))}</span></div></div></div>`; }).join(""); html = `<div class="wallet-trades">${body}</div>`; } else { html = `<div class="empty">${esc(t(authed ? "noTx" : "needTg"))}</div>`; } $("walletList").innerHTML = html + pager("wallet",walletPage,walletData.total); const historyTable = (type) => { const filtered = items.filter(x => String(x.transaction_type || "").toLowerCase() === type); if (!filtered.length) return `<div class="empty">No ${type} history yet.</div>`; return `<div class="wrap"><table class="tbl"><thead><tr><th>Type</th><th>Amount</th><th>Status</th></tr></thead><tbody>${filtered.map(x => `<tr><td>${esc(tk("tx_", x.transaction_type))}<div class="utc-time">${esc(dateUTC(x.created_at))}</div></td><td>${esc(money(x.amount))} <small class="usdt-value">(${esc(transactionUsdt(x))} USDT)</small></td><td>${esc(txStatusLabel(x))}</td></tr>`).join("")}</tbody></table></div>`; }; $("depositHistoryList").innerHTML = historyTable("deposit"); $("withdrawHistoryList").innerHTML = historyTable("withdrawal"); }
 async function loadWallet(silent){ if(!authed){ renderWallet(); return; } try { const d = await api("wallet_history",{page:walletPage,page_size:PAGE}); walletData = {items:d.transactions || [],total:Number(d.pagination && d.pagination.total || 0)}; renderWallet(); } catch(error) { if(!silent) toast(error.message); } }
-let selectedDepositCoin = "USDT"; const liveCoinPrices = { USDT: 1, BNB: 0, ETH: 0, SOL: 0 };
-async function refreshDepositPrices(){ try { const response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=binancecoin,ethereum,solana&vs_currencies=usd", { signal: AbortSignal.timeout(7000) }); const prices = await response.json(); const values = { BNB: prices.binancecoin?.usd, ETH: prices.ethereum?.usd, SOL: prices.solana?.usd }; Object.entries(values).forEach(([coin, price]) => { if (!Number.isFinite(Number(price))) return; liveCoinPrices[coin] = Number(price); document.querySelectorAll(`[data-live-price="${coin}"]`).forEach(el => { el.textContent = Number(price).toLocaleString(undefined, { maximumFractionDigits: 4 }); }); }); updateDepositSummary(); } catch (_) { document.querySelectorAll("[data-live-price]").forEach(el => { if (el.textContent === "—") el.textContent = "Price unavailable"; }); } }
-refreshDepositPrices();
-async function openDepositPage(){ showPage("deposit"); await openCash("deposit"); const fields = $("cashDepositFields"); const mount = $("depositFlowMount"); if (fields && mount) { mount.appendChild(fields); fields.style.display = "block"; } $("cashModal").classList.remove("open"); }
-async function openCash(kind){ $("cashTitle").textContent = (kind === "deposit" ? "⬇ " : "⬆ ") + t(kind === "deposit" ? "deposit" : "withdraw"); $("cashDepositFields").style.display = kind === "deposit" ? "block" : "none"; $("cashWithdrawFields").style.display = kind === "withdraw" ? "block" : "none"; $("depositTimer").style.display = kind === "deposit" ? "block" : "none"; if(kind === "withdraw"){ const available = Number.isFinite(balance) ? Math.max(0, balance) : 0; $("withdrawAvailableBalance").textContent = `${money(available)} Points · ${(available / 100).toFixed(2)} USDT`; $("withdrawAmount").max = available.toFixed(2); $("withdrawAmount").value = available >= 500 ? "500" : ""; $("withdrawUsdtPreview").textContent = available >= 500 ? `${(Number($("withdrawAmount").value || 0) * 0.9 / 100).toFixed(2)} USDT after 10% fee` : "Minimum 5.00 USDT"; } $("cashModal").classList.add("open"); if(kind === "deposit"){ refreshDepositPrices(); startDepositTimer(); $("depositAmount").value = ""; $("depositTxHash").value = ""; $("depositSubmitStatus").textContent = ""; try { const config = await api("wallet_config"); const options = Array.isArray(config.deposit_options) ? config.deposit_options : []; const select = $("depositOption"); select.innerHTML = options.map((item, index) => `<option value="${index}">${esc(item.coin)} · ${esc(item.network)}</option>`).join(""); const selectedIndex = options.findIndex(item => String(item.coin || "").toUpperCase() === selectedDepositCoin); if (selectedIndex >= 0) select.value = String(selectedIndex); const setOption = () => { const item = options[Number(select.value)] || options[0]; selectedDepositCoin = String(item?.coin || "USDT").toUpperCase(); const address = item?.address || ""; $("depositAddress").value = address || "Deposit address is not configured"; const qr = $("depositQrImage"); if (qr && address) { qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(address)}`; qr.hidden = false; } else if (qr) { qr.removeAttribute("src"); qr.hidden = true; } const coinLabel = item?.coin || "asset"; const networkLabel = item?.network || "network"; const logoKey = coinLabel.toLowerCase().replace(/[^a-z]/g, ""); const logoMap = { usdt: "usdt", tether: "usdt", bnb: "bnb", eth: "eth", ethereum: "eth", solana: "sol", sol: "sol", tron: "trx", trx: "trx", polygon: "matic", matic: "matic", btc: "btc", bitcoin: "btc" }; const logo = logoMap[logoKey] || "usdt"; const logoUrls = { usdt: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/usdt.png", bnb: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/bnb.png", eth: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/eth.png", sol: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/sol.png", trx: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/trx.png", matic: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/matic.png", btc: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/btc.png" }; $("depositAssetLogo").src = logoUrls[logo] || logoUrls.usdt; $("depositAssetLogo").alt = `${coinLabel} logo`; $("depositAssetName").textContent = item ? coinLabel : "Select an asset"; $("depositNetworkHint").textContent = item ? `Only send ${coinLabel} on ${networkLabel}. Sending another coin or network may permanently lose funds.` : "No active deposit address configured"; $("depositBlockchain").textContent = networkLabel; updateDepositSummary(); }; select.onchange = setOption; setOption(); } catch(error) { toast(error.message); } } }
-function updateDepositSummary() { const amount = Number($("depositAmount")?.value || 0); const value = amount > 0 ? `${amount.toFixed(2)} USDT` : "— USDT"; $("depositTotalPrice").textContent = value; $("depositSubtotal").textContent = value; $("depositAmountDue").textContent = value; }
-let depositTimerId = null;
-function startDepositTimer() { clearInterval(depositTimerId); const expiresAt = Date.now() + 30 * 60 * 1000; const tick = () => { const remaining = Math.max(0, expiresAt - Date.now()); const seconds = Math.floor(remaining / 1000); $("depositTimer").textContent = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`; if (!remaining) { clearInterval(depositTimerId); $("submitDeposit").disabled = true; $("depositSubmitStatus").textContent = "Payment session expired. Close and start a new session."; } }; $("submitDeposit").disabled = false; $("depositSubmitStatus").textContent = ""; tick(); depositTimerId = setInterval(tick, 1000); }
-async function submitDeposit(){ const amount = Number($("depositAmount").value); const txHash = $("depositTxHash").value.trim(); const option = $("depositOption").selectedOptions[0]?.textContent || "USDT · BEP-20"; if (!Number.isFinite(amount) || amount < 1) return toast("Enter the amount you sent in USDT."); if (txHash.length < 20) return toast("Enter a valid transaction hash."); const button = $("submitDeposit"); button.disabled = true; try { const result = await api("submit_deposit", { amount_usdt: amount.toFixed(6), tx_hash: txHash, network: option }); $("depositSubmitStatus").textContent = result.message || "Submitted for verification."; toast("Deposit request sent to admin for approval."); $("depositAmount").value = ""; $("depositTxHash").value = ""; await syncUser(); } catch (error) { button.disabled = false; toast(error.message, true); } }
-async function submitWithdrawal(){ const amount = Number($("withdrawAmount").value); const address = $("withdrawAddress").value.trim(); if(!Number.isFinite(amount) || amount < 500){ toast("Minimum withdrawal is 500 points (5 USDT)."); return; } if(address.length < 20) { toast("Enter a valid wallet address."); return; } const button = $("submitWithdrawal"); button.disabled = true; try { await api("request_withdrawal", {amount: amount.toFixed(2), destination_address: address}); toast("Withdrawal request submitted for admin approval."); $("cashModal").classList.remove("open"); $("withdrawAmount").value = ""; $("withdrawAddress").value = ""; await manualRefresh(); } catch(error) { toast(error.message); } finally { button.disabled = false; } }
-function renderReferral(){ const box = $("referralBody"); if(!authed){ box.innerHTML = `<div class="card"><div class="empty">${esc(t("needTg"))}</div></div>`; return; } if(!referralData){ box.innerHTML = `<div class="card"><div class="empty">${esc(t("loading"))}</div></div>`; return; } const r = referralData; const link = r.referral_link; const linkCard = `<div class="card"><label>${esc(t("yourLink"))}</label>${link ? `<div class="copybox" style="margin-top:7px"><input type="text" readonly value="${esc(link)}"><button class="sec-btn" type="button" data-copy="link">${esc(t("copy"))}</button></div><button class="primary-btn" type="button" data-share="1" style="margin-top:12px">📤 ${esc(t("share"))}</button>` : `<div class="notice">${esc(t("noLink"))}</div>`}<label style="display:block;margin-top:14px">${esc(t("yourCode"))}</label><div class="copybox" style="margin-top:7px"><input type="text" readonly value="${esc(r.referral_code || "")}"><button class="sec-btn" type="button" data-copy="code">${esc(t("copy"))}</button></div><div class="notice" style="margin-top:12px">${esc(t("rewardPromo"))}</div></div>`; const reward = r.reward || {}; const pendingRewards = Number(reward.pending_points || 0); const claimRewardBtn = pendingRewards > 0 ? `<button class="primary-btn" id="claimRewardBtn" type="button" style="background:#22c55e; color:#fff; margin-top:10px;">${esc(t("claimRewards"))} (${money(pendingRewards)} pts)</button>` : `<div class="muted small" style="margin-top:10px;">No available rewards to claim.</div>`; const claimCommissionBtn = Number(r.total_commission || 0) > 0 ? `<button class="primary-btn" id="claimCommissionBtn" type="button" style="margin-top:10px;">Claim commission to wallet</button>` : `<div class="muted small" style="margin-top:10px;">No commission available to claim.</div>`; const teamRows = (r.team_levels || []).map(l => `<div class="kv"><span>Level ${esc(l.level)}</span><strong>${esc(l.count)} members</strong></div>`).join(""); const stats = `<div class="stats"><div class="stat"><div class="l">${esc(t("directRef"))}</div><div class="v">${esc(r.total_direct_referrals || 0)}</div></div><div class="stat"><div class="l">${esc(t("availableComm"))}</div><div class="v">${esc(money(r.total_commission || 0))}</div></div><div class="stat"><div class="l">${esc(t("availableReward"))}</div><div class="v" style="color:#22c55e;">${esc(money(pendingRewards))}</div></div><div class="stat"><div class="l">${esc(t("claimedRewards"))}</div><div class="v">${esc(money(reward.credited_points || 0))}</div></div></div>`; const levelRows = (r.commission_levels || []).map(l => `<tr><td>L${esc(l.level)}</td><td>${esc(l.rate_percent)}%</td><td>${esc(l.commission_count)}</td><td>${esc(money(l.total_commission))}</td></tr>`).join(""); const levelsCard = `<div class="card"><div class="section-title">${esc(t("levels"))}</div><div class="notice"><strong>Team · 3 levels</strong>${teamRows}<div style="margin-top:12px">${claimCommissionBtn}</div></div><div class="wrap"><table class="tbl"><thead><tr><th>${esc(t("lvl"))}</th><th>${esc(t("rate"))}</th><th>${esc(t("cnt"))}</th><th>${esc(t("total"))}</th></tr></thead><tbody>${levelRows}</tbody></table></div></div>`; const applyCard = r.referred_by ? `<div class="card"><div class="muted small">${esc(t("referredBy"))}</div></div>` : `<div class="card"><div class="section-title">${esc(t("haveCode"))}</div><input id="refCodeInput" type="text" maxlength="100" autocomplete="off" placeholder="${esc(t("enterCode"))}"><button class="primary-btn" type="button" data-apply-ref="1">${esc(t("apply"))}</button></div>`; const commRows = (commData.items || []).map(c => `<tr><td class="period">${esc(fmtPeriod(c.round_code) || "—")}<div class="utc-time">${esc(dateUTC(c.created_at))}</div></td><td>L${esc(c.referral_level)}</td><td class="n-green">+${esc(money(c.commission_amount))}</td></tr>`).join(""); const commCard = `<div class="card"><div class="section-title">${esc(t("commHistory"))}</div>${commRows ? `<div class="wrap"><table class="tbl"><thead><tr><th>${esc(t("colPeriod"))}</th><th>${esc(t("lvl"))}</th><th>${esc(t("comm"))}</th></tr></thead><tbody>${commRows}</tbody></table></div>` : `<div class="empty">${esc(t("noTx"))}</div>`}${pager("comm",commPage,commData.total)}</div>`; const rewardClaimCard = `<div class="card"><div class="section-title">${esc(t("availableReward"))}</div><div class="stats" style="margin-bottom:10px;"><div class="stat"><div class="l">${esc(t("availableReward"))}</div><div class="v" style="color:#22c55e;">${esc(money(pendingRewards))}</div></div></div>${claimRewardBtn}</div>`; box.innerHTML = linkCard + stats + rewardClaimCard + membersCardHtml() + levelsCard + applyCard + commCard; }
+let selectedDepositCoinPage = "USDT";
+async function loadDepositPage() {
+  try {
+    const config = await api("wallet_config");
+    const options = Array.isArray(config.deposit_options) ? config.deposit_options : [];
+    const select = $("depositOptionPage");
+    select.innerHTML = options.map((item, i) => `<option value="${i}">${esc(item.coin)} · ${esc(item.network)}</option>`).join("");
+    const setOption = () => {
+      const item = options[Number(select.value)] || options[0];
+      if (!item) { $("depositAddressPage").value = "No deposit address configured"; return; }
+      selectedDepositCoinPage = String(item.coin || "USDT").toUpperCase();
+      const address = item?.address || "";
+      $("depositAddressPage").value = address || "Not configured";
+      const qr = $("depositQrImagePage");
+      if (qr && address) {
+        qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=440x440&data=${encodeURIComponent(address)}`;
+        qr.hidden = false;
+      } else if (qr) {
+        qr.removeAttribute("src");
+        qr.hidden = true;
+      }
+      const coinLabel = item?.coin || "USDT";
+      const networkLabel = item?.network || "network";
+      const logoKey = coinLabel.toLowerCase().replace(/[^a-z]/g, "");
+      const logoMap = { usdt:"usdt", tether:"usdt", bnb:"bnb", eth:"eth", ethereum:"eth", solana:"sol", sol:"sol", tron:"trx", trx:"trx", polygon:"matic", matic:"matic", btc:"btc", bitcoin:"btc" };
+      const logo = logoMap[logoKey] || "usdt";
+      const logoUrls = {
+        usdt: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/usdt.png",
+        bnb: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/bnb.png",
+        eth: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/eth.png",
+        sol: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/sol.png",
+        trx: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/trx.png"
+      };
+      $("depositAssetLogoPage").src = logoUrls[logo] || logoUrls.usdt;
+      $("depositAssetNamePage").textContent = coinLabel;
+      $("depositNetworkHintPage").textContent = `Send only ${coinLabel} on ${networkLabel}`;
+    };
+    select.onchange = setOption;
+    setOption();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+function populateWithdrawPage() {
+  const addrInput = $("withdrawAddressPage");
+  if (addrInput) {
+    addrInput.value = savedWalletAddress || "";
+    addrInput.placeholder = savedWalletAddress ? "" : "Add wallet in Profile first";
+  }
+  const balEl = $("withdrawPageBalance");
+  if (balEl) balEl.textContent = `${money(balance || 0)} Points · ${((Number(balance)||0)/100).toFixed(2)} USDT`;
+}
+async function downloadQrCode() {
+  const img = $("depositQrImagePage");
+  if (!img || !img.src || img.hidden) { toast("QR not available"); return; }
+  try {
+    const response = await fetch(img.src);
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `deposit-qr-${selectedDepositCoinPage}-${Date.now()}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast("QR downloaded");
+  } catch(e) {
+    toast("Download failed. Long-press the QR to save.");
+  }
+}
+async function submitDepositPage() {
+  const amount = Number($("depositAmountPage").value);
+  const txHash = $("depositTxHashPage").value.trim();
+  const option = $("depositOptionPage").selectedOptions[0]?.textContent || "USDT";
+  if (!Number.isFinite(amount) || amount < 1) return toast("Enter at least 1 USDT.");
+  if (txHash.length < 20) return toast("Enter a valid transaction hash.");
+  const btn = $("submitDepositPage");
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = "Submitting…";
+  try {
+    await api("submit_deposit", { amount_usdt: amount.toFixed(6), tx_hash: txHash, network: option });
+    $("depositSubmitStatusPage").textContent = "✅ Submitted for admin approval.";
+    toast("Deposit submitted for approval.");
+    $("depositAmountPage").value = "";
+    $("depositTxHashPage").value = "";
+    await syncUser();
+    await loadWallet(true);
+  } catch(e) {
+    toast(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+}
+async function submitWithdrawalPage() {
+  const amount = Number($("withdrawAmountPage").value);
+  const address = $("withdrawAddressPage").value.trim();
+  if (!Number.isFinite(amount) || amount < 500) return toast("Minimum withdrawal is 500 points.");
+  if (!address || address.length < 20) return toast("No wallet saved. Add one in Profile first.");
+  const btn = $("submitWithdrawalPage");
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = "Submitting…";
+  try {
+    await api("request_withdrawal", { amount: amount.toFixed(2), destination_address: address });
+    toast("Withdrawal request submitted.");
+    $("withdrawAmountPage").value = "";
+    await syncUser();
+    await loadWallet(true);
+  } catch(e) {
+    toast(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+}
+function renderReferral(){ const box = $("referralBody"); if(!authed){ box.innerHTML = `<div class="card"><div class="empty">${esc(t("needTg"))}</div><button class="primary-btn" id="refAuthRetry" type="button" style="margin-top:10px">Retry Authentication</button></div>`; const btn = $("refAuthRetry"); if (btn) btn.onclick = authenticate; return; } if(!referralData){ box.innerHTML = `<div class="card"><div class="empty">${esc(t("loading"))}</div></div>`; return; } const r = referralData; const link = r.referral_link; const linkCard = `<div class="card"><label>${esc(t("yourLink"))}</label>${link ? `<div class="copybox" style="margin-top:7px"><input type="text" readonly value="${esc(link)}"><button class="sec-btn" type="button" data-copy="link">${esc(t("copy"))}</button></div><button class="primary-btn" type="button" data-share="1" style="margin-top:12px">📤 ${esc(t("share"))}</button>` : `<div class="notice">${esc(t("noLink"))}</div>`}<label style="display:block;margin-top:14px">${esc(t("yourCode"))}</label><div class="copybox" style="margin-top:7px"><input type="text" readonly value="${esc(r.referral_code || "")}"><button class="sec-btn" type="button" data-copy="code">${esc(t("copy"))}</button></div><div class="notice" style="margin-top:12px">${esc(t("rewardPromo"))}</div></div>`; const reward = r.reward || {}; const pendingRewards = Number(reward.pending_points || 0); const claimRewardBtn = pendingRewards > 0 ? `<button class="primary-btn" id="claimRewardBtn" type="button" style="background:#22c55e; color:#fff; margin-top:10px;">${esc(t("claimRewards"))} (${money(pendingRewards)} pts)</button>` : `<div class="muted small" style="margin-top:10px;">No available rewards to claim.</div>`; const claimCommissionBtn = Number(r.total_commission || 0) > 0 ? `<button class="primary-btn" id="claimCommissionBtn" type="button" style="margin-top:10px;">Claim commission to wallet</button>` : `<div class="muted small" style="margin-top:10px;">No commission available to claim.</div>`; const teamRows = (r.team_levels || []).map(l => `<div class="kv"><span>Level ${esc(l.level)}</span><strong>${esc(l.count)} members</strong></div>`).join(""); const stats = `<div class="stats"><div class="stat"><div class="l">${esc(t("directRef"))}</div><div class="v">${esc(r.total_direct_referrals || 0)}</div></div><div class="stat"><div class="l">${esc(t("availableComm"))}</div><div class="v">${esc(money(r.total_commission || 0))}</div></div><div class="stat"><div class="l">${esc(t("availableReward"))}</div><div class="v" style="color:#22c55e;">${esc(money(pendingRewards))}</div></div><div class="stat"><div class="l">${esc(t("claimedRewards"))}</div><div class="v">${esc(money(reward.credited_points || 0))}</div></div></div>`; const levelRows = (r.commission_levels || []).map(l => `<tr><td>L${esc(l.level)}</td><td>${esc(l.rate_percent)}%</td><td>${esc(l.commission_count)}</td><td>${esc(money(l.total_commission))}</td></tr>`).join(""); const levelsCard = `<div class="card"><div class="section-title">${esc(t("levels"))}</div><div class="notice"><strong>Team · 3 levels</strong>${teamRows}<div style="margin-top:12px">${claimCommissionBtn}</div></div><div class="wrap"><table class="tbl"><thead><tr><th>${esc(t("lvl"))}</th><th>${esc(t("rate"))}</th><th>${esc(t("cnt"))}</th><th>${esc(t("total"))}</th></tr></thead><tbody>${levelRows}</tbody></table></div></div>`; const applyCard = r.referred_by ? `<div class="card"><div class="muted small">${esc(t("referredBy"))}</div></div>` : `<div class="card"><div class="section-title">${esc(t("haveCode"))}</div><input id="refCodeInput" type="text" maxlength="100" autocomplete="off" placeholder="${esc(t("enterCode"))}"><button class="primary-btn" type="button" data-apply-ref="1">${esc(t("apply"))}</button></div>`; const commRows = (commData.items || []).map(c => `<tr><td class="period">${esc(fmtPeriod(c.round_code) || "—")}<div class="utc-time">${esc(dateUTC(c.created_at))}</div></td><td>L${esc(c.referral_level)}</td><td class="n-green">+${esc(money(c.commission_amount))}</td></tr>`).join(""); const commCard = `<div class="card"><div class="section-title">${esc(t("commHistory"))}</div>${commRows ? `<div class="wrap"><table class="tbl"><thead><tr><th>${esc(t("colPeriod"))}</th><th>${esc(t("lvl"))}</th><th>${esc(t("comm"))}</th></tr></thead><tbody>${commRows}</tbody></table></div>` : `<div class="empty">${esc(t("noTx"))}</div>`}${pager("comm",commPage,commData.total)}</div>`; const rewardClaimCard = `<div class="card"><div class="section-title">${esc(t("availableReward"))}</div><div class="stats" style="margin-bottom:10px;"><div class="stat"><div class="l">${esc(t("availableReward"))}</div><div class="v" style="color:#22c55e;">${esc(money(pendingRewards))}</div></div></div>${claimRewardBtn}</div>`; box.innerHTML = linkCard + stats + rewardClaimCard + membersCardHtml() + levelsCard + applyCard + commCard; }
 async function loadReferral(silent){ if(!authed){ renderReferral(); return; } try { const d = await api("referral_data"); referralData = d.referral; const h = await api("referral_history",{page:commPage,page_size:PAGE}); commData = {items:h.commissions || [],total:Number(h.pagination && h.pagination.total || 0)}; renderReferral(); } catch(error) { if(!silent) toast(error.message); } }
 async function loadCommissions(){ try { const h = await api("referral_history",{page:commPage,page_size:PAGE}); commData = {items:h.commissions || [],total:Number(h.pagination && h.pagination.total || 0)}; renderReferral(); } catch(error) { toast(error.message); } }
 async function applyReferral(){ const input = $("refCodeInput"); const code = input ? input.value.trim() : ""; if(!code){ toast(t("enterCode")); return; } try { await api("apply_referral",{referral_code:code}); toast(t("refreshed")); await loadReferral(); } catch(error) { toast(error.message); } }
@@ -835,13 +879,13 @@ function detectResults(){ if(!authed) return; const rev = latestRounds.filter(re
 function getActiveRound(){ const r = currentRound; if(!r) return null; const now = nowMs(); const starts = new Date(r.starts_at).getTime(); const ends = new Date(r.ends_at).getTime(); return Number.isFinite(starts) && Number.isFinite(ends) && now >= starts && now < ends ? r : null; }
 function isBettingOpen(round){ if(!round || round.status !== "open") return false; const now = nowMs(); const starts = new Date(round.starts_at).getTime(); const closes = new Date(round.betting_closes_at).getTime(); const ends = new Date(round.ends_at).getTime(); return Number.isFinite(starts) && Number.isFinite(closes) && Number.isFinite(ends) && now >= starts && now < closes && now < ends; }
 async function syncRounds(){ if(roundsBusy) return roundsOk; roundsBusy = true; try { const d = await getRounds(1); const serverMs = new Date(d.server_time).getTime(); if(Number.isFinite(serverMs)) serverTimeOffset = serverMs - d._mid; currentRound = d.current_round || null; latestRounds = d.rounds || []; roundsLoaded = true; roundsFailed = false; roundsOk = true; if(resultPage === 1){ resultData = {rounds:latestRounds,total:Number(d.rounds_page && d.rounds_page.total || 0)}; renderResults(); } detectResults(); setNotice("nConnected"); } catch(error) { roundsFailed = true; roundsOk = false; setNotice("nUnavailable",{msg:error.message}); } finally { lastRoundsSync = Date.now(); roundsBusy = false; updateRoundDisplay(); } return roundsOk; }
-async function syncUser(){ if(!authed) return false; if(userBusy) return userOk; userBusy = true; try { const [balData,betData] = await Promise.all([ api("balance"), api("my_bets",{page:tradePage,page_size:PAGE}) ]); updateBalance(balData.balance); tradeData = {bets:betData.bets || [],total:Number(betData.pagination && betData.pagination.total || 0)}; renderTrades(); if(activePage === "wallet") await loadWallet(true); userOk = true; } catch(error) { userOk = false; } finally { lastUserSync = Date.now(); userBusy = false; } return userOk; }
+async function syncUser(){ if(!authed) return false; if(userBusy) return userOk; userBusy = true; try { const [balData,betData] = await Promise.all([ api("balance"), api("my_bets",{page:tradePage,page_size:PAGE}) ]); updateBalance(balData.balance); if (balData.wallet_address !== undefined) savedWalletAddress = balData.wallet_address || null; tradeData = {bets:betData.bets || [],total:Number(betData.pagination && betData.pagination.total || 0)}; renderTrades(); if(activePage === "wallet") await loadWallet(true); if (activePage === "withdraw") populateWithdrawPage(); userOk = true; } catch(error) { userOk = false; } finally { lastUserSync = Date.now(); userBusy = false; } return userOk; }
 function setRing(frac,locked){ const el = $("ringFg"); el.style.transition = frac > lastRingFrac + 0.01 ? "none" : ""; el.style.strokeDashoffset = String(RING_LENGTH * (1 - frac)); el.classList.toggle("locked",locked); lastRingFrac = frac; }
 function updateRoundDisplay(){ const server = getActiveRound(); let info = null; if(server){ info = { code:server.round_code, endsMs:new Date(server.ends_at).getTime(), open:isBettingOpen(server), virtual:false }; } else if(roundsLoaded){ const s = slotInfo(nowMs()); info = {code:s.code,endsMs:s.endsMs,open:false,virtual:true}; } if(!info){ $("periodId").textContent = t("loadingRound"); $("timer").textContent = "--:--"; setRing(0,true); setStatus(authBlock || (roundsFailed ? "stError" : "stConnecting")); updateBetButtons(false); previousBettingOpen = false; lastTickSecond = -1; return; } const left = Math.max(0,Math.ceil((info.endsMs - nowMs()) / 1000)); $("periodId").textContent = fmtPeriod(info.code); $("timer").textContent = String(Math.floor(left / 60)).padStart(2,"0") + ":" + String(left % 60).padStart(2,"0"); setRing(Math.min(1,left / ROUND_SECONDS),!info.open); setStatus(authBlock || (info.virtual ? "stSyncing" : info.open ? "stOpen" : "stLocked")); updateBetButtons(info.open && authed); if(previousBettingOpen === true && !info.open){ playLockSound(); haptic("light"); } previousBettingOpen = info.open; if(left <= 10 && left > 0 && left !== lastTickSecond){ playTickSound(); lastTickSecond = left; } else if(left > 10 || left === 0){ lastTickSecond = -1; } if(lastDisplayedRoundCode !== info.code){ lastDisplayedRoundCode = info.code; lastTickSecond = -1; previousBettingOpen = info.open; } }
 function updateBetButtons(enabled){ document.querySelectorAll("[data-bet],.number-btn").forEach(button => { button.disabled = !enabled; }); }
 function poll(){ if(document.hidden) return; const now = Date.now(); if(!roundsBusy){ const r = currentRound; const ended = r && nowMs() >= new Date(r.ends_at).getTime(); const slot = slotInfo(nowMs()); const prevCode = slotInfo(slot.startMs - 1).code; const prevMissing = roundsLoaded && nowMs() - slot.startMs < 30000 && !latestRounds.some(x => x.round_code === prevCode && revealed(x)); const due = now - lastRoundsSync >= ROUND_POLL || ((ended || prevMissing) && now - lastRoundsSync >= 1000); if(due) syncRounds(); } if(authed && !userBusy && now - lastUserSync >= USER_POLL){ syncUser(); } }
 async function manualRefresh(button){ if(button) button.classList.add("busy"); try { if(!authed){ await authenticate(); } else { const okRounds = await syncRounds(); const okUser = await syncUser(); if(resultPage !== 1) await loadResults(); if(activePage === "wallet") await loadWallet(true); if(activePage === "referral") await loadReferral(true); toast(okRounds && okUser ? t("refreshed") : t("refreshFailed")); } } catch(error) { toast(error.message || t("refreshFailed")); } finally { if(button) button.classList.remove("busy"); } }
-async function authenticate(){ try { if(!tg){ authed = false; authBlock = "stTelegram"; profName = {k:"notTg"}; profStatus = {k:"openInTg"}; renderProfile(); renderTrades(); syncRounds(); return; } tg.ready(); tg.expand(); initData = tg.initData || ""; if(!initData){ authed = false; authBlock = "stAuth"; profName = {k:"tgMissing"}; profStatus = {k:"openOfficial"}; renderProfile(); renderTrades(); syncRounds(); return; } const response = await fetch("/api/auth",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({initData}) }); const data = await parseResponse(response); authed = true; authBlock = null; user = data.user; if (typeof loadNotifications === "function") await loadNotifications().catch(() => {}); if (typeof loadAppConfig === "function") await loadAppConfig(); profName = user.username ? {raw:"@" + user.username} : {k:"tgUser",v:{id:user.telegram_id}}; profStatus = {k:"verified"}; renderProfile(); try { await syncRounds(); await syncUser(); await applyReferralFromUrl(); } catch (error) { console.warn("[v0] post-auth sync failed", error.message); authBlock = "stConnecting"; renderProfile(); toast("Account authenticated; syncing game data…"); } } catch(error) { authed = false; authBlock = "stAuth"; profStatus = {raw:error.message}; renderProfile(); toast(error.message); } }
+async function authenticate(){ try { if(!tg){ authed = false; authBlock = "stTelegram"; profName = {k:"notTg"}; profStatus = {k:"openInTg"}; renderProfile(); renderTrades(); syncRounds(); return; } tg.ready(); tg.expand(); initData = tg.initData || ""; if(!initData){ authed = false; authBlock = "stAuth"; profName = {k:"tgMissing"}; profStatus = {k:"openOfficial"}; renderProfile(); renderTrades(); syncRounds(); return; } const response = await fetch("/api/auth",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({initData}) }); const data = await parseResponse(response); authed = true; authBlock = null; user = data.user; if (typeof loadNotifications === "function") await loadNotifications().catch(() => {}); if (typeof loadAppConfig === "function") await loadAppConfig(); profName = user.username ? {raw:"@" + user.username} : {k:"tgUser",v:{id:user.telegram_id}}; profStatus = {k:"verified"}; renderProfile(); try { await syncRounds(); await syncUser(); await applyReferralFromUrl(); } catch (error) { console.warn("[v0] post-auth sync failed", error.message); authBlock = "stConnecting"; renderProfile(); toast("Account authenticated; syncing game data…"); } } catch(error) { authed = false; authBlock = "stAuth"; profStatus = {raw:error.message}; renderProfile(); renderReferral(); toast(error.message); } }
 function renderBreakdown(){
   const text = $("betAmount").value.trim();
   const ok = /^\d{1,18}(\.\d{1,2})?$/.test(text);
@@ -896,14 +940,7 @@ async function confirmBet(){
   btn.disabled = true;
   try {
     if(!pendingBetRequest){
-      pendingBetRequest = {
-        requestId: makeRequestId(),
-        roundCode: currentBet.roundCode,
-        betType: currentBet.type,
-        selection: currentBet.type === "Number" ? currentBet.selection : null,
-        stake: totalStakeStr,
-        multiplier: betMultiplier
-      };
+      pendingBetRequest = { requestId: makeRequestId(), roundCode: currentBet.roundCode, betType: currentBet.type, selection: currentBet.type === "Number" ? currentBet.selection : null, stake: totalStakeStr, multiplier: betMultiplier };
     }
     const r = pendingBetRequest;
     if(r.roundCode !== currentBet.roundCode || r.betType !== currentBet.type || r.selection !== (currentBet.type === "Number" ? currentBet.selection : null) || r.stake !== totalStakeStr || r.multiplier !== betMultiplier){
@@ -911,14 +948,7 @@ async function confirmBet(){
       toast(t("toastChanged"));
       return;
     }
-    await api("place_bet",{
-      round_code: r.roundCode,
-      bet_type: r.betType,
-      selection: r.selection,
-      stake: r.stake,
-      multiplier: r.multiplier,
-      request_id: r.requestId
-    });
+    await api("place_bet",{ round_code: r.roundCode, bet_type: r.betType, selection: r.selection, stake: r.stake, multiplier: r.multiplier, request_id: r.requestId });
     playedRounds.add(r.roundCode);
     pendingBetRequest = null;
     $("betModal").classList.remove("open");
@@ -934,7 +964,16 @@ async function confirmBet(){
     btn.disabled = false;
   }
 }
-function showPage(name){ activePage = name; document.querySelectorAll(".page").forEach(page => { page.classList.toggle("active",page.id === "page-" + name); }); document.querySelectorAll(".nav-btn").forEach(button => { button.classList.toggle("active",button.dataset.page === name); }); if(name === "wallet" || name === "deposit" || name === "withdraw") loadWallet(); if(name === "referral" || name === "profile") loadReferral(); window.scrollTo(0,0); }
+function showPage(name){
+  activePage = name;
+  document.querySelectorAll(".page").forEach(page => { page.classList.toggle("active", page.id === "page-" + name); });
+  document.querySelectorAll(".nav-btn").forEach(button => { button.classList.toggle("active", button.dataset.page === name); });
+  if(name === "wallet" || name === "deposit" || name === "withdraw") loadWallet();
+  if(name === "referral" || name === "profile") loadReferral();
+  if(name === "deposit") loadDepositPage();
+  if(name === "withdraw") populateWithdrawPage();
+  window.scrollTo(0,0);
+}
 function renderLangList(filter){ const q = String(filter || "").trim().toLowerCase(); const list = LANGS.filter(l => !q || String(l.name || "").toLowerCase().includes(q) || String(l.en || "").toLowerCase().includes(q) || l.code.toLowerCase().includes(q)); $("langListModal").innerHTML = list.length ? list.map(l => `<button class="lang-btn${l.code === lang ? " active" : ""}" type="button" data-lang="${esc(l.code)}">${esc(l.name)}${l.en && l.en !== l.name ? " · " + esc(l.en) : ""}</button>`).join("") : `<div class="empty">${esc(t("noLangs"))}</div>`; }
 function openLangModal(){ $("langSearch").value = ""; renderLangList(""); $("langModal").classList.add("open"); }
 function renderCurrentLang(){ const meta = LANGS.find(l => l.code === lang) || LANGS[0]; const currentLanguage = $("curLangName"); if(currentLanguage) currentLanguage.textContent = meta ? `${meta.name} (${meta.en})` : "English"; }
@@ -1009,14 +1048,7 @@ function init(){
   setInterval(() => { if (initData) loadNotifications(); }, 30000);
   $("closeNotifications").onclick = () => $("notificationModal").classList.remove("open");
   $("headerProfile").onclick = () => showPage("profile");
-  $("headerSoundBtn").onclick = () => {
-    unlockAudio();
-    settings.sound = !settings.sound;
-    saveSettings();
-    renderSettings();
-    if (settings.sound) playPing();
-    haptic("light");
-  };
+  $("headerSoundBtn").onclick = () => { unlockAudio(); settings.sound = !settings.sound; saveSettings(); renderSettings(); if (settings.sound) playPing(); haptic("light"); };
   $("headerChannelBtn").onclick = () => openExternalLink(appConfig.channel_url);
   $("headerSupportBtn").onclick = () => openExternalLink(appConfig.support_url);
   $("editProfileBtn").onclick = openProfileModal;
@@ -1025,22 +1057,12 @@ function init(){
   $("saveWalletAddressBtn").onclick = saveWalletAddress;
   $("gameRulesBtn").onclick = () => $("gameRulesModal").classList.add("open");
   $("authRetry").onclick = authenticate;
-  // Profile menu navigation
-  document.querySelectorAll("[data-profile-action]").forEach(button => {
-    button.onclick = () => handleProfileAction(button.dataset.profileAction);
-  });
-  // Settings modal buttons
+  document.querySelectorAll("[data-profile-action]").forEach(button => { button.onclick = () => handleProfileAction(button.dataset.profileAction); });
   $("settingsLangBtn").onclick = () => { $("settingsModal").classList.remove("open"); openLangModal(); };
   $("settingsNotifBtn").onclick = () => { $("settingsModal").classList.remove("open"); $("notifSettingsModal").classList.add("open"); };
-  $("settingsResetBtn").onclick = () => {
-    settings.sound = true; settings.vibrate = true; settings.updates = true;
-    saveSettings(); renderSettings();
-    toast("Preferences reset to defaults");
-  };
-  // Help modal buttons
+  $("settingsResetBtn").onclick = () => { settings.sound = true; settings.vibrate = true; settings.updates = true; saveSettings(); renderSettings(); toast("Preferences reset to defaults"); };
   $("helpChannelBtn").onclick = () => openExternalLink(appConfig.channel_url);
   $("helpSupportBtn").onclick = () => openExternalLink(appConfig.support_url);
-  // Gift code
   $("redeemGiftBtn").onclick = async () => {
     const code = $("giftCodeInput").value.trim();
     if (!code) return toast("Enter a gift code.");
@@ -1066,20 +1088,28 @@ function init(){
   };
   $("confirmBet").onclick = confirmBet;
   $("resultPopupClose").onclick = closeResultPopup;
-  $("depositBtn").onclick = () => { openDepositPage().catch(error => toast(error.message, true)); };
-  $("depositPageBack").onclick = () => { clearInterval(depositTimerId); showPage("wallet"); };
+  // Deposit/Withdraw page buttons
+  $("depositBtn").onclick = () => showPage("deposit");
+  $("homeDepositBtn").onclick = () => showPage("deposit");
   $("withdrawBtn").onclick = () => showPage("withdraw");
-  $("homeDepositBtn").onclick = () => { openDepositPage().catch(error => toast(error.message, true)); };
   $("homeWithdrawBtn").onclick = () => showPage("withdraw");
-  document.querySelectorAll("[data-open-cash]").forEach(button => { button.onclick = () => openCash(button.dataset.openCash); });
-  $("depositAmount").addEventListener("input", updateDepositSummary);
-  $("submitDeposit").onclick = submitDeposit;
-  $("cancelDeposit").onclick = () => { clearInterval(depositTimerId); showPage("wallet"); };
-  $("submitWithdrawal").onclick = submitWithdrawal;
-  $("withdrawAmount").addEventListener("input", () => { const points = Math.max(0, Number($("withdrawAmount").value) || 0); $("withdrawUsdtPreview").textContent = `${(points * 0.9 / 100).toFixed(2)} USDT after 10% fee`; });
-  document.querySelectorAll(".withdraw-preset").forEach((button) => { button.addEventListener("click", () => { const available = Math.max(0, Number(balance) || 0); const percent = button.dataset.percent === "max" ? 100 : Number(button.dataset.percent); const amount = Math.floor((available * percent / 100) * 100) / 100; $("withdrawAmount").value = amount >= 500 ? amount.toFixed(2) : ""; $("withdrawUsdtPreview").textContent = amount >= 500 ? `${(amount * 0.9 / 100).toFixed(2)} USDT after 10% fee` : "Minimum 5.00 USDT"; }); });
-  $("copyDepositAddress").onclick = async () => { const value = $("depositAddress").value; if(value && await copyText(value)) toast("Deposit address copied."); };
-  // Claim buttons - better loading state
+  $("depositPageBack").onclick = () => showPage("wallet");
+  $("withdrawPageBack").onclick = () => showPage("wallet");
+  $("copyDepositAddressPage").onclick = async () => { const v = $("depositAddressPage").value; if (v && await copyText(v)) toast("Deposit address copied."); };
+  $("downloadQrBtn").onclick = downloadQrCode;
+  $("submitDepositPage").onclick = submitDepositPage;
+  $("submitWithdrawalPage").onclick = submitWithdrawalPage;
+  $("withdrawAmountPage").addEventListener("input", () => { const pts = Math.max(0, Number($("withdrawAmountPage").value) || 0); $("withdrawUsdtPreviewPage").textContent = `${(pts * 0.9 / 100).toFixed(2)} USDT after 10% fee`; });
+  document.querySelectorAll(".withdraw-preset-page").forEach(btn => {
+    btn.onclick = () => {
+      const avail = Math.max(0, Number(balance) || 0);
+      const pct = btn.dataset.percent === "max" ? 100 : Number(btn.dataset.percent);
+      const amt = Math.floor((avail * pct / 100) * 100) / 100;
+      $("withdrawAmountPage").value = amt >= 500 ? amt.toFixed(2) : "";
+      $("withdrawUsdtPreviewPage").textContent = amt >= 500 ? `${(amt * 0.9 / 100).toFixed(2)} USDT after 10% fee` : "Minimum 5.00 USDT";
+    };
+  });
+  // Claim buttons
   document.addEventListener("click", async (event) => {
     const btn = event.target.closest("#claimCommissionBtn") || event.target.closest("#claimRewardBtn");
     if (!btn) return;
@@ -1102,15 +1132,13 @@ function init(){
       toast(error.message);
     }
   });
-  // Sound / Vibration / Updates toggles
-  $("sndSwitch").onclick = () => { unlockAudio(); settings.sound = !settings.sound; saveSettings(); renderSettings(); if(settings.sound) playPing(); haptic("light"); };
-  $("vibSwitch").onclick = () => { settings.vibrate = !settings.vibrate; saveSettings(); renderSettings(); if(settings.vibrate) haptic("success"); };
+  $("sndSwitch").onclick = () => { unlockAudio(); settings.sound = !settings.sound; saveSettings(); renderSettings(); if (settings.sound) playPing(); haptic("light"); };
+  $("vibSwitch").onclick = () => { settings.vibrate = !settings.vibrate; saveSettings(); renderSettings(); if (settings.vibrate) haptic("success"); };
   $("updatesSwitch").onclick = () => { settings.updates = !settings.updates; saveSettings(); renderSettings(); haptic("light"); };
-  $("resultModal").addEventListener("click",event => { if(event.target === $("resultModal")) closeResultPopup(); });
+  $("resultModal").addEventListener("click", event => { if (event.target === $("resultModal")) closeResultPopup(); });
   document.querySelectorAll("[data-bet]").forEach(button => { button.onclick = () => openBet(button.dataset.bet); });
   document.querySelectorAll("[data-close]").forEach(button => { button.onclick = () => $(button.dataset.close).classList.remove("open"); });
-  document.querySelectorAll(".modal-backdrop").forEach(modal => { modal.addEventListener("click",event => { if(event.target === modal && modal.id !== "resultModal"){ modal.classList.remove("open"); } }); });
-  // Amount presets - base step = preset value
+  document.querySelectorAll(".modal-backdrop").forEach(modal => { modal.addEventListener("click", event => { if (event.target === modal && modal.id !== "resultModal") { modal.classList.remove("open"); } }); });
   document.querySelectorAll("[data-amount]").forEach(button => {
     button.onclick = () => {
       betStep = Number(button.dataset.amount);
@@ -1119,7 +1147,6 @@ function init(){
       renderBreakdown();
     };
   });
-  // Plus/minus with linear step
   $("minusAmount").onclick = () => {
     const cur = Number($("betAmount").value) || betStep;
     const floor = Math.min(betStep, cur);
@@ -1134,7 +1161,6 @@ function init(){
     pendingBetRequest = null;
     renderBreakdown();
   };
-  // Multiplier buttons
   document.querySelectorAll("[data-mult]").forEach(button => {
     button.onclick = () => {
       betMultiplier = Number(button.dataset.mult) || 1;
@@ -1143,7 +1169,6 @@ function init(){
       renderBreakdown();
     };
   });
-  // Manual input - if exact preset, adjust step
   $("betAmount").addEventListener("input", () => {
     const val = Number($("betAmount").value);
     const presets = [10, 20, 50, 100, 500];
@@ -1151,18 +1176,18 @@ function init(){
     pendingBetRequest = null;
     renderBreakdown();
   });
-  document.addEventListener("click",async event => {
-    const pg = event.target.closest("[data-pager]"); if(pg && !pg.disabled){ const dir = Number(pg.dataset.dir); const id = pg.dataset.pager; if(id === "results"){ resultPage = Math.max(1,resultPage + dir); loadResults(); } else if(id === "trades"){ tradePage = Math.max(1,tradePage + dir); loadTrades(); } else if(id === "wallet"){ walletPage = Math.max(1,walletPage + dir); loadWallet(); } else if(id === "comm"){ commPage = Math.max(1,commPage + dir); loadCommissions(); } return; }
-    const tr = event.target.closest("[data-trade]"); if(tr){ tr.parentElement.classList.toggle("open"); return; }
-    const lb = event.target.closest("[data-lang]"); if(lb){ setLanguage(lb.dataset.lang); return; }
-    const cp = event.target.closest("[data-copy]"); if(cp && referralData){ const value = cp.dataset.copy === "link" ? referralData.referral_link : referralData.referral_code; const ok = value ? await copyText(value) : false; toast(ok ? t("copied") : t("copyFail")); return; }
-    const sh = event.target.closest("[data-share]"); if(sh && referralData && referralData.referral_link){ const url = "https://t.me/share/url?url=" + encodeURIComponent(referralData.referral_link) + "&text=" + encodeURIComponent(t("shareText")); try { if(tg && tg.openTelegramLink) tg.openTelegramLink(url); else window.open(url,"_blank"); } catch(_) { window.open(url,"_blank"); } return; }
-    const ap = event.target.closest("[data-apply-ref]"); if(ap){ applyReferral(); }
+  document.addEventListener("click", async event => {
+    const pg = event.target.closest("[data-pager]"); if (pg && !pg.disabled) { const dir = Number(pg.dataset.dir); const id = pg.dataset.pager; if (id === "results") { resultPage = Math.max(1, resultPage + dir); loadResults(); } else if (id === "trades") { tradePage = Math.max(1, tradePage + dir); loadTrades(); } else if (id === "wallet") { walletPage = Math.max(1, walletPage + dir); loadWallet(); } else if (id === "comm") { commPage = Math.max(1, commPage + dir); loadCommissions(); } return; }
+    const tr = event.target.closest("[data-trade]"); if (tr) { tr.parentElement.classList.toggle("open"); return; }
+    const lb = event.target.closest("[data-lang]"); if (lb) { setLanguage(lb.dataset.lang); return; }
+    const cp = event.target.closest("[data-copy]"); if (cp && referralData) { const value = cp.dataset.copy === "link" ? referralData.referral_link : referralData.referral_code; const ok = value ? await copyText(value) : false; toast(ok ? t("copied") : t("copyFail")); return; }
+    const sh = event.target.closest("[data-share]"); if (sh && referralData && referralData.referral_link) { const url = "https://t.me/share/url?url=" + encodeURIComponent(referralData.referral_link) + "&text=" + encodeURIComponent(t("shareText")); try { if (tg && tg.openTelegramLink) tg.openTelegramLink(url); else window.open(url, "_blank"); } catch (_) { window.open(url, "_blank"); } return; }
+    const ap = event.target.closest("[data-apply-ref]"); if (ap) { applyReferral(); }
   });
-  document.addEventListener("visibilitychange",() => { if(!document.hidden){ syncRounds(); syncUser(); } });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { syncRounds(); syncUser(); } });
   renderResults(); renderTrades(); renderWallet(); renderReferral();
-  authenticate(); if(!tg) syncRounds();
-  setInterval(updateRoundDisplay,1000); setInterval(poll,1000);
+  authenticate(); if (!tg) syncRounds();
+  setInterval(updateRoundDisplay, 1000); setInterval(poll, 1000);
 }
 init();
 })();
