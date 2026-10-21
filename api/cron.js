@@ -6,6 +6,21 @@ const FUTURE_ROUNDS = 5;
 const MAX_SETTLEMENT_ATTEMPTS = 20;
 const RESULTS_CHANNEL = "@crypto_trader_results";
 
+// Round prediction posts are OFF by default: the real result is generated
+// randomly inside the database, so a "prediction" computed from the round code
+// has no connection to the outcome. Set to true only if you still want them.
+const SEND_PREDICTIONS = false;
+
+function resultColour(n) {
+  if (n === 0) return "Red + Violet";
+  if (n === 5) return "Green + Violet";
+  return n % 2 === 0 ? "Red" : "Green";
+}
+
+function resultSize(n) {
+  return n >= 5 ? "Big" : "Small";
+}
+
 async function notifyResults(text) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return;
@@ -229,6 +244,10 @@ module.exports = async function handler(req, res) {
   }
 
   let client;
+  // Telegram messages are collected here and sent only AFTER the database
+  // transaction is committed, so a slow Telegram call can never hold the
+  // round lock or make the cron time out.
+  const pendingMessages = [];
 
   try {
     client = await getPool().connect();
@@ -322,12 +341,12 @@ module.exports = async function handler(req, res) {
         [roundCode, "open", startsAt, bettingClosesAt, endsAt]
       );
 
-      if (inserted.rowCount) {
+      if (inserted.rowCount && SEND_PREDICTIONS) {
         const seed = [...roundCode].reduce((sum, char) => sum + char.charCodeAt(0), 0);
         const predictedNumber = seed % 10;
         const predictedColour = ["Red", "Green", "Violet"][seed % 3];
 
-        await notifyResults(
+        pendingMessages.push(
           `🔮 Prediction (not guaranteed)\n🔢 Round: ${roundCode}\n🎯 Suggested number: ${predictedNumber}\n🎨 Suggested colour: ${predictedColour}\n⚠️ Informational only`
         );
       }
@@ -394,14 +413,23 @@ module.exports = async function handler(req, res) {
 
       if (result.phase === "result_calculated") {
         resultsCalculated++;
-        await notifyResults(
-          `🎲 Round result published\n🔢 Round: ${result.round_code}\n🎯 Result: ${result.result_number ?? "—"}\n🎨 Colour: ${result.result_color ?? "—"}\n📏 Size: ${result.result_size ?? "—"}`
+        pendingMessages.push(
+          `🎲 Round result published\n🔢 Round: ${result.round_code}\n🎯 Result: ${result.result_number ?? "—"}\n🎨 Colour: ${result.result_colour ?? result.result_color ?? "—"}\n📏 Size: ${result.result_size ?? "—"}`
         );
       } else if (result.phase === "payout_released") {
         payoutsReleased++;
       } else if (!result.phase) {
+        // The current settle_expired_round() settles and pays in one step and
+        // returns no "phase". Previously no Telegram result was sent here.
         resultsCalculated++;
         payoutsReleased++;
+
+        const n = Number(result.result_number);
+        if (Number.isInteger(n) && n >= 0 && n <= 9) {
+          pendingMessages.push(
+            `🎲 Round result published\n🔢 Round: ${result.round_code}\n🎯 Result: ${n}\n🎨 Colour: ${resultColour(n)}\n📏 Size: ${resultSize(n)}`
+          );
+        }
       } else {
         throw new Error(`Unexpected settlement phase: ${result.phase}`);
       }
@@ -438,6 +466,11 @@ module.exports = async function handler(req, res) {
 
     await client.query("COMMIT");
 
+    // Send Telegram messages after commit (best effort, never fails the cron).
+    for (const message of pendingMessages.slice(0, 10)) {
+      await notifyResults(message).catch(() => {});
+    }
+
     return sendJson(res, 200, {
       success: true,
       server_time: serverTimeResult.rows[0].server_time,
@@ -447,6 +480,7 @@ module.exports = async function handler(req, res) {
       current_rounds_opened: currentOpened.rowCount,
       rounds_locked: locked.rowCount,
       results_calculated: resultsCalculated,
+      telegram_messages_sent: Math.min(pendingMessages.length, 10),
       payouts_released: payoutsReleased,
       deposits_credited: depositsCredited,
       round_duration_seconds: ROUND_SECONDS,
