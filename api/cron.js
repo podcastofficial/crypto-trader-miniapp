@@ -232,7 +232,7 @@ module.exports = async function handler(req, res) {
     const seed = [...roundCode].reduce((sum, char) => sum + char.charCodeAt(0), 0);
     const predictedNumber = seed % 10;
     const predictedColour = ["Red", "Green", "Violet"][seed % 3];
-    await notifyResults(`🔮 Prediction (not guaranteed)\n🔢 Round: ${roundCode}\n🎯 Suggested number: ${predictedNumber}\n🎨 Suggested colour: ${predictedColour}\n⚠️ Informational estimate only — play responsibly.`);
+    await notifyResults(`🔮 Prediction\n🔢 Round: ${roundCode}\n🎯 Suggested number: ${predictedNumber}\n🎨 Suggested colour: ${predictedColour};
   }
 
       roundsCreated += inserted.rowCount;
@@ -370,7 +370,8 @@ module.exports = async function handler(req, res) {
 
     return sendJson(res, 500, {
       success: false,
-      message: "Cron execution failed"
+      message: "Cron execution failed",
+      detail: String(error && error.message ? error.message : error).slice(0, 300)
     });
   } finally {
     if (client) {
