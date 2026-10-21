@@ -232,7 +232,7 @@ module.exports = async function handler(req, res) {
     const seed = [...roundCode].reduce((sum, char) => sum + char.charCodeAt(0), 0);
     const predictedNumber = seed % 10;
     const predictedColour = ["Red", "Green", "Violet"][seed % 3];
-    await notifyResults(`🔮 Prediction\n🔢 Round: ${roundCode}\n🎯 Suggested number: ${predictedNumber}\n🎨 Suggested colour: ${predictedColour};
+    await notifyResults(`🔮 Prediction (not guaranteed)\n🔢 Round: ${roundCode}\n🎯 Suggested number: ${predictedNumber}\n🎨 Suggested colour: ${predictedColour}\n⚠️ Informational estimate only — play responsibly.`);
   }
 
       roundsCreated += inserted.rowCount;
