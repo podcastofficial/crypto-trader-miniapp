@@ -1359,8 +1359,8 @@ async function reviewWalletTransaction(action, body, session, req) {
   const note = String(body.admin_note || "").trim().slice(0, 500);
   const payoutTxHash = String(body.payout_tx_hash || "").trim().slice(0, 200);
   const reviewNote = payoutTxHash ? `${note}${note ? " | " : ""}Payout TX: ${payoutTxHash}`.slice(0, 500) : note;
-  if (action === "withdrawal_approve" && !/^(0x)?[a-fA-F0-9]{64}$/.test(payoutTxHash)) {
-    throw new Error("Enter a valid 64-character transaction hash (0x prefix is optional). ");
+  if (action === "withdrawal_approve" && !/^0x[a-fA-F0-9]{64}$/.test(payoutTxHash)) {
+  throw new Error("A valid payout transaction hash is required.");
   }
 
   await ensureManagementTables();
@@ -1371,7 +1371,7 @@ async function reviewWalletTransaction(action, body, session, req) {
 
     const result = await client.query(
       `SELECT t.id,t.user_id,t.transaction_type,t.amount,t.status,
-        t.network,t.tx_hash,t.payout_tx_hash,t.destination_address,u.telegram_id,u.username,u.first_name,u.last_name
+        t.network,t.tx_hash,t.payout_tx_hash,u.telegram_id,u.username,u.first_name,u.last_name
        FROM public.transactions t
        JOIN public.users u ON u.id=t.user_id
        WHERE t.id=$1
@@ -1666,31 +1666,6 @@ module.exports = async function handler(req, res) {
       case "user_management":
         result = await userManagement(body, session, req);
         break;
-
-      case "gift_codes": {
-        await ensureManagementTables();
-        const page = Math.max(1, parseInt(body.page || "1", 10) || 1);
-        const pageSize = Math.min(100, Math.max(1, parseInt(body.page_size || "50", 10) || 50));
-        const offset = (page - 1) * pageSize;
-        const countRows = await query(`SELECT COUNT(*)::int AS total FROM public.gift_codes`);
-        const giftCodes = await query(
-          `SELECT id,code,points,max_uses,uses,expires_at,created_by,created_at
-           FROM public.gift_codes ORDER BY id DESC LIMIT $1 OFFSET $2`,
-          [pageSize, offset]
-        );
-        const total = Number(countRows[0]?.total || 0);
-        result = {
-          ok: true,
-          gift_codes: giftCodes,
-          pagination: {
-            page, page_size: pageSize, total,
-            total_pages: Math.max(1, Math.ceil(total / pageSize)),
-            has_next: offset + pageSize < total,
-            has_previous: page > 1
-          }
-        };
-        break;
-      }
 
       case "user_detail": {
         const id = String(body.user_id || "");
