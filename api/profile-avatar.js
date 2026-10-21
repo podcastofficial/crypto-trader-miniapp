@@ -1,31 +1,31 @@
 "use strict";
-
-const { put } = require("@vercel/blob");
 const pool = require("../lib/pgpool");
-
+const { verifyTelegramInitData } = require("../lib/telegram-auth");
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
-  if (req.method !== "POST") return res.status(405).json({ success: false, message: "Method not allowed." });
-  const id = String(req.headers["x-telegram-id"] || req.headers["x-user-id"] || "").trim();
-  let body = req.body;
-  if (typeof body === "string") { try { body = JSON.parse(body); } catch (_) { body = null; } }
-  const file = body?.file;
-  if (!id || !file) return res.status(400).json({ success: false, message: "Missing image." });
-  if (!/^data:image\/(png|jpeg|webp);base64,/.test(file)) return res.status(400).json({ success: false, message: "Use PNG, JPG, or WebP." });
-  const base64 = file.split(",", 2)[1];
-  if (!base64) return res.status(400).json({ success: false, message: "Invalid image data." });
-  if (!base64 || Buffer.byteLength(base64, "base64") > 2 * 1024 * 1024) return res.status(400).json({ success: false, message: "Image must be under 2 MB." });
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  if (req.method !== "POST") { res.setHeader("Allow", "POST"); return res.status(405).json({ success:false, message:"Method not allowed." }); }
+  const user = verifyTelegramInitData(req.body && req.body.initData);
+  if (!user) return res.status(401).json({ success:false, message:"Telegram session invalid or expired. Reopen the Mini App." });
+  const displayName = String(req.body && req.body.displayName || "").trim().slice(0,64);
+  if (!displayName) return res.status(400).json({ success:false, message:"Enter a display name." });
+  const client = await pool.connect();
   try {
-    const mime = file.slice(5, file.indexOf(";"));
-    const blob = await put(`avatars/${id}-${Date.now()}.${mime.split("/")[1]}`, Buffer.from(base64, "base64"), { access: "public", contentType: mime });
-    const client = await pool.connect();
-    try {
-      await client.query("ALTER TABLE public.users ADD COLUMN IF NOT EXISTS avatar_url TEXT");
-      await client.query("UPDATE public.users SET avatar_url = $1 WHERE telegram_id = $2", [blob.url, id]);
-    } finally { client.release(); }
-    return res.status(200).json({ success: true, url: blob.url });
-  } catch (error) {
-    console.error("profile avatar error:", error.stack || error.message);
-    return res.status(500).json({ success: false, message: "Could not upload image: " + (error.message || "storage error") });
-  }
+    await client.query("BEGIN");
+    const found = await client.query("SELECT id FROM public.users WHERE telegram_id=$1 LIMIT 1", [String(user.id)]);
+    if (!found.rowCount) { await client.query("ROLLBACK"); return res.status(404).json({ success:false, message:"User not found. Reopen the Mini App and try again." }); }
+    const userId = found.rows[0].id;
+    await client.query(`CREATE TABLE IF NOT EXISTS public.user_profiles (
+      id BIGSERIAL PRIMARY KEY, user_id BIGINT UNIQUE NOT NULL, username TEXT, first_name TEXT, last_name TEXT,
+      bio TEXT, avatar_url TEXT, wallet_address TEXT, country TEXT, language TEXT, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+    await client.query(`INSERT INTO public.user_profiles(user_id,first_name,updated_at) VALUES($1,$2,NOW())
+      ON CONFLICT(user_id) DO UPDATE SET first_name=EXCLUDED.first_name, updated_at=NOW()`, [userId, displayName]);
+    await client.query("UPDATE public.users SET first_name=$1 WHERE id=$2", [displayName, userId]);
+    await client.query("COMMIT");
+    return res.status(200).json({ success:true, displayName });
+  } catch (e) {
+    await client.query("ROLLBACK").catch(()=>{});
+    console.error("Profile save failed:", e.code || e.message);
+    return res.status(500).json({ success:false, message:"Could not save profile." });
+  } finally { client.release(); }
 };
