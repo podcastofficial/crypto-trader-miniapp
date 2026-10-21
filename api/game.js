@@ -168,7 +168,8 @@ function verifyTelegramInitData(initData) {
       return null;
     }
 
-    if (Math.abs(Date.now() / 1000 - authDate) > 3600) {
+    // Increased to 24 hours to prevent sudden logouts
+    if (Math.abs(Date.now() / 1000 - authDate) > 86400) {
       return null;
     }
 
@@ -380,6 +381,7 @@ async function getReferralData(client, userId) {
     [userId]
   );
 
+  // FIX: Only count pending rewards for ACTIVE users (bet in last 7 days)
   const rewardSummary = await client.query(
     `SELECT
        COUNT(*) FILTER (WHERE status = 'pending')::int
@@ -387,15 +389,17 @@ async function getReferralData(client, userId) {
        COUNT(*) FILTER (WHERE status = 'credited')::int
          AS credited_count,
        COALESCE(
-         SUM(reward_points) FILTER (WHERE status = 'pending'),
+         SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' AND EXISTS (
+           SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days'
+         )),
          0
        )::numeric(20,2) AS pending_points,
        COALESCE(
-         SUM(reward_points) FILTER (WHERE status = 'credited'),
+         SUM(rr.reward_points) FILTER (WHERE rr.status = 'credited'),
          0
        )::numeric(20,2) AS credited_points
-     FROM public.referral_rewards
-     WHERE referrer_user_id = $1`,
+     FROM public.referral_rewards rr
+     WHERE rr.referrer_user_id = $1`,
     [userId]
   );
 
@@ -681,6 +685,7 @@ module.exports = async function handler(req, res) {
       await client.query(`INSERT INTO public.gift_code_redemptions(gift_code_id,user_id) VALUES($1,$2)`, [gift.rows[0].id, user.id]);
       await client.query(`UPDATE public.gift_codes SET uses=uses+1 WHERE id=$1`, [gift.rows[0].id]);
       await client.query(`UPDATE public.wallet_balances SET balance=balance+$1,updated_at=NOW() WHERE user_id=$2`, [gift.rows[0].points, user.id]);
+      await client.query(`INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at) VALUES ($1, 'gift', $2, 'completed', NOW(), NOW())`, [user.id, gift.rows[0].points]);
       await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'gift','Gift code redeemed',$2)`, [user.id, `You received ${gift.rows[0].points} points.`]);
       await client.query("COMMIT"); transactionStarted = false;
       return json(res, 200, { success: true, points: gift.rows[0].points });
@@ -844,12 +849,15 @@ module.exports = async function handler(req, res) {
       const netPoints = Math.floor(amount * (1 - withdrawalFeeRate) * 100) / 100;
       const netAmountUsdt = (netPoints / POINTS_PER_USDT).toFixed(6);
       
+      // FIX: Store the original deducted amount in transactions so admin refunds correctly!
+      const grossAmountUsdt = (amount / POINTS_PER_USDT).toFixed(6);
+      
       const tx = await client.query(
         `INSERT INTO public.transactions
           (user_id, transaction_type, amount, status, network, destination_address, created_at, updated_at)
          VALUES ($1, 'withdrawal', $2, 'pending', 'BSC', $3, NOW(), NOW())
          RETURNING id, amount, status, destination_address, created_at`,
-        [user.id, netAmountUsdt, destination]
+        [user.id, grossAmountUsdt, destination]
       );
       
       await client.query("COMMIT"); transactionStarted = false;
@@ -1004,6 +1012,46 @@ module.exports = async function handler(req, res) {
       return json(res, 200, data);
     }
 
+    // FIX: Added claim_rewards action for Claim Reward button
+    if (action === "claim_rewards") {
+      const claim = await client.query(
+        `WITH claimable AS (
+           SELECT COALESCE(SUM(rr.reward_points), 0) AS amount
+           FROM public.referral_rewards rr
+           JOIN public.users u ON u.id = rr.referred_user_id
+           WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
+           AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
+         ), marked AS (
+           UPDATE public.referral_rewards rr
+           SET status = 'credited', credited_at = NOW()
+           FROM public.users u
+           WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
+           AND u.id = rr.referred_user_id
+           AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
+           RETURNING rr.reward_points
+         )
+         SELECT (SELECT amount FROM claimable)::numeric(20,2) AS amount`,
+        [user.id]
+      );
+      
+      const amount = Number(claim.rows[0]?.amount || 0);
+      if (amount <= 0) {
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 400, { success: false, message: "No active referral rewards available to claim." });
+      }
+      
+      await client.query(
+        `UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`,
+        [amount.toFixed(2), user.id]
+      );
+      
+      // Add transaction record for history
+      await client.query(`INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at) VALUES ($1, 'reward', $2, 'completed', NOW(), NOW())`, [user.id, amount.toFixed(2)]);
+      
+      await client.query("COMMIT"); transactionStarted = false;
+      return json(res, 200, { success: true, claimed_points: amount.toFixed(2) });
+    }
+
     if (action === "claim_commission") {
       const claim = await client.query(
         `WITH claimable AS (
@@ -1024,10 +1072,15 @@ module.exports = async function handler(req, res) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 400, { success: false, message: "No commission is available to claim." });
       }
+      
       await client.query(
         `UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`,
         [amount.toFixed(2), user.id]
       );
+      
+      // FIX: Add transaction record for history
+      await client.query(`INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at) VALUES ($1, 'commission', $2, 'completed', NOW(), NOW())`, [user.id, amount.toFixed(2)]);
+      
       await client.query("COMMIT"); transactionStarted = false;
       return json(res, 200, { success: true, claimed_points: amount.toFixed(2) });
     }
