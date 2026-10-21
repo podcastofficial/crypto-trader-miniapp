@@ -215,12 +215,13 @@ function verifyTelegramInitData(initData) {
 async function getUser(client, telegramUser) {
   await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS first_name TEXT`);
   await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS last_name TEXT`);
+  await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS wallet_address TEXT`);
   const result = await client.query(
     `INSERT INTO public.users (telegram_id, username, first_name, last_name)
        VALUES ($1, $2, $3, $4)
        ON CONFLICT (telegram_id)
        DO UPDATE SET username = EXCLUDED.username, first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name
-       RETURNING id, telegram_id, username, first_name, last_name, referral_code, referred_by, (xmax = 0) AS is_new`,
+       RETURNING id, telegram_id, username, first_name, last_name, wallet_address, referral_code, referred_by, (xmax = 0) AS is_new`,
     [String(telegramUser.id), telegramUser.username || null, telegramUser.first_name || null, telegramUser.last_name || null]
   );
 
@@ -646,6 +647,34 @@ module.exports = async function handler(req, res) {
     await client.query(`ALTER TABLE public.referral_commissions ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ`);
     const action = String(body.action || "");
 
+    if (action === "get_wallet_address") {
+      const result = await client.query(
+        `SELECT wallet_address FROM public.users WHERE id = $1 LIMIT 1`,
+        [user.id]
+      );
+      await client.query("COMMIT");
+      transactionStarted = false;
+      return json(res, 200, {
+        success: true,
+        wallet_address: result.rows[0]?.wallet_address || ""
+      });
+    }
+
+    if (action === "save_wallet_address") {
+      const walletAddress = String(body.wallet_address || "").trim();
+      if (walletAddress.length < 20 || walletAddress.length > 150) {
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 400, { success: false, message: "Enter a valid wallet address." });
+      }
+      await client.query(
+        `UPDATE public.users SET wallet_address = $1 WHERE id = $2`,
+        [walletAddress, user.id]
+      );
+      await client.query("COMMIT");
+      transactionStarted = false;
+      return json(res, 200, { success: true, wallet_address: walletAddress });
+    }
+
     if (action === "balance") {
       const result = await client.query(
         `SELECT balance
@@ -817,7 +846,7 @@ module.exports = async function handler(req, res) {
     if (action === "request_withdrawal") {
       const amountText = String(body.amount || "").trim();
       const amount = Number(amountText);
-      const destination = String(body.destination_address || "").trim();
+      const destination = String(body.destination_address || user.wallet_address || "").trim();
       const withdrawalFeeRate = 0.10;
       
       if (!/^\d{1,18}(\.\d{1,2})?$/.test(amountText) || !Number.isFinite(amount) || amount < MIN_WITHDRAW_POINTS) {
