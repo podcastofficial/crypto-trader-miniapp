@@ -1476,7 +1476,7 @@ newStatus,
     await client.query("COMMIT");
 
     if (action === "withdrawal_approve") {
-      await notifyTelegram(`✅ Withdrawal approved\n👤 Name: ${tx.first_name || "User"}${tx.last_name ? ` ${tx.last_name}` : ""}\n💵 Amount: ${Number(tx.amount).toFixed(2)} USDT\n📣 Manual payout approved`, [process.env.ADMIN_CHAT_ID, RESULTS_CHANNEL]);
+      await notifyTelegram(`✅ Withdrawal approved\n👤 Name: ${tx.first_name || "User"}${tx.last_name ? ` ${tx.last_name}` : ""}\n💵 Amount: ${Number(tx.amount).toFixed(2)} USDT\n🌐 Network: BNB Smart Chain (BEP-20)\n🔗 Transaction: https://bscscan.com/tx/${encodeURIComponent(payoutTxHash)}\n📣 Manual payout approved`, [process.env.ADMIN_CHAT_ID, RESULTS_CHANNEL]);
     } else if (action === "deposit_approve") {
       await notifyTelegram(`✅ Deposit approved\n👤 User ID: ${tx.telegram_id}\n💵 Amount credited: ${Number(tx.amount) * 100} points (${Number(tx.amount).toFixed(2)} USDT)`);
     }
