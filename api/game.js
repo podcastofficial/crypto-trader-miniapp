@@ -10,16 +10,16 @@ const pool = new Pool({
 });
 
 const BET_TYPES = ["Number", "Red", "Green", "Violet", "Big", "Small"];
-const ALLOWED_MULTIPLIERS = [1, 3, 9, 27, 81]; // NEW: Multiplier validation
+const ALLOWED_MULTIPLIERS = [1, 3, 9, 27, 81];
 const POINTS_PER_USDT = 100;
 const MIN_BET_POINTS = 10;
 const MIN_DEPOSIT_POINTS = 100;
 const MIN_WITHDRAW_POINTS = 500;
-const ROUND_LOCK_KEY = 739184205; // same lock key as api/cron.js
+const ROUND_LOCK_KEY = 739184205;
 const RESULTS_CHANNEL = "@crypto_trader_results";
 
 // ============================================================================
-// SAFE ETHERS LOADER (Prevents 500 errors on server crash)
+// SAFE ETHERS LOADER (Prevents 500 errors on server crash if library missing)
 // ============================================================================
 let _ethers = null;
 let _provider = null;
@@ -75,7 +75,7 @@ function pageParams(input = {}) {
 }
 
 // ============================================================================
-// NEW: App Settings Helpers (For Admin Panel & Header Buttons)
+// App Settings Helpers
 // ============================================================================
 async function ensureAppSettings(client) {
   await client.query("SAVEPOINT sp_app_settings");
@@ -137,7 +137,7 @@ function parseSettingValue(raw) {
 // ============================================================================
 
 // ============================================================================
-// NEW: BEP-20 Auto-Deposit Verification (Via Direct RPC Node)
+// BEP-20 Auto-Deposit Verification (Using getTransactionReceipt to avoid limits)
 // ============================================================================
 async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
   const usdtContract = (process.env.USDT_BEP20_TOKEN_ADDRESS || "0x55d398326f99059fF775485246999027B3197955").toLowerCase();
@@ -152,7 +152,7 @@ async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
     const ethers = getEthers();
     const provider = getProvider();
 
-    // 1. Fetch receipt
+    // 1. Fetch receipt directly for this TX hash
     const receipt = await provider.getTransactionReceipt(txHash);
     if (!receipt) {
       return { success: false, reason: "Transaction not found on Blockchain yet. Please wait." };
@@ -164,7 +164,7 @@ async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
     // 2. Fetch transaction details
     const tx = await provider.getTransaction(txHash);
 
-    // 3. Check Transfer logs
+    // 3. Check Transfer logs inside the receipt
     const transferTopic = ethers.id("Transfer(address,address,uint256)");
     const log = receipt.logs.find(l => 
       l.address.toLowerCase() === usdtContract &&
@@ -176,14 +176,18 @@ async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
       return { success: false, reason: "Transaction was not sent to the official deposit address." };
     }
 
-    // 4. Decode amount
+    // 4. Decode amount (BEP-20 USDT has 18 decimals)
     const onChainAmount = Number(ethers.formatUnits(log.data, 18));
 
     if (onChainAmount + 0.01 < expectedAmountUsdt) {
       return { success: false, reason: `Amount mismatch. You sent ${onChainAmount} USDT but entered ${expectedAmountUsdt} USDT.` };
     }
 
-    return { success: true, verifiedAmount: onChainAmount, fromAddress: tx.from };
+    return { 
+      success: true, 
+      verifiedAmount: onChainAmount,
+      fromAddress: tx.from 
+    };
 
   } catch (error) {
     console.error("Blockchain verify error:", error.message);
@@ -194,7 +198,6 @@ async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
 
 // Makes sure the current round and a few future rounds exist,
 // so the game never depends on the cron timing.
-// Safe to run many times: unique round_code + advisory lock.
 async function ensureRounds(client) {
   try {
     await client.query(`CREATE TABLE IF NOT EXISTS public.game_rounds (
@@ -236,7 +239,6 @@ async function ensureRounds(client) {
     );
 
     if (!lock.rows[0].ok) {
-      // Cron is creating rounds right now.
       await client.query("ROLLBACK");
       return;
     }
@@ -314,7 +316,6 @@ function verifyTelegramInitData(initData) {
       return null;
     }
 
-    // Increased to 24 hours to prevent sudden logouts
     if (Math.abs(Date.now() / 1000 - authDate) > 86400) {
       return null;
     }
