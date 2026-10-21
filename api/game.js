@@ -1,5 +1,6 @@
 const { Pool } = require("pg");
 const crypto = require("crypto");
+const { ethers } = require("ethers"); // NEW: Ethers for Direct RPC Verification
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -10,13 +11,16 @@ const pool = new Pool({
 });
 
 const BET_TYPES = ["Number", "Red", "Green", "Violet", "Big", "Small"];
-const ALLOWED_MULTIPLIERS = [1, 3, 9, 27, 81]; // NEW: Multiplier validation
+const ALLOWED_MULTIPLIERS = [1, 3, 9, 27, 81]; // Multiplier validation
 const POINTS_PER_USDT = 100;
 const MIN_BET_POINTS = 10;
 const MIN_DEPOSIT_POINTS = 100;
 const MIN_WITHDRAW_POINTS = 500;
 const ROUND_LOCK_KEY = 739184205; // same lock key as api/cron.js
 const RESULTS_CHANNEL = "@crypto_trader_results";
+
+// NEW: Setup BSC Provider (QuickNode RPC URL from .env)
+const provider = new ethers.JsonRpcProvider(process.env.BSC_RPC_URL || "https://bsc-dataseed.binance.org");
 
 async function notifyTelegram(text, chats = [process.env.ADMIN_CHAT_ID]) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -48,7 +52,7 @@ function pageParams(input = {}) {
 }
 
 // ============================================================================
-// NEW: App Settings Helpers (For Admin Panel & Header Buttons)
+// App Settings Helpers (For Admin Panel & Header Buttons)
 // ============================================================================
 async function ensureAppSettings(client) {
   await client.query("SAVEPOINT sp_app_settings");
@@ -110,79 +114,67 @@ function parseSettingValue(raw) {
 // ============================================================================
 
 // ============================================================================
-// NEW: BEP-20 Auto-Deposit Verification (With Rate Limit Retry)
+// NEW: BEP-20 Auto-Deposit Verification (Via Direct RPC Node)
 // ============================================================================
 async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
-  const apiKey = process.env.BSCSCAN_API_KEY;
-  const usdtContract = process.env.USDT_BEP20_TOKEN_ADDRESS || "0x55d398326f99059fF775485246999027B3197955";
+  const usdtContract = (process.env.USDT_BEP20_TOKEN_ADDRESS || "0x55d398326f99059fF775485246999027B3197955").toLowerCase();
   const depositAddress = String(process.env.USDT_BEP20_DEPOSIT_ADDRESS || "").toLowerCase();
 
-  if (!apiKey || !depositAddress) {
-    console.warn("BscScan API Key or Deposit Address missing. Falling back to manual verification.");
-    return { success: false, reason: "API not configured" };
+  if (!depositAddress) {
+    console.warn("Deposit Address missing in .env");
+    return { success: false, reason: "Server configuration missing" };
   }
 
-  const maxRetries = 3;
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const url = `https://api.bscscan.com/api?module=account&action=tokentx&contractaddress=${usdtContract}&address=${depositAddress}&page=1&offset=10&sort=desc&apikey=${apiKey}`;
-      
-      const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
-      
-      if (response.status === 429) {
-        throw new Error("RATE_LIMIT");
-      }
+  try {
+    // 1. Blockchain se transaction receipt fetch karein
+    const receipt = await provider.getTransactionReceipt(txHash);
 
-      const data = await response.json();
-
-      if (data.message && data.message.toLowerCase().includes("rate limit")) {
-         throw new Error("RATE_LIMIT");
-      }
-
-      if (data.status !== "1" || !data.result) {
-        return { success: false, reason: "Transaction not found on Blockchain yet. Wait for confirmation." };
-      }
-
-      const tx = data.result.find(t => t.hash.toLowerCase() === txHash.toLowerCase());
-
-      if (!tx) {
-        return { success: false, reason: "Transaction hash not found on Blockchain yet." };
-      }
-
-      if (tx.to.toLowerCase() !== depositAddress) {
-        return { success: false, reason: "This transaction was not sent to the official deposit address." };
-      }
-
-      const onChainAmount = Number(tx.value) / Math.pow(10, Number(tx.tokenDecimal));
-      
-      if (onChainAmount + 0.01 < expectedAmountUsdt) {
-        return { success: false, reason: `Amount mismatch. You sent ${onChainAmount} USDT but entered ${expectedAmountUsdt} USDT.` };
-      }
-
-      return { 
-        success: true, 
-        verifiedAmount: onChainAmount,
-        fromAddress: tx.from 
-      };
-
-    } catch (error) {
-      if (error.message === "RATE_LIMIT" && attempt < maxRetries) {
-        const waitTime = attempt * 2000; // 2s, 4s
-        console.warn(`Rate limit hit, retrying in ${waitTime}ms... (Attempt ${attempt}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, waitTime));
-      } else {
-        console.error("Blockchain verify error:", error.message);
-        return { success: false, reason: "Blockchain network error or limit exceeded. Please wait." };
-      }
+    if (!receipt) {
+      return { success: false, reason: "Transaction not found on Blockchain yet. Please wait." };
     }
+
+    if (receipt.status !== 1) {
+      return { success: false, reason: "Transaction failed on the blockchain." };
+    }
+
+    // 2. Transaction details fetch karein
+    const tx = await provider.getTransaction(txHash);
+
+    // 3. Check karein ki kya token transfer hamare address par hua hai?
+    const transferTopic = ethers.id("Transfer(address,address,uint256)");
+    
+    const log = receipt.logs.find(l => 
+      l.address.toLowerCase() === usdtContract &&
+      l.topics[0] === transferTopic &&
+      l.topics[2] && ethers.getAddress("0x" + l.topics[2].slice(26)).toLowerCase() === depositAddress
+    );
+
+    if (!log) {
+      return { success: false, reason: "Transaction was not sent to the official deposit address." };
+    }
+
+    // 4. Transfer amount decode karein (USDT me 18 decimals hote hain BSC par)
+    const onChainAmount = Number(ethers.formatUnits(log.data, 18));
+
+    if (onChainAmount + 0.01 < expectedAmountUsdt) {
+      return { success: false, reason: `Amount mismatch. You sent ${onChainAmount} USDT but entered ${expectedAmountUsdt} USDT.` };
+    }
+
+    return { 
+      success: true, 
+      verifiedAmount: onChainAmount,
+      fromAddress: tx.from 
+    };
+
+  } catch (error) {
+    console.error("Blockchain verify error:", error.message);
+    return { success: false, reason: "Blockchain network error. Submitted for manual review." };
   }
-  return { success: false, reason: "Max retries reached. Please try again later." };
 }
 // ============================================================================
 
 // Makes sure the current round and a few future rounds exist,
 // so the game never depends on the cron timing.
-// Safe to run many times: unique round_code + advisory lock.
 async function ensureRounds(client) {
   try {
     await client.query(`CREATE TABLE IF NOT EXISTS public.game_rounds (
@@ -224,7 +216,6 @@ async function ensureRounds(client) {
     );
 
     if (!lock.rows[0].ok) {
-      // Cron is creating rounds right now.
       await client.query("ROLLBACK");
       return;
     }
@@ -257,7 +248,6 @@ async function ensureRounds(client) {
   }
 }
 
-// Settles rounds whose end time has passed.
 async function settleDueRounds(client) {
   try {
     const due = await client.query(
@@ -302,7 +292,6 @@ function verifyTelegramInitData(initData) {
       return null;
     }
 
-    // Increased to 24 hours to prevent sudden logouts
     if (Math.abs(Date.now() / 1000 - authDate) > 86400) {
       return null;
     }
@@ -391,7 +380,6 @@ async function getUser(client, telegramUser) {
     [user.id]
   );
 
-  // Signup bonus using SAVEPOINT to prevent full transaction abort
   if (user.is_new && !user.signup_bonus_given) {
     const enabledRaw = await getAppSetting(client, "signup_bonus_enabled", "true");
     const amountRaw = await getAppSetting(client, "signup_bonus_amount", "25");
@@ -1107,7 +1095,7 @@ module.exports = async function handler(req, res) {
         return json(res, 409, { success: false, message: "This transaction hash has already been submitted." });
       }
 
-      // 🚀 AUTOMATIC VERIFICATION 🚀
+      // 🚀 AUTOMATIC VERIFICATION VIA RPC 🚀
       const verification = await verifyBEP20Deposit(txHash, amount);
 
       if (verification.success) {
