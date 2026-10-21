@@ -23,9 +23,11 @@ button.busy { opacity:.6; pointer-events:none; }
 header { background:#141415; border-bottom:1px solid #29292c; color:#f5f5f5; padding:15px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .brand { font-size:18px; font-weight:900; letter-spacing:-.3px; }
 .brand span { color:#facc15; }
-.head-btns { display:flex; gap:8px; }
+.head-btns { display:flex; gap:6px; }
 .header-symbol { display:inline-block; color:#facc15; filter:saturate(1.25); }
-.icon-btn { border:1px solid #3f3f46; background:linear-gradient(145deg,#292929,#202023); box-shadow:0 4px 12px #0005; color:#facc15; border-radius:11px; padding:10px; }
+.icon-btn { border:1px solid #3f3f46; background:linear-gradient(145deg,#292929,#202023); box-shadow:0 4px 12px #0005; color:#facc15; border-radius:11px; padding:8px; }
+.head-btns .icon-btn svg { width:18px; height:18px; }
+.head-btns .icon-btn { font-size:16px; line-height:1; min-width:34px; min-height:34px; display:grid; place-items:center; }
 .page { display:none; color:#f5f5f5; }
 .page.active { display:block; }
 .section { padding:0 14px; margin-bottom:15px; }
@@ -117,9 +119,8 @@ label { font-weight:800; font-size:12px; }
 .trade-period { font-size:12px; font-variant-numeric:tabular-nums; }
 .trade-status { font-weight:800; font-size:13px; }
 .trade-amt { font-weight:800; font-size:13px; text-align:right; font-variant-numeric:tabular-nums; }
-.notification-btn { position:relative; width:42px; height:42px; display:grid; place-items:center; }
-.notification-btn svg { width:21px; height:21px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-#notificationCount { position:absolute; top:-3px; right:-3px; min-width:16px; height:16px; border-radius:999px; background:#ef4444; color:#fff; font-size:10px; line-height:16px; font-weight:800; }
+.notification-btn { position:relative; }
+#notificationCount { position:absolute; top:-3px; right:-3px; min-width:16px; height:16px; border-radius:999px; background:#ef4444; color:#fff; font-size:10px; line-height:16px; font-weight:800; text-align:center; }
 .notification-item { padding:11px 0; border-bottom:1px solid #2b2b31; }
 .notification-item strong, .notification-item small { display:block; }
 .notification-item small { color:#a1a1aa; margin-top:4px; }
@@ -165,8 +166,12 @@ label { font-weight:800; font-size:12px; }
 .modal { background:#171719; color:#f5f5f5; border:1px solid #38383d; box-shadow:0 20px 70px #000b; width:100%; max-width:430px; max-height:90%; overflow:auto; padding:19px; border-radius:17px; }
 .modal-title { font-size:18px; font-weight:900; }
 .close-btn { padding:9px 12px; border-radius:9px; background:#29292c; color:#f5f5f5; }
-.amount-presets { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; margin:12px 0; }
-.amount-presets button { background:#302911; color:#facc15; border:1px solid #51421a; padding:12px 3px; border-radius:9px; font-weight:900; }
+.amount-presets { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; margin:12px 0; }
+.amount-presets button { background:#302911; color:#facc15; border:1px solid #51421a; padding:11px 2px; border-radius:9px; font-weight:900; font-size:13px; }
+.multiplier-row { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; margin:4px 0 12px; }
+.multiplier-btn { padding:11px 2px; border-radius:9px; background:#29292c; color:#facc15; border:1px solid #3a3a40; font-weight:900; font-size:13px; cursor:pointer; }
+.multiplier-btn.active { background:#facc15; color:#171717; border-color:#facc15; }
+.multiplier-label { margin-bottom:6px; }
 .checkout-modal { background:#f8f8fb; color:#25262a; max-width:640px; max-height:calc(100dvh - 26px); overflow:auto; }
 .checkout-topbar { display:flex; align-items:center; justify-content:space-between; padding-bottom:18px; border-bottom:1px solid #d9d9de; font-size:20px; }
 .checkout-back { border:0; background:transparent; font-size:34px; color:#25262a; line-height:1; cursor:pointer; }
@@ -256,7 +261,35 @@ label { font-weight:800; font-size:12px; }
 .result-modal-badges { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin:14px 0; }
 .result-modal-badges span { padding:8px 13px; border-radius:999px; background:#302911; color:#facc15; font-size:11px; font-weight:900; }
 .result-modal .primary-btn { margin-top:8px; }
-@media(max-width:380px) { .nav-btn { font-size:10px; } .section { padding:0 10px; } .balance-card { margin:10px; } .card { padding:13px; } .ring { width:110px; height:110px; } .option-grid, .number-grid { gap:7px; } .option-btn { font-size:12px; } .number-btn { min-height:45px; } }
+/* PROFILE MENU */
+.profile-menu-list { display:flex; flex-direction:column; gap:0; }
+.profile-menu-item { display:flex; align-items:center; gap:12px; padding:13px 6px; background:transparent; border-bottom:1px solid #222225; color:#f5f5f5; text-align:left; width:100%; cursor:pointer; }
+.profile-menu-item:last-child { border-bottom:0; }
+.profile-menu-item:active { background:#1d1d1f; }
+.profile-menu-item .pm-icon { font-size:20px; min-width:28px; text-align:center; }
+.profile-menu-item .pm-text { flex:1; display:flex; flex-direction:column; gap:2px; }
+.profile-menu-item .pm-text strong { font-size:14px; font-weight:800; color:#f5f5f5; }
+.profile-menu-item .pm-text small { font-size:11px; color:#a1a1aa; font-weight:500; }
+.profile-menu-item .chev { color:#6b6b72; font-size:20px; }
+.profile-menu-item.danger .pm-text strong { color:#fca5a5; }
+@media(max-width:380px) {
+  .nav-btn { font-size:10px; }
+  .section { padding:0 10px; }
+  .balance-card { margin:10px; }
+  .card { padding:13px; }
+  .ring { width:110px; height:110px; }
+  .option-grid, .number-grid { gap:7px; }
+  .option-btn { font-size:12px; }
+  .number-btn { min-height:45px; }
+  .head-btns { gap:4px; }
+  .head-btns .icon-btn { padding:6px; min-width:30px; min-height:30px; }
+  .head-btns .icon-btn svg { width:15px; height:15px; }
+  .brand { font-size:15px; }
+  .amount-presets { grid-template-columns:repeat(5,minmax(0,1fr)); gap:4px; }
+  .amount-presets button { padding:9px 1px; font-size:11px; }
+  .multiplier-row { gap:4px; }
+  .multiplier-btn { padding:9px 1px; font-size:11px; }
+}
 </style>
 </head>
 <body>
@@ -268,6 +301,9 @@ label { font-weight:800; font-size:12px; }
       <div class="small muted" data-i18n="brandSub">Prediction Dashboard · UTC</div>
     </div>
     <div class="head-btns">
+      <button class="icon-btn" id="headerSoundBtn" type="button" aria-label="Toggle sound" title="Sound"><span id="headerSoundIcon">🔊</span></button>
+      <button class="icon-btn" id="headerChannelBtn" type="button" aria-label="Channel" title="Channel" style="display:none">📺</button>
+      <button class="icon-btn" id="headerSupportBtn" type="button" aria-label="Support" title="Support" style="display:none">🎧</button>
       <button class="icon-btn notification-btn" id="notificationBell" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span id="notificationCount" hidden>0</span></button>
       <button class="icon-btn" id="headerProfile" type="button" aria-label="Profile"><span class="header-symbol">👤</span></button>
     </div>
@@ -398,34 +434,78 @@ label { font-weight:800; font-size:12px; }
     </div>
   </section>
 
-  <!-- PROFILE -->
+  <!-- PROFILE (MENU) -->
   <section class="page" id="page-profile">
     <div class="section">
       <div class="section-title">👤 <span data-i18n="profile">Profile</span></div>
+      
+      <!-- Profile header card -->
       <div class="card">
         <div class="muted small" data-i18n="tgAccount">Telegram account</div>
         <strong id="profileName">…</strong>
         <p class="muted small" id="profileStatus">…</p>
-        <div class="profile-stats"><div><span>Joined</span><strong id="profileJoined">—</strong></div><div><span>Available points</span><strong id="profileAvailablePoints">—</strong></div></div>
-        <button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth">Retry Authentication</button>
-        <div class="card" style="margin-top:14px"><div class="section-title">Gift code</div><div class="copybox"><input id="giftCodeInput" placeholder="Enter gift code"><button class="sec-btn" id="redeemGiftBtn" type="button">Redeem</button></div></div>
+        <div class="profile-stats">
+          <div><span>Joined</span><strong id="profileJoined">—</strong></div>
+          <div><span>Available points</span><strong id="profileAvailablePoints">—</strong></div>
+        </div>
         <div class="actions" style="margin-top:12px">
           <button class="action-btn" id="editProfileBtn" type="button" data-i18n="editProfile">Edit Profile</button>
           <button class="action-btn alt" id="walletAddressBtn" type="button" data-i18n="manageWallet">Add / Edit Wallet</button>
         </div>
+        <button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth" style="margin-top:10px; display:none">Retry Authentication</button>
       </div>
+
+      <!-- Profile menu -->
       <div class="card">
-        <div class="section-title">⚙️ <span data-i18n="settings">Settings</span></div>
-        <div class="setting-row"><span>🔊 <span data-i18n="sound">Sound</span></span><button class="switch on" id="sndSwitch" type="button" role="switch" aria-checked="true"><i></i></button></div>
-        <div class="setting-row"><span>📳 <span data-i18n="vibration">Vibration</span></span><button class="switch on" id="vibSwitch" type="button" role="switch" aria-checked="true"><i></i></button></div>
-      </div>
-      <div class="card">
-        <div class="section-title" data-i18n="about">About</div>
-        <p data-i18n="aboutText">Server-controlled rounds and live points wallet.</p>
-        <div class="notice" data-i18n="gameNotice">Server-controlled game. Bets use your available points.</div>
+        <div class="profile-menu-list">
+          <button class="profile-menu-item" data-profile-action="wallet" type="button">
+            <span class="pm-icon">💰</span>
+            <span class="pm-text"><strong>Wallet</strong><small>Deposit, Withdraw, History</small></span>
+            <span class="chev">›</span>
+          </button>
+          <button class="profile-menu-item" data-profile-action="gift" type="button">
+            <span class="pm-icon">🎁</span>
+            <span class="pm-text"><strong>Gift Code</strong><small>Redeem and History</small></span>
+            <span class="chev">›</span>
+          </button>
+          <button class="profile-menu-item" data-profile-action="tx" type="button">
+            <span class="pm-icon">📋</span>
+            <span class="pm-text"><strong>Transaction History</strong><small>All Deposit, Withdraw, Game</small></span>
+            <span class="chev">›</span>
+          </button>
+          <button class="profile-menu-item" data-profile-action="referral" type="button">
+            <span class="pm-icon">👥</span>
+            <span class="pm-text"><strong>My Referral</strong><small>Invite &amp; Earn Commission</small></span>
+            <span class="chev">›</span>
+          </button>
+          <button class="profile-menu-item" data-profile-action="lang" type="button">
+            <span class="pm-icon">🌐</span>
+            <span class="pm-text"><strong>Language</strong><small>English, Indonesian, Russian, Chinese, Hindi, Urdu</small></span>
+            <span class="chev">›</span>
+          </button>
+          <button class="profile-menu-item" data-profile-action="notif" type="button">
+            <span class="pm-icon">🔔</span>
+            <span class="pm-text"><strong>Notification</strong><small>Sound, Vibration, Updates</small></span>
+            <span class="chev">›</span>
+          </button>
+          <button class="profile-menu-item" data-profile-action="settings" type="button">
+            <span class="pm-icon">⚙️</span>
+            <span class="pm-text"><strong>Settings</strong><small>App preferences</small></span>
+            <span class="chev">›</span>
+          </button>
+          <button class="profile-menu-item" data-profile-action="help" type="button">
+            <span class="pm-icon">🆘</span>
+            <span class="pm-text"><strong>Help &amp; Support</strong><small>Get help</small></span>
+            <span class="chev">›</span>
+          </button>
+          <button class="profile-menu-item danger" data-profile-action="logout" type="button">
+            <span class="pm-icon">🚪</span>
+            <span class="pm-text"><strong>Logout</strong><small>Sign out from app</small></span>
+            <span class="chev">›</span>
+          </button>
+        </div>
       </div>
     </div>
-    <div class="card faq-card"><div class="section-title">Game FAQ</div><details><summary>How do I play?</summary><p>Pick a number, colour, or Big/Small option before betting closes, then confirm your points stake.</p></details><details><summary>When do I win?</summary><p>Winning bets settle automatically after the server publishes the result.</p></details><details><summary>How are payouts calculated?</summary><p>100 points on Red/Green can return 200 points, a number can return 900 points, and Violet can return 450 points if the result matches.</p></details><details><summary>Can I cancel a bet?</summary><p>Bets cannot be cancelled after confirmation.</p></details></div>
   </section>
 
   <!-- NAVIGATION -->
@@ -441,9 +521,11 @@ label { font-weight:800; font-size:12px; }
 <div class="modal-backdrop" id="betModal">
   <div class="modal">
     <div class="row"><div class="modal-title" id="betModalTitle">…</div><button class="close-btn" data-close="betModal" type="button">✕</button></div>
-    <p class="muted small" id="betModalPeriod"></p>  <label for="betAmount" data-i18n="betAmount">Bet Amount (Points)</label>
+    <p class="muted small" id="betModalPeriod"></p>
+    <label for="betAmount" data-i18n="betAmount">Bet Amount (Points)</label>
     <div class="amount-presets">
       <button data-amount="10" type="button">10</button>
+      <button data-amount="20" type="button">20</button>
       <button data-amount="50" type="button">50</button>
       <button data-amount="100" type="button">100</button>
       <button data-amount="500" type="button">500</button>
@@ -453,19 +535,84 @@ label { font-weight:800; font-size:12px; }
       <input id="betAmount" type="number" min="10" step="0.01" value="100" inputmode="decimal">
       <button id="plusAmount" type="button">+</button>
     </div>
+    <div class="multiplier-label muted small">Multiplier</div>
+    <div class="multiplier-row">
+      <button class="multiplier-btn active" data-mult="1" type="button">1×</button>
+      <button class="multiplier-btn" data-mult="3" type="button">3×</button>
+      <button class="multiplier-btn" data-mult="9" type="button">9×</button>
+      <button class="multiplier-btn" data-mult="27" type="button">27×</button>
+      <button class="multiplier-btn" data-mult="81" type="button">81×</button>
+    </div>
     <div class="breakdown" id="betBreakdown"></div>
     <div class="notice" data-i18n="betNote">A bet deducts points from your available balance.</div>
     <button class="primary-btn" id="confirmBet" type="button" style="margin-top:14px" data-i18n="placeBet">Place Bet</button>
   </div>
 </div>
 
+<!-- GIFT CODE MODAL -->
+<div class="modal-backdrop" id="giftModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title">🎁 Gift Code</div><button class="close-btn" data-close="giftModal" type="button">✕</button></div>
+    <label for="giftCodeInput">Enter gift code</label>
+    <div class="copybox" style="margin-top:6px">
+      <input id="giftCodeInput" placeholder="Enter gift code">
+      <button class="sec-btn" id="redeemGiftBtn" type="button">Redeem</button>
+    </div>
+    <div class="notice">Redeem a valid gift code to add points to your wallet. Each code can typically be used once per user.</div>
+    <div class="section-title" style="margin-top:14px">Gift History</div>
+    <div id="giftHistoryList"><div class="empty">Loading…</div></div>
+  </div>
+</div>
+
+<!-- NOTIFICATION SETTINGS MODAL -->
+<div class="modal-backdrop" id="notifSettingsModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title">🔔 Notification Settings</div><button class="close-btn" data-close="notifSettingsModal" type="button">✕</button></div>
+    <div class="setting-row"><span>🔊 <span data-i18n="sound">Sound</span></span><button class="switch on" id="sndSwitch" type="button" role="switch" aria-checked="true"><i></i></button></div>
+    <div class="setting-row"><span>📳 <span data-i18n="vibration">Vibration</span></span><button class="switch on" id="vibSwitch" type="button" role="switch" aria-checked="true"><i></i></button></div>
+    <div class="setting-row"><span>📨 Updates</span><button class="switch on" id="updatesSwitch" type="button" role="switch" aria-checked="true"><i></i></button></div>
+    <p class="muted small" style="margin-top:12px">Toggle sound, vibration, and update notifications. Changes are saved automatically.</p>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-backdrop" id="settingsModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title">⚙️ App Settings</div><button class="close-btn" data-close="settingsModal" type="button">✕</button></div>
+    <div class="setting-row"><span>🌐 <span data-i18n="language">Language</span></span><button class="sec-btn" id="settingsLangBtn" type="button">Change</button></div>
+    <div class="setting-row"><span>🔔 Notifications</span><button class="sec-btn" id="settingsNotifBtn" type="button">Open</button></div>
+    <div class="setting-row"><span>🔄 Reset Preferences</span><button class="sec-btn" id="settingsResetBtn" type="button">Reset</button></div>
+    <div class="notice" style="margin-top:14px">
+      <strong>Crypto Trader Pro</strong><br>
+      <small class="muted">Server-controlled prediction game. Play responsibly.</small>
+    </div>
+  </div>
+</div>
+
+<!-- HELP & SUPPORT MODAL -->
+<div class="modal-backdrop" id="helpModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title">🆘 Help &amp; Support</div><button class="close-btn" data-close="helpModal" type="button">✕</button></div>
+    <div class="setting-row"><span>📺 Official Channel</span><button class="sec-btn" id="helpChannelBtn" type="button">Open</button></div>
+    <div class="setting-row"><span>🎧 Support</span><button class="sec-btn" id="helpSupportBtn" type="button">Contact</button></div>
+    <div class="section-title" style="margin-top:16px">FAQ</div>
+    <div class="faq-card">
+      <details><summary>How do I play?</summary><p>Pick a number, colour, or Big/Small option before betting closes, then confirm your points stake.</p></details>
+      <details><summary>When do I win?</summary><p>Winning bets settle automatically after the server publishes the result.</p></details>
+      <details><summary>How are payouts calculated?</summary><p>100 points on Red/Green can return 200 points, a number can return 900 points, and Violet can return 450 points if the result matches.</p></details>
+      <details><summary>Can I cancel a bet?</summary><p>Bets cannot be cancelled after confirmation.</p></details>
+      <details><summary>Minimum withdrawal?</summary><p>500 points (5 USDT). A 10% fee applies.</p></details>
+    </div>
+  </div>
+</div>
+
+<!-- GAME RULES MODAL -->
 <div class="modal-backdrop" id="gameRulesModal" role="dialog" aria-modal="true" aria-labelledby="gameRulesTitle"><div class="modal rules-modal"><div class="row"><div class="modal-title" id="gameRulesTitle">Game Rules & Payouts</div><button class="close-btn" data-close="gameRulesModal" type="button" aria-label="Close">✕</button></div><p>1. Select a number, colour, or Big/Small before betting closes.<br>2. Enter your stake and confirm the bet.<br>3. The server publishes the round result after the timer ends.<br>4. Winning bets are credited automatically; predictions are not guaranteed.</p><div class="payout-example"><strong>100 points examples</strong><br>🔴/🟢 Red or Green: 100 × 2 = <b>200 points</b><br>🔢 Number 0–9: 100 × 9 = <b>900 points</b><br>🟣 Violet: 100 × 4.5 = <b>450 points</b><br>📊 Big/Small: 100 × 2 = <b>200 points</b></div><p class="muted small">Potential payout is shown before confirmation. A prediction is only an informational estimate, never a guaranteed result.</p></div></div>
 
 <!-- PROFILE EDIT MODAL -->
 <div class="modal-backdrop" id="profileModal">
   <div class="modal">
     <div class="row"><div class="modal-title" data-i18n="editProfile">Edit Profile</div><button class="close-btn" data-close="profileModal" type="button">✕</button></div>
-    <!-- FIX: Removed Image Upload and added default Character Icon -->
     <div style="text-align:center; margin-bottom: 15px;">
         <div style="width: 80px; height: 80px; border-radius: 50%; background: #29292c; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 40px; border: 2px solid #facc15;">
             👨‍💻
@@ -584,18 +731,28 @@ document.documentElement.lang = lang; document.documentElement.dir = initialLang
 function t(key,vars){ const d = dict(lang); let s = d && d[key]; if (s == null || s === key) s = I18N.en[key] || key; if(vars){ for(const k in vars){ s = s.split("{" + k + "}").join(String(vars[k])); } } return s; }
 function tk(prefix,value){ const k = prefix + value; return I18N.en[k] !== undefined ? t(k) : String(value ?? ""); }
 function applyStatic(){ const meta = LANGS.find(l => l.code === lang); document.documentElement.lang = lang; document.documentElement.dir = (meta && meta.dir) || "ltr"; document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); }); document.querySelectorAll("[data-i18n-ph]").forEach(el => { el.placeholder = t(el.dataset.i18nPh); }); }
-const settings = {sound:true,vibrate:true};
-function loadSettings(){ try { const raw = localStorage.getItem("ctp_settings"); if(raw){ const o = JSON.parse(raw); settings.sound = o.sound !== false; settings.vibrate = o.vibrate !== false; } } catch(_) {} }
+const settings = {sound:true,vibrate:true,updates:true};
+function loadSettings(){ try { const raw = localStorage.getItem("ctp_settings"); if(raw){ const o = JSON.parse(raw); settings.sound = o.sound !== false; settings.vibrate = o.vibrate !== false; settings.updates = o.updates !== false; } } catch(_) {} }
 function saveSettings(){ try { localStorage.setItem("ctp_settings",JSON.stringify(settings)); } catch(_) {} }
-function renderSettings(){ [["sndSwitch","sound"],["vibSwitch","vibrate"]].forEach(([id,key]) => { const el = $(id); el.classList.toggle("on",settings[key]); el.setAttribute("aria-checked",settings[key] ? "true" : "false"); }); }
+function renderHeaderSound(){ const icon = $("headerSoundIcon"); if (icon) icon.textContent = settings.sound ? "🔊" : "🔇"; }
+function renderSettings(){
+  [["sndSwitch","sound"],["vibSwitch","vibrate"],["updatesSwitch","updates"]].forEach(([id,key]) => {
+    const el = $(id); if (!el) return;
+    el.classList.toggle("on", settings[key]);
+    el.setAttribute("aria-checked", settings[key] ? "true" : "false");
+  });
+  renderHeaderSound();
+}
 function haptic(kind){
   if(!settings.vibrate) return;
   try { if(tg && tg.HapticFeedback){ if(kind === "success" || kind === "warning" || kind === "error"){ tg.HapticFeedback.notificationOccurred(kind); } else { tg.HapticFeedback.impactOccurred(kind === "heavy" ? "heavy" : "light"); } return; } } catch(_) {}
   try { if(navigator.vibrate) { if (kind === "success") navigator.vibrate([30, 40, 30]); else if (kind === "heavy") navigator.vibrate(80); else navigator.vibrate(50); } } catch(_) {}
 }
-document.addEventListener("click", event => { const target = event.target.closest("button, a, [role=button], [data-page]"); if(!target || target.disabled || target.closest("#sndSwitch, #vibSwitch")) return; haptic("light"); if(settings.sound) playTickSound(); }, { passive: true });
+document.addEventListener("click", event => { const target = event.target.closest("button, a, [role=button], [data-page]"); if(!target || target.disabled || target.closest("#sndSwitch, #vibSwitch, #updatesSwitch")) return; haptic("light"); if(settings.sound) playTickSound(); }, { passive: true });
 let initData = "", authed = false, authBlock = null, user = null, balance = null, currentRound = null, latestRounds = [];
 let resultPage = 1, resultData = {rounds:[],total:0}, tradePage = 1, tradeData = {bets:[],total:0}, walletPage = 1, walletData = {items:[],total:0}, referralData = null, commPage = 1, commData = {items:[],total:0}, activePage = "home", currentBet = null, pendingBetRequest = null, toastTimer = null, bannerTimer = null, serverTimeOffset = 0, roundsLoaded = false, roundsFailed = false, roundsBusy = false, userBusy = false, roundsOk = false, userOk = false, lastRoundsSync = 0, lastUserSync = 0, lastRingFrac = 1, activeTxFilter = "all";
+let betStep = 100, betMultiplier = 1;
+let appConfig = { sound_button_enabled:true, channel_button_enabled:false, channel_url:"", support_button_enabled:false, support_url:"", support_type:"whatsapp" };
 let firstResultShown = false; const seenResults = new Set(), queuedResults = new Set(), playedRounds = new Set(); let resultPopupQueue = [], resultPopupOpen = false;
 let audioContext = null, audioUnlocked = false, lastTickSecond = -1, previousBettingOpen = null, lastDisplayedRoundCode = "";
 let statusKey = "stConnecting", notice = {key:"nConnecting",vars:null}, profName = {k:"checkingTg"}, profStatus = {k:"authenticating"};
@@ -680,14 +837,103 @@ function isBettingOpen(round){ if(!round || round.status !== "open") return fals
 async function syncRounds(){ if(roundsBusy) return roundsOk; roundsBusy = true; try { const d = await getRounds(1); const serverMs = new Date(d.server_time).getTime(); if(Number.isFinite(serverMs)) serverTimeOffset = serverMs - d._mid; currentRound = d.current_round || null; latestRounds = d.rounds || []; roundsLoaded = true; roundsFailed = false; roundsOk = true; if(resultPage === 1){ resultData = {rounds:latestRounds,total:Number(d.rounds_page && d.rounds_page.total || 0)}; renderResults(); } detectResults(); setNotice("nConnected"); } catch(error) { roundsFailed = true; roundsOk = false; setNotice("nUnavailable",{msg:error.message}); } finally { lastRoundsSync = Date.now(); roundsBusy = false; updateRoundDisplay(); } return roundsOk; }
 async function syncUser(){ if(!authed) return false; if(userBusy) return userOk; userBusy = true; try { const [balData,betData] = await Promise.all([ api("balance"), api("my_bets",{page:tradePage,page_size:PAGE}) ]); updateBalance(balData.balance); tradeData = {bets:betData.bets || [],total:Number(betData.pagination && betData.pagination.total || 0)}; renderTrades(); if(activePage === "wallet") await loadWallet(true); userOk = true; } catch(error) { userOk = false; } finally { lastUserSync = Date.now(); userBusy = false; } return userOk; }
 function setRing(frac,locked){ const el = $("ringFg"); el.style.transition = frac > lastRingFrac + 0.01 ? "none" : ""; el.style.strokeDashoffset = String(RING_LENGTH * (1 - frac)); el.classList.toggle("locked",locked); lastRingFrac = frac; }
-function updateRoundDisplay(){ const server = getActiveRound(); let info = null; if(server){ info = { code:server.round_code, endsMs:new Date(server.ends_at).getTime(), open:isBettingOpen(server), virtual:false }; } else if(roundsLoaded){ const s = slotInfo(nowMs()); info = {code:s.code,endsMs:s.endsMs,open:false,virtual:true}; } if(!info){ $("periodId").textContent = t("loadingRound"); $("timer").textContent = "--:--"; setRing(0,true); setStatus(authBlock || (roundsFailed ? "stError" : "stConnecting")); updateBetButtons(false); previousBettingOpen = false; lastTickSecond = -1; return; } const left = Math.max(0,Math.ceil((info.endsMs - nowMs()) / 1000)); $("periodId").textContent = fmtPeriod(info.code); $("timer").textContent = String(Math.floor(left / 60)).padStart(2,"0") + ":" + String(left % 60).padStart(2,"0"); setRing(Math.min(1,left / ROUND_SECONDS),!info.open); setStatus(authBlock || (info.virtual ? "stSyncing" : info.open ? "stOpen" : "stLocked")); updateBetButtons(info.open && authed); if(previousBettingOpen === true && !info.open){ playLockSound(); haptic("light"); } previousBettingOpen = info.open; if(left <= 30 && left > 0 && left !== lastTickSecond){ playTickSound(); lastTickSecond = left; } else if(left > 30 || left === 0){ lastTickSecond = -1; } if(lastDisplayedRoundCode !== info.code){ lastDisplayedRoundCode = info.code; lastTickSecond = -1; previousBettingOpen = info.open; } }
+function updateRoundDisplay(){ const server = getActiveRound(); let info = null; if(server){ info = { code:server.round_code, endsMs:new Date(server.ends_at).getTime(), open:isBettingOpen(server), virtual:false }; } else if(roundsLoaded){ const s = slotInfo(nowMs()); info = {code:s.code,endsMs:s.endsMs,open:false,virtual:true}; } if(!info){ $("periodId").textContent = t("loadingRound"); $("timer").textContent = "--:--"; setRing(0,true); setStatus(authBlock || (roundsFailed ? "stError" : "stConnecting")); updateBetButtons(false); previousBettingOpen = false; lastTickSecond = -1; return; } const left = Math.max(0,Math.ceil((info.endsMs - nowMs()) / 1000)); $("periodId").textContent = fmtPeriod(info.code); $("timer").textContent = String(Math.floor(left / 60)).padStart(2,"0") + ":" + String(left % 60).padStart(2,"0"); setRing(Math.min(1,left / ROUND_SECONDS),!info.open); setStatus(authBlock || (info.virtual ? "stSyncing" : info.open ? "stOpen" : "stLocked")); updateBetButtons(info.open && authed); if(previousBettingOpen === true && !info.open){ playLockSound(); haptic("light"); } previousBettingOpen = info.open; if(left <= 10 && left > 0 && left !== lastTickSecond){ playTickSound(); lastTickSecond = left; } else if(left > 10 || left === 0){ lastTickSecond = -1; } if(lastDisplayedRoundCode !== info.code){ lastDisplayedRoundCode = info.code; lastTickSecond = -1; previousBettingOpen = info.open; } }
 function updateBetButtons(enabled){ document.querySelectorAll("[data-bet],.number-btn").forEach(button => { button.disabled = !enabled; }); }
 function poll(){ if(document.hidden) return; const now = Date.now(); if(!roundsBusy){ const r = currentRound; const ended = r && nowMs() >= new Date(r.ends_at).getTime(); const slot = slotInfo(nowMs()); const prevCode = slotInfo(slot.startMs - 1).code; const prevMissing = roundsLoaded && nowMs() - slot.startMs < 30000 && !latestRounds.some(x => x.round_code === prevCode && revealed(x)); const due = now - lastRoundsSync >= ROUND_POLL || ((ended || prevMissing) && now - lastRoundsSync >= 1000); if(due) syncRounds(); } if(authed && !userBusy && now - lastUserSync >= USER_POLL){ syncUser(); } }
 async function manualRefresh(button){ if(button) button.classList.add("busy"); try { if(!authed){ await authenticate(); } else { const okRounds = await syncRounds(); const okUser = await syncUser(); if(resultPage !== 1) await loadResults(); if(activePage === "wallet") await loadWallet(true); if(activePage === "referral") await loadReferral(true); toast(okRounds && okUser ? t("refreshed") : t("refreshFailed")); } } catch(error) { toast(error.message || t("refreshFailed")); } finally { if(button) button.classList.remove("busy"); } }
-async function authenticate(){ try { if(!tg){ authed = false; authBlock = "stTelegram"; profName = {k:"notTg"}; profStatus = {k:"openInTg"}; renderProfile(); renderTrades(); syncRounds(); return; } tg.ready(); tg.expand(); initData = tg.initData || ""; if(!initData){ authed = false; authBlock = "stAuth"; profName = {k:"tgMissing"}; profStatus = {k:"openOfficial"}; renderProfile(); renderTrades(); syncRounds(); return; } const response = await fetch("/api/auth",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({initData}) }); const data = await parseResponse(response); authed = true; authBlock = null; user = data.user; if (typeof loadNotifications === "function") await loadNotifications().catch(() => {}); profName = user.username ? {raw:"@" + user.username} : {k:"tgUser",v:{id:user.telegram_id}}; profStatus = {k:"verified"}; renderProfile(); try { await syncRounds(); await syncUser(); await applyReferralFromUrl(); } catch (error) { console.warn("[v0] post-auth sync failed", error.message); authBlock = "stConnecting"; renderProfile(); toast("Account authenticated; syncing game data…"); } } catch(error) { authed = false; authBlock = "stAuth"; profStatus = {raw:error.message}; renderProfile(); toast(error.message); } }
-function renderBreakdown(){ const text = $("betAmount").value.trim(); const ok = /^\d{1,18}(\.\d{1,2})?$/.test(text); const stakeC = ok ? cents(text) : 0; const feeC = Math.floor((stakeC * FEE_PERCENT + 50) / 100); const actualC = stakeC - feeC; $("betBreakdown").innerHTML = `<div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(stakeC / 100))}</span></div><div class="kv"><span>${esc(t("bkFee",{pct:FEE_PERCENT}))}</span><span>−${esc(money(feeC / 100))}</span></div><div class="kv strong"><span>${esc(t("dActual"))}</span><span>${esc(money(actualC / 100))}</span></div>`; }
-function openBet(type,selection = null){ if(!authed){ toast(t("toastAuth")); return; } const round = getActiveRound(); if(!isBettingOpen(round)){ toast(t("toastLocked")); syncRounds(); return; } haptic("light"); currentBet = {type,selection,roundCode:round.round_code}; pendingBetRequest = null; $("betModalTitle").textContent = t("betOn") + " " + tk("bt_",type) + (selection === null ? "" : " " + selection); $("betModalPeriod").textContent = t("serverRound") + " " + fmtPeriod(round.round_code); $("betAmount").value = "100"; renderBreakdown(); $("confirmBet").disabled = false; $("betModal").classList.add("open"); }
-async function confirmBet(){ if(!currentBet || !authed) return; const stakeText = $("betAmount").value.trim(); const stake = Number(stakeText); if(!/^\d{1,18}(\.\d{1,2})?$/.test(stakeText) || !Number.isFinite(stake) || stake < 10){ toast(t("toastAmount")); return; } const btn = $("confirmBet"); btn.disabled = true; try { if(!pendingBetRequest){ pendingBetRequest = { requestId:makeRequestId(), roundCode:currentBet.roundCode, betType:currentBet.type, selection:currentBet.type === "Number" ? currentBet.selection : null, stake:stakeText }; } const r = pendingBetRequest; if(r.roundCode !== currentBet.roundCode || r.betType !== currentBet.type || r.selection !== (currentBet.type === "Number" ? currentBet.selection : null) || r.stake !== stakeText){ pendingBetRequest = null; toast(t("toastChanged")); return; } await api("place_bet",{ round_code:r.roundCode, bet_type:r.betType, selection:r.selection, stake:r.stake, request_id:r.requestId }); playedRounds.add(r.roundCode); pendingBetRequest = null; $("betModal").classList.remove("open"); playBetSound(); haptic("success"); toast(t("toastBetOk")); tradePage = 1; await syncUser(); } catch(error) { haptic("error"); toast(error.message || t("toastBetFail")); } finally { btn.disabled = false; } }
+async function authenticate(){ try { if(!tg){ authed = false; authBlock = "stTelegram"; profName = {k:"notTg"}; profStatus = {k:"openInTg"}; renderProfile(); renderTrades(); syncRounds(); return; } tg.ready(); tg.expand(); initData = tg.initData || ""; if(!initData){ authed = false; authBlock = "stAuth"; profName = {k:"tgMissing"}; profStatus = {k:"openOfficial"}; renderProfile(); renderTrades(); syncRounds(); return; } const response = await fetch("/api/auth",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({initData}) }); const data = await parseResponse(response); authed = true; authBlock = null; user = data.user; if (typeof loadNotifications === "function") await loadNotifications().catch(() => {}); if (typeof loadAppConfig === "function") await loadAppConfig(); profName = user.username ? {raw:"@" + user.username} : {k:"tgUser",v:{id:user.telegram_id}}; profStatus = {k:"verified"}; renderProfile(); try { await syncRounds(); await syncUser(); await applyReferralFromUrl(); } catch (error) { console.warn("[v0] post-auth sync failed", error.message); authBlock = "stConnecting"; renderProfile(); toast("Account authenticated; syncing game data…"); } } catch(error) { authed = false; authBlock = "stAuth"; profStatus = {raw:error.message}; renderProfile(); toast(error.message); } }
+function renderBreakdown(){
+  const text = $("betAmount").value.trim();
+  const ok = /^\d{1,18}(\.\d{1,2})?$/.test(text);
+  const baseStakeC = ok ? cents(text) : 0;
+  const totalStakeC = baseStakeC * betMultiplier;
+  const feeC = Math.floor((totalStakeC * FEE_PERCENT + 50) / 100);
+  const actualC = totalStakeC - feeC;
+  let html = `<div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(baseStakeC / 100))}</span></div>`;
+  if (betMultiplier > 1) {
+    html += `<div class="kv"><span>Multiplier</span><span>×${betMultiplier}</span></div>`;
+    html += `<div class="kv"><span>Total Stake</span><span>${esc(money(totalStakeC / 100))}</span></div>`;
+  }
+  html += `<div class="kv"><span>${esc(t("bkFee",{pct:FEE_PERCENT}))}</span><span>−${esc(money(feeC / 100))}</span></div>`;
+  html += `<div class="kv strong"><span>${esc(t("dActual"))}</span><span>${esc(money(actualC / 100))}</span></div>`;
+  if (Number.isFinite(balance) && (totalStakeC / 100) > Number(balance)) {
+    html += `<div class="kv" style="color:#ef4444"><span>⚠ Insufficient balance</span><span>${esc(money(balance))}</span></div>`;
+  }
+  $("betBreakdown").innerHTML = html;
+}
+function openBet(type,selection = null){
+  if(!authed){ toast(t("toastAuth")); return; }
+  const round = getActiveRound();
+  if(!isBettingOpen(round)){ toast(t("toastLocked")); syncRounds(); return; }
+  haptic("light");
+  currentBet = {type,selection,roundCode:round.round_code};
+  pendingBetRequest = null;
+  betMultiplier = 1;
+  betStep = 100;
+  document.querySelectorAll("[data-mult]").forEach(b => b.classList.toggle("active", Number(b.dataset.mult) === 1));
+  $("betModalTitle").textContent = t("betOn") + " " + tk("bt_",type) + (selection === null ? "" : " " + selection);
+  $("betModalPeriod").textContent = t("serverRound") + " " + fmtPeriod(round.round_code);
+  $("betAmount").value = "100";
+  renderBreakdown();
+  $("confirmBet").disabled = false;
+  $("betModal").classList.add("open");
+}
+async function confirmBet(){
+  if(!currentBet || !authed) return;
+  const baseText = $("betAmount").value.trim();
+  const baseAmount = Number(baseText);
+  if(!/^\d{1,18}(\.\d{1,2})?$/.test(baseText) || !Number.isFinite(baseAmount) || baseAmount < 10){
+    toast(t("toastAmount"));
+    return;
+  }
+  const totalStake = baseAmount * betMultiplier;
+  if (Number.isFinite(balance) && totalStake > Number(balance)) {
+    toast("Insufficient wallet balance for this bet.");
+    return;
+  }
+  const totalStakeStr = totalStake.toFixed(2);
+  const btn = $("confirmBet");
+  btn.disabled = true;
+  try {
+    if(!pendingBetRequest){
+      pendingBetRequest = {
+        requestId: makeRequestId(),
+        roundCode: currentBet.roundCode,
+        betType: currentBet.type,
+        selection: currentBet.type === "Number" ? currentBet.selection : null,
+        stake: totalStakeStr,
+        multiplier: betMultiplier
+      };
+    }
+    const r = pendingBetRequest;
+    if(r.roundCode !== currentBet.roundCode || r.betType !== currentBet.type || r.selection !== (currentBet.type === "Number" ? currentBet.selection : null) || r.stake !== totalStakeStr || r.multiplier !== betMultiplier){
+      pendingBetRequest = null;
+      toast(t("toastChanged"));
+      return;
+    }
+    await api("place_bet",{
+      round_code: r.roundCode,
+      bet_type: r.betType,
+      selection: r.selection,
+      stake: r.stake,
+      multiplier: r.multiplier,
+      request_id: r.requestId
+    });
+    playedRounds.add(r.roundCode);
+    pendingBetRequest = null;
+    $("betModal").classList.remove("open");
+    playBetSound();
+    haptic("success");
+    toast(t("toastBetOk"));
+    tradePage = 1;
+    await syncUser();
+  } catch(error) {
+    haptic("error");
+    toast(error.message || t("toastBetFail"));
+  } finally {
+    btn.disabled = false;
+  }
+}
 function showPage(name){ activePage = name; document.querySelectorAll(".page").forEach(page => { page.classList.toggle("active",page.id === "page-" + name); }); document.querySelectorAll(".nav-btn").forEach(button => { button.classList.toggle("active",button.dataset.page === name); }); if(name === "wallet" || name === "deposit" || name === "withdraw") loadWallet(); if(name === "referral" || name === "profile") loadReferral(); window.scrollTo(0,0); }
 function renderLangList(filter){ const q = String(filter || "").trim().toLowerCase(); const list = LANGS.filter(l => !q || String(l.name || "").toLowerCase().includes(q) || String(l.en || "").toLowerCase().includes(q) || l.code.toLowerCase().includes(q)); $("langListModal").innerHTML = list.length ? list.map(l => `<button class="lang-btn${l.code === lang ? " active" : ""}" type="button" data-lang="${esc(l.code)}">${esc(l.name)}${l.en && l.en !== l.name ? " · " + esc(l.en) : ""}</button>`).join("") : `<div class="empty">${esc(t("noLangs"))}</div>`; }
 function openLangModal(){ $("langSearch").value = ""; renderLangList(""); $("langModal").classList.add("open"); }
@@ -696,9 +942,65 @@ function rerender(){ applyStatic(); renderCurrentLang(); renderSettings(); rende
 function setLanguage(code){ if(!dict(code)) return; lang = code; const meta = LANGS.find(l => l.code === code); document.documentElement.lang = code; document.documentElement.dir = meta && meta.dir === "rtl" ? "rtl" : "ltr"; try { localStorage.setItem("ctp_lang",code); } catch(_) {} $("langModal").classList.remove("open"); rerender(); }
 function renderNumbers(){ const box = $("numberGrid"); box.innerHTML = ""; for(let n = 0; n <= 9; n++){ const button = document.createElement("button"); button.type = "button"; button.className = "number-btn " + numClass(n); button.textContent = n; button.onclick = () => openBet("Number",n); box.appendChild(button); } }
 async function loadNotifications() { try { const data = await api("notifications"); const list = $("notificationList"); let rows = data.notifications || []; if (!rows.length && (tradeData.bets || []).length) { rows = tradeData.bets.slice(0, 5).map(b => ({ title: "Trade activity", message: `${b.bet_type} bet ${b.status || "pending"}`, created_at: b.created_at, is_read: false })); } $("notificationCount").textContent = 0; $("notificationCount").hidden = true; list.innerHTML = rows.length ? rows.map(item => `<div class="notification-item"><strong>${esc(item.title)}</strong><small>${esc(item.message)} · ${new Date(item.created_at).toLocaleString()}</small>${item.kind === "withdrawal" ? '<button type="button" class="sec-btn notification-action" data-notification-page="withdraw">Open withdraw</button>' : ""}</div>`).join("") : '<div class="empty">No activity yet.</div>'; list.querySelectorAll("[data-notification-page]").forEach(button => { button.onclick = () => { $("notificationModal").classList.remove("open"); showPage(button.dataset.notificationPage); }; }); } catch (error) { console.warn("[v0] notifications unavailable", error.message); } }
+async function loadGiftHistory() {
+  const box = $("giftHistoryList");
+  if (!box) return;
+  try {
+    const d = await api("wallet_history", { page: 1, page_size: 20 });
+    const gifts = (d.transactions || []).filter(x => String(x.transaction_type || "").toLowerCase() === "gift");
+    box.innerHTML = gifts.length ? `<div class="wrap"><table class="tbl"><thead><tr><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody>${gifts.map(g => `<tr><td>${esc(dateUTC(g.created_at))}</td><td class="n-green">+${esc(money(g.amount))}</td><td>${esc(txStatusLabel(g))}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">No gift codes redeemed yet.</div>`;
+  } catch (e) {
+    box.innerHTML = `<div class="empty">Unable to load gift history.</div>`;
+  }
+}
+async function loadAppConfig() {
+  try {
+    const data = await api("app_config");
+    if (data && data.config) appConfig = { ...appConfig, ...data.config };
+  } catch (_) {}
+  renderHeaderButtons();
+}
+function renderHeaderButtons() {
+  const ch = $("headerChannelBtn");
+  const sp = $("headerSupportBtn");
+  const sd = $("headerSoundBtn");
+  if (ch) ch.style.display = appConfig.channel_button_enabled ? "" : "none";
+  if (sp) sp.style.display = appConfig.support_button_enabled ? "" : "none";
+  if (sd) sd.style.display = appConfig.sound_button_enabled === false ? "none" : "";
+  const hc = $("helpChannelBtn");
+  const hs = $("helpSupportBtn");
+  if (hc) hc.style.display = appConfig.channel_url ? "" : "none";
+  if (hs) hs.style.display = appConfig.support_url ? "" : "none";
+}
+function openExternalLink(url) {
+  if (!url) { toast("Link not configured"); return; }
+  try {
+    if (tg && tg.openLink) { tg.openLink(url); return; }
+  } catch (_) {}
+  window.open(url, "_blank");
+}
+function handleProfileAction(action) {
+  if (action === "wallet") { showPage("wallet"); return; }
+  if (action === "tx") { showPage("wallet"); return; }
+  if (action === "referral") { showPage("referral"); return; }
+  if (action === "gift") { $("giftModal").classList.add("open"); loadGiftHistory(); return; }
+  if (action === "lang") { openLangModal(); return; }
+  if (action === "notif") { $("notifSettingsModal").classList.add("open"); return; }
+  if (action === "settings") { $("settingsModal").classList.add("open"); return; }
+  if (action === "help") { $("helpModal").classList.add("open"); renderHeaderButtons(); return; }
+  if (action === "logout") {
+    try {
+      if (confirm("Logout and close the app?")) {
+        try { localStorage.removeItem("ctp_lang"); localStorage.removeItem("ctp_settings"); } catch (_) {}
+        if (tg && tg.close) tg.close();
+      }
+    } catch (_) {}
+    return;
+  }
+}
 function init(){
   loadSettings(); document.addEventListener("pointerdown",unlockAudio,{passive:true}); document.addEventListener("keydown",unlockAudio);
-  renderNumbers(); applyStatic(); renderCurrentLang(); renderSettings(); renderProfile(); setStatus("stConnecting"); setNotice("nConnecting");
+  renderNumbers(); applyStatic(); renderCurrentLang(); renderSettings(); renderProfile(); setStatus("stConnecting"); setNotice("nConnecting"); renderHeaderButtons();
   document.querySelectorAll("#txFilters .tab").forEach(tab => { tab.onclick = () => { document.querySelectorAll("#txFilters .tab").forEach(t => t.classList.remove("on")); tab.classList.add("on"); activeTxFilter = tab.dataset.txFilter; renderWallet(); }; });
   document.querySelectorAll(".nav-btn").forEach(button => { button.onclick = () => showPage(button.dataset.page); });
   document.querySelectorAll("[data-page-go]").forEach(button => { button.onclick = () => showPage(button.dataset.pageGo); });
@@ -707,13 +1009,61 @@ function init(){
   setInterval(() => { if (initData) loadNotifications(); }, 30000);
   $("closeNotifications").onclick = () => $("notificationModal").classList.remove("open");
   $("headerProfile").onclick = () => showPage("profile");
+  $("headerSoundBtn").onclick = () => {
+    unlockAudio();
+    settings.sound = !settings.sound;
+    saveSettings();
+    renderSettings();
+    if (settings.sound) playPing();
+    haptic("light");
+  };
+  $("headerChannelBtn").onclick = () => openExternalLink(appConfig.channel_url);
+  $("headerSupportBtn").onclick = () => openExternalLink(appConfig.support_url);
   $("editProfileBtn").onclick = openProfileModal;
   $("walletAddressBtn").onclick = openWalletAddressModal;
   $("saveProfileBtn").onclick = saveProfile;
   $("saveWalletAddressBtn").onclick = saveWalletAddress;
   $("gameRulesBtn").onclick = () => $("gameRulesModal").classList.add("open");
   $("authRetry").onclick = authenticate;
-  $("redeemGiftBtn").onclick = async () => { const code = $("giftCodeInput").value.trim(); if (!code) return toast("Enter a gift code."); try { const result = await api("redeem_gift", { code }); toast(`Gift redeemed: ${result.points} points added.`); $("giftCodeInput").value = ""; await loadNotifications(); await loadWallet(true); } catch (error) { toast(error.message, true); } };
+  // Profile menu navigation
+  document.querySelectorAll("[data-profile-action]").forEach(button => {
+    button.onclick = () => handleProfileAction(button.dataset.profileAction);
+  });
+  // Settings modal buttons
+  $("settingsLangBtn").onclick = () => { $("settingsModal").classList.remove("open"); openLangModal(); };
+  $("settingsNotifBtn").onclick = () => { $("settingsModal").classList.remove("open"); $("notifSettingsModal").classList.add("open"); };
+  $("settingsResetBtn").onclick = () => {
+    settings.sound = true; settings.vibrate = true; settings.updates = true;
+    saveSettings(); renderSettings();
+    toast("Preferences reset to defaults");
+  };
+  // Help modal buttons
+  $("helpChannelBtn").onclick = () => openExternalLink(appConfig.channel_url);
+  $("helpSupportBtn").onclick = () => openExternalLink(appConfig.support_url);
+  // Gift code
+  $("redeemGiftBtn").onclick = async () => {
+    const code = $("giftCodeInput").value.trim();
+    if (!code) return toast("Enter a gift code.");
+    const btn = $("redeemGiftBtn");
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.textContent = "…";
+    try {
+      const result = await api("redeem_gift", { code });
+      const pts = Number(result && result.points) || 0;
+      toast(`✅ Gift redeemed: ${money(pts)} points added.`);
+      $("giftCodeInput").value = "";
+      await syncUser();
+      await loadWallet(true);
+      await loadGiftHistory();
+      await loadNotifications();
+    } catch (error) {
+      toast(error.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Redeem";
+    }
+  };
   $("confirmBet").onclick = confirmBet;
   $("resultPopupClose").onclick = closeResultPopup;
   $("depositBtn").onclick = () => { openDepositPage().catch(error => toast(error.message, true)); };
@@ -728,19 +1078,79 @@ function init(){
   $("submitWithdrawal").onclick = submitWithdrawal;
   $("withdrawAmount").addEventListener("input", () => { const points = Math.max(0, Number($("withdrawAmount").value) || 0); $("withdrawUsdtPreview").textContent = `${(points * 0.9 / 100).toFixed(2)} USDT after 10% fee`; });
   document.querySelectorAll(".withdraw-preset").forEach((button) => { button.addEventListener("click", () => { const available = Math.max(0, Number(balance) || 0); const percent = button.dataset.percent === "max" ? 100 : Number(button.dataset.percent); const amount = Math.floor((available * percent / 100) * 100) / 100; $("withdrawAmount").value = amount >= 500 ? amount.toFixed(2) : ""; $("withdrawUsdtPreview").textContent = amount >= 500 ? `${(amount * 0.9 / 100).toFixed(2)} USDT after 10% fee` : "Minimum 5.00 USDT"; }); });
-  $("depositAmount").addEventListener("input", updateDepositSummary);
   $("copyDepositAddress").onclick = async () => { const value = $("depositAddress").value; if(value && await copyText(value)) toast("Deposit address copied."); };
-  document.addEventListener("click", async (event) => { if(!event.target.closest("#claimCommissionBtn") && !event.target.closest("#claimRewardBtn")) return; const button = event.target.closest("#claimCommissionBtn") || event.target.closest("#claimRewardBtn"); const isReward = button.id === "claimRewardBtn"; button.disabled = true; try { const endpoint = isReward ? "claim_rewards" : "claim_commission"; const result = await api(endpoint); toast(`Claimed ${money(result.claimed_points)} points (${(Number(result.claimed_points) / 100).toFixed(2)} USDT)`); await manualRefresh(); } catch(error) { button.disabled = false; toast(error.message); } });
-  $("sndSwitch").onclick = () => { settings.sound = !settings.sound; saveSettings(); renderSettings(); if(settings.sound) playPing(); };
+  // Claim buttons - better loading state
+  document.addEventListener("click", async (event) => {
+    const btn = event.target.closest("#claimCommissionBtn") || event.target.closest("#claimRewardBtn");
+    if (!btn) return;
+    const isReward = btn.id === "claimRewardBtn";
+    if (btn.disabled) return;
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = "Claiming…";
+    try {
+      const endpoint = isReward ? "claim_rewards" : "claim_commission";
+      const result = await api(endpoint);
+      const claimed = Number(result && (result.claimed_points || result.amount)) || 0;
+      toast(`✅ Claimed ${money(claimed)} points (${(claimed / 100).toFixed(2)} USDT)`);
+      await loadReferral(true);
+      await syncUser();
+      await loadWallet(true);
+    } catch (error) {
+      btn.disabled = false;
+      btn.textContent = originalText;
+      toast(error.message);
+    }
+  });
+  // Sound / Vibration / Updates toggles
+  $("sndSwitch").onclick = () => { unlockAudio(); settings.sound = !settings.sound; saveSettings(); renderSettings(); if(settings.sound) playPing(); haptic("light"); };
   $("vibSwitch").onclick = () => { settings.vibrate = !settings.vibrate; saveSettings(); renderSettings(); if(settings.vibrate) haptic("success"); };
+  $("updatesSwitch").onclick = () => { settings.updates = !settings.updates; saveSettings(); renderSettings(); haptic("light"); };
   $("resultModal").addEventListener("click",event => { if(event.target === $("resultModal")) closeResultPopup(); });
   document.querySelectorAll("[data-bet]").forEach(button => { button.onclick = () => openBet(button.dataset.bet); });
   document.querySelectorAll("[data-close]").forEach(button => { button.onclick = () => $(button.dataset.close).classList.remove("open"); });
   document.querySelectorAll(".modal-backdrop").forEach(modal => { modal.addEventListener("click",event => { if(event.target === modal && modal.id !== "resultModal"){ modal.classList.remove("open"); } }); });
-  document.querySelectorAll("[data-amount]").forEach(button => { button.onclick = () => { $("betAmount").value = button.dataset.amount; pendingBetRequest = null; renderBreakdown(); }; });
-  $("minusAmount").onclick = () => { $("betAmount").value = Math.max(10,(Number($("betAmount").value) || 10) - 10).toFixed(2); pendingBetRequest = null; renderBreakdown(); };
-  $("plusAmount").onclick = () => { $("betAmount").value = ((Number($("betAmount").value) || 10) + 10).toFixed(2); pendingBetRequest = null; renderBreakdown(); };
-  $("betAmount").addEventListener("input",() => { pendingBetRequest = null; renderBreakdown(); });
+  // Amount presets - base step = preset value
+  document.querySelectorAll("[data-amount]").forEach(button => {
+    button.onclick = () => {
+      betStep = Number(button.dataset.amount);
+      $("betAmount").value = button.dataset.amount;
+      pendingBetRequest = null;
+      renderBreakdown();
+    };
+  });
+  // Plus/minus with linear step
+  $("minusAmount").onclick = () => {
+    const cur = Number($("betAmount").value) || betStep;
+    const floor = Math.min(betStep, cur);
+    const newVal = Math.max(floor, cur - betStep);
+    $("betAmount").value = newVal.toFixed(2);
+    pendingBetRequest = null;
+    renderBreakdown();
+  };
+  $("plusAmount").onclick = () => {
+    const cur = Number($("betAmount").value) || 0;
+    $("betAmount").value = (cur + betStep).toFixed(2);
+    pendingBetRequest = null;
+    renderBreakdown();
+  };
+  // Multiplier buttons
+  document.querySelectorAll("[data-mult]").forEach(button => {
+    button.onclick = () => {
+      betMultiplier = Number(button.dataset.mult) || 1;
+      document.querySelectorAll("[data-mult]").forEach(b => b.classList.toggle("active", Number(b.dataset.mult) === betMultiplier));
+      pendingBetRequest = null;
+      renderBreakdown();
+    };
+  });
+  // Manual input - if exact preset, adjust step
+  $("betAmount").addEventListener("input", () => {
+    const val = Number($("betAmount").value);
+    const presets = [10, 20, 50, 100, 500];
+    if (presets.includes(val)) betStep = val;
+    pendingBetRequest = null;
+    renderBreakdown();
+  });
   document.addEventListener("click",async event => {
     const pg = event.target.closest("[data-pager]"); if(pg && !pg.disabled){ const dir = Number(pg.dataset.dir); const id = pg.dataset.pager; if(id === "results"){ resultPage = Math.max(1,resultPage + dir); loadResults(); } else if(id === "trades"){ tradePage = Math.max(1,tradePage + dir); loadTrades(); } else if(id === "wallet"){ walletPage = Math.max(1,walletPage + dir); loadWallet(); } else if(id === "comm"){ commPage = Math.max(1,commPage + dir); loadCommissions(); } return; }
     const tr = event.target.closest("[data-trade]"); if(tr){ tr.parentElement.classList.toggle("open"); return; }
