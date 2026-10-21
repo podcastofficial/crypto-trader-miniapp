@@ -109,6 +109,77 @@ function parseSettingValue(raw) {
 }
 // ============================================================================
 
+// ============================================================================
+// NEW: BEP-20 Auto-Deposit Verification (With Rate Limit Retry)
+// ============================================================================
+async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
+  const apiKey = process.env.BSCSCAN_API_KEY;
+  const usdtContract = process.env.USDT_BEP20_TOKEN_ADDRESS || "0x55d398326f99059fF775485246999027B3197955";
+  const depositAddress = String(process.env.USDT_BEP20_DEPOSIT_ADDRESS || "").toLowerCase();
+
+  if (!apiKey || !depositAddress) {
+    console.warn("BscScan API Key or Deposit Address missing. Falling back to manual verification.");
+    return { success: false, reason: "API not configured" };
+  }
+
+  const maxRetries = 3;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const url = `https://api.bscscan.com/api?module=account&action=tokentx&contractaddress=${usdtContract}&address=${depositAddress}&page=1&offset=10&sort=desc&apikey=${apiKey}`;
+      
+      const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      
+      if (response.status === 429) {
+        throw new Error("RATE_LIMIT");
+      }
+
+      const data = await response.json();
+
+      if (data.message && data.message.toLowerCase().includes("rate limit")) {
+         throw new Error("RATE_LIMIT");
+      }
+
+      if (data.status !== "1" || !data.result) {
+        return { success: false, reason: "Transaction not found on Blockchain yet. Wait for confirmation." };
+      }
+
+      const tx = data.result.find(t => t.hash.toLowerCase() === txHash.toLowerCase());
+
+      if (!tx) {
+        return { success: false, reason: "Transaction hash not found on Blockchain yet." };
+      }
+
+      if (tx.to.toLowerCase() !== depositAddress) {
+        return { success: false, reason: "This transaction was not sent to the official deposit address." };
+      }
+
+      const onChainAmount = Number(tx.value) / Math.pow(10, Number(tx.tokenDecimal));
+      
+      if (onChainAmount + 0.01 < expectedAmountUsdt) {
+        return { success: false, reason: `Amount mismatch. You sent ${onChainAmount} USDT but entered ${expectedAmountUsdt} USDT.` };
+      }
+
+      return { 
+        success: true, 
+        verifiedAmount: onChainAmount,
+        fromAddress: tx.from 
+      };
+
+    } catch (error) {
+      if (error.message === "RATE_LIMIT" && attempt < maxRetries) {
+        const waitTime = attempt * 2000; // 2s, 4s
+        console.warn(`Rate limit hit, retrying in ${waitTime}ms... (Attempt ${attempt}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      } else {
+        console.error("Blockchain verify error:", error.message);
+        return { success: false, reason: "Blockchain network error or limit exceeded. Please wait." };
+      }
+    }
+  }
+  return { success: false, reason: "Max retries reached. Please try again later." };
+}
+// ============================================================================
+
 // Makes sure the current round and a few future rounds exist,
 // so the game never depends on the cron timing.
 // Safe to run many times: unique round_code + advisory lock.
@@ -279,8 +350,8 @@ function verifyTelegramInitData(initData) {
 async function getUser(client, telegramUser) {
   await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS first_name TEXT`);
   await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS last_name TEXT`);
-  await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS signup_bonus_given BOOLEAN NOT NULL DEFAULT FALSE`); // NEW
-  await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS deposit_wallet TEXT`); // NEW for Withdraw Lock
+  await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS signup_bonus_given BOOLEAN NOT NULL DEFAULT FALSE`); 
+  await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS deposit_wallet TEXT`); 
   await client.query(`ALTER TABLE public.referral_rewards ADD COLUMN IF NOT EXISTS credited_at TIMESTAMPTZ`);
   
   const result = await client.query(
@@ -306,7 +377,6 @@ async function getUser(client, telegramUser) {
     created_by TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`);
   
-  // NEW: Gift Redemption Table created early to prevent errors
   await client.query(`CREATE TABLE IF NOT EXISTS public.gift_code_redemptions (
     gift_code_id BIGINT REFERENCES public.gift_codes(id) ON DELETE CASCADE,
     user_id BIGINT REFERENCES public.users(id) ON DELETE CASCADE,
@@ -321,7 +391,7 @@ async function getUser(client, telegramUser) {
     [user.id]
   );
 
-  // FIX: Signup bonus using SAVEPOINT to prevent full transaction abort
+  // Signup bonus using SAVEPOINT to prevent full transaction abort
   if (user.is_new && !user.signup_bonus_given) {
     const enabledRaw = await getAppSetting(client, "signup_bonus_enabled", "true");
     const amountRaw = await getAppSetting(client, "signup_bonus_amount", "25");
@@ -425,7 +495,7 @@ function telegramBotUsername() {
 }
 
 // ============================================================================
-// NEW: Auto-credit pending rewards for active users (Fixes Point 2 & 3)
+// Auto-credit pending rewards for active users
 // ============================================================================
 async function autoCreditReferralRewards(client, referrerUserId) {
   await client.query("SAVEPOINT sp_auto_credit");
@@ -826,7 +896,7 @@ module.exports = async function handler(req, res) {
     await client.query("BEGIN");
     transactionStarted = true;
 
-    await ensureAppSettings(client); // NEW
+    await ensureAppSettings(client); 
     const user = await getUser(client, telegramUser);
     await client.query(`ALTER TABLE public.referral_commissions ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ`);
     const action = String(body.action || "");
@@ -1036,15 +1106,54 @@ module.exports = async function handler(req, res) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 409, { success: false, message: "This transaction hash has already been submitted." });
       }
-      
-      const submitted = await client.query(`INSERT INTO public.transactions (user_id,transaction_type,amount,status,network,tx_hash,created_at,updated_at) VALUES ($1,'deposit',$2::numeric,'pending',$3,$4,NOW(),NOW()) RETURNING id,amount,status,network,tx_hash,created_at`, [user.id, amount.toFixed(6), network, txHash]);
-      
-      await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'deposit','Deposit submitted',$2)`, [user.id, `Transaction submitted for admin approval. Balance will be credited only after approval.`]).catch(() => {});
-      
-      await client.query("COMMIT"); transactionStarted = false;
-      await notifyTelegram(`💰 Deposit submitted\n👤 User ID: ${user.telegram_id}\n🔗 TX: ${txHash}\n🌐 Network: ${network}\n⏳ Status: Pending verification`);
-      
-      return json(res, 200, { success: true, deposit: submitted.rows[0], message: "Submitted for admin approval. Credit will be added only after verification." });
+
+      // 🚀 AUTOMATIC VERIFICATION 🚀
+      const verification = await verifyBEP20Deposit(txHash, amount);
+
+      if (verification.success) {
+        const pointsToAdd = verification.verifiedAmount * 100;
+
+        const submitted = await client.query(
+          `INSERT INTO public.transactions (user_id,transaction_type,amount,status,network,tx_hash,created_at,updated_at) 
+           VALUES ($1,'deposit',$2::numeric,'completed',$3,$4,NOW(),NOW()) 
+           RETURNING id,amount,status,network,tx_hash,created_at`, 
+          [user.id, verification.verifiedAmount.toFixed(6), network, txHash]
+        );
+
+        await client.query(`UPDATE public.wallet_balances SET balance=balance+$1, updated_at=NOW() WHERE user_id=$2`, [pointsToAdd, user.id]);
+        
+        await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'deposit','Deposit Successful',$2)`, 
+          [user.id, `Deposit of ${verification.verifiedAmount} USDT verified automatically. ${pointsToAdd} Points added.`]).catch(() => {});
+        
+        await client.query("COMMIT"); transactionStarted = false;
+
+        await notifyTelegram(`✅ Auto-Deposit Verified!\n👤 User ID: ${user.telegram_id}\n💵 Amount: ${verification.verifiedAmount} USDT\n🪙 Points: ${pointsToAdd}\n🔗 TX: ${txHash}`);
+
+        return json(res, 200, { 
+          success: true, 
+          deposit: submitted.rows[0], 
+          message: `Auto-verified! ${pointsToAdd} points added.` 
+        });
+
+      } else {
+        console.warn("Auto-verify failed:", verification.reason);
+        
+        const submitted = await client.query(
+          `INSERT INTO public.transactions (user_id,transaction_type,amount,status,network,tx_hash,created_at,updated_at) 
+           VALUES ($1,'deposit',$2::numeric,'pending',$3,$4,NOW(),NOW()) 
+           RETURNING id,amount,status,network,tx_hash,created_at`, 
+          [user.id, amount.toFixed(6), network, txHash]
+        );
+        
+        await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'deposit','Deposit pending',$2)`, 
+          [user.id, `Auto-verification failed (${verification.reason}). Submitted to admin for manual approval.`]).catch(() => {});
+        
+        await client.query("COMMIT"); transactionStarted = false;
+        
+        await notifyTelegram(`⚠️ Manual Verification Needed\n👤 User ID: ${user.telegram_id}\n🔗 TX: ${txHash}\n🌐 Network: ${network}\n❌ Reason: ${verification.reason}`);
+        
+        return json(res, 200, { success: true, deposit: submitted.rows[0], message: "Submitted for admin approval. Auto-verify is pending." });
+      }
     }
 
     if (action === "request_withdrawal") {
@@ -1333,7 +1442,7 @@ module.exports = async function handler(req, res) {
       const requestId = String(body.request_id || "");
       const stakeText = String(body.stake ?? "").trim();
       const stake = Number(stakeText);
-      const multiplier = Number(body.multiplier) || 1; // NEW
+      const multiplier = Number(body.multiplier) || 1; 
 
       const selection =
         body.selection === null || body.selection === undefined
