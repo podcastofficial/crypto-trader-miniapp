@@ -98,34 +98,55 @@ async function scanDeposits(client) {
   };
 
   const latest = parseInt(await call("eth_blockNumber", []), 16);
-  const fromBlock = Math.max(0, latest - 2000);
+  
+  // FIX: QuickNode Free Plan 5 block limit ke liye chunking
+  // Hum pichle 100 blocks scan karenge, 5-5 blocks ke chunk me
+  const blockRange = 100;
+  const fromBlock = Math.max(0, latest - blockRange);
+  const chunkSize = 5;
+  
   const paddedTo = `0x${depositAddress.slice(2).padStart(64, "0")}`;
+  let allLogs = [];
 
-  const logs = await call("eth_getLogs", [
-    {
-      address: token,
-      fromBlock: `0x${fromBlock.toString(16)}`,
-      toBlock: `0x${latest.toString(16)}`,
-      topics: [USDT_TRANSFER_TOPIC, null, paddedTo]
+  for (let i = fromBlock; i <= latest; i += chunkSize) {
+    const toBlockChunk = Math.min(i + chunkSize - 1, latest);
+    try {
+      const chunkLogs = await call("eth_getLogs", [
+        {
+          address: token,
+          fromBlock: `0x${i.toString(16)}`,
+          toBlock: `0x${toBlockChunk.toString(16)}`,
+          topics: [USDT_TRANSFER_TOPIC, null, paddedTo]
+        }
+      ]);
+      if (chunkLogs && chunkLogs.length > 0) {
+        allLogs.push(...chunkLogs);
+      }
+    } catch (err) {
+      console.error(`Deposit scan chunk error (${i}-${toBlockChunk}):`, err.message);
     }
-  ]);
+    // Rate limit se bachne ke liye 150ms ka delay
+    await new Promise(res => setTimeout(res, 150));
+  }
 
   let credited = 0;
 
-  for (const log of logs || []) {
+  for (const log of allLogs) {
     const txHash = String(log.transactionHash || "");
     if (!/^0x[0-9a-f]{64}$/i.test(txHash)) continue;
 
     const confirmations = Math.max(0, latest - parseInt(String(log.blockNumber || "0"), 16) + 1);
-    const requiredConfirmations = Math.max(1, Number(process.env.BSC_MIN_CONFIRMATIONS || 12));
+    const requiredConfirmations = Math.max(1, Number(process.env.BSC_MIN_CONFIRMATIONS || 3)); // Default 3 for faster credit
 
     if (confirmations < requiredConfirmations) continue;
 
     const raw = BigInt(log.data || "0x0");
-    const usdt = Number(raw) / 1e6;
+    
+    // FIX: BSC USDT me 18 decimals hote hain (1e6 nahi)
+    const usdt = Number(raw) / 1e18;
     const points = usdt * 100;
 
-    if (!Number.isFinite(points) || points < 100) continue;
+    if (!Number.isFinite(points) || points < 100) continue; // Min 1 USDT (100 points)
 
     const submitted = await client.query(
       `SELECT id, user_id, status
@@ -150,7 +171,8 @@ async function scanDeposits(client) {
       userId = walletRow.rows[0]?.user_id ?? null;
     }
 
-    if (!userId || (submitted.rowCount && submitted.rows[0].status === "confirmed")) {
+    // FIX: Agar deposit already 'completed' ya 'confirmed' hai, to skip karein
+    if (!userId || (submitted.rowCount && ['confirmed', 'completed'].includes(submitted.rows[0].status))) {
       continue;
     }
 
