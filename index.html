@@ -619,8 +619,6 @@ label { font-weight:800; font-size:12px; }
     <div class="row"><div class="modal-title" data-i18n="editProfile">Edit Profile</div><button class="close-btn" data-close="profileModal" type="button">✕</button></div>
   <label for="profileDisplayName" data-i18n="displayName">Display name</label>
   <input id="profileDisplayName" type="text" maxlength="64" autocomplete="name">
-  <label for="profileAvatar" style="margin-top:12px">Profile image</label>
-  <input id="profileAvatar" type="file" accept="image/png,image/jpeg,image/webp">
   <div class="notice" data-i18n="profileTelegramNote">Your Telegram username is managed by Telegram.</div>
     <button class="primary-btn" id="saveProfileBtn" type="button" style="margin-top:14px" data-i18n="saveChanges">Save Changes</button>
   </div>
@@ -1058,6 +1056,7 @@ let initData = "";
 let authed = false;
 let authBlock = null;
 let user = null;
+let savedWalletAddress = "";
 let balance = null;
 let currentRound = null;
 let latestRounds = [];
@@ -1318,7 +1317,9 @@ function openProfileModal(){
 
 function openWalletAddressModal(){
   if(!authed){ toast(t("toastAuth")); return; }
+  $("walletAddressInput").value = savedWalletAddress || "";
   $("walletAddressModal").classList.add("open");
+  loadSavedWalletAddress();
 }
 
 async function saveProfile(){
@@ -1327,21 +1328,12 @@ async function saveProfile(){
   const userId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id;
   if(!userId){ toast(t("openInTg")); return; }
   try {
-  const response = await fetch("/api/profile",{
-  method:"POST",
-  headers:{"Content-Type":"application/json","x-telegram-id":String(userId)},
-  body:JSON.stringify({displayName:value})
-  });
-  const data = await response.json().catch(() => null);
-  const avatar = $("profileAvatar").files && $("profileAvatar").files[0];
-  if (avatar) {
-    if (avatar.size > 2 * 1024 * 1024) { toast("Image must be under 2 MB."); return; }
-    const reader = new FileReader();
-    const imageData = await new Promise(resolve => { reader.onload = () => resolve(reader.result); reader.readAsDataURL(avatar); });
-    const avatarResponse = await fetch("/api/profile-avatar", { method:"POST", headers:{"Content-Type":"application/json","x-telegram-id":String(userId)}, body:JSON.stringify({file:imageData}) });
-    const avatarData = await avatarResponse.json().catch(() => null);
-    if (!avatarResponse.ok || !avatarData?.success) { toast(avatarData?.message || "Could not upload image."); return; }
-  }
+    const response = await fetch("/api/profile",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-telegram-id":String(userId)},
+      body:JSON.stringify({displayName:value})
+    });
+    const data = await response.json().catch(() => null);
     if(!response.ok || !data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; }
     profName = {raw:data.displayName};
     renderProfile();
@@ -1354,22 +1346,35 @@ async function saveProfile(){
 
 async function saveWalletAddress(){
   const value = $("walletAddressInput").value.trim();
-  // Flexible validation
-  if(value.length < 20){ toast(t("invalidWallet")); return; }
-  const userId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id;
-  if(!userId){ toast(t("openInTg")); return; }
+  if(value.length < 20 || value.length > 150){ toast(t("invalidWallet")); return; }
+  if(!initData){ toast(t("openInTg")); return; }
+  const button = $("saveWalletAddressBtn");
+  button.disabled = true;
   try {
-    const response = await fetch("/api/set-deposit-wallet",{
-      method:"POST", headers:{"Content-Type":"application/json","x-telegram-id":String(userId)},
-      body:JSON.stringify({walletAddress:value})
-    });
-    const data = await response.json().catch(() => null);
-    if(!response.ok || !data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; }
+    const result = await api("save_wallet_address", {wallet_address:value});
+    savedWalletAddress = String(result.wallet_address || value);
+    $("walletAddressInput").value = savedWalletAddress;
+    $("withdrawAddress").value = savedWalletAddress;
     toast(t("walletSaved"));
     $("walletAddressModal").classList.remove("open");
-  } catch(_) {
-    toast(t("refreshFailed"));
+  } catch(error) {
+    toast(error.message || t("refreshFailed"));
+  } finally {
+    button.disabled = false;
   }
+}
+
+async function loadSavedWalletAddress(){
+  if(!initData) return "";
+  try {
+    const result = await api("get_wallet_address");
+    savedWalletAddress = String(result.wallet_address || "");
+    const profileInput = $("walletAddressInput");
+    const withdrawalInput = $("withdrawAddress");
+    if(profileInput && !profileInput.value) profileInput.value = savedWalletAddress;
+    if(withdrawalInput && !withdrawalInput.value) withdrawalInput.value = savedWalletAddress;
+  } catch(_) {}
+  return savedWalletAddress;
 }
 
 function updateBalance(value){
@@ -1643,6 +1648,7 @@ let selectedDepositCoin = "USDT";
   $("cashWithdrawFields").style.display = kind === "withdraw" ? "block" : "none";
   $("depositTimer").style.display = kind === "deposit" ? "block" : "none";
   if(kind === "withdraw"){
+    await loadSavedWalletAddress();
     const available = Number.isFinite(balance) ? Math.max(0, balance) : 0;
     $("withdrawAvailableBalance").textContent = `${money(available)} Points · ${(available / 100).toFixed(2)} USDT`;
     $("withdrawAmount").max = available.toFixed(2);
@@ -1745,7 +1751,7 @@ let selectedDepositCoin = "USDT";
     await api("request_withdrawal", {amount: amount.toFixed(2), destination_address: address});
     toast("Withdrawal request submitted for admin approval.");
     $("cashModal").classList.remove("open");
-    $("withdrawAmount").value = ""; $("withdrawAddress").value = "";
+    $("withdrawAmount").value = ""; $("withdrawAddress").value = savedWalletAddress || "";
     await refreshAll(true);
   } catch(error) { toast(error.message); }
   finally { button.disabled = false; }
