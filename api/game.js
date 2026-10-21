@@ -51,35 +51,53 @@ function pageParams(input = {}) {
 // NEW: App Settings Helpers (For Admin Panel & Header Buttons)
 // ============================================================================
 async function ensureAppSettings(client) {
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS public.app_settings (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL,
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-  const defaults = [
-    ['sound_button_enabled', 'true'],
-    ['channel_button_enabled', 'false'],
-    ['channel_url', ''],
-    ['support_button_enabled', 'false'],
-    ['support_url', ''],
-    ['support_type', 'whatsapp'],
-    ['signup_bonus_enabled', 'true'],
-    ['signup_bonus_amount', '25'],
-  ];
-  for (const [key, value] of defaults) {
-    await client.query(
-      `INSERT INTO public.app_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING`,
-      [key, value]
-    );
+  await client.query("SAVEPOINT sp_app_settings");
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS public.app_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    
+    const defaults = [
+      ['sound_button_enabled', 'true'],
+      ['channel_button_enabled', 'false'],
+      ['channel_url', ''],
+      ['support_button_enabled', 'false'],
+      ['support_url', ''],
+      ['support_type', 'whatsapp'],
+      ['signup_bonus_enabled', 'true'],
+      ['signup_bonus_amount', '25'],
+    ];
+    
+    for (const [key, value] of defaults) {
+      await client.query(
+        `INSERT INTO public.app_settings (key, value) 
+         VALUES ($1, $2) 
+         ON CONFLICT (key) DO NOTHING`,
+        [key, value]
+      );
+    }
+    await client.query("RELEASE SAVEPOINT sp_app_settings");
+  } catch (err) {
+    await client.query("ROLLBACK TO SAVEPOINT sp_app_settings");
+    console.warn("App settings setup skipped:", err.message);
   }
 }
 
 async function getAppSetting(client, key, fallback = null) {
-  const r = await client.query(`SELECT value FROM public.app_settings WHERE key = $1`, [key]);
-  if (!r.rowCount) return fallback;
-  return r.rows[0].value;
+  try {
+    const r = await client.query(
+      `SELECT value FROM public.app_settings WHERE key = $1`, 
+      [key]
+    );
+    if (!r.rowCount) return fallback;
+    return r.rows[0].value;
+  } catch (_) {
+    return fallback;
+  }
 }
 
 function parseSettingValue(raw) {
@@ -410,37 +428,56 @@ function telegramBotUsername() {
 // NEW: Auto-credit pending rewards for active users (Fixes Point 2 & 3)
 // ============================================================================
 async function autoCreditReferralRewards(client, referrerUserId) {
-  const check = await client.query(`
-    SELECT COUNT(*)::int AS cnt FROM public.referral_rewards rr
-    WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
-      AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')
-  `, [referrerUserId]);
-  if (check.rows[0].cnt === 0) return 0;
+  await client.query("SAVEPOINT sp_auto_credit");
+  try {
+    const check = await client.query(`
+      SELECT COUNT(*)::int AS cnt FROM public.referral_rewards rr
+      WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
+        AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')
+    `, [referrerUserId]);
+    
+    if (check.rows[0].cnt === 0) {
+      await client.query("RELEASE SAVEPOINT sp_auto_credit");
+      return 0;
+    }
 
-  const locked = await client.query(`
-    SELECT rr.id, rr.reward_points FROM public.referral_rewards rr
-    WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
-      AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')
-    FOR UPDATE
-  `, [referrerUserId]);
-  if (!locked.rowCount) return 0;
+    const locked = await client.query(`
+      SELECT rr.id, rr.reward_points FROM public.referral_rewards rr
+      WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
+        AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')
+      FOR UPDATE
+    `, [referrerUserId]);
+    
+    if (!locked.rowCount) {
+      await client.query("RELEASE SAVEPOINT sp_auto_credit");
+      return 0;
+    }
 
-  const total = locked.rows.reduce((sum, r) => sum + Number(r.reward_points), 0);
-  const ids = locked.rows.map(r => r.id);
+    const total = locked.rows.reduce((sum, r) => sum + Number(r.reward_points), 0);
+    const ids = locked.rows.map(r => r.id);
 
-  await client.query(`UPDATE public.referral_rewards SET status = 'credited', credited_at = NOW() WHERE id = ANY($1::bigint[])`, [ids]);
-  await client.query(`UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`, [total.toFixed(2), referrerUserId]);
-  await client.query(
-    `INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at)
-     VALUES ($1, 'reward', $2, 'completed', NOW(), NOW())`,
-    [referrerUserId, total.toFixed(2)]
-  ).catch(() => {});
-  await client.query(
-    `INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'reward','Referral reward credited',$2)`,
-    [referrerUserId, `You received ${total.toFixed(2)} points from active referral rewards.`]
-  ).catch(() => {});
+    await client.query(`UPDATE public.referral_rewards SET status = 'credited', credited_at = NOW() WHERE id = ANY($1::bigint[])`, [ids]);
+    await client.query(`UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`, [total.toFixed(2), referrerUserId]);
+    
+    await client.query("SAVEPOINT sp_auto_tx");
+    try {
+      await client.query(
+        `INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at)
+         VALUES ($1, 'reward', $2, 'completed', NOW(), NOW())`,
+        [referrerUserId, total.toFixed(2)]
+      );
+      await client.query("RELEASE SAVEPOINT sp_auto_tx");
+    } catch(e) {
+      await client.query("ROLLBACK TO SAVEPOINT sp_auto_tx");
+    }
 
-  return total;
+    await client.query("RELEASE SAVEPOINT sp_auto_credit");
+    return total;
+  } catch (err) {
+    await client.query("ROLLBACK TO SAVEPOINT sp_auto_credit");
+    console.warn("Auto credit skipped:", err.message);
+    return 0;
+  }
 }
 // ============================================================================
 
@@ -717,9 +754,9 @@ module.exports = async function handler(req, res) {
            AND result_number IS NOT NULL
            AND ends_at <= NOW()
          ORDER BY starts_at DESC
-  LIMIT $1 OFFSET $2`,
-  [pageSize, offset]
-  );
+         LIMIT $1 OFFSET $2`,
+        [pageSize, offset]
+      );
 
       const currentResult = await client.query(
         `SELECT id, round_code, status, starts_at,
@@ -750,12 +787,12 @@ module.exports = async function handler(req, res) {
     } catch (error) {
       console.error("GET /api/game:", error);
 
-  return json(res, 500, {
-  success: false,
-  message: "Unable to load game data.",
-  error_code: error.code || "GAME_BACKEND_ERROR",
-  detail: error.message,
-  });
+      return json(res, 500, {
+        success: false,
+        message: "Unable to load game data.",
+        error_code: error.code || "GAME_BACKEND_ERROR",
+        detail: error.message,
+      });
     } finally {
       if (client) client.release();
     }
@@ -794,9 +831,6 @@ module.exports = async function handler(req, res) {
     await client.query(`ALTER TABLE public.referral_commissions ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ`);
     const action = String(body.action || "");
 
-    // ============================================================================
-    // NEW: app_config action
-    // ============================================================================
     if (action === "app_config") {
       const rows = await client.query(`SELECT key, value FROM public.app_settings`);
       const config = {
@@ -817,7 +851,6 @@ module.exports = async function handler(req, res) {
       return json(res, 200, { success: true, config });
     }
 
-    // MODIFIED: Return deposit_wallet for locked withdraw
     if (action === "balance") {
       const result = await client.query(
         `SELECT wb.balance, u.deposit_wallet
@@ -864,15 +897,23 @@ module.exports = async function handler(req, res) {
       await client.query(`INSERT INTO public.gift_code_redemptions(gift_code_id,user_id) VALUES($1,$2)`, [gift.rows[0].id, user.id]);
       await client.query(`UPDATE public.gift_codes SET uses=uses+1 WHERE id=$1`, [gift.rows[0].id]);
       await client.query(`UPDATE public.wallet_balances SET balance=balance+$1,updated_at=NOW() WHERE user_id=$2`, [gift.rows[0].points, user.id]);
-      await client.query(
-        `INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at)
-         VALUES ($1, 'gift', $2, 'completed', NOW(), NOW())`,
-        [user.id, gift.rows[0].points]
-      );
+      
+      await client.query("SAVEPOINT sp_gift_tx");
+      try {
+        await client.query(
+          `INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at)
+           VALUES ($1, 'gift', $2, 'completed', NOW(), NOW())`,
+          [user.id, gift.rows[0].points]
+        );
+        await client.query("RELEASE SAVEPOINT sp_gift_tx");
+      } catch(e) {
+        await client.query("ROLLBACK TO SAVEPOINT sp_gift_tx");
+      }
+
       await client.query(
         `INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'gift','Gift code redeemed',$2)`,
         [user.id, `You received ${gift.rows[0].points} points.`]
-      );
+      ).catch(()=>{});
       
       await client.query("COMMIT"); transactionStarted = false;
       return json(res, 200, { success: true, points: gift.rows[0].points });
@@ -958,13 +999,13 @@ module.exports = async function handler(req, res) {
         await client.query(`INSERT INTO public.deposit_addresses (coin,network,address)
           SELECT 'USDT','BSC BEP-20',$1 WHERE NOT EXISTS (SELECT 1 FROM public.deposit_addresses)`, [seedAddress]);
       }
-  const options = await client.query(`SELECT id,coin,network,address,COALESCE(qr_payload,address) AS qr_payload
-  FROM public.deposit_addresses WHERE is_active=TRUE ORDER BY sort_order,id LIMIT 10`);
-  const rows = options.rows.length ? options.rows : (process.env.USDT_BEP20_DEPOSIT_ADDRESS ? [{ id: "env-usdt-bep20", coin: "USDT", network: "BEP-20", address: process.env.USDT_BEP20_DEPOSIT_ADDRESS, qr_payload: process.env.USDT_BEP20_DEPOSIT_ADDRESS }] : []);
-  await client.query("COMMIT"); transactionStarted = false;
-  return json(res, 200, {
-  success: true,
-  deposit_options: rows,
+      const options = await client.query(`SELECT id,coin,network,address,COALESCE(qr_payload,address) AS qr_payload
+      FROM public.deposit_addresses WHERE is_active=TRUE ORDER BY sort_order,id LIMIT 10`);
+      const rows = options.rows.length ? options.rows : (process.env.USDT_BEP20_DEPOSIT_ADDRESS ? [{ id: "env-usdt-bep20", coin: "USDT", network: "BEP-20", address: process.env.USDT_BEP20_DEPOSIT_ADDRESS, qr_payload: process.env.USDT_BEP20_DEPOSIT_ADDRESS }] : []);
+      await client.query("COMMIT"); transactionStarted = false;
+      return json(res, 200, {
+        success: true,
+        deposit_options: rows,
         deposit_address: rows[0]?.address || null,
         token_address: process.env.USDT_BEP20_TOKEN_ADDRESS || null,
         network: rows[0]?.network || "BSC BEP-20",
@@ -1235,11 +1276,18 @@ module.exports = async function handler(req, res) {
 
       await client.query(`UPDATE public.referral_rewards SET status = 'credited', credited_at = NOW() WHERE id = ANY($1::bigint[])`, [ids]);
       await client.query(`UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`, [amount.toFixed(2), user.id]);
-      await client.query(
-        `INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at)
-         VALUES ($1, 'reward', $2, 'completed', NOW(), NOW())`,
-        [user.id, amount.toFixed(2)]
-      ).catch(console.error);
+      
+      await client.query("SAVEPOINT sp_claim_tx");
+      try {
+        await client.query(
+          `INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at)
+           VALUES ($1, 'reward', $2, 'completed', NOW(), NOW())`,
+          [user.id, amount.toFixed(2)]
+        );
+        await client.query("RELEASE SAVEPOINT sp_claim_tx");
+      } catch(e) {
+        await client.query("ROLLBACK TO SAVEPOINT sp_claim_tx");
+      }
 
       await client.query("COMMIT"); transactionStarted = false;
       return json(res, 200, { success: true, claimed_points: amount.toFixed(2) });
@@ -1262,11 +1310,18 @@ module.exports = async function handler(req, res) {
 
       await client.query(`UPDATE public.referral_commissions SET claimed_at = NOW() WHERE id = ANY($1::bigint[])`, [ids]);
       await client.query(`UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`, [amount.toFixed(2), user.id]);
-      await client.query(
-        `INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at)
-         VALUES ($1, 'commission', $2, 'completed', NOW(), NOW())`,
-        [user.id, amount.toFixed(2)]
-      ).catch(console.error);
+      
+      await client.query("SAVEPOINT sp_comm_tx");
+      try {
+        await client.query(
+          `INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at)
+           VALUES ($1, 'commission', $2, 'completed', NOW(), NOW())`,
+          [user.id, amount.toFixed(2)]
+        );
+        await client.query("RELEASE SAVEPOINT sp_comm_tx");
+      } catch(e) {
+        await client.query("ROLLBACK TO SAVEPOINT sp_comm_tx");
+      }
 
       await client.query("COMMIT"); transactionStarted = false;
       return json(res, 200, { success: true, claimed_points: amount.toFixed(2) });
@@ -1412,7 +1467,8 @@ module.exports = async function handler(req, res) {
 
     return json(res, 500, {
       success: false,
-      message: "Game request failed. Please try again.",
+      message: "Game request failed: " + error.message,
+      detail: error.detail || error.message
     });
   } finally {
     if (client) client.release();
