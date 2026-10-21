@@ -2,12 +2,6 @@
   "outputDirectory": ".",
   "cleanUrls": false,
   "trailingSlash": false,
-  "crons": [
-    {
-      "path": "/api/cron",
-      "schedule": "* * * * *"
-    }
-  ],
   "functions": {
     "api/cron.js": {
       "maxDuration": 60
