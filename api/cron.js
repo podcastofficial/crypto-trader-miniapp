@@ -6,33 +6,6 @@ const FUTURE_ROUNDS = 5;
 const MAX_SETTLEMENT_ATTEMPTS = 20;
 const RESULTS_CHANNEL = "@crypto_trader_results";
 
-async function notifyResults(text) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) return;
-
-  try {
-    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        chat_id: RESULTS_CHANNEL,
-        text,
-        disable_web_page_preview: true
-      }),
-      signal: AbortSignal.timeout(10000)
-    });
-
-    if (!response.ok) {
-      const errText = await response.text().catch(() => "");
-      console.error("Telegram result notification rejected:", response.status, errText);
-    }
-  } catch (error) {
-    console.error("Telegram result notification failed:", error.message);
-  }
-}
-
 let pool;
 
 function getPool() {
@@ -66,21 +39,145 @@ function normalizeAddress(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+// ==========================================
+// CHANNEL SETTINGS & TELEGRAM SYSTEM
+// ==========================================
+async function getChannelSettings(client) {
+  try {
+    const r = await client.query(
+      `SELECT * FROM public.channel_settings WHERE id=1`
+    );
+    return r.rows[0] || {};
+  } catch (_) {
+    return {}; 
+  }
+}
+
+async function sendTelegramMessage(client, type, data) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return;
+
+  try {
+    const settings = await getChannelSettings(client);
+    const channel = settings.channel_username || RESULTS_CHANNEL;
+    const botName = settings.bot_username || "YourBot";
+
+    const inlineKeyboard = {
+      inline_keyboard: [
+        [
+          { 
+            text: settings.inline_link_text || "🚀 Play Now", 
+            url: `https://t.me/${botName}?start=game` 
+          }
+        ]
+      ]
+    };
+
+    if (type === 'prediction') {
+      if (settings.predictions_enabled === false) return;
+
+      let text = settings.prediction_message || 
+        "🔮 Prediction (not guaranteed)\n🔢 Round: {round}\n🎯 Suggested number: {number}\n🎨 Suggested colour: {colour}";
+
+      text = text
+        .replace("{round}", data.round)
+        .replace("{number}", data.number)
+        .replace("{colour}", data.colour);
+
+      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: channel,
+          text: text,
+          reply_markup: inlineKeyboard,
+          disable_web_page_preview: true
+        })
+      });
+    }
+
+    if (type === 'result') {
+      await client.query(
+        `UPDATE public.prediction_history 
+         SET actual_number=$1, actual_colour=$2, result=$3 
+         WHERE round_code=$4`,
+        [
+          data.result_number, 
+          data.result_colour, 
+          data.is_win ? 'win' : 'loss', 
+          data.round
+        ]
+      );
+
+      const hist = await client.query(
+        `SELECT result FROM public.prediction_history`
+      );
+      
+      const total = hist.rowCount;
+      const wins = hist.rows.filter(r => r.result === 'win').length;
+      const winRatio = total > 0 ? ((wins / total) * 100).toFixed(1) : "0.0";
+      const lossRatio = total > 0 ? (100 - Number(winRatio)).toFixed(1) : "0.0";
+
+      let text = settings.result_message || 
+        "🎲 Round result published\n🔢 Round: {round}\n🎯 Result: {number}\n🎨 Colour: {colour}\n📏 Size: {size}\n\n📊 Win Ratio: {win_ratio}% | Loss: {loss_ratio}%";
+
+      text = text
+        .replace("{round}", data.round)
+        .replace("{number}", data.result_number)
+        .replace("{colour}", data.result_colour)
+        .replace("{size}", data.result_size)
+        .replace("{win_ratio}", winRatio)
+        .replace("{loss_ratio}", lossRatio);
+
+      if (settings.result_image_url && settings.result_image_url.startsWith("http")) {
+        await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: channel,
+            photo: settings.result_image_url,
+            caption: text,
+            reply_markup: inlineKeyboard
+          })
+        });
+      } else {
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: channel,
+            text: text,
+            reply_markup: inlineKeyboard,
+            disable_web_page_preview: true
+          })
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Telegram Notification Error:", error.message);
+  }
+}
+
+// ==========================================
+// DEPOSIT SCANNER
+// ==========================================
 async function scanDeposits(client) {
   const rpc = process.env.BSC_RPC_URL;
   const token = normalizeAddress(process.env.USDT_BEP20_TOKEN_ADDRESS);
   const depositAddress = normalizeAddress(process.env.USDT_BEP20_DEPOSIT_ADDRESS);
 
-  if (!rpc || !/^0x[a-f0-9]{40}$/.test(token) || !/^0x[a-f0-9]{40}$/.test(depositAddress)) {
+  if (
+    !rpc || 
+    !/^0x[a-f0-9]{40}$/.test(token) || 
+    !/^0x[a-f0-9]{40}$/.test(depositAddress)
+  ) {
     return 0;
   }
 
   const call = async (method, params) => {
     const response = await fetch(rpc, {
       method: "POST",
-      headers: {
-        "content-type": "application/json"
-      },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({
         jsonrpc: "2.0",
         id: 1,
@@ -98,14 +195,11 @@ async function scanDeposits(client) {
   };
 
   const latest = parseInt(await call("eth_blockNumber", []), 16);
-  
-  // FIX: QuickNode Free Plan 5 block limit ke liye chunking
-  // Hum pichle 100 blocks scan karenge, 5-5 blocks ke chunk me
   const blockRange = 100;
   const fromBlock = Math.max(0, latest - blockRange);
   const chunkSize = 5;
-  
   const paddedTo = `0x${depositAddress.slice(2).padStart(64, "0")}`;
+  
   let allLogs = [];
 
   for (let i = fromBlock; i <= latest; i += chunkSize) {
@@ -125,7 +219,6 @@ async function scanDeposits(client) {
     } catch (err) {
       console.error(`Deposit scan chunk error (${i}-${toBlockChunk}):`, err.message);
     }
-    // Rate limit se bachne ke liye 150ms ka delay
     await new Promise(res => setTimeout(res, 150));
   }
 
@@ -135,18 +228,23 @@ async function scanDeposits(client) {
     const txHash = String(log.transactionHash || "");
     if (!/^0x[0-9a-f]{64}$/i.test(txHash)) continue;
 
-    const confirmations = Math.max(0, latest - parseInt(String(log.blockNumber || "0"), 16) + 1);
-    const requiredConfirmations = Math.max(1, Number(process.env.BSC_MIN_CONFIRMATIONS || 3)); // Default 3 for faster credit
+    const confirmations = Math.max(
+      0, 
+      latest - parseInt(String(log.blockNumber || "0"), 16) + 1
+    );
+    
+    const requiredConfirmations = Math.max(
+      1, 
+      Number(process.env.BSC_MIN_CONFIRMATIONS || 3)
+    );
 
     if (confirmations < requiredConfirmations) continue;
 
     const raw = BigInt(log.data || "0x0");
-    
-    // FIX: BSC USDT me 18 decimals hote hain (1e6 nahi)
     const usdt = Number(raw) / 1e18;
     const points = usdt * 100;
 
-    if (!Number.isFinite(points) || points < 100) continue; // Min 1 USDT (100 points)
+    if (!Number.isFinite(points) || points < 100) continue;
 
     const submitted = await client.query(
       `SELECT id, user_id, status
@@ -171,39 +269,29 @@ async function scanDeposits(client) {
       userId = walletRow.rows[0]?.user_id ?? null;
     }
 
-    // FIX: Agar deposit already 'completed' ya 'confirmed' hai, to skip karein
-    if (!userId || (submitted.rowCount && ['confirmed', 'completed'].includes(submitted.rows[0].status))) {
+    if (
+      !userId || 
+      (submitted.rowCount && ['confirmed', 'completed'].includes(submitted.rows[0].status))
+    ) {
       continue;
     }
 
     if (submitted.rowCount) {
       await client.query(
         `UPDATE public.transactions
-         SET amount=$1,
-             status='confirmed',
-             network='BSC',
-             updated_at=NOW()
-         WHERE id=$2
-         RETURNING id`,
+         SET amount=$1, status='confirmed', network='BSC', updated_at=NOW()
+         WHERE id=$2`,
         [points.toFixed(2), submitted.rows[0].id]
       );
     } else {
       await client.query(
         `INSERT INTO public.transactions (
-           user_id,
-           transaction_type,
-           amount,
-           status,
-           network,
-           tx_hash,
-           created_at,
-           updated_at
+           user_id, transaction_type, amount, status, network, tx_hash, created_at, updated_at
          )
          SELECT $1, 'deposit', $2, 'confirmed', 'BSC', $3, NOW(), NOW()
          WHERE NOT EXISTS (
            SELECT 1 FROM public.transactions
-           WHERE LOWER(tx_hash)=LOWER($3)
-             AND transaction_type='deposit'
+           WHERE LOWER(tx_hash)=LOWER($3) AND transaction_type='deposit'
          )`,
         [userId, points.toFixed(2), txHash]
       );
@@ -233,10 +321,12 @@ function authorized(req) {
   );
 }
 
+// ==========================================
+// MAIN HANDLER
+// ==========================================
 module.exports = async function handler(req, res) {
   if (req.method !== "GET" && req.method !== "POST") {
     res.setHeader("Allow", "GET, POST");
-
     return sendJson(res, 405, {
       success: false,
       message: "Method not allowed"
@@ -254,21 +344,36 @@ module.exports = async function handler(req, res) {
 
   try {
     client = await getPool().connect();
-
     await client.query("BEGIN");
-
+    
     await client.query(
       "SELECT pg_advisory_xact_lock($1::bigint)",
       [739184205]
     );
 
+    // Safety check for channel_settings
+    try { 
+      await client.query(`SELECT 1 FROM public.channel_settings LIMIT 1`); 
+    } catch (e) {
+      await client.query(`CREATE TABLE IF NOT EXISTS public.channel_settings (
+        id INT PRIMARY KEY DEFAULT 1, 
+        channel_username TEXT DEFAULT '@crypto_trader_results', 
+        bot_username TEXT DEFAULT 'YourBot', 
+        predictions_enabled BOOLEAN DEFAULT TRUE, 
+        prediction_timing INT DEFAULT 150, 
+        prediction_message TEXT, 
+        result_message TEXT, 
+        result_image_url TEXT, 
+        inline_link_text TEXT DEFAULT 'Play'
+      )`);
+      await client.query(`INSERT INTO public.channel_settings (id) VALUES (1) ON CONFLICT DO NOTHING`);
+    }
+
     const timeResult = await client.query(
       `
         SELECT
           NOW() AS db_now,
-          FLOOR(
-            EXTRACT(EPOCH FROM NOW()) / $1
-          ) * $1 AS current_slot
+          FLOOR(EXTRACT(EPOCH FROM NOW()) / $1) * $1 AS current_slot
       `,
       [ROUND_SECONDS]
     );
@@ -331,11 +436,7 @@ module.exports = async function handler(req, res) {
       const inserted = await client.query(
         `
           INSERT INTO public.game_rounds (
-            round_code,
-            status,
-            starts_at,
-            betting_closes_at,
-            ends_at
+            round_code, status, starts_at, betting_closes_at, ends_at
           )
           VALUES ($1, $2, $3, $4, $5)
           ON CONFLICT (round_code) DO NOTHING
@@ -345,19 +446,26 @@ module.exports = async function handler(req, res) {
       );
 
       if (inserted.rowCount) {
+        roundsCreated++;
+        
         const seed = [...roundCode].reduce((sum, char) => sum + char.charCodeAt(0), 0);
         const predictedNumber = seed % 10;
         const predictedColour = ["Red", "Green", "Violet"][seed % 3];
 
-        await notifyResults(
-          `🔮 Prediction (not guaranteed)\n🔢 Round: ${roundCode}\n🎯 Suggested number: ${predictedNumber}\n🎨 Suggested colour: ${predictedColour}\n⚠️ Informational only`
+        await client.query(
+          `INSERT INTO public.prediction_history (round_code, predicted_number, predicted_colour) VALUES ($1, $2, $3)`,
+          [roundCode, predictedNumber, predictedColour]
         );
-      }
 
-      roundsCreated += inserted.rowCount;
+        await sendTelegramMessage(client, 'prediction', {
+          round: roundCode,
+          number: predictedNumber,
+          colour: predictedColour
+        });
+      }
     }
 
-    const futureOpened = await client.query(`
+    await client.query(`
       UPDATE public.game_rounds
       SET status = 'open'
       WHERE status = 'locked'
@@ -366,10 +474,9 @@ module.exports = async function handler(req, res) {
         AND ends_at > NOW()
         AND result_number IS NULL
         AND settled_at IS NULL
-      RETURNING id
     `);
 
-    const currentOpened = await client.query(`
+    await client.query(`
       UPDATE public.game_rounds
       SET status = 'open'
       WHERE status = 'locked'
@@ -378,7 +485,6 @@ module.exports = async function handler(req, res) {
         AND ends_at > NOW()
         AND result_number IS NULL
         AND settled_at IS NULL
-      RETURNING id
     `);
 
     const locked = await client.query(`
@@ -416,27 +522,33 @@ module.exports = async function handler(req, res) {
 
       if (result.phase === "result_calculated") {
         resultsCalculated++;
-        await notifyResults(
-          `🎲 Round result published\n🔢 Round: ${result.round_code}\n🎯 Result: ${result.result_number ?? "—"}\n🎨 Colour: ${result.result_color ?? "—"}\n📏 Size: ${result.result_size ?? "—"}`
+        
+        const pred = await client.query(
+          `SELECT predicted_number FROM public.prediction_history WHERE round_code=$1`, 
+          [result.round_code]
         );
+        
+        const isWin = pred.rowCount && Number(pred.rows[0].predicted_number) === Number(result.result_number);
+
+        await sendTelegramMessage(client, 'result', {
+          round: result.round_code,
+          result_number: result.result_number ?? "—",
+          result_colour: result.result_color ?? "—",
+          result_size: result.result_size ?? "—",
+          is_win: isWin
+        });
+
       } else if (result.phase === "payout_released") {
         payoutsReleased++;
       } else if (!result.phase) {
         resultsCalculated++;
         payoutsReleased++;
-      } else {
-        throw new Error(`Unexpected settlement phase: ${result.phase}`);
       }
     }
 
     const currentResult = await client.query(`
       SELECT
-        id,
-        round_code,
-        status,
-        starts_at,
-        betting_closes_at,
-        ends_at
+        id, round_code, status, starts_at, betting_closes_at, ends_at
       FROM public.game_rounds
       WHERE starts_at <= NOW()
         AND ends_at > NOW()
@@ -465,8 +577,6 @@ module.exports = async function handler(req, res) {
       server_time: serverTimeResult.rows[0].server_time,
       current_round: currentResult.rows[0] || null,
       rounds_created: roundsCreated,
-      future_rounds_opened: futureOpened.rowCount,
-      current_rounds_opened: currentOpened.rowCount,
       rounds_locked: locked.rowCount,
       results_calculated: resultsCalculated,
       payouts_released: payoutsReleased,
@@ -474,6 +584,7 @@ module.exports = async function handler(req, res) {
       round_duration_seconds: ROUND_SECONDS,
       betting_duration_seconds: BETTING_SECONDS
     });
+
   } catch (error) {
     if (client) {
       await client.query("ROLLBACK").catch(() => {});
