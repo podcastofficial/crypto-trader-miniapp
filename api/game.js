@@ -216,6 +216,8 @@ function verifyTelegramInitData(initData) {
 async function getUser(client, telegramUser) {
   await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS first_name TEXT`);
   await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS last_name TEXT`);
+  await client.query(`ALTER TABLE public.referral_rewards ADD COLUMN IF NOT EXISTS credited_at TIMESTAMPTZ`); // FIX
+  
   const result = await client.query(
     `INSERT INTO public.users (telegram_id, username, first_name, last_name)
        VALUES ($1, $2, $3, $4)
@@ -1012,75 +1014,74 @@ module.exports = async function handler(req, res) {
       return json(res, 200, data);
     }
 
-    // FIX: Added claim_rewards action for Claim Reward button
+    // FIX: Added save_wallet action for Add/Edit Wallet modal
+    if (action === "save_wallet") {
+      const walletAddress = String(body.walletAddress || "").trim();
+      if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 400, { success: false, message: "Invalid wallet address." });
+      }
+      await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS deposit_wallet TEXT`);
+      await client.query(`UPDATE public.users SET deposit_wallet = $1 WHERE id = $2`, [walletAddress, user.id]);
+      await client.query("COMMIT"); transactionStarted = false;
+      return json(res, 200, { success: true, message: "Wallet address saved." });
+    }
+
+    // FIX: Added claim_rewards with separate SELECT & UPDATE queries
     if (action === "claim_rewards") {
-      const claim = await client.query(
-        `WITH claimable AS (
-           SELECT COALESCE(SUM(rr.reward_points), 0) AS amount
-           FROM public.referral_rewards rr
-           JOIN public.users u ON u.id = rr.referred_user_id
-           WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
-           AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
-         ), marked AS (
-           UPDATE public.referral_rewards rr
-           SET status = 'credited', credited_at = NOW()
-           FROM public.users u
-           WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
-           AND u.id = rr.referred_user_id
-           AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
-           RETURNING rr.reward_points
-         )
-         SELECT (SELECT amount FROM claimable)::numeric(20,2) AS amount`,
-        [user.id]
-      );
-      
-      const amount = Number(claim.rows[0]?.amount || 0);
+      const claimable = await client.query(`
+        SELECT COALESCE(SUM(rr.reward_points), 0) AS amount
+        FROM public.referral_rewards rr
+        JOIN public.users u ON u.id = rr.referred_user_id
+        WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
+        AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
+      `, [user.id]);
+
+      const amount = Number(claimable.rows[0]?.amount || 0);
       if (amount <= 0) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 400, { success: false, message: "No active referral rewards available to claim." });
       }
-      
-      await client.query(
-        `UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`,
-        [amount.toFixed(2), user.id]
-      );
-      
-      // Add transaction record for history
-      await client.query(`INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at) VALUES ($1, 'reward', $2, 'completed', NOW(), NOW())`, [user.id, amount.toFixed(2)]);
-      
+
+      await client.query(`
+        UPDATE public.referral_rewards rr
+        SET status = 'credited', credited_at = NOW()
+        FROM public.users u
+        WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
+        AND u.id = rr.referred_user_id
+        AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
+      `, [user.id]);
+
+      await client.query(`UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`, [amount.toFixed(2), user.id]);
+      await client.query(`INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at) VALUES ($1, 'reward', $2, 'completed', NOW(), NOW())`, [user.id, amount.toFixed(2)]).catch(console.error);
+
       await client.query("COMMIT"); transactionStarted = false;
       return json(res, 200, { success: true, claimed_points: amount.toFixed(2) });
     }
 
+    // FIX: Added claim_commission with separate SELECT & UPDATE queries
     if (action === "claim_commission") {
-      const claim = await client.query(
-        `WITH claimable AS (
-           SELECT COALESCE(SUM(commission_amount), 0) AS amount
-           FROM public.referral_commissions
-           WHERE referrer_user_id = $1 AND claimed_at IS NULL
-         ), marked AS (
-           UPDATE public.referral_commissions
-           SET claimed_at = NOW()
-           WHERE referrer_user_id = $1 AND claimed_at IS NULL
-           RETURNING commission_amount
-         )
-         SELECT (SELECT amount FROM claimable)::numeric(20,2) AS amount`,
-        [user.id]
-      );
-      const amount = Number(claim.rows[0]?.amount || 0);
+      const claimable = await client.query(`
+        SELECT COALESCE(SUM(commission_amount), 0) AS amount
+        FROM public.referral_commissions
+        WHERE referrer_user_id = $1 AND claimed_at IS NULL
+      `, [user.id]);
+
+      const amount = Number(claimable.rows[0]?.amount || 0);
       if (amount <= 0) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 400, { success: false, message: "No commission is available to claim." });
       }
-      
-      await client.query(
-        `UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`,
-        [amount.toFixed(2), user.id]
-      );
-      
-      // FIX: Add transaction record for history
-      await client.query(`INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at) VALUES ($1, 'commission', $2, 'completed', NOW(), NOW())`, [user.id, amount.toFixed(2)]);
-      
+
+      await client.query(`
+        UPDATE public.referral_commissions
+        SET claimed_at = NOW()
+        WHERE referrer_user_id = $1 AND claimed_at IS NULL
+      `, [user.id]);
+
+      await client.query(`UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`, [amount.toFixed(2), user.id]);
+      await client.query(`INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at) VALUES ($1, 'commission', $2, 'completed', NOW(), NOW())`, [user.id, amount.toFixed(2)]).catch(console.error);
+
       await client.query("COMMIT"); transactionStarted = false;
       return json(res, 200, { success: true, claimed_points: amount.toFixed(2) });
     }
