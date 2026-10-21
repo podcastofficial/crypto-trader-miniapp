@@ -45,7 +45,7 @@ function sendJson(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-const USDT_TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55aeb5d5f9f";
+const USDT_TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 
 async function scanDeposits(client) {
   const rpc = process.env.BSC_RPC_URL;
@@ -332,7 +332,15 @@ module.exports = async function handler(req, res) {
       LIMIT 1
     `);
 
-    const depositsCredited = await scanDeposits(client);
+    let depositsCredited = 0;
+    try {
+      await client.query("SAVEPOINT deposit_scan");
+      depositsCredited = await scanDeposits(client);
+      await client.query("RELEASE SAVEPOINT deposit_scan");
+    } catch (scanError) {
+      await client.query("ROLLBACK TO SAVEPOINT deposit_scan").catch(() => {});
+      console.error("Deposit scan failed:", scanError.message);
+    }
 
     const serverTimeResult = await client.query(`
   SELECT NOW() AS server_time
