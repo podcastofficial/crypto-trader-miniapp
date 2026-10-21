@@ -1,9 +1,9 @@
 {
+  "cleanUrls": false,
+  "trailingSlash": false,
   "functions": {
     "api/*.js": {
       "maxDuration": 60
     }
-  },
-  "cleanUrls": false,
-  "trailingSlash": false
+  }
 }
