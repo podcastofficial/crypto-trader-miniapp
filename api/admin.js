@@ -28,67 +28,141 @@ const RESULTS_CHANNEL = "@crypto_trader_results";
 async function notifyTelegram(text, chats = [process.env.ADMIN_CHAT_ID]) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return { ok: false, error: "TELEGRAM_BOT_TOKEN is not configured." };
+
   chats = chats.filter(Boolean);
+
   const results = await Promise.all(chats.map(async (chatId) => {
     try {
       const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
         signal: AbortSignal.timeout(10000)
       });
+
       const payload = await response.json();
       return { chatId, ok: response.ok && payload.ok, payload };
-    } catch (error) { return { chatId, ok: false, error: error.message }; }
+    } catch (error) {
+      return { chatId, ok: false, error: error.message };
+    }
   }));
+
   return { ok: results.every(item => item.ok), results };
 }
 
 async function telegramAdminAction(body, session, req) {
   await ensureManagementTables();
+
   if (body.mode === "retry") {
     const id = String(body.id || "").trim();
     if (!/^\d+$/.test(id)) throw new Error("Invalid notification ID.");
-    const rows = await query(`SELECT id,channel,message,status,attempt_count FROM public.telegram_notifications WHERE id=$1`, [id]);
+
+    const rows = await query(
+      `SELECT id, channel, message, status, attempt_count
+       FROM public.telegram_notifications
+       WHERE id=$1`,
+      [id]
+    );
+
     if (!rows.length) throw new Error("Notification not found.");
     if (rows[0].status === "sent") throw new Error("This notification was already delivered.");
+
     const attempt = Number(rows[0].attempt_count || 0) + 1;
-    await query(`UPDATE public.telegram_notifications SET status='pending',attempt_count=$1,error_message=NULL WHERE id=$2`, [attempt, id]);
+    await query(
+      `UPDATE public.telegram_notifications
+       SET status='pending', attempt_count=$1, error_message=NULL
+       WHERE id=$2`,
+      [attempt, id]
+    );
+
     const result = await notifyTelegram(rows[0].message, [rows[0].channel]);
+
     if (result.ok) {
       const telegramId = result.results.find(item => item.ok)?.payload?.result?.message_id;
-      await query(`UPDATE public.telegram_notifications SET status='sent',telegram_message_id=$1,sent_at=NOW() WHERE id=$2`, [telegramId ? String(telegramId) : null, id]);
+      await query(
+        `UPDATE public.telegram_notifications
+         SET status='sent', telegram_message_id=$1, sent_at=NOW()
+         WHERE id=$2`,
+        [telegramId ? String(telegramId) : null, id]
+      );
     } else {
       const error = result.results.map(item => item.error || item.payload?.description).filter(Boolean).join("; ");
-      await query(`UPDATE public.telegram_notifications SET status='failed',error_message=$1 WHERE id=$2`, [error.slice(0, 500), id]);
+      await query(
+        `UPDATE public.telegram_notifications
+         SET status='failed', error_message=$1
+         WHERE id=$2`,
+        [error.slice(0, 500), id]
+      );
     }
+
     await audit(session.username, "telegram_retry", req, result.ok ? "success" : "failed", "telegram_notification", id);
+
     if (!result.ok) throw new Error("Telegram retry failed.");
     return { ok: true, notification_id: id };
   }
+
   if (body.mode === "history") {
     const page = Math.max(1, Number(body.page) || 1);
     const pageSize = Math.min(PAGE_SIZE_MAX, Math.max(1, Number(body.page_size) || 25));
     const offset = (page - 1) * pageSize;
+
     const [rows, totals] = await Promise.all([
-      query(`SELECT id,event_type,channel,message,status,telegram_message_id,error_message,attempt_count,created_at,sent_at FROM public.telegram_notifications ORDER BY id DESC LIMIT $1 OFFSET $2`, [pageSize, offset]),
+      query(
+        `SELECT id, event_type, channel, message, status, telegram_message_id, error_message, attempt_count, created_at, sent_at
+         FROM public.telegram_notifications
+         ORDER BY id DESC
+         LIMIT $1 OFFSET $2`,
+        [pageSize, offset]
+      ),
       query(`SELECT COUNT(*)::int AS total FROM public.telegram_notifications`)
     ]);
+
     const total = Number(totals[0]?.total || 0);
-    return { ok: true, notifications: rows, page, page_size: pageSize, total, total_pages: Math.max(1, Math.ceil(total / pageSize)) };
+
+    return {
+      ok: true,
+      notifications: rows,
+      page,
+      page_size: pageSize,
+      total,
+      total_pages: Math.max(1, Math.ceil(total / pageSize))
+    };
   }
+
   const message = String(body.message || "").trim().slice(0, 4000);
   const channel = String(body.channel || process.env.ADMIN_CHAT_ID || "").trim().slice(0, 200);
+
   if (!message || !channel) throw new Error("Message and channel are required.");
-  const created = await query(`INSERT INTO public.telegram_notifications(event_type,channel,message,status,attempt_count) VALUES($1,$2,$3,'pending',1) RETURNING id`, [body.event_type === "test" ? "test" : "admin", channel, message]);
+
+  const created = await query(
+    `INSERT INTO public.telegram_notifications(event_type,channel,message,status,attempt_count)
+     VALUES($1,$2,$3,'pending',1)
+     RETURNING id`,
+    [body.event_type === "test" ? "test" : "manual", channel, message]
+  );
+
   const result = await notifyTelegram(message, [channel]);
+
   if (result.ok) {
     const telegramId = result.results.find(item => item.ok)?.payload?.result?.message_id;
-    await query(`UPDATE public.telegram_notifications SET status='sent',telegram_message_id=$1,sent_at=NOW() WHERE id=$2`, [telegramId ? String(telegramId) : null, created[0].id]);
+    await query(
+      `UPDATE public.telegram_notifications
+       SET status='sent', telegram_message_id=$1, sent_at=NOW()
+       WHERE id=$2`,
+      [telegramId ? String(telegramId) : null, created[0].id]
+    );
   } else {
     const error = result.results.map(item => item.error || item.payload?.description).filter(Boolean).join("; ");
-    await query(`UPDATE public.telegram_notifications SET status='failed',error_message=$1 WHERE id=$2`, [error.slice(0, 500), created[0].id]);
+    await query(
+      `UPDATE public.telegram_notifications
+       SET status='failed', error_message=$1
+       WHERE id=$2`,
+      [error.slice(0, 500), created[0].id]
+    );
   }
+
   await audit(session.username, "telegram_notification", req, result.ok ? "success" : "failed", "telegram_notification", created[0].id);
+
   if (!result.ok) throw new Error("Telegram delivery failed. Check notification history.");
   return { ok: true, notification_id: created[0].id };
 }
@@ -248,6 +322,7 @@ async function ensureDepositAddresses() {
 
 async function depositAddressConfig(body, session, req) {
   await ensureDepositAddresses();
+
   if (body.mode === "save") {
     const id = String(body.id || "");
     const coin = String(body.coin || "").trim().slice(0, 30);
@@ -256,18 +331,35 @@ async function depositAddressConfig(body, session, req) {
     const qrPayload = String(body.qr_payload || address).trim().slice(0, 300);
     const active = body.is_active !== false;
     const order = Math.max(0, Math.min(100, Number(body.sort_order) || 0));
+
     if (!coin || !network || !address) throw new Error("Coin, network and address are required.");
+
     const rows = id
-      ? await query(`UPDATE public.deposit_addresses SET coin=$1,network=$2,address=$3,qr_payload=$4,is_active=$5,sort_order=$6,updated_at=NOW() WHERE id=$7 RETURNING *`, [coin,network,address,qrPayload,active,order,id])
-      : await query(`INSERT INTO public.deposit_addresses (coin,network,address,qr_payload,is_active,sort_order) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`, [coin,network,address,qrPayload,active,order]);
+      ? await query(
+          `UPDATE public.deposit_addresses
+           SET coin=$1, network=$2, address=$3, qr_payload=$4, is_active=$5, sort_order=$6, updated_at=NOW()
+           WHERE id=$7
+           RETURNING *`,
+          [coin, network, address, qrPayload, active, order, id]
+        )
+      : await query(
+          `INSERT INTO public.deposit_addresses (coin,network,address,qr_payload,is_active,sort_order)
+           VALUES ($1,$2,$3,$4,$5,$6)
+           RETURNING *`,
+          [coin, network, address, qrPayload, active, order]
+        );
+
     if (!rows.length) throw new Error("Deposit address not found.");
+
     await audit(session.username, "deposit_address_save", req, "success", "deposit_address", rows[0].id);
   }
+
   if (body.mode === "delete") {
     const id = String(body.id || "");
     await query("DELETE FROM public.deposit_addresses WHERE id=$1", [id]);
     await audit(session.username, "deposit_address_delete", req, "success", "deposit_address", id);
   }
+
   return { ok: true, deposit_addresses: await query("SELECT * FROM public.deposit_addresses ORDER BY sort_order,id LIMIT 20") };
 }
 
@@ -279,78 +371,165 @@ function ipAddress(req) {
   ).split(",")[0].trim().slice(0, 100);
 }
 
-  async function ensureManagementTables() {
-    await query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT FALSE`);
-    await query(`ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS payout_tx_hash TEXT`);
-    await query(`CREATE TABLE IF NOT EXISTS public.gift_codes (
-      id BIGSERIAL PRIMARY KEY, code TEXT UNIQUE NOT NULL, points NUMERIC(20,2) NOT NULL,
-      max_uses INTEGER NOT NULL DEFAULT 1, uses INTEGER NOT NULL DEFAULT 0,
-      expires_at TIMESTAMPTZ, created_by TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )`);
-    await query(`CREATE TABLE IF NOT EXISTS public.user_notifications (
-      id BIGSERIAL PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-      kind TEXT NOT NULL, title TEXT NOT NULL, message TEXT NOT NULL, is_read BOOLEAN NOT NULL DEFAULT FALSE,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )`);
-    await query(`CREATE TABLE IF NOT EXISTS public.telegram_notifications (
-      id BIGSERIAL PRIMARY KEY, event_type TEXT NOT NULL, channel TEXT NOT NULL,
-      message TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', telegram_message_id TEXT,
-      error_message TEXT, attempt_count INTEGER NOT NULL DEFAULT 0,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), sent_at TIMESTAMPTZ
-    )`);
+async function ensureManagementTables() {
+  await query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT FALSE`);
+  await query(`ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS payout_tx_hash TEXT`);
+  await query(`CREATE TABLE IF NOT EXISTS public.gift_codes (
+    id BIGSERIAL PRIMARY KEY,
+    code TEXT UNIQUE NOT NULL,
+    points NUMERIC(20,2) NOT NULL,
+    max_uses INTEGER NOT NULL DEFAULT 1,
+    uses INTEGER NOT NULL DEFAULT 0,
+    expires_at TIMESTAMPTZ,
+    created_by TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+  await query(`CREATE TABLE IF NOT EXISTS public.user_notifications (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+  await query(`CREATE TABLE IF NOT EXISTS public.telegram_notifications (
+    id BIGSERIAL PRIMARY KEY,
+    event_type TEXT NOT NULL,
+    channel TEXT NOT NULL,
+    message TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    telegram_message_id TEXT,
+    error_message TEXT,
+    attempt_count INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    sent_at TIMESTAMPTZ
+  )`);
+}
+
+async function userManagement(body, session, req) {
+  await ensureManagementTables();
+
+  const userId = String(body.user_id || "");
+  if (!/^\d{1,15}$/.test(userId)) throw new Error("Invalid user ID.");
+
+  const action = String(body.management_action || "");
+
+  if (["block", "unblock"].includes(action)) {
+    await query(
+      `UPDATE public.users SET is_blocked=$1 WHERE id=$2`,
+      [action === "block", userId]
+    );
+
+    await query(
+      `INSERT INTO public.user_notifications (user_id,kind,title,message)
+       VALUES ($1,'admin', $2, $3)`,
+      [userId, action === "block" ? "Account blocked" : "Account unblocked", action === "block" ? "Your account has been blocked by admin." : "Your account has been unblocked by admin."]
+    );
+  } else if (["add_fund", "remove_fund"].includes(action)) {
+    const points = Number(body.points);
+    if (!Number.isFinite(points) || points <= 0 || points > 100000000) {
+      throw new Error("Enter a valid points amount.");
+    }
+
+    const delta = action === "add_fund" ? points : -points;
+    const result = await query(
+      `UPDATE public.wallet_balances
+       SET balance=balance+$1, updated_at=NOW()
+       WHERE user_id=$2 AND balance+$1 >= 0
+       RETURNING balance`,
+      [delta, userId]
+    );
+
+    if (!result.length) throw new Error("Insufficient balance or user wallet not found.");
+
+    await query(
+      `INSERT INTO public.user_notifications (user_id,kind,title,message)
+       VALUES ($1,'wallet','Balance updated',$2)`,
+      [userId, `${action === "add_fund" ? "Added" : "Removed"} ${points} points.`]
+    );
+  } else if (action === "transfer_points") {
+    const toUserId = String(body.to_user_id || "");
+    const points = Number(body.points);
+
+    if (!/^\d{1,15}$/.test(toUserId) || toUserId === userId || !Number.isFinite(points) || points <= 0 || points > 100000000) {
+      throw new Error("Enter a valid different target user and points.");
+    }
+
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      const recipient = await client.query(
+        `SELECT id FROM public.users WHERE id=$1 FOR SHARE`,
+        [toUserId]
+      );
+
+      if (!recipient.rowCount) throw new Error("Target user not found.");
+
+      const debit = await client.query(
+        `UPDATE public.wallet_balances
+         SET balance=balance-$1, updated_at=NOW()
+         WHERE user_id=$2 AND balance >= $1
+         RETURNING balance`,
+        [points, userId]
+      );
+
+      if (!debit.rowCount) throw new Error("Insufficient balance.");
+
+      await client.query(
+        `INSERT INTO public.wallet_balances(user_id,balance)
+         VALUES($1,0)
+         ON CONFLICT(user_id) DO NOTHING`,
+        [toUserId]
+      );
+
+      await client.query(
+        `UPDATE public.wallet_balances
+         SET balance=balance+$1, updated_at=NOW()
+         WHERE user_id=$2`,
+        [points, toUserId]
+      );
+
+      await client.query(
+        `INSERT INTO public.user_notifications(user_id,kind,title,message)
+         VALUES($1,'transfer','Points received',$2),($3,'transfer','Points sent',$4)`,
+        [toUserId, `You received ${points} points.`, userId, `You sent ${points} points.`]
+      );
+
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  } else if (action === "create_gift") {
+    const points = Number(body.points);
+    const maxUses = Math.min(1000000, Math.max(1, Math.floor(Number(body.max_uses || 1))));
+
+    if (!Number.isFinite(points) || points <= 0) throw new Error("Enter valid gift points.");
+
+    const code = String(body.code || `GIFT-${crypto.randomBytes(4).toString("hex").toUpperCase()}`).trim().toUpperCase();
+
+    const result = await query(
+      `INSERT INTO public.gift_codes(code,points,max_uses,expires_at,created_by)
+       VALUES($1,$2,$3,$4,$5)
+       RETURNING code,points,max_uses,expires_at`,
+      [code, points, maxUses, body.expires_at || null, session.username]
+    );
+
+    return { ok: true, gift_code: result[0] };
+  } else {
+    throw new Error("Unknown user management action.");
   }
 
-  async function userManagement(body, session, req) {
-    await ensureManagementTables();
-    const userId = String(body.user_id || "");
-    if (!/^\d{1,15}$/.test(userId)) throw new Error("Invalid user ID.");
-    const action = String(body.management_action || "");
-    if (["block", "unblock"].includes(action)) {
-      await query(`UPDATE public.users SET is_blocked=$1 WHERE id=$2`, [action === "block", userId]);
-      await query(`INSERT INTO public.user_notifications (user_id,kind,title,message) VALUES ($1,'admin', $2, $3)`, [userId, action === "block" ? "Account blocked" : "Account unblocked", action === "block" ? "Your account has been blocked by admin." : "Your account has been unblocked."]);
-    } else if (["add_fund", "remove_fund"].includes(action)) {
-      const points = Number(body.points);
-      if (!Number.isFinite(points) || points <= 0 || points > 100000000) throw new Error("Enter a valid points amount.");
-      const delta = action === "add_fund" ? points : -points;
-      const result = await query(`UPDATE public.wallet_balances SET balance=balance+$1, updated_at=NOW() WHERE user_id=$2 AND balance+$1 >= 0 RETURNING balance`, [delta, userId]);
-      if (!result.length) throw new Error("Insufficient balance or user wallet not found.");
-      await query(`INSERT INTO public.user_notifications (user_id,kind,title,message) VALUES ($1,'wallet','Balance updated',$2)`, [userId, `${action === "add_fund" ? "Added" : "Removed"} ${points} points by admin.`]);
-    } else if (action === "transfer_points") {
-      const toUserId = String(body.to_user_id || "");
-      const points = Number(body.points);
-      if (!/^\d{1,15}$/.test(toUserId) || toUserId === userId || !Number.isFinite(points) || points <= 0 || points > 100000000) {
-        throw new Error("Enter a valid different target user and points.");
-      }
-      const client = await pool.connect();
-      try { await client.query("BEGIN");
-        const recipient = await client.query(`SELECT id FROM public.users WHERE id=$1 FOR SHARE`, [toUserId]);
-        if (!recipient.rowCount) throw new Error("Target user not found.");
-        const debit = await client.query(`UPDATE public.wallet_balances SET balance=balance-$1,updated_at=NOW() WHERE user_id=$2 AND balance >= $1 RETURNING balance`, [points, userId]);
-        if (!debit.rowCount) throw new Error("Insufficient balance.");
-        await client.query(`INSERT INTO public.wallet_balances(user_id,balance) VALUES($1,0) ON CONFLICT(user_id) DO NOTHING`, [toUserId]);
-        await client.query(`UPDATE public.wallet_balances SET balance=balance+$1,updated_at=NOW() WHERE user_id=$2`, [points, toUserId]);
-        await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'transfer','Points received',$2),($3,'transfer','Points sent',$4)`, [toUserId, `You received ${points} points.`, userId, `You sent ${points} points.`]);
-        await client.query("COMMIT");
-      } catch (error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); }
-    } else if (action === "create_gift") {
-      const points = Number(body.points), maxUses = Math.min(1000000, Math.max(1, Math.floor(Number(body.max_uses || 1))));
-      if (!Number.isFinite(points) || points <= 0) throw new Error("Enter valid gift points.");
-      const code = String(body.code || `GIFT-${crypto.randomBytes(4).toString("hex").toUpperCase()}`).trim().toUpperCase();
-      const result = await query(`INSERT INTO public.gift_codes(code,points,max_uses,expires_at,created_by) VALUES($1,$2,$3,$4,$5) RETURNING code,points,max_uses,expires_at`, [code, points, maxUses, body.expires_at || null, session.username]);
-      return { ok: true, gift_code: result[0] };
-    } else throw new Error("Unknown user management action.");
-    await audit(session.username, `user_${action}`, req, "success", "user", userId);
-    return { ok: true };
-  }
+  await audit(session.username, `user_${action}`, req, "success", "user", userId);
+  return { ok: true };
+}
 
-  async function audit(
-    username,
-  action,
-  req,
-  outcome = "success",
-  targetType = null,
-  targetId = null
-) {
+async function audit(username, action, req, outcome = "success", targetType = null, targetId = null) {
   try {
     await pool.query(
       `INSERT INTO public.admin_audit_log
@@ -366,10 +545,7 @@ function ipAddress(req) {
       ]
     );
   } catch (error) {
-    console.error(
-      "Admin audit write failed:",
-      error.code || error.name
-    );
+    console.error("Admin audit write failed:", error.code || error.name);
   }
 }
 
@@ -408,10 +584,7 @@ async function recordLogin(req, success) {
       [ipAddress(req), !!success]
     );
   } catch (error) {
-    console.error(
-      "Login attempt logging failed:",
-      error.code || error.name
-    );
+    console.error("Login attempt logging failed:", error.code || error.name);
   }
 }
 
@@ -592,11 +765,11 @@ const LISTS = {
   },
 
   transactions: {
-select: `id,user_id,transaction_type,amount,status,
-  network,tx_hash,payout_tx_hash,destination_address,admin_note,
-  reviewed_at,reviewed_by,created_at,updated_at`,
-from: "public.transactions",
-  order: "id DESC"
+    select: `id,user_id,transaction_type,amount,status,
+      network,tx_hash,payout_tx_hash,destination_address,admin_note,
+      reviewed_at,reviewed_by,created_at,updated_at`,
+    from: "public.transactions",
+    order: "id DESC"
   },
 
   rounds: {
@@ -692,9 +865,7 @@ async function listAction(action, body) {
   if (action === "users") {
     const segment = String(body.segment || "all");
 
-    if (!USER_SEGMENTS.has(segment)) {
-      throw new Error("Invalid user segment.");
-    }
+    if (!USER_SEGMENTS.has(segment)) throw new Error("Invalid user segment.");
 
     const segmentSql = userSegmentSql(segment);
     if (segmentSql) conditions.push(segmentSql);
@@ -743,9 +914,7 @@ async function listAction(action, body) {
     const type = body.type || body.transaction_type;
 
     if (type) {
-      if (!["deposit", "withdrawal"].includes(String(type))) {
-        throw new Error("Invalid transaction type.");
-      }
+      if (!["deposit", "withdrawal"].includes(String(type))) throw new Error("Invalid transaction type.");
 
       addFilter(
         conditions,
@@ -756,9 +925,7 @@ async function listAction(action, body) {
     }
 
     if (body.user_id) {
-      if (!/^\d{1,15}$/.test(String(body.user_id))) {
-        throw new Error("Invalid user ID.");
-      }
+      if (!/^\d{1,15}$/.test(String(body.user_id))) throw new Error("Invalid user ID.");
 
       addFilter(
         conditions,
@@ -771,9 +938,7 @@ async function listAction(action, body) {
     if (body.status) {
       const status = String(body.status);
 
-      if (!STATUSES.has(status)) {
-        throw new Error("Invalid status.");
-      }
+      if (!STATUSES.has(status)) throw new Error("Invalid status.");
 
       addFilter(conditions, params, "status=?", status);
     }
@@ -789,9 +954,7 @@ async function listAction(action, body) {
     }
 
     if (body.user_id) {
-      if (!/^\d{1,15}$/.test(String(body.user_id))) {
-        throw new Error("Invalid user ID.");
-      }
+      if (!/^\d{1,15}$/.test(String(body.user_id))) throw new Error("Invalid user ID.");
 
       addFilter(
         conditions,
@@ -813,9 +976,7 @@ async function listAction(action, body) {
     if (body.status) {
       const status = String(body.status);
 
-      if (!STATUSES.has(status)) {
-        throw new Error("Invalid status.");
-      }
+      if (!STATUSES.has(status)) throw new Error("Invalid status.");
 
       addFilter(conditions, params, "b.status=?", status);
     }
@@ -824,9 +985,7 @@ async function listAction(action, body) {
   if (action === "rounds" && body.status) {
     const status = String(body.status);
 
-    if (!STATUSES.has(status)) {
-      throw new Error("Invalid status.");
-    }
+    if (!STATUSES.has(status)) throw new Error("Invalid status.");
 
     addFilter(conditions, params, "r.status=?", status);
   }
@@ -851,9 +1010,7 @@ async function listAction(action, body) {
     }
   }
 
-  const where = conditions.length
-    ? `WHERE ${conditions.join(" AND ")}`
-    : "";
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
   const countSql = action === "rounds"
     ? `SELECT COUNT(DISTINCT r.id) AS total
@@ -1225,9 +1382,7 @@ async function exportCsv(body) {
   if (kind === "users") {
     const segment = String(body.segment || "all");
 
-    if (!USER_SEGMENTS.has(segment)) {
-      throw new Error("Invalid user segment.");
-    }
+    if (!USER_SEGMENTS.has(segment)) throw new Error("Invalid user segment.");
 
     const segmentSql = userSegmentSql(segment);
     if (segmentSql) conditions.push(segmentSql);
@@ -1255,9 +1410,7 @@ async function exportCsv(body) {
       ORDER BY u.id DESC LIMIT ${EXPORT_MAX}`;
   } else if (kind === "bets") {
     if (body.user_id) {
-      if (!/^\d{1,15}$/.test(String(body.user_id))) {
-        throw new Error("Invalid user ID.");
-      }
+      if (!/^\d{1,15}$/.test(String(body.user_id))) throw new Error("Invalid user ID.");
 
       params.push(String(body.user_id));
       conditions.push(`b.user_id=$${params.length}`);
@@ -1271,9 +1424,7 @@ async function exportCsv(body) {
     if (body.status) {
       const status = String(body.status);
 
-      if (!STATUSES.has(status)) {
-        throw new Error("Invalid status.");
-      }
+      if (!STATUSES.has(status)) throw new Error("Invalid status.");
 
       params.push(status);
       conditions.push(`b.status=$${params.length}`);
@@ -1290,18 +1441,14 @@ async function exportCsv(body) {
     const type = body.type || body.transaction_type;
 
     if (type) {
-      if (!["deposit", "withdrawal"].includes(String(type))) {
-        throw new Error("Invalid transaction type.");
-      }
+      if (!["deposit", "withdrawal"].includes(String(type))) throw new Error("Invalid transaction type.");
 
       params.push(String(type));
       conditions.push(`transaction_type=$${params.length}`);
     }
 
     if (body.user_id) {
-      if (!/^\d{1,15}$/.test(String(body.user_id))) {
-        throw new Error("Invalid user ID.");
-      }
+      if (!/^\d{1,15}$/.test(String(body.user_id))) throw new Error("Invalid user ID.");
 
       params.push(String(body.user_id));
       conditions.push(`user_id=$${params.length}`);
@@ -1310,9 +1457,7 @@ async function exportCsv(body) {
     if (body.status) {
       const status = String(body.status);
 
-      if (!STATUSES.has(status)) {
-        throw new Error("Invalid status.");
-      }
+      if (!STATUSES.has(status)) throw new Error("Invalid status.");
 
       params.push(status);
       conditions.push(`status=$${params.length}`);
@@ -1346,7 +1491,7 @@ async function exportCsv(body) {
 }
 
 /* =========================
-   WALLET TRANSACTION REVIEW (UPDATED: 1 USDT = 100 POINTS)
+   WALLET TRANSACTION REVIEW
 ========================= */
 
 async function reviewWalletTransaction(action, body, session, req) {
@@ -1359,11 +1504,13 @@ async function reviewWalletTransaction(action, body, session, req) {
   const note = String(body.admin_note || "").trim().slice(0, 500);
   const payoutTxHash = String(body.payout_tx_hash || "").trim().slice(0, 200);
   const reviewNote = payoutTxHash ? `${note}${note ? " | " : ""}Payout TX: ${payoutTxHash}`.slice(0, 500) : note;
+
   if (action === "withdrawal_approve" && !/^0x[a-fA-F0-9]{64}$/.test(payoutTxHash)) {
-  throw new Error("A valid payout transaction hash is required.");
+    throw new Error("A valid payout transaction hash is required.");
   }
 
   await ensureManagementTables();
+
   const client = await pool.connect();
 
   try {
@@ -1379,15 +1526,11 @@ async function reviewWalletTransaction(action, body, session, req) {
       [transactionId]
     );
 
-    if (!result.rows.length) {
-      throw new Error("Transaction not found.");
-    }
+    if (!result.rows.length) throw new Error("Transaction not found.");
 
     const tx = result.rows[0];
 
-    if (tx.status !== "pending") {
-      throw new Error("Transaction is not pending.");
-    }
+    if (tx.status !== "pending") throw new Error("Transaction is not pending.");
 
     if (!["deposit", "withdrawal"].includes(tx.transaction_type)) {
       throw new Error("Unsupported wallet transaction type.");
@@ -1410,7 +1553,6 @@ async function reviewWalletTransaction(action, body, session, req) {
     let newStatus;
 
     if (action === "deposit_approve") {
-      // === FIXED: 1 USDT = 100 Points ===
       await client.query(
         `INSERT INTO public.wallet_balances
           (user_id,balance,updated_at)
@@ -1426,11 +1568,8 @@ async function reviewWalletTransaction(action, body, session, req) {
     } else if (action === "deposit_reject") {
       newStatus = "rejected";
     } else if (action === "withdrawal_approve") {
-      // The amount must already have been reserved by the
-      // user-facing withdrawal request endpoint.
       newStatus = "confirmed";
     } else if (action === "withdrawal_reject") {
-      // === FIXED: Refund 1 USDT = 100 Points ===
       await client.query(
         `INSERT INTO public.wallet_balances
           (user_id,balance,updated_at)
@@ -1457,26 +1596,20 @@ async function reviewWalletTransaction(action, body, session, req) {
 
     await client.query(
       `UPDATE public.transactions
-SET status=$1,
-  admin_note=$2,
-  payout_tx_hash=CASE WHEN $5 <> '' THEN $5 ELSE payout_tx_hash END,
+       SET status=$1,
+           admin_note=$2,
+           payout_tx_hash=CASE WHEN $5 <> '' THEN $5 ELSE payout_tx_hash END,
            reviewed_at=NOW(),
            reviewed_by=$3,
            updated_at=NOW()
        WHERE id=$4`,
-      [
-newStatus,
-  reviewNote,
-  session.username,
-  transactionId,
-  payoutTxHash
-      ]
+      [newStatus, reviewNote, session.username, transactionId, payoutTxHash]
     );
 
     await client.query("COMMIT");
 
     if (action === "withdrawal_approve") {
-      await notifyTelegram(`✅ Withdrawal approved\n👤 Name: ${tx.first_name || "User"}${tx.last_name ? ` ${tx.last_name}` : ""}\n💵 Amount: ${Number(tx.amount).toFixed(2)} USDT\n📣 Manual payout approved`, [process.env.ADMIN_CHAT_ID, RESULTS_CHANNEL]);
+      await notifyTelegram(`✅ Withdrawal approved\n👤 Name: ${tx.first_name || "User"}${tx.last_name ? ` ${tx.last_name}` : ""}\n💵 Amount: ${Number(tx.amount).toFixed(2)} USDT\n📣 Manual payout required.`);
     } else if (action === "deposit_approve") {
       await notifyTelegram(`✅ Deposit approved\n👤 User ID: ${tx.telegram_id}\n💵 Amount credited: ${Number(tx.amount) * 100} points (${Number(tx.amount).toFixed(2)} USDT)`);
     }
@@ -1497,7 +1630,7 @@ newStatus,
       status: newStatus,
       message:
         action === "deposit_approve"
-          ? `Deposit approved. ${Number(tx.amount) * 100} Points credited to user.`
+          ? `Deposit approved. ${Number(tx.amount) * 100} points credited to user.`
           : action === "deposit_reject"
           ? "Deposit rejected."
           : action === "withdrawal_approve"
@@ -1571,12 +1704,7 @@ module.exports = async function handler(req, res) {
     try {
       if (!(await loginAllowed(req))) {
         await recordLogin(req, false);
-        await audit(
-          "unknown",
-          "login_rate_limited",
-          req,
-          "blocked"
-        );
+        await audit("unknown", "login_rate_limited", req, "blocked");
 
         return json(res, 429, {
           message: "Too many login attempts. Try again in 15 minutes."
@@ -1607,10 +1735,7 @@ module.exports = async function handler(req, res) {
 
       return json(res, 200, { ok: true });
     } catch (error) {
-      console.error(
-        "Admin login error:",
-        error.code || error.name
-      );
+      console.error("Admin login error:", error.code || error.name);
 
       return json(res, 500, {
         message: "Login service temporarily unavailable."
