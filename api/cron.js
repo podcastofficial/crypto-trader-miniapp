@@ -205,7 +205,6 @@ async function scanDeposits(client) {
 
 function authorized(req) {
   const secret = process.env.CRON_SECRET;
-
   return Boolean(
     secret &&
     req.headers.authorization === `Bearer ${secret}`
@@ -320,7 +319,7 @@ module.exports = async function handler(req, res) {
           ON CONFLICT (round_code) DO NOTHING
           RETURNING id
         `,
-        ["open", roundCode, startsAt, bettingClosesAt, endsAt]
+        [roundCode, "open", startsAt, bettingClosesAt, endsAt]
       );
 
       if (inserted.rowCount) {
