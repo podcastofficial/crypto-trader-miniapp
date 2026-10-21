@@ -1,6 +1,5 @@
 const { Pool } = require("pg");
 const crypto = require("crypto");
-const { ethers } = require("ethers"); // NEW: Ethers for Direct RPC Verification
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -11,7 +10,7 @@ const pool = new Pool({
 });
 
 const BET_TYPES = ["Number", "Red", "Green", "Violet", "Big", "Small"];
-const ALLOWED_MULTIPLIERS = [1, 3, 9, 27, 81]; // Multiplier validation
+const ALLOWED_MULTIPLIERS = [1, 3, 9, 27, 81]; // NEW: Multiplier validation
 const POINTS_PER_USDT = 100;
 const MIN_BET_POINTS = 10;
 const MIN_DEPOSIT_POINTS = 100;
@@ -19,8 +18,32 @@ const MIN_WITHDRAW_POINTS = 500;
 const ROUND_LOCK_KEY = 739184205; // same lock key as api/cron.js
 const RESULTS_CHANNEL = "@crypto_trader_results";
 
-// NEW: Setup BSC Provider (QuickNode RPC URL from .env)
-const provider = new ethers.JsonRpcProvider(process.env.BSC_RPC_URL || "https://bsc-dataseed.binance.org");
+// ============================================================================
+// SAFE ETHERS LOADER (Prevents 500 errors on server crash)
+// ============================================================================
+let _ethers = null;
+let _provider = null;
+
+function getEthers() {
+  if (!_ethers) {
+    try {
+      _ethers = require("ethers");
+    } catch (e) {
+      console.error("[FATAL] ethers not installed:", e.message);
+      throw new Error("Blockchain library not available. Please check package.json.");
+    }
+  }
+  return _ethers;
+}
+
+function getProvider() {
+  if (!_provider) {
+    const ethers = getEthers();
+    _provider = new ethers.JsonRpcProvider(process.env.BSC_RPC_URL || "https://bsc-dataseed.binance.org");
+  }
+  return _provider;
+}
+// ============================================================================
 
 async function notifyTelegram(text, chats = [process.env.ADMIN_CHAT_ID]) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -52,7 +75,7 @@ function pageParams(input = {}) {
 }
 
 // ============================================================================
-// App Settings Helpers (For Admin Panel & Header Buttons)
+// NEW: App Settings Helpers (For Admin Panel & Header Buttons)
 // ============================================================================
 async function ensureAppSettings(client) {
   await client.query("SAVEPOINT sp_app_settings");
@@ -126,23 +149,23 @@ async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
   }
 
   try {
-    // 1. Blockchain se transaction receipt fetch karein
-    const receipt = await provider.getTransactionReceipt(txHash);
+    const ethers = getEthers();
+    const provider = getProvider();
 
+    // 1. Fetch receipt
+    const receipt = await provider.getTransactionReceipt(txHash);
     if (!receipt) {
       return { success: false, reason: "Transaction not found on Blockchain yet. Please wait." };
     }
-
     if (receipt.status !== 1) {
       return { success: false, reason: "Transaction failed on the blockchain." };
     }
 
-    // 2. Transaction details fetch karein
+    // 2. Fetch transaction details
     const tx = await provider.getTransaction(txHash);
 
-    // 3. Check karein ki kya token transfer hamare address par hua hai?
+    // 3. Check Transfer logs
     const transferTopic = ethers.id("Transfer(address,address,uint256)");
-    
     const log = receipt.logs.find(l => 
       l.address.toLowerCase() === usdtContract &&
       l.topics[0] === transferTopic &&
@@ -153,18 +176,14 @@ async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
       return { success: false, reason: "Transaction was not sent to the official deposit address." };
     }
 
-    // 4. Transfer amount decode karein (USDT me 18 decimals hote hain BSC par)
+    // 4. Decode amount
     const onChainAmount = Number(ethers.formatUnits(log.data, 18));
 
     if (onChainAmount + 0.01 < expectedAmountUsdt) {
       return { success: false, reason: `Amount mismatch. You sent ${onChainAmount} USDT but entered ${expectedAmountUsdt} USDT.` };
     }
 
-    return { 
-      success: true, 
-      verifiedAmount: onChainAmount,
-      fromAddress: tx.from 
-    };
+    return { success: true, verifiedAmount: onChainAmount, fromAddress: tx.from };
 
   } catch (error) {
     console.error("Blockchain verify error:", error.message);
@@ -175,6 +194,7 @@ async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
 
 // Makes sure the current round and a few future rounds exist,
 // so the game never depends on the cron timing.
+// Safe to run many times: unique round_code + advisory lock.
 async function ensureRounds(client) {
   try {
     await client.query(`CREATE TABLE IF NOT EXISTS public.game_rounds (
@@ -216,6 +236,7 @@ async function ensureRounds(client) {
     );
 
     if (!lock.rows[0].ok) {
+      // Cron is creating rounds right now.
       await client.query("ROLLBACK");
       return;
     }
@@ -248,6 +269,7 @@ async function ensureRounds(client) {
   }
 }
 
+// Settles rounds whose end time has passed.
 async function settleDueRounds(client) {
   try {
     const due = await client.query(
@@ -292,6 +314,7 @@ function verifyTelegramInitData(initData) {
       return null;
     }
 
+    // Increased to 24 hours to prevent sudden logouts
     if (Math.abs(Date.now() / 1000 - authDate) > 86400) {
       return null;
     }
