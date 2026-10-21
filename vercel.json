@@ -1,10 +1,9 @@
 {
-  "outputDirectory": ".",
-  "cleanUrls": false,
-  "trailingSlash": false,
   "functions": {
-    "api/cron.js": {
+    "api/*.js": {
       "maxDuration": 60
     }
-  }
+  },
+  "cleanUrls": false,
+  "trailingSlash": false
 }
