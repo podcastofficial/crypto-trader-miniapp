@@ -428,20 +428,6 @@ label { font-weight:800; font-size:12px; }
   .option-btn { font-size:12px; }
   .number-btn { min-height:45px; }
 }
-
-/* Profile option rows retain original palette; dark black profile backdrop */
-#page-profile { background:#000 !important; }
-#page-profile .profile-menu-card { background:#080808 !important; border-color:#292929 !important; }
-#page-profile .profile-option {
- width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px;
- text-align:left; margin-top:8px; padding:12px; border-radius:12px; cursor:pointer;
- background:#111 !important; color:#f5f5f5 !important; border:1px solid #2d2d2d !important; box-shadow:none !important;
-}
-#page-profile .profile-option > span { display:block; line-height:1.45; font-weight:700; }
-#page-profile .profile-option small { display:block; color:#a3a3a3 !important; font-size:11px; font-weight:500; margin-top:2px; }
-#page-profile .profile-option b { color:#facc15 !important; font-size:22px; font-weight:500; }
-.bottom-nav { grid-template-columns:repeat(5,minmax(0,1fr)); }
-#page-activity .card { margin-bottom:12px; }
 </style>  </head>  <body>
 <div class="banner" id="banner" role="status" aria-live="polite"></div>
 <div class="app">  <header>
@@ -556,56 +542,53 @@ label { font-weight:800; font-size:12px; }
     <div class="section-title">👥 <span data-i18n="refTitle">Referral Program</span></div>
     <div id="referralBody"><div class="empty" data-i18n="loading">Loading…</div></div>
   </div>
-</section>  <!-- PROFILE -->
-<section class="page" id="page-profile">
+</section>  <!-- PROFILE -->  <section class="page" id="page-profile">
   <div class="section">
-    <div class="section-title">👤 <span data-i18n="profile">Profile</span></div>
-    <div class="card">
-      <div class="muted small" data-i18n="tgAccount">Telegram account</div>
-      <strong id="profileName">…</strong><p class="muted small" id="profileStatus">…</p>
-      <div class="profile-stats"><div><span>Joined</span><strong id="profileJoined">—</strong></div><div><span>Available points</span><strong id="profileAvailablePoints">—</strong></div></div>
-      <button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth">Retry Authentication</button>
-      <div class="card" style="margin-top:14px"><div class="section-title">🎁 Gift Code</div><div class="copybox"><input id="giftCodeInput" placeholder="Enter gift code"><button class="sec-btn" id="redeemGiftBtn" type="button">Redeem</button></div></div>
-      <div class="actions" style="margin-top:12px"><button class="action-btn" id="editProfileBtn" type="button" data-i18n="editProfile">Edit Profile</button><button class="action-btn alt" id="walletAddressBtn" type="button" data-i18n="manageWallet">Add / Edit Wallet</button></div>
-    </div>
-    <div class="card profile-menu-card" style="margin-top:14px">
-      <div class="section-title">Profile Options</div>
-      <button class="setting-row profile-option" type="button" data-page-go="deposit"><span>📥 Deposit<small>Add funds to your account</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" data-page-go="withdraw"><span>📤 Withdraw<small>Request a withdrawal</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" data-page-go="wallet"><span>💰 Wallet<small>Balance and wallet transactions</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" data-page-go="activity"><span>📜 Activity &amp; History<small>Bets, deposits, withdrawals and rewards</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" id="profileGiftOption"><span>🎁 Gift Code<small>Redeem a code</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" data-page-go="referral"><span>👥 My Referrals<small>Referral link and rewards</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" id="profileLanguageOption"><span>🌐 Language<small>Choose display language</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" id="profileNotificationOption"><span>🔔 Notifications<small>Sound and notification preferences</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" id="profileSettingsOption"><span>⚙️ Settings<small>Sound, vibration and app preferences</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" id="profileSupportOption"><span>🎧 Help &amp; Support<small>Support information</small></span><b>›</b></button>
-      <button class="setting-row profile-option" type="button" id="profileLogoutOption"><span>🚪 Logout<small>Close this session</small></span><b>›</b></button>
-    </div>
-    <div class="card" style="margin-top:14px"><div class="section-title" data-i18n="settings">Settings</div>
-      <div class="setting-row"><span>🔊 <span data-i18n="sound">Sound</span></span><button class="switch on" id="sndSwitch" type="button" role="switch" aria-checked="true"><i></i></button></div>
-      <div class="setting-row"><span>📳 <span data-i18n="vibration">Vibration</span></span><button class="switch on" id="vibSwitch" type="button" role="switch" aria-checked="true"><i></i></button></div>
-    </div>
-    <div class="card"><div class="section-title" data-i18n="about">About</div><p data-i18n="aboutText">Server-controlled rounds and live points wallet.</p><div class="notice" data-i18n="gameNotice">Server-controlled game. Bets use your available points.</div></div>
-    <div class="card faq-card"><div class="section-title">Game FAQ</div><details><summary>How do I play?</summary><p>Pick a number, colour, or Big/Small option before betting closes, then confirm your points stake.</p></details><details><summary>When do I win?</summary><p>Winning bets settle automatically after the server publishes the result.</p></details><details><summary>How are payouts calculated?</summary><p>100 points on Red/Green can return 200 points, a number can return 900 points, and Violet can return 450 points if the result matches.</p></details><details><summary>Can I cancel a bet?</summary><p>Bets cannot be cancelled after confirmation.</p></details></div>
+    <div class="section-title">👤 <span data-i18n="profile">Profile</span></div>  <div class="card">
+  <div class="muted small" data-i18n="tgAccount">Telegram account</div>
+  <strong id="profileName">…</strong>
+  <p class="muted small" id="profileStatus">…</p>
+  <div class="profile-stats"><div><span>Joined</span><strong id="profileJoined">—</strong></div><div><span>Available points</span><strong id="profileAvailablePoints">—</strong></div></div>
+
+  <button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth">Retry Authentication</button>
+  <div class="card" style="margin-top:14px"><div class="section-title">Gift code</div><div class="copybox"><input id="giftCodeInput" placeholder="Enter gift code"><button class="sec-btn" id="redeemGiftBtn" type="button">Redeem</button></div></div>
+
+  <div class="actions" style="margin-top:12px">
+    <button class="action-btn" id="editProfileBtn" type="button" data-i18n="editProfile">Edit Profile</button>
+    <button class="action-btn alt" id="walletAddressBtn" type="button" data-i18n="manageWallet">Add / Edit Wallet</button>
   </div>
-</section>
-<!-- ACTIVITY -->
-<section class="page" id="page-activity">
- <div class="section">
-  <div class="section-title">📜 Activity &amp; History</div>
-  <div class="card"><div class="section-title">Betting / Trade History</div><div class="muted small">Your existing trade history is available on the Home page.</div><button class="primary-btn" type="button" data-page-go="home">Open Home / Trade History</button></div>
-  <div class="card" style="margin-top:12px"><div class="section-title">Deposit &amp; Withdrawal History</div><div id="activityWalletHistory" class="empty">Loading transaction history…</div></div>
-  <div class="card" style="margin-top:12px"><div class="section-title">Referral &amp; Commission History</div><div id="activityReferralHistory" class="empty">Loading referral history…</div></div>
- </div>
-</section>
-<!-- NAVIGATION -->
-<nav class="bottom-nav" aria-label="Main navigation">
- <button class="nav-btn active" data-page="home" type="button"><span class="nav-icon">🏠</span><span data-i18n="home">Home</span></button>
- <button class="nav-btn" data-page="deposit" type="button"><span class="nav-icon">📥</span><span>Deposit</span></button>
- <button class="nav-btn" data-page="withdraw" type="button"><span class="nav-icon">📤</span><span>Withdraw</span></button>
- <button class="nav-btn" data-page="activity" type="button"><span class="nav-icon">📜</span><span>Activity</span></button>
- <button class="nav-btn" data-page="profile" type="button"><span class="nav-icon">👤</span><span data-i18n="profile">Profile</span></button>
+  </div>    <div class="card">
+  <div class="section-title">⚙️ <span data-i18n="settings">Settings</span></div>
+      <div class="setting-row">
+        <span>🔊 <span data-i18n="sound">Sound</span></span>
+        <button class="switch on" id="sndSwitch" type="button" role="switch" aria-checked="true"><i></i></button>
+      </div>
+      <div class="setting-row">
+        <span>📳 <span data-i18n="vibration">Vibration</span></span>
+        <button class="switch on" id="vibSwitch" type="button" role="switch" aria-checked="true"><i></i></button>
+      </div>
+
+    </div>  <div class="card">
+  <div class="section-title" data-i18n="about">About</div>
+  <p data-i18n="aboutText">Server-controlled rounds and live points wallet.</p>
+  <div class="notice" data-i18n="gameNotice">Server-controlled game. Bets use your available points.</div>
+</div>
+
+  </div>
+<div class="card faq-card"><div class="section-title">Game FAQ</div><details><summary>How do I play?</summary><p>Pick a number, colour, or Big/Small option before betting closes, then confirm your points stake.</p></details><details><summary>When do I win?</summary><p>Winning bets settle automatically after the server publishes the result.</p></details><details><summary>How are payouts calculated?</summary><p>100 points on Red/Green can return 200 points, a number can return 900 points, and Violet can return 450 points if the result matches.</p></details><details><summary>Can I cancel a bet?</summary><p>Bets cannot be cancelled after confirmation.</p></details></div>
+</section>  <!-- NAVIGATION -->  <nav class="bottom-nav" aria-label="Main navigation">
+  <button class="nav-btn active" data-page="home" type="button">
+    <span class="nav-icon">🏠</span><span data-i18n="home">Home</span>
+  </button>
+  <button class="nav-btn" data-page="wallet" type="button">
+    <span class="nav-icon">💰</span><span data-i18n="wallet">Wallet</span>
+  </button>
+  <button class="nav-btn" data-page="referral" type="button">
+    <span class="nav-icon">🎁</span><span data-i18n="referral">Referral</span>
+  </button>
+  <button class="nav-btn" data-page="profile" type="button">
+    <span class="nav-icon">👤</span><span data-i18n="profile">Profile</span>
+  </button>
 </nav>  </div>  <!-- BET MODAL -->  <div class="modal-backdrop" id="betModal">
   <div class="modal">
     <div class="row">
@@ -636,8 +619,6 @@ label { font-weight:800; font-size:12px; }
     <div class="row"><div class="modal-title" data-i18n="editProfile">Edit Profile</div><button class="close-btn" data-close="profileModal" type="button">✕</button></div>
   <label for="profileDisplayName" data-i18n="displayName">Display name</label>
   <input id="profileDisplayName" type="text" maxlength="64" autocomplete="name">
-  <label for="profileAvatar" style="margin-top:12px">Profile image</label>
-  <input id="profileAvatar" type="file" accept="image/png,image/jpeg,image/webp">
   <div class="notice" data-i18n="profileTelegramNote">Your Telegram username is managed by Telegram.</div>
     <button class="primary-btn" id="saveProfileBtn" type="button" style="margin-top:14px" data-i18n="saveChanges">Save Changes</button>
   </div>
@@ -1075,6 +1056,7 @@ let initData = "";
 let authed = false;
 let authBlock = null;
 let user = null;
+let savedWalletAddress = "";
 let balance = null;
 let currentRound = null;
 let latestRounds = [];
@@ -1335,7 +1317,9 @@ function openProfileModal(){
 
 function openWalletAddressModal(){
   if(!authed){ toast(t("toastAuth")); return; }
+  $("walletAddressInput").value = savedWalletAddress || "";
   $("walletAddressModal").classList.add("open");
+  loadSavedWalletAddress();
 }
 
 async function saveProfile(){
@@ -1344,21 +1328,12 @@ async function saveProfile(){
   const userId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id;
   if(!userId){ toast(t("openInTg")); return; }
   try {
-  const response = await fetch("/api/profile",{
-  method:"POST",
-  headers:{"Content-Type":"application/json","x-telegram-id":String(userId)},
-  body:JSON.stringify({displayName:value})
-  });
-  const data = await response.json().catch(() => null);
-  const avatar = $("profileAvatar").files && $("profileAvatar").files[0];
-  if (avatar) {
-    if (avatar.size > 2 * 1024 * 1024) { toast("Image must be under 2 MB."); return; }
-    const reader = new FileReader();
-    const imageData = await new Promise(resolve => { reader.onload = () => resolve(reader.result); reader.readAsDataURL(avatar); });
-    const avatarResponse = await fetch("/api/profile-avatar", { method:"POST", headers:{"Content-Type":"application/json","x-telegram-id":String(userId)}, body:JSON.stringify({file:imageData}) });
-    const avatarData = await avatarResponse.json().catch(() => null);
-    if (!avatarResponse.ok || !avatarData?.success) { toast(avatarData?.message || "Could not upload image."); return; }
-  }
+    const response = await fetch("/api/profile",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-telegram-id":String(userId)},
+      body:JSON.stringify({displayName:value})
+    });
+    const data = await response.json().catch(() => null);
     if(!response.ok || !data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; }
     profName = {raw:data.displayName};
     renderProfile();
@@ -1371,22 +1346,35 @@ async function saveProfile(){
 
 async function saveWalletAddress(){
   const value = $("walletAddressInput").value.trim();
-  // Flexible validation
-  if(value.length < 20){ toast(t("invalidWallet")); return; }
-  const userId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id;
-  if(!userId){ toast(t("openInTg")); return; }
+  if(value.length < 20 || value.length > 150){ toast(t("invalidWallet")); return; }
+  if(!initData){ toast(t("openInTg")); return; }
+  const button = $("saveWalletAddressBtn");
+  button.disabled = true;
   try {
-    const response = await fetch("/api/set-deposit-wallet",{
-      method:"POST", headers:{"Content-Type":"application/json","x-telegram-id":String(userId)},
-      body:JSON.stringify({walletAddress:value})
-    });
-    const data = await response.json().catch(() => null);
-    if(!response.ok || !data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; }
+    const result = await api("save_wallet_address", {wallet_address:value});
+    savedWalletAddress = String(result.wallet_address || value);
+    $("walletAddressInput").value = savedWalletAddress;
+    $("withdrawAddress").value = savedWalletAddress;
     toast(t("walletSaved"));
     $("walletAddressModal").classList.remove("open");
-  } catch(_) {
-    toast(t("refreshFailed"));
+  } catch(error) {
+    toast(error.message || t("refreshFailed"));
+  } finally {
+    button.disabled = false;
   }
+}
+
+async function loadSavedWalletAddress(){
+  if(!initData) return "";
+  try {
+    const result = await api("get_wallet_address");
+    savedWalletAddress = String(result.wallet_address || "");
+    const profileInput = $("walletAddressInput");
+    const withdrawalInput = $("withdrawAddress");
+    if(profileInput && !profileInput.value) profileInput.value = savedWalletAddress;
+    if(withdrawalInput && !withdrawalInput.value) withdrawalInput.value = savedWalletAddress;
+  } catch(_) {}
+  return savedWalletAddress;
 }
 
 function updateBalance(value){
@@ -1660,6 +1648,7 @@ let selectedDepositCoin = "USDT";
   $("cashWithdrawFields").style.display = kind === "withdraw" ? "block" : "none";
   $("depositTimer").style.display = kind === "deposit" ? "block" : "none";
   if(kind === "withdraw"){
+    await loadSavedWalletAddress();
     const available = Number.isFinite(balance) ? Math.max(0, balance) : 0;
     $("withdrawAvailableBalance").textContent = `${money(available)} Points · ${(available / 100).toFixed(2)} USDT`;
     $("withdrawAmount").max = available.toFixed(2);
@@ -1762,7 +1751,7 @@ let selectedDepositCoin = "USDT";
     await api("request_withdrawal", {amount: amount.toFixed(2), destination_address: address});
     toast("Withdrawal request submitted for admin approval.");
     $("cashModal").classList.remove("open");
-    $("withdrawAmount").value = ""; $("withdrawAddress").value = "";
+    $("withdrawAmount").value = ""; $("withdrawAddress").value = savedWalletAddress || "";
     await refreshAll(true);
   } catch(error) { toast(error.message); }
   finally { button.disabled = false; }
@@ -2518,32 +2507,7 @@ function showPage(name){
 
   if(name === "wallet" || name === "deposit" || name === "withdraw") loadWallet();
   if(name === "referral" || name === "profile") loadReferral();
-  if(name === "activity") loadActivityPage();
   window.scrollTo(0,0);
-}
-
-async function loadActivityPage(){
-  const walletEl = $("activityWalletHistory");
-  const referralEl = $("activityReferralHistory");
-  if(!authed){
-    if(walletEl) walletEl.textContent = "Authenticate through Telegram to view activity.";
-    if(referralEl) referralEl.textContent = "Authenticate through Telegram to view referral activity.";
-    return;
-  }
-  try {
-    const d = await api("wallet_history",{page:1,page_size:20});
-    const items = d.transactions || [];
-    if(walletEl) walletEl.innerHTML = items.length ? items.map(x =>
-      `<div class="setting-row"><span><strong>${esc(String(x.transaction_type || "transaction").replace(/_/g," "))}</strong><small>${esc(x.created_at || "")} · ${esc(x.status || "unknown")}</small></span><b>${esc(String(x.amount ?? "—"))} Points</b></div>`
-    ).join("") : '<div class="empty">No wallet transactions yet.</div>';
-  } catch(e) { if(walletEl) walletEl.textContent = "Could not load wallet history."; }
-  try {
-    const h = await api("referral_history",{page:1,page_size:20});
-    const items = h.commissions || [];
-    if(referralEl) referralEl.innerHTML = items.length ? items.map(x =>
-      `<div class="setting-row"><span><strong>Referral commission</strong><small>${esc(x.created_at || "")} · ${esc(x.status || "recorded")}</small></span><b>${esc(String(x.amount ?? x.points ?? "—"))} Points</b></div>`
-    ).join("") : '<div class="empty">No referral commissions yet.</div>';
-  } catch(e) { if(referralEl) referralEl.textContent = "Could not load referral history."; }
 }
 
 function renderLangList(filter){
@@ -2828,37 +2792,5 @@ function init(){
 init();
 
 })();
-</script>  
-<script>
-document.addEventListener("DOMContentLoaded", function () {
- const byId = id => document.getElementById(id);
- byId("profileGiftOption")?.addEventListener("click", function () {
-   byId("giftCodeInput")?.scrollIntoView({behavior:"smooth",block:"center"});
-   byId("giftCodeInput")?.focus();
- });
- byId("profileLanguageOption")?.addEventListener("click", function () {
-   const modal=byId("langModal");
-   if(modal){modal.classList.add("open");return;}
-   const button=document.querySelector('[data-open="langModal"],#languageBtn,.lang-btn');
-   if(button)button.click();else alert("Language selector is not available in this view.");
- });
- byId("profileNotificationOption")?.addEventListener("click", function () {
-   const modal=byId("notificationModal");
-   if(modal){modal.classList.add("open");return;}
-   byId("sndSwitch")?.scrollIntoView({behavior:"smooth",block:"center"});
- });
- byId("profileSettingsOption")?.addEventListener("click", function () {
-   byId("sndSwitch")?.scrollIntoView({behavior:"smooth",block:"center"});
- });
- byId("profileSupportOption")?.addEventListener("click", function () {
-   const link=document.querySelector('a[href*="t.me/"][data-support],a.support-link');
-   if(link)window.open(link.href,"_blank","noopener");else alert("Support link has not been configured.");
- });
- byId("profileLogoutOption")?.addEventListener("click", function () {
-   alert("Close the Mini App from Telegram to end this session.");
- });
-});
-</script>
-
-</body>
+</script>  </body>
   </html>
