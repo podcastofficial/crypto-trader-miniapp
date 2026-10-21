@@ -87,7 +87,7 @@ async function ensureAppSettings(client) {
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
-    
+
     const defaults = [
       ['sound_button_enabled', 'true'],
       ['channel_button_enabled', 'false'],
@@ -98,7 +98,7 @@ async function ensureAppSettings(client) {
       ['signup_bonus_enabled', 'true'],
       ['signup_bonus_amount', '25'],
     ];
-    
+
     for (const [key, value] of defaults) {
       await client.query(
         `INSERT INTO public.app_settings (key, value) 
@@ -215,7 +215,7 @@ async function ensureRounds(client) {
     await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS result_number INTEGER`);
     await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
     await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS settled_at TIMESTAMPTZ`);
-    
+
     const check = await client.query(`
       SELECT
         EXISTS (
@@ -366,13 +366,13 @@ async function getUser(client, telegramUser) {
   await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS signup_bonus_given BOOLEAN NOT NULL DEFAULT FALSE`); 
   await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS deposit_wallet TEXT`); 
   await client.query(`ALTER TABLE public.referral_rewards ADD COLUMN IF NOT EXISTS credited_at TIMESTAMPTZ`);
-  
+
   const result = await client.query(
     `INSERT INTO public.users (telegram_id, username, first_name, last_name)
        VALUES ($1, $2, $3, $4)
        ON CONFLICT (telegram_id)
        DO UPDATE SET username = EXCLUDED.username, first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name
-       RETURNING id, telegram_id, username, first_name, last_name, referral_code, referred_by, signup_bonus_given, deposit_wallet, (xmax = 0) AS is_new`,
+       RETURNING id, telegram_id, username, first_name, last_name, referral_code, referred_by, signup_bonus_given, deposit_wallet, is_blocked, (xmax = 0) AS is_new`,
     [String(telegramUser.id), telegramUser.username || null, telegramUser.first_name || null, telegramUser.last_name || null]
   );
 
@@ -389,7 +389,7 @@ async function getUser(client, telegramUser) {
     max_uses INTEGER NOT NULL DEFAULT 1, uses INTEGER NOT NULL DEFAULT 0, expires_at TIMESTAMPTZ,
     created_by TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`);
-  
+
   await client.query(`CREATE TABLE IF NOT EXISTS public.gift_code_redemptions (
     gift_code_id BIGINT REFERENCES public.gift_codes(id) ON DELETE CASCADE,
     user_id BIGINT REFERENCES public.users(id) ON DELETE CASCADE,
@@ -517,7 +517,7 @@ async function autoCreditReferralRewards(client, referrerUserId) {
       WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
         AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')
     `, [referrerUserId]);
-    
+
     if (check.rows[0].cnt === 0) {
       await client.query("RELEASE SAVEPOINT sp_auto_credit");
       return 0;
@@ -529,7 +529,7 @@ async function autoCreditReferralRewards(client, referrerUserId) {
         AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')
       FOR UPDATE
     `, [referrerUserId]);
-    
+
     if (!locked.rowCount) {
       await client.query("RELEASE SAVEPOINT sp_auto_credit");
       return 0;
@@ -540,7 +540,7 @@ async function autoCreditReferralRewards(client, referrerUserId) {
 
     await client.query(`UPDATE public.referral_rewards SET status = 'credited', credited_at = NOW() WHERE id = ANY($1::bigint[])`, [ids]);
     await client.query(`UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`, [total.toFixed(2), referrerUserId]);
-    
+
     await client.query("SAVEPOINT sp_auto_tx");
     try {
       await client.query(
@@ -911,6 +911,17 @@ module.exports = async function handler(req, res) {
     await ensureAppSettings(client); 
     const user = await getUser(client, telegramUser);
     await client.query(`ALTER TABLE public.referral_commissions ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ`);
+
+    // NEW: Check if user is blocked
+    if (user.is_blocked) {
+      await client.query("ROLLBACK");
+      transactionStarted = false;
+      return json(res, 403, {
+        success: false,
+        message: "Your account has been blocked by the admin.",
+      });
+    }
+
     const action = String(body.action || "");
 
     if (action === "app_config") {
@@ -969,17 +980,17 @@ module.exports = async function handler(req, res) {
         [code]
       );
       if (!gift.rowCount) throw new Error("Gift code is invalid, expired, or already used.");
-      
+
       const used = await client.query(
         `SELECT 1 FROM public.gift_code_redemptions WHERE gift_code_id=$1 AND user_id=$2`,
         [gift.rows[0].id, user.id]
       );
       if (used.rowCount) throw new Error("You have already redeemed this gift code.");
-      
+
       await client.query(`INSERT INTO public.gift_code_redemptions(gift_code_id,user_id) VALUES($1,$2)`, [gift.rows[0].id, user.id]);
       await client.query(`UPDATE public.gift_codes SET uses=uses+1 WHERE id=$1`, [gift.rows[0].id]);
       await client.query(`UPDATE public.wallet_balances SET balance=balance+$1,updated_at=NOW() WHERE user_id=$2`, [gift.rows[0].points, user.id]);
-      
+
       await client.query("SAVEPOINT sp_gift_tx");
       try {
         await client.query(
@@ -996,7 +1007,7 @@ module.exports = async function handler(req, res) {
         `INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'gift','Gift code redeemed',$2)`,
         [user.id, `You received ${gift.rows[0].points} points.`]
       ).catch(()=>{});
-      
+
       await client.query("COMMIT"); transactionStarted = false;
       return json(res, 200, { success: true, points: gift.rows[0].points });
     }
@@ -1102,17 +1113,17 @@ module.exports = async function handler(req, res) {
       const amountText = String(body.amount_usdt || "").trim();
       const amount = Number(amountText);
       const network = String(body.network || "Unknown Network").trim().slice(0, 80);
-      
+
       if (txHash.length < 20) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 400, { success: false, message: "Enter a valid transaction hash." });
       }
-      
+
       if (!Number.isFinite(amount) || amount < 1 || amount > 1000000) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 400, { success: false, message: "Minimum deposit is 1 USDT." });
       }
-      
+
       const existing = await client.query(`SELECT id,status FROM public.transactions WHERE LOWER(tx_hash)=LOWER($1) LIMIT 1`, [txHash]);
       if (existing.rowCount) {
         await client.query("ROLLBACK"); transactionStarted = false;
@@ -1133,10 +1144,10 @@ module.exports = async function handler(req, res) {
         );
 
         await client.query(`UPDATE public.wallet_balances SET balance=balance+$1, updated_at=NOW() WHERE user_id=$2`, [pointsToAdd, user.id]);
-        
+
         await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'deposit','Deposit Successful',$2)`, 
           [user.id, `Deposit of ${verification.verifiedAmount} USDT verified automatically. ${pointsToAdd} Points added.`]).catch(() => {});
-        
+
         await client.query("COMMIT"); transactionStarted = false;
 
         await notifyTelegram(`✅ Auto-Deposit Verified!\n👤 User ID: ${user.telegram_id}\n💵 Amount: ${verification.verifiedAmount} USDT\n🪙 Points: ${pointsToAdd}\n🔗 TX: ${txHash}`);
@@ -1149,21 +1160,21 @@ module.exports = async function handler(req, res) {
 
       } else {
         console.warn("Auto-verify failed:", verification.reason);
-        
+
         const submitted = await client.query(
           `INSERT INTO public.transactions (user_id,transaction_type,amount,status,network,tx_hash,created_at,updated_at) 
            VALUES ($1,'deposit',$2::numeric,'pending',$3,$4,NOW(),NOW()) 
            RETURNING id,amount,status,network,tx_hash,created_at`, 
           [user.id, amount.toFixed(6), network, txHash]
         );
-        
+
         await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'deposit','Deposit pending',$2)`, 
           [user.id, `Auto-verification failed (${verification.reason}). Submitted to admin for manual approval.`]).catch(() => {});
-        
+
         await client.query("COMMIT"); transactionStarted = false;
-        
+
         await notifyTelegram(`⚠️ Manual Verification Needed\n👤 User ID: ${user.telegram_id}\n🔗 TX: ${txHash}\n🌐 Network: ${network}\n❌ Reason: ${verification.reason}`);
-        
+
         return json(res, 200, { success: true, deposit: submitted.rows[0], message: "Submitted for admin approval. Auto-verify is pending." });
       }
     }
@@ -1173,17 +1184,17 @@ module.exports = async function handler(req, res) {
       const amount = Number(amountText);
       const destination = String(body.destination_address || "").trim();
       const withdrawalFeeRate = 0.10;
-      
+
       if (!/^\d{1,18}(\.\d{1,2})?$/.test(amountText) || !Number.isFinite(amount) || amount < MIN_WITHDRAW_POINTS) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 400, { success: false, message: "Minimum withdrawal is 500 points (5 USDT)." });
       }
-      
+
       if (destination.length < 20) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 400, { success: false, message: "Enter a valid wallet address." });
       }
-      
+
       const result = await client.query(
         `UPDATE public.wallet_balances
          SET balance = balance - $1::numeric, updated_at = NOW()
@@ -1194,12 +1205,12 @@ module.exports = async function handler(req, res) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 400, { success: false, message: "Insufficient available balance." });
       }
-      
+
       const netPoints = Math.floor(amount * (1 - withdrawalFeeRate) * 100) / 100;
       const netAmountUsdt = (netPoints / POINTS_PER_USDT).toFixed(6);
-      
+
       const grossAmountUsdt = (amount / POINTS_PER_USDT).toFixed(6);
-      
+
       const tx = await client.query(
         `INSERT INTO public.transactions
           (user_id, transaction_type, amount, status, network, destination_address, created_at, updated_at)
@@ -1207,11 +1218,18 @@ module.exports = async function handler(req, res) {
          RETURNING id, amount, status, destination_address, created_at`,
         [user.id, grossAmountUsdt, destination]
       );
-      
+
       await client.query("COMMIT"); transactionStarted = false;
       const displayName = [user.first_name, user.last_name].filter(Boolean).join(" ") || "User";
-      await notifyTelegram(`📤 Withdrawal requested\n👤 Name: ${displayName}\n💵 Gross: ${(amount / POINTS_PER_USDT).toFixed(2)} USDT\n💸 Fee: 10%\n✅ Net: ${netAmountUsdt} USDT\n🏦 Wallet: ${destination}\n⏳ Status: Pending approval`, [process.env.ADMIN_CHAT_ID, RESULTS_CHANNEL]);
       
+      // Notify Admin
+      await notifyTelegram(`📤 Withdrawal requested\n👤 Name: ${displayName}\n💵 Gross: ${(amount / POINTS_PER_USDT).toFixed(2)} USDT\n💸 Fee: 10%\n✅ Net: ${netAmountUsdt} USDT\n🏦 Wallet: ${destination}\n⏳ Status: Pending approval`, [process.env.ADMIN_CHAT_ID, RESULTS_CHANNEL]);
+
+      // NEW: Notify User via Bot
+      if (user.telegram_id) {
+        await notifyTelegram(`⏳ Withdrawal Request Received\nAmount: ${(amount / POINTS_PER_USDT).toFixed(2)} USDT\nNet Amount: ${netAmountUsdt} USDT\nStatus: Pending Admin Approval\n\nYou will be notified once processed.`, [user.telegram_id]);
+      }
+
       return json(res, 200, { success: true, withdrawal: tx.rows[0], balance: result.rows[0].balance });
     }
 
@@ -1397,7 +1415,7 @@ module.exports = async function handler(req, res) {
 
       await client.query(`UPDATE public.referral_rewards SET status = 'credited', credited_at = NOW() WHERE id = ANY($1::bigint[])`, [ids]);
       await client.query(`UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`, [amount.toFixed(2), user.id]);
-      
+
       await client.query("SAVEPOINT sp_claim_tx");
       try {
         await client.query(
@@ -1431,7 +1449,7 @@ module.exports = async function handler(req, res) {
 
       await client.query(`UPDATE public.referral_commissions SET claimed_at = NOW() WHERE id = ANY($1::bigint[])`, [ids]);
       await client.query(`UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`, [amount.toFixed(2), user.id]);
-      
+
       await client.query("SAVEPOINT sp_comm_tx");
       try {
         await client.query(
