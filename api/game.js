@@ -10,7 +10,7 @@ const pool = new Pool({
 });
 
 const BET_TYPES = ["Number", "Red", "Green", "Violet", "Big", "Small"];
-const ALLOWED_MULTIPLIERS = [1, 3, 9, 27, 81]; // NEW: bet multipliers
+const ALLOWED_MULTIPLIERS = [1, 3, 9, 27, 81]; // NEW: Multiplier validation
 const POINTS_PER_USDT = 100;
 const MIN_BET_POINTS = 10;
 const MIN_DEPOSIT_POINTS = 100;
@@ -47,9 +47,9 @@ function pageParams(input = {}) {
   };
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// NEW: App settings helpers (admin-configurable options)
-// ═══════════════════════════════════════════════════════════════════
+// ============================================================================
+// NEW: App Settings Helpers (For Admin Panel & Header Buttons)
+// ============================================================================
 async function ensureAppSettings(client) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS public.app_settings (
@@ -59,41 +59,37 @@ async function ensureAppSettings(client) {
     )
   `);
   const defaults = [
-    ["sound_button_enabled", "true"],
-    ["channel_button_enabled", "false"],
-    ["channel_url", ""],
-    ["support_button_enabled", "false"],
-    ["support_url", ""],
-    ["support_type", "whatsapp"],
-    ["signup_bonus_enabled", "true"],
-    ["signup_bonus_amount", "25"],
+    ['sound_button_enabled', 'true'],
+    ['channel_button_enabled', 'false'],
+    ['channel_url', ''],
+    ['support_button_enabled', 'false'],
+    ['support_url', ''],
+    ['support_type', 'whatsapp'],
+    ['signup_bonus_enabled', 'true'],
+    ['signup_bonus_amount', '25'],
   ];
   for (const [key, value] of defaults) {
     await client.query(
-      `INSERT INTO public.app_settings (key, value) VALUES ($1, $2)
-       ON CONFLICT (key) DO NOTHING`,
+      `INSERT INTO public.app_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING`,
       [key, value]
     );
   }
 }
 
 async function getAppSetting(client, key, fallback = null) {
-  const r = await client.query(
-    `SELECT value FROM public.app_settings WHERE key = $1`,
-    [key]
-  );
+  const r = await client.query(`SELECT value FROM public.app_settings WHERE key = $1`, [key]);
   if (!r.rowCount) return fallback;
   return r.rows[0].value;
 }
 
 function parseSettingValue(raw) {
   if (raw === null || raw === undefined) return null;
-  if (raw === "true" || raw === "1") return true;
-  if (raw === "false" || raw === "0") return false;
-  if (!isNaN(Number(raw)) && String(raw).trim() !== "") return Number(raw);
+  if (raw === 'true' || raw === '1') return true;
+  if (raw === 'false' || raw === '0') return false;
+  if (!isNaN(Number(raw)) && String(raw).trim() !== '') return Number(raw);
   return raw;
 }
-// ═══════════════════════════════════════════════════════════════════
+// ============================================================================
 
 // Makes sure the current round and a few future rounds exist,
 // so the game never depends on the cron timing.
@@ -266,14 +262,15 @@ async function getUser(client, telegramUser) {
   await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS first_name TEXT`);
   await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS last_name TEXT`);
   await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS signup_bonus_given BOOLEAN NOT NULL DEFAULT FALSE`); // NEW
-  await client.query(`ALTER TABLE public.referral_rewards ADD COLUMN IF NOT EXISTS credited_at TIMESTAMPTZ`); // FIX
+  await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS deposit_wallet TEXT`); // NEW for Withdraw Lock
+  await client.query(`ALTER TABLE public.referral_rewards ADD COLUMN IF NOT EXISTS credited_at TIMESTAMPTZ`);
   
   const result = await client.query(
     `INSERT INTO public.users (telegram_id, username, first_name, last_name)
        VALUES ($1, $2, $3, $4)
        ON CONFLICT (telegram_id)
        DO UPDATE SET username = EXCLUDED.username, first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name
-       RETURNING id, telegram_id, username, first_name, last_name, referral_code, referred_by, signup_bonus_given, (xmax = 0) AS is_new`,
+       RETURNING id, telegram_id, username, first_name, last_name, referral_code, referred_by, signup_bonus_given, deposit_wallet, (xmax = 0) AS is_new`,
     [String(telegramUser.id), telegramUser.username || null, telegramUser.first_name || null, telegramUser.last_name || null]
   );
 
@@ -290,8 +287,8 @@ async function getUser(client, telegramUser) {
     max_uses INTEGER NOT NULL DEFAULT 1, uses INTEGER NOT NULL DEFAULT 0, expires_at TIMESTAMPTZ,
     created_by TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`);
-
-  // NEW: create gift redemption table early to avoid "table not exist" errors
+  
+  // NEW: Gift Redemption Table created early to prevent errors
   await client.query(`CREATE TABLE IF NOT EXISTS public.gift_code_redemptions (
     gift_code_id BIGINT REFERENCES public.gift_codes(id) ON DELETE CASCADE,
     user_id BIGINT REFERENCES public.users(id) ON DELETE CASCADE,
@@ -306,7 +303,7 @@ async function getUser(client, telegramUser) {
     [user.id]
   );
 
-  // MODIFIED: Signup bonus via admin settings + one-time flag
+  // FIX: Signup bonus using SAVEPOINT to prevent full transaction abort
   if (user.is_new && !user.signup_bonus_given) {
     const enabledRaw = await getAppSetting(client, "signup_bonus_enabled", "true");
     const amountRaw = await getAppSetting(client, "signup_bonus_amount", "25");
@@ -322,18 +319,33 @@ async function getUser(client, telegramUser) {
         `UPDATE public.users SET signup_bonus_given = TRUE WHERE id = $1`,
         [user.id]
       );
-      await client.query(
-        `INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at)
-         VALUES ($1, 'signup_bonus', $2, 'completed', NOW(), NOW())`,
-        [user.id, bonusAmount.toFixed(2)]
-      ).catch(() => {});
-      await client.query(
-        `INSERT INTO public.user_notifications(user_id,kind,title,message)
-         VALUES($1,'bonus','Joining bonus',$2)`,
-        [user.id, `You received ${bonusAmount} points as a new user joining bonus.`]
-      );
+
+      await client.query("SAVEPOINT sp_bonus_tx");
+      try {
+        await client.query(
+          `INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at)
+           VALUES ($1, 'reward', $2, 'completed', NOW(), NOW())`,
+          [user.id, bonusAmount.toFixed(2)]
+        );
+        await client.query("RELEASE SAVEPOINT sp_bonus_tx");
+      } catch (err) {
+        await client.query("ROLLBACK TO SAVEPOINT sp_bonus_tx");
+        console.warn("Signup bonus txn insert skipped:", err.message);
+      }
+
+      await client.query("SAVEPOINT sp_bonus_notif");
+      try {
+        await client.query(
+          `INSERT INTO public.user_notifications(user_id,kind,title,message)
+           VALUES($1,'bonus','Joining bonus',$2)`,
+          [user.id, `You received ${bonusAmount} points as a new user joining bonus.`]
+        );
+        await client.query("RELEASE SAVEPOINT sp_bonus_notif");
+      } catch (err) {
+        await client.query("ROLLBACK TO SAVEPOINT sp_bonus_notif");
+        console.warn("Signup bonus notif skipped:", err.message);
+      }
     } else {
-      // Mark as given so we don't try again on future logins
       await client.query(
         `UPDATE public.users SET signup_bonus_given = TRUE WHERE id = $1`,
         [user.id]
@@ -394,67 +406,45 @@ function telegramBotUsername() {
     .replace(/^@/, "");
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// NEW: Auto-credit pending rewards for active users
-// (Fixes Points 2 & 3: no more stale pending counts for active users)
-// ═══════════════════════════════════════════════════════════════════
+// ============================================================================
+// NEW: Auto-credit pending rewards for active users (Fixes Point 2 & 3)
+// ============================================================================
 async function autoCreditReferralRewards(client, referrerUserId) {
   const check = await client.query(`
     SELECT COUNT(*)::int AS cnt FROM public.referral_rewards rr
-    WHERE rr.referrer_user_id = $1
-      AND rr.status = 'pending'
-      AND EXISTS (
-        SELECT 1 FROM public.bets b
-        WHERE b.user_id = rr.referred_user_id
-          AND b.created_at > NOW() - INTERVAL '7 days'
-      )
+    WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
+      AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')
   `, [referrerUserId]);
-
   if (check.rows[0].cnt === 0) return 0;
 
   const locked = await client.query(`
     SELECT rr.id, rr.reward_points FROM public.referral_rewards rr
-    WHERE rr.referrer_user_id = $1
-      AND rr.status = 'pending'
-      AND EXISTS (
-        SELECT 1 FROM public.bets b
-        WHERE b.user_id = rr.referred_user_id
-          AND b.created_at > NOW() - INTERVAL '7 days'
-      )
+    WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
+      AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')
     FOR UPDATE
   `, [referrerUserId]);
-
   if (!locked.rowCount) return 0;
 
   const total = locked.rows.reduce((sum, r) => sum + Number(r.reward_points), 0);
-  const ids = locked.rows.map((r) => r.id);
+  const ids = locked.rows.map(r => r.id);
 
-  await client.query(
-    `UPDATE public.referral_rewards SET status = 'credited', credited_at = NOW()
-     WHERE id = ANY($1::bigint[])`,
-    [ids]
-  );
-  await client.query(
-    `UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`,
-    [total.toFixed(2), referrerUserId]
-  );
+  await client.query(`UPDATE public.referral_rewards SET status = 'credited', credited_at = NOW() WHERE id = ANY($1::bigint[])`, [ids]);
+  await client.query(`UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`, [total.toFixed(2), referrerUserId]);
   await client.query(
     `INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at)
      VALUES ($1, 'reward', $2, 'completed', NOW(), NOW())`,
     [referrerUserId, total.toFixed(2)]
   ).catch(() => {});
   await client.query(
-    `INSERT INTO public.user_notifications(user_id,kind,title,message)
-     VALUES($1,'reward','Referral reward credited',$2)`,
+    `INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'reward','Referral reward credited',$2)`,
     [referrerUserId, `You received ${total.toFixed(2)} points from active referral rewards.`]
   ).catch(() => {});
 
   return total;
 }
-// ═══════════════════════════════════════════════════════════════════
+// ============================================================================
 
 async function getReferralData(client, userId) {
-  // NEW: auto-credit active referrals' rewards before computing summary
   await autoCreditReferralRewards(client, userId);
 
   const userResult = await client.query(
@@ -535,8 +525,6 @@ async function getReferralData(client, userId) {
     [userId]
   );
 
-  // MODIFIED: pending_points here now only counts inactive referrals,
-  // since active ones were auto-credited above.
   const rewardSummary = await client.query(
     `SELECT
        COUNT(*) FILTER (WHERE status = 'pending')::int
@@ -639,7 +627,6 @@ async function getReferralData(client, userId) {
 }
 
 async function getReferralMembers(client, userId) {
-  // NEW: auto-credit active referrals' rewards before listing
   await autoCreditReferralRewards(client, userId);
 
   const members = await client.query(
@@ -802,16 +789,14 @@ module.exports = async function handler(req, res) {
     await client.query("BEGIN");
     transactionStarted = true;
 
-    // NEW: ensure app_settings table exists
-    await ensureAppSettings(client);
-
+    await ensureAppSettings(client); // NEW
     const user = await getUser(client, telegramUser);
     await client.query(`ALTER TABLE public.referral_commissions ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ`);
     const action = String(body.action || "");
 
-    // ═══════════════════════════════════════════════════════════════
-    // NEW: app_config action (header buttons + bonus settings)
-    // ═══════════════════════════════════════════════════════════════
+    // ============================================================================
+    // NEW: app_config action
+    // ============================================================================
     if (action === "app_config") {
       const rows = await client.query(`SELECT key, value FROM public.app_settings`);
       const config = {
@@ -824,20 +809,21 @@ module.exports = async function handler(req, res) {
         signup_bonus_enabled: true,
         signup_bonus_amount: 25,
       };
-      rows.rows.forEach((row) => {
+      rows.rows.forEach(row => {
         const parsed = parseSettingValue(row.value);
         if (parsed !== null) config[row.key] = parsed;
       });
-      await client.query("COMMIT");
-      transactionStarted = false;
+      await client.query("COMMIT"); transactionStarted = false;
       return json(res, 200, { success: true, config });
     }
 
+    // MODIFIED: Return deposit_wallet for locked withdraw
     if (action === "balance") {
       const result = await client.query(
-        `SELECT balance
-         FROM public.wallet_balances
-         WHERE user_id = $1`,
+        `SELECT wb.balance, u.deposit_wallet
+         FROM public.wallet_balances wb
+         JOIN public.users u ON u.id = wb.user_id
+         WHERE wb.user_id = $1`,
         [user.id]
       );
 
@@ -847,55 +833,48 @@ module.exports = async function handler(req, res) {
       return json(res, 200, {
         success: true,
         balance: result.rows[0]?.balance ?? "0.00",
+        wallet_address: result.rows[0]?.deposit_wallet || null,
       });
     }
 
-  if (action === "notifications") {
-  const notifications = await client.query(`SELECT id,kind,title,message,is_read,created_at FROM public.user_notifications WHERE user_id=$1 ORDER BY id DESC LIMIT 50`, [user.id]);
-  await client.query(`UPDATE public.user_notifications SET is_read=TRUE WHERE user_id=$1 AND is_read=FALSE`, [user.id]);
-  await client.query("COMMIT"); transactionStarted = false;
-  return json(res, 200, { success: true, notifications: notifications.rows });
-  }
+    if (action === "notifications") {
+      const notifications = await client.query(`SELECT id,kind,title,message,is_read,created_at FROM public.user_notifications WHERE user_id=$1 ORDER BY id DESC LIMIT 50`, [user.id]);
+      await client.query(`UPDATE public.user_notifications SET is_read=TRUE WHERE user_id=$1 AND is_read=FALSE`, [user.id]);
+      await client.query("COMMIT"); transactionStarted = false;
+      return json(res, 200, { success: true, notifications: notifications.rows });
+    }
 
-    // MODIFIED: gift redemption — table already created in getUser()
     if (action === "redeem_gift") {
       const code = String(body.code || "").trim().toUpperCase();
       if (!/^[A-Z0-9-]{4,64}$/.test(code)) throw new Error("Enter a valid gift code.");
       const gift = await client.query(
         `SELECT * FROM public.gift_codes
-         WHERE UPPER(code)=$1
-           AND uses < max_uses
-           AND (expires_at IS NULL OR expires_at > NOW())
+         WHERE UPPER(code)=$1 AND uses < max_uses AND (expires_at IS NULL OR expires_at > NOW())
          FOR UPDATE`,
         [code]
       );
       if (!gift.rowCount) throw new Error("Gift code is invalid, expired, or already used.");
+      
       const used = await client.query(
         `SELECT 1 FROM public.gift_code_redemptions WHERE gift_code_id=$1 AND user_id=$2`,
         [gift.rows[0].id, user.id]
       );
       if (used.rowCount) throw new Error("You have already redeemed this gift code.");
-      await client.query(
-        `INSERT INTO public.gift_code_redemptions(gift_code_id,user_id) VALUES($1,$2)`,
-        [gift.rows[0].id, user.id]
-      );
+      
+      await client.query(`INSERT INTO public.gift_code_redemptions(gift_code_id,user_id) VALUES($1,$2)`, [gift.rows[0].id, user.id]);
       await client.query(`UPDATE public.gift_codes SET uses=uses+1 WHERE id=$1`, [gift.rows[0].id]);
-      await client.query(
-        `UPDATE public.wallet_balances SET balance=balance+$1,updated_at=NOW() WHERE user_id=$2`,
-        [gift.rows[0].points, user.id]
-      );
+      await client.query(`UPDATE public.wallet_balances SET balance=balance+$1,updated_at=NOW() WHERE user_id=$2`, [gift.rows[0].points, user.id]);
       await client.query(
         `INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at)
          VALUES ($1, 'gift', $2, 'completed', NOW(), NOW())`,
         [user.id, gift.rows[0].points]
       );
       await client.query(
-        `INSERT INTO public.user_notifications(user_id,kind,title,message)
-         VALUES($1,'gift','Gift code redeemed',$2)`,
+        `INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'gift','Gift code redeemed',$2)`,
         [user.id, `You received ${gift.rows[0].points} points.`]
       );
-      await client.query("COMMIT");
-      transactionStarted = false;
+      
+      await client.query("COMMIT"); transactionStarted = false;
       return json(res, 200, { success: true, points: gift.rows[0].points });
     }
 
@@ -1057,7 +1036,6 @@ module.exports = async function handler(req, res) {
       const netPoints = Math.floor(amount * (1 - withdrawalFeeRate) * 100) / 100;
       const netAmountUsdt = (netPoints / POINTS_PER_USDT).toFixed(6);
       
-      // FIX: Store the original deducted amount in transactions so admin refunds correctly!
       const grossAmountUsdt = (amount / POINTS_PER_USDT).toFixed(6);
       
       const tx = await client.query(
@@ -1070,7 +1048,7 @@ module.exports = async function handler(req, res) {
       
       await client.query("COMMIT"); transactionStarted = false;
       const displayName = [user.first_name, user.last_name].filter(Boolean).join(" ") || "User";
-  await notifyTelegram(`📤 Withdrawal requested\n👤 Name: ${displayName}\n💵 Gross: ${(amount / POINTS_PER_USDT).toFixed(2)} USDT\n💸 Fee: 10%\n✅ Net: ${netAmountUsdt} USDT\n🏦 Wallet: ${destination}\n⏳ Status: Pending approval`, [process.env.ADMIN_CHAT_ID, RESULTS_CHANNEL]);
+      await notifyTelegram(`📤 Withdrawal requested\n👤 Name: ${displayName}\n💵 Gross: ${(amount / POINTS_PER_USDT).toFixed(2)} USDT\n💸 Fee: 10%\n✅ Net: ${netAmountUsdt} USDT\n🏦 Wallet: ${destination}\n⏳ Status: Pending approval`, [process.env.ADMIN_CHAT_ID, RESULTS_CHANNEL]);
       
       return json(res, 200, { success: true, withdrawal: tx.rows[0], balance: result.rows[0].balance });
     }
@@ -1220,7 +1198,6 @@ module.exports = async function handler(req, res) {
       return json(res, 200, data);
     }
 
-    // FIX: Added save_wallet action for Add/Edit Wallet modal
     if (action === "save_wallet") {
       const walletAddress = String(body.walletAddress || "").trim();
       if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
@@ -1233,109 +1210,65 @@ module.exports = async function handler(req, res) {
       return json(res, 200, { success: true, message: "Wallet address saved." });
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // MODIFIED: claim_rewards — auto-credit first, then FOR UPDATE fallback
-    // ═══════════════════════════════════════════════════════════════
     if (action === "claim_rewards") {
-      // Try auto-credit first (for active referrals)
       const autoCredited = await autoCreditReferralRewards(client, user.id);
       if (autoCredited > 0) {
-        await client.query("COMMIT");
-        transactionStarted = false;
-        return json(res, 200, {
-          success: true,
-          claimed_points: autoCredited.toFixed(2),
-          auto: true,
-        });
+        await client.query("COMMIT"); transactionStarted = false;
+        return json(res, 200, { success: true, claimed_points: autoCredited.toFixed(2), auto: true });
       }
 
-      // Fallback: manual claim with FOR UPDATE
       const claimable = await client.query(`
-        SELECT rr.id, rr.reward_points
-        FROM public.referral_rewards rr
+        SELECT rr.id, rr.reward_points FROM public.referral_rewards rr
         JOIN public.users u ON u.id = rr.referred_user_id
-        WHERE rr.referrer_user_id = $1
-          AND rr.status = 'pending'
-          AND EXISTS (
-            SELECT 1 FROM public.bets b
-            WHERE b.user_id = u.id
-              AND b.created_at > NOW() - INTERVAL '7 days'
-          )
+        WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
+        AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
         FOR UPDATE
       `, [user.id]);
 
       if (!claimable.rowCount) {
-        await client.query("ROLLBACK");
-        transactionStarted = false;
-        return json(res, 400, {
-          success: false,
-          message: "No active referral rewards available to claim.",
-        });
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 400, { success: false, message: "No active referral rewards available to claim." });
       }
 
       const amount = claimable.rows.reduce((sum, r) => sum + Number(r.reward_points), 0);
-      const ids = claimable.rows.map((r) => r.id);
+      const ids = claimable.rows.map(r => r.id);
 
-      await client.query(
-        `UPDATE public.referral_rewards SET status = 'credited', credited_at = NOW()
-         WHERE id = ANY($1::bigint[])`,
-        [ids]
-      );
-      await client.query(
-        `UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`,
-        [amount.toFixed(2), user.id]
-      );
+      await client.query(`UPDATE public.referral_rewards SET status = 'credited', credited_at = NOW() WHERE id = ANY($1::bigint[])`, [ids]);
+      await client.query(`UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`, [amount.toFixed(2), user.id]);
       await client.query(
         `INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at)
          VALUES ($1, 'reward', $2, 'completed', NOW(), NOW())`,
         [user.id, amount.toFixed(2)]
       ).catch(console.error);
 
-      await client.query("COMMIT");
-      transactionStarted = false;
+      await client.query("COMMIT"); transactionStarted = false;
       return json(res, 200, { success: true, claimed_points: amount.toFixed(2) });
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // MODIFIED: claim_commission — FOR UPDATE lock for safety
-    // ═══════════════════════════════════════════════════════════════
     if (action === "claim_commission") {
       const claimable = await client.query(`
-        SELECT id, commission_amount
-        FROM public.referral_commissions
+        SELECT id, commission_amount FROM public.referral_commissions
         WHERE referrer_user_id = $1 AND claimed_at IS NULL
         FOR UPDATE
       `, [user.id]);
 
       if (!claimable.rowCount) {
-        await client.query("ROLLBACK");
-        transactionStarted = false;
-        return json(res, 400, {
-          success: false,
-          message: "No commission is available to claim.",
-        });
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 400, { success: false, message: "No commission is available to claim." });
       }
 
       const amount = claimable.rows.reduce((sum, r) => sum + Number(r.commission_amount), 0);
-      const ids = claimable.rows.map((r) => r.id);
+      const ids = claimable.rows.map(r => r.id);
 
-      await client.query(
-        `UPDATE public.referral_commissions SET claimed_at = NOW()
-         WHERE id = ANY($1::bigint[])`,
-        [ids]
-      );
-      await client.query(
-        `UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`,
-        [amount.toFixed(2), user.id]
-      );
+      await client.query(`UPDATE public.referral_commissions SET claimed_at = NOW() WHERE id = ANY($1::bigint[])`, [ids]);
+      await client.query(`UPDATE public.wallet_balances SET balance = balance + $1 WHERE user_id = $2`, [amount.toFixed(2), user.id]);
       await client.query(
         `INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at)
          VALUES ($1, 'commission', $2, 'completed', NOW(), NOW())`,
         [user.id, amount.toFixed(2)]
       ).catch(console.error);
 
-      await client.query("COMMIT");
-      transactionStarted = false;
+      await client.query("COMMIT"); transactionStarted = false;
       return json(res, 200, { success: true, claimed_points: amount.toFixed(2) });
     }
 
@@ -1372,7 +1305,6 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      // NEW: validate multiplier
       if (!ALLOWED_MULTIPLIERS.includes(multiplier)) {
         await client.query("ROLLBACK");
         transactionStarted = false;
@@ -1424,8 +1356,6 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      // NOTE: No max bet limit — only wallet balance (checked inside place_bet_atomic)
-      // The `stake` here is already the total (base × multiplier) sent from frontend.
       const result = await client.query(
         `SELECT public.place_bet_atomic(
            $1::bigint,
