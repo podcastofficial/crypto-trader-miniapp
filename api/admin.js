@@ -316,29 +316,6 @@ async function ensureManagementTables() {
   await query(`INSERT INTO public.channel_settings (id) VALUES (1) ON CONFLICT DO NOTHING`);
 }
 
-/**
- * Gift code distribution formula (documented for user-panel implementation):
- *
- * FIXED MODE:
- *   total_points = pool
- *   per_user_points = fixed per user
- *   max_users = floor(total_points / per_user_points)
- *   Every redeemer gets exactly per_user_points, up to max_users.
- *
- * DISTRIBUTION MODE (race — early birds get more):
- *   total_points = pool (P)
- *   max_users = N
- *   position i (1-indexed, i = uses + 1)
- *   equal_pool = P * 0.5
- *   bonus_pool = P * 0.5
- *   equal_share = equal_pool / N
- *   sum_weights = N * (N + 1) / 2
- *   weight = N - i + 1
- *   bonus_share = bonus_pool * weight / sum_weights
- *   reward(i) = round(equal_share + bonus_share, 2)
- *   For the LAST user (i == N): reward = P - sum(previous rewards)  // exact balance
- *   Redeem blocked when uses >= max_users.
- */
 async function userManagement(body, session, req) {
   await ensureManagementTables();
   const action = String(body.management_action || "");
@@ -472,7 +449,9 @@ function pagination(body) {
   return { page, size, offset: (page - 1) * size };
 }
 
-/* ---------- DASHBOARD ---------- */
+/* =========================
+   DASHBOARD (with today's + 24h + all-time P/L)
+========================= */
 async function dashboard() {
   const [totalsRows, roundStatuses, recentRounds, healthRows, userMetrics, securityRows] = await Promise.all([
     query(`SELECT
@@ -482,6 +461,15 @@ async function dashboard() {
       (SELECT COALESCE(SUM(stake),0) FROM public.bets) AS total_stake,
       (SELECT COALESCE(SUM(fee),0) FROM public.bets) AS total_fees,
       (SELECT COALESCE(SUM(payout),0) FROM public.bets) AS total_payouts,
+
+      (SELECT COUNT(*) FROM public.bets WHERE created_at >= CURRENT_DATE) AS bets_today,
+      (SELECT COALESCE(SUM(stake),0) FROM public.bets WHERE created_at >= CURRENT_DATE) AS stake_today,
+      (SELECT COALESCE(SUM(payout),0) FROM public.bets WHERE created_at >= CURRENT_DATE) AS payout_today,
+
+      (SELECT COUNT(*) FROM public.bets WHERE created_at >= NOW() - INTERVAL '24 hours') AS bets_24h,
+      (SELECT COALESCE(SUM(stake),0) FROM public.bets WHERE created_at >= NOW() - INTERVAL '24 hours') AS stake_24h,
+      (SELECT COALESCE(SUM(payout),0) FROM public.bets WHERE created_at >= NOW() - INTERVAL '24 hours') AS payout_24h,
+
       (SELECT COALESCE(SUM(balance),0) FROM public.wallet_balances) AS total_wallet_balance,
       (SELECT COALESCE(SUM(amount),0) FROM public.transactions WHERE transaction_type='deposit' AND status IN ('confirmed','completed')) AS total_deposits,
       (SELECT COUNT(*) FROM public.transactions WHERE transaction_type='deposit' AND status IN ('confirmed','completed')) AS deposit_count,
@@ -538,7 +526,9 @@ async function dashboard() {
   };
 }
 
-/* ---------- LISTS ---------- */
+/* =========================
+   LIST CONFIGURATION
+========================= */
 const LISTS = {
   users: {
     select: `u.id,u.telegram_id,u.first_name,u.last_name,u.username,w.balance,
@@ -698,7 +688,9 @@ async function listAction(action, body) {
   };
 }
 
-/* ---------- ANALYTICS ---------- */
+/* =========================
+   ANALYTICS
+========================= */
 async function analytics() {
   const [daily, resultRows, topUsers, largeStakes, highReturnUsers, userMetrics] = await Promise.all([
     query(`WITH days AS (
@@ -759,7 +751,9 @@ async function analytics() {
   };
 }
 
-/* ---------- RECONCILE ---------- */
+/* =========================
+   RECONCILE
+========================= */
 async function reconcile() {
   const rows = await query(`SELECT
     (SELECT COALESCE(SUM(balance),0) FROM public.wallet_balances) AS wallet_total,
@@ -792,7 +786,9 @@ async function reconcile() {
   };
 }
 
-/* ---------- USER DETAIL ---------- */
+/* =========================
+   USER DETAIL
+========================= */
 async function userDetail(userId) {
   const profiles = await query(
     `SELECT u.id,u.telegram_id,u.first_name,u.last_name,u.username,w.balance,
@@ -848,7 +844,9 @@ async function userDetail(userId) {
   };
 }
 
-/* ---------- SEARCH ---------- */
+/* =========================
+   SEARCH
+========================= */
 async function search(q) {
   q = String(q || "").trim().slice(0, 100);
   if (!q) return { users: [], rounds: [], bets: [] };
@@ -871,7 +869,9 @@ async function search(q) {
   return { users, rounds, bets };
 }
 
-/* ---------- CSV EXPORT ---------- */
+/* =========================
+   CSV EXPORT
+========================= */
 function csvCell(value) {
   let s = value == null ? "" : String(value);
   if (/^[\s]*[=+\-@\t\r]/.test(s)) s = "'" + s;
@@ -945,6 +945,21 @@ async function exportCsv(body) {
       FROM public.transactions
       ${conditions.length ? "WHERE " + conditions.join(" AND ") : ""}
       ORDER BY id DESC LIMIT ${EXPORT_MAX}`;
+  } else if (kind === "wallets") {
+    if (body.q) {
+      const q = String(body.q).trim().slice(0, 100);
+      if (/^\d+$/.test(q)) {
+        params.push(q);
+        conditions.push(`CAST(w.user_id AS TEXT)=$${params.length}`);
+      } else {
+        params.push(`%${q}%`);
+        conditions.push(`u.username ILIKE $${params.length}`);
+      }
+    }
+    sql = `SELECT w.user_id,u.telegram_id,u.username,w.balance,w.updated_at
+      FROM public.wallet_balances w LEFT JOIN public.users u ON u.id=w.user_id
+      ${conditions.length ? "WHERE " + conditions.join(" AND ") : ""}
+      ORDER BY w.user_id DESC LIMIT ${EXPORT_MAX}`;
   } else {
     throw new Error("Invalid export type.");
   }
@@ -959,7 +974,9 @@ async function exportCsv(body) {
   return { csv, row_count: rows.length, truncated: rows.length === EXPORT_MAX };
 }
 
-/* ---------- WALLET TRANSACTION REVIEW ---------- */
+/* =========================
+   WALLET TRANSACTION REVIEW
+========================= */
 async function reviewWalletTransaction(action, body, session, req) {
   const transactionId = String(body.transaction_id || "");
   if (!/^\d{1,15}$/.test(transactionId)) throw new Error("Invalid transaction ID.");
@@ -1061,7 +1078,9 @@ async function reviewWalletTransaction(action, body, session, req) {
   }
 }
 
-/* ---------- GIFT CODES (admin listing) ---------- */
+/* =========================
+   GIFT CODES (admin listing)
+========================= */
 async function getGiftCodes(body) {
   await ensureManagementTables();
   const { page, size, offset } = pagination(body);
@@ -1082,7 +1101,9 @@ async function getGiftCodes(body) {
   };
 }
 
-/* ---------- GIFT REDEMPTIONS ---------- */
+/* =========================
+   GIFT REDEMPTIONS
+========================= */
 async function getGiftRedemptions(body) {
   await ensureManagementTables();
   const { page, size, offset } = pagination(body);
@@ -1108,7 +1129,9 @@ async function getGiftRedemptions(body) {
   };
 }
 
-/* ---------- CHANNEL SETTINGS ---------- */
+/* =========================
+   CHANNEL SETTINGS
+========================= */
 async function getChannelSettings() {
   await ensureManagementTables();
   const rows = await query(`SELECT * FROM public.channel_settings WHERE id=1`);
@@ -1136,7 +1159,9 @@ async function saveChannelSettings(body, session, req) {
   return { ok: true, message: "Channel settings saved." };
 }
 
-/* ---------- BROADCAST ---------- */
+/* =========================
+   BROADCAST
+========================= */
 async function broadcastMessage(body, session, req) {
   await ensureManagementTables();
   const msg = String(body.message || "").trim().slice(0, 4000);
@@ -1173,7 +1198,9 @@ async function broadcastMessage(body, session, req) {
   return { ok: true, message: `Broadcast complete. Sent: ${sent}, Failed: ${failed}`, sent, failed };
 }
 
-/* ---------- LOGIN ATTEMPTS (dedicated) ---------- */
+/* =========================
+   LOGIN ATTEMPTS (dedicated)
+========================= */
 async function getLoginAttempts(body) {
   const { page, size, offset } = pagination(body);
   const [rows, totals] = await Promise.all([
@@ -1191,7 +1218,9 @@ async function getLoginAttempts(body) {
   };
 }
 
-/* ---------- SECURITY SUMMARY ---------- */
+/* =========================
+   SECURITY SUMMARY
+========================= */
 async function securitySummary() {
   const [attempts, auditRows] = await Promise.all([
     query(`SELECT id,ip,success,attempted_at FROM public.admin_login_attempts ORDER BY attempted_at DESC LIMIT 100`),
@@ -1200,7 +1229,9 @@ async function securitySummary() {
   return { attempts, entries: auditRows };
 }
 
-/* ---------- HANDLER ---------- */
+/* =========================
+   API HANDLER
+========================= */
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
