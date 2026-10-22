@@ -1010,45 +1010,82 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === "redeem_gift") {
+      const fail = async (message) => {
+        await client.query("ROLLBACK");
+        transactionStarted = false;
+        return json(res, 400, { success: false, message });
+      };
       const code = String(body.code || "").trim().toUpperCase();
-      if (!/^[A-Z0-9-]{4,64}$/.test(code)) throw new Error("Enter a valid gift code.");
+      if (!/^[A-Z0-9-]{4,64}$/.test(code)) return fail("Enter a valid gift code.");
+
+      await client.query(`ALTER TABLE public.gift_codes ADD COLUMN IF NOT EXISTS mode TEXT DEFAULT 'fixed'`);
+      await client.query(`ALTER TABLE public.gift_codes ADD COLUMN IF NOT EXISTS total_points NUMERIC(20,2)`);
+      await client.query(`ALTER TABLE public.gift_codes ADD COLUMN IF NOT EXISTS per_user_points NUMERIC(20,2)`);
+      await client.query(`ALTER TABLE public.gift_code_redemptions ADD COLUMN IF NOT EXISTS points_earned NUMERIC(20,2)`);
+
       const gift = await client.query(
         `SELECT * FROM public.gift_codes
          WHERE UPPER(code)=$1 AND uses < max_uses AND (expires_at IS NULL OR expires_at > NOW())
          FOR UPDATE`,
         [code]
       );
-      if (!gift.rowCount) throw new Error("Gift code is invalid, expired, or already used.");
+      if (!gift.rowCount) return fail("Gift code is invalid, expired, or already used.");
+      const g = gift.rows[0];
 
       const used = await client.query(
         `SELECT 1 FROM public.gift_code_redemptions WHERE gift_code_id=$1 AND user_id=$2`,
-        [gift.rows[0].id, user.id]
+        [g.id, user.id]
       );
-      if (used.rowCount) throw new Error("You have already redeemed this gift code.");
+      if (used.rowCount) return fail("You have already redeemed this gift code.");
 
-      await client.query(`INSERT INTO public.gift_code_redemptions(gift_code_id,user_id) VALUES($1,$2)`, [gift.rows[0].id, user.id]);
-      await client.query(`UPDATE public.gift_codes SET uses=uses+1 WHERE id=$1`, [gift.rows[0].id]);
-      await client.query(`UPDATE public.wallet_balances SET balance=balance+$1,updated_at=NOW() WHERE user_id=$2`, [gift.rows[0].points, user.id]);
+      let pts;
+      if (g.mode === "distribution") {
+        const sum = await client.query(
+          `SELECT COALESCE(SUM(points_earned),0) AS s FROM public.gift_code_redemptions WHERE gift_code_id=$1`,
+          [g.id]
+        );
+        const remaining = Number(g.total_points) - Number(sum.rows[0].s);
+        const usesLeft = Number(g.max_uses) - Number(g.uses);
+        if (remaining <= 0) return fail("Gift code is invalid, expired, or already used.");
+        if (usesLeft <= 1) pts = remaining;
+        else {
+          pts = Math.floor(Math.random() * (remaining / usesLeft) * 2 * 100) / 100;
+          pts = Math.max(0.01, Math.min(pts, remaining - 0.01 * (usesLeft - 1)));
+        }
+      } else {
+        pts = Number(g.per_user_points ?? g.points);
+      }
+      pts = Number(pts.toFixed(2));
+
+      await client.query(`INSERT INTO public.gift_code_redemptions(gift_code_id,user_id,points_earned) VALUES($1,$2,$3)`, [g.id, user.id, pts]);
+      await client.query(`UPDATE public.gift_codes SET uses=uses+1 WHERE id=$1`, [g.id]);
+      await client.query(`UPDATE public.wallet_balances SET balance=balance+$1,updated_at=NOW() WHERE user_id=$2`, [pts, user.id]);
 
       await client.query("SAVEPOINT sp_gift_tx");
       try {
         await client.query(
           `INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at)
            VALUES ($1, 'gift', $2, 'completed', NOW(), NOW())`,
-          [user.id, gift.rows[0].points]
+          [user.id, pts]
         );
         await client.query("RELEASE SAVEPOINT sp_gift_tx");
       } catch(e) {
         await client.query("ROLLBACK TO SAVEPOINT sp_gift_tx");
       }
 
-      await client.query(
-        `INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'gift','Gift code redeemed',$2)`,
-        [user.id, `You received ${gift.rows[0].points} points.`]
-      ).catch(()=>{});
+      await client.query("SAVEPOINT sp_gift_notif");
+      try {
+        await client.query(
+          `INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'gift','Gift code redeemed',$2)`,
+          [user.id, `You received ${pts} points.`]
+        );
+        await client.query("RELEASE SAVEPOINT sp_gift_notif");
+      } catch(e) {
+        await client.query("ROLLBACK TO SAVEPOINT sp_gift_notif");
+      }
 
       await client.query("COMMIT"); transactionStarted = false;
-      return json(res, 200, { success: true, points: gift.rows[0].points });
+      return json(res, 200, { success: true, points: pts });
     }
 
     if (action === "my_bets") {
