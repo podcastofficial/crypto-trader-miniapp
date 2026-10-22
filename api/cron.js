@@ -46,6 +46,21 @@ function slotOfRound(code) {
   return Math.floor(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) / 180000);
 }
 
+// Batch windows like "10:00-12:00,18:00-22:00" in IST (UTC+5:30). Empty = always on.
+function inBatchWindow(windows, slotStartMs) {
+  const w = String(windows || "").trim();
+  if (!w) return true;
+  const d = new Date(slotStartMs + 330 * 60000);
+  const mins = d.getUTCHours() * 60 + d.getUTCMinutes();
+  return w.split(",").some(part => {
+    const m = part.match(/^(\d{2}):(\d{2})-(\d{2}):(\d{2})$/);
+    if (!m) return false;
+    const from = +m[1] * 60 + +m[2];
+    const to = +m[3] * 60 + +m[4];
+    return from <= to ? (mins >= from && mins < to) : (mins >= from || mins < to);
+  });
+}
+
 function fmtPeriod(code) {
   const raw = String(code || "");
   if (!/^\d{14}$/.test(raw)) return raw.slice(0, 12);
@@ -79,6 +94,7 @@ async function sendTelegramMessage(client, type, data) {
     const botName = settings.bot_username || "YourBot";
     if (settings.channel_updates_enabled === false) return;
     const slot = slotOfRound(data.round);
+    if (!inBatchWindow(settings.batch_windows, slot * 180000)) return;
 
     const inlineKeyboard = {
       inline_keyboard: [
@@ -503,8 +519,8 @@ module.exports = async function handler(req, res) {
         roundsCreated++;
 
         const seed = [...roundCode].reduce((sum, char) => sum + char.charCodeAt(0), 0);
-        const predictedNumber = seed % 10;
-        const predictedColour = ["Red", "Green", "Violet"][seed % 3];
+        const predictedNumber = Math.floor(Math.random() * 10);
+        const predictedColour = (predictedNumber === 0 || predictedNumber === 5) ? "Violet" : (predictedNumber % 2 === 0 ? "Red" : "Green");
 
         await client.query(
           `INSERT INTO public.prediction_history (round_code, predicted_number, predicted_colour) VALUES ($1, $2, $3)`,
