@@ -1113,7 +1113,8 @@ async function loadNextResultPreview(bodyId, btnId) {
     const d = await api("next_round");
     const n = d.next || d.round || {};
     const period = n.period_number ?? n.round_code ?? "—";
-    const pred = n.predicted_result ?? n.result_number ?? d.predicted_result ?? null;
+    const pred = n.predicted_result ?? d.predicted_result ?? null;
+    const predSource = n.prediction_source === "manual" ? "manual" : "auto";
     const startsAt = n.starts_at || d.starts_at || null;
     const endsAt = n.ends_at || d.ends_at || null;
     body.innerHTML = `
@@ -1129,7 +1130,7 @@ async function loadNextResultPreview(bodyId, btnId) {
             : `<span class="timer-badge expired">⏱ No end time</span>`}
         </div>
         <div class="detail-item">
-          <span>Predicted Result</span>
+          <span>Predicted Result (${predSource})</span>
           <strong class="yellow result-big">${pred === null || pred === undefined ? "—" : escapeHtml(pred)}</strong>
         </div>
       </div>
@@ -2281,6 +2282,12 @@ async function renderChannelSettings() {
           <div class="small muted">Default 150 (bets close at 150s).</div>
         </div>
 
+        <div class="field">
+          <label>Posting Time Batches (IST, optional)</label>
+          <input name="batch_windows" value="${escapeHtml(s.batch_windows || "")}" placeholder="10:00-12:00,18:00-22:00" maxlength="300">
+          <div class="small muted">Posts go only inside these windows (India time). Leave empty = all day. Each extra channel also has its own schedule in minutes (3, 6, 9...).</div>
+        </div>
+
         <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
           <input type="checkbox" name="channel_updates_enabled" ${s.channel_updates_enabled ? "checked" : ""} style="width:auto">
           <label style="margin:0">Channel Updates (Result + Prediction Posts) ON/OFF</label>
@@ -2364,6 +2371,7 @@ async function renderChannelSettings() {
         channel_username: fd.get("channel_username"),
         bot_username: fd.get("bot_username"),
         prediction_timing: fd.get("prediction_timing"),
+        batch_windows: fd.get("batch_windows"),
         channel_updates_enabled: fd.get("channel_updates_enabled") === "on",
         predictions_enabled: fd.get("predictions_enabled") === "on",
         prediction_message: fd.get("prediction_message"),
