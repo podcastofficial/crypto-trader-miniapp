@@ -44,6 +44,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .red { color: var(--red); }
 .yellow { color: var(--yellow); }
 .violet { color: var(--violet); }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
 #loginView {
   min-height: 100vh;
@@ -162,6 +163,8 @@ textarea { resize: vertical; min-height: 120px; }
   font-weight: 800;
 }
 
+.notif-wrap { position: relative; }
+
 .notif-btn {
   position: relative;
   background: transparent;
@@ -191,8 +194,8 @@ textarea { resize: vertical; min-height: 120px; }
 
 .notif-dropdown {
   position: absolute;
-  top: 60px;
-  right: 20px;
+  top: calc(100% + 10px);
+  right: 0;
   width: 320px;
   max-height: 400px;
   overflow-y: auto;
@@ -556,6 +559,46 @@ a.tx-link:hover { text-decoration: underline; }
 .switch.on i { transform: translateX(22px); }
 .grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 
+/* NEW helpers */
+.inline-form { display: flex; flex-wrap: wrap; gap: 9px; align-items: flex-end; }
+.inline-form .field { margin: 0; flex: 1 1 180px; }
+.winloss-bar { display: flex; height: 10px; border-radius: 6px; overflow: hidden; background: #222; margin-top: 8px; }
+.winloss-bar .w { background: var(--green); }
+.winloss-bar .l { background: var(--red); }
+.pred-next { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.result-big { font-size: 26px; font-weight: 900; color: var(--yellow); }
+
+.timer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: rgba(245, 200, 75, 0.12);
+  border: 1px solid rgba(245, 200, 75, 0.35);
+  color: var(--yellow);
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.timer-badge.urgent {
+  background: rgba(255, 107, 124, 0.15);
+  border-color: rgba(255, 107, 124, 0.5);
+  color: var(--red);
+  animation: pulseUrgent 1s ease-in-out infinite;
+}
+.timer-badge.expired {
+  background: rgba(141, 152, 168, 0.15);
+  border-color: rgba(141, 152, 168, 0.4);
+  color: var(--muted);
+}
+@keyframes pulseUrgent {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
 @media (max-width: 1100px) {
   .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .layout { grid-template-columns: 190px minmax(0, 1fr); }
@@ -585,9 +628,10 @@ a.tx-link:hover { text-decoration: underline; }
   .main { padding: 15px; }
   .page-header h2 { font-size: 22px; }
   .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .notif-dropdown { width: 290px; right: 10px; }
+  .notif-dropdown { width: 290px; right: 0; }
   .card { padding: 15px; }
   .grid-4 { grid-template-columns: 1fr; }
+  .pred-next { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 420px) {
@@ -650,24 +694,25 @@ a.tx-link:hover { text-decoration: underline; }
       <span class="admin-badge">ADMIN</span>
       <span id="adminUsername" class="small muted"></span>
 
-      <button class="notif-btn" id="notifBell">
-        🔔
-        <span id="notifBadge" class="notif-badge hidden">0</span>
-      </button>
+      <div class="notif-wrap">
+        <button class="notif-btn" id="notifBell" type="button">
+          🔔
+          <span id="notifBadge" class="notif-badge hidden">0</span>
+        </button>
+        <div id="notifDropdown" class="notif-dropdown hidden">
+          <div class="notif-header">
+            <span>Pending Requests</span>
+            <button class="btn small" id="closeNotif" style="padding:4px 8px;">✕</button>
+          </div>
+          <div id="notifList">
+            <div class="empty">Loading...</div>
+          </div>
+        </div>
+      </div>
 
       <button class="btn btn-danger" id="logoutButton">Logout</button>
     </div>
   </header>
-
-  <div id="notifDropdown" class="notif-dropdown hidden">
-    <div class="notif-header">
-      <span>Pending Requests</span>
-      <button class="btn small" id="closeNotif" style="padding:4px 8px;">✕</button>
-    </div>
-    <div id="notifList">
-      <div class="empty">Loading...</div>
-    </div>
-  </div>
 
   <div class="layout">
     <aside class="sidebar" id="sidebar"></aside>
@@ -708,7 +753,8 @@ const VIEWS = [
   { group: "CONTROL & BOT", items: [
     ["channel_settings", "⚙️", "Channel Settings"],
     ["broadcast", "📢", "Broadcast"],
-    ["telegram", "✈", "Telegram Logs"]
+    ["telegram", "✈", "Telegram Logs"],
+    ["telegram_support", "🎧", "Telegram Support"]
   ]},
   { group: "SECURITY", items: [
     ["audit", "▤", "Audit Logs"],
@@ -773,6 +819,115 @@ function toast(message, isError = false) {
   toast.timer = setTimeout(() => el.classList.remove("show"), 3500);
 }
 
+/* ===== NEW: Period countdown timers ===== */
+let periodTimerInterval = null;
+
+function stopPeriodTimers() {
+  if (periodTimerInterval) {
+    clearInterval(periodTimerInterval);
+    periodTimerInterval = null;
+  }
+}
+
+function startPeriodTimers() {
+  stopPeriodTimers();
+  const update = () => {
+    document.querySelectorAll("[data-countdown-to]").forEach(el => {
+      const endsAt = el.dataset.countdownTo;
+      const target = new Date(endsAt).getTime();
+      if (!endsAt || isNaN(target)) {
+        el.textContent = "⏱ —";
+        el.className = "timer-badge expired";
+        return;
+      }
+      const diff = target - Date.now();
+      if (diff <= 0) {
+        el.innerHTML = "⏱ 00:00 · Ended";
+        el.className = "timer-badge expired";
+        if (!el.dataset.refreshed && el.dataset.refreshFn) {
+          el.dataset.refreshed = "1";
+          const fn = el.dataset.refreshFn;
+          setTimeout(() => {
+            if (typeof window[fn] === "function" && state.currentView) {
+              try { window[fn](); } catch { /* ignore */ }
+            }
+          }, 3000);
+        }
+        return;
+      }
+      const totalSec = Math.floor(diff / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      const pad = n => String(n).padStart(2, "0");
+      const display = h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+      el.innerHTML = `⏱ ${display}`;
+      el.className = "timer-badge" + (totalSec <= 30 ? " urgent" : "");
+    });
+  };
+  update();
+  periodTimerInterval = setInterval(update, 1000);
+}
+
+/* ===== Blockchain explorers + copy helpers ===== */
+const EXPLORERS = {
+  "BEP-20": "https://bscscan.com/tx/",
+  "BSC": "https://bscscan.com/tx/",
+  "TRC-20": "https://tronscan.org/#/transaction/",
+  "TRON": "https://tronscan.org/#/transaction/",
+  "ERC-20": "https://etherscan.io/tx/",
+  "ETHEREUM": "https://etherscan.io/tx/",
+  "ETH": "https://etherscan.io/tx/",
+  "POLYGON": "https://polygonscan.com/tx/",
+  "SOL": "https://solscan.io/tx/",
+  "SOLANA": "https://solscan.io/tx/",
+  "BTC": "https://mempool.space/tx/",
+  "GRAM": "https://tonscan.org/tx/",
+  "TON": "https://tonscan.org/tx/"
+};
+
+function explorerUrl(network, hash) {
+  if (!hash) return "";
+  const base = EXPLORERS[String(network || "").toUpperCase()];
+  return base ? base + hash : "";
+}
+
+function txHashCell(hash, network) {
+  if (!hash) return "—";
+  const url = explorerUrl(network, hash);
+  const short = hash.length > 18 ? hash.slice(0, 10) + "…" + hash.slice(-6) : hash;
+  if (!url) return `<span class="mono" title="${escapeHtml(hash)}">${escapeHtml(short)}</span>`;
+  return `<a class="tx-link mono" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(hash)}">${escapeHtml(short)} ↗</a>`;
+}
+
+function addressCell(addr) {
+  if (!addr) return "—";
+  const short = addr.length > 18 ? addr.slice(0, 10) + "…" + addr.slice(-6) : addr;
+  return `<span class="mono" title="${escapeHtml(addr)}">${escapeHtml(short)}</span>
+    <button class="copy-btn" data-copy="${escapeHtml(addr)}" title="Copy address" type="button">📋</button>`;
+}
+
+function copyText(text) {
+  if (!text) return;
+  const done = () => toast("Copied");
+  const fallback = () => {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      document.execCommand("copy"); ta.remove(); done();
+    } catch { toast("Copy failed", true); }
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(done).catch(fallback);
+  } else fallback();
+}
+
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-copy]");
+  if (btn) { e.preventDefault(); copyText(btn.dataset.copy); }
+});
+
 async function api(action, data = {}) {
   const response = await fetch(API_URL, {
     method: "POST",
@@ -783,9 +938,8 @@ async function api(action, data = {}) {
   let result;
   try { result = await response.json(); }
   catch { throw new Error("Server returned an invalid response."); }
-  if (response.status === 401) {
+  if (response.status === 401 && action !== "login") {
     showLogin("Your session expired. Please sign in again.");
-    throw new Error(result.error || result.message || "Session expired.");
   }
   if (!response.ok || result.ok === false) {
     throw new Error(result.error || result.message || "Request failed.");
@@ -794,6 +948,7 @@ async function api(action, data = {}) {
 }
 
 function showLogin(message = "") {
+  stopPeriodTimers();
   if (state.notifInterval) {
     clearInterval(state.notifInterval);
     state.notifInterval = null;
@@ -823,6 +978,7 @@ async function loadBotUsername() {
   try {
     const data = await api("channel_settings");
     state.botUsername = (data.settings && data.settings.bot_username) || null;
+    if (state.botUsername) localStorage.setItem("bot_username", state.botUsername);
   } catch { /* ignore */ }
 }
 
@@ -871,7 +1027,7 @@ function table(headers, rows, emptyText = "No records found.") {
 }
 
 function detailItem(label, value) {
-  return `<div class="detail-item"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value ?? "—")}</strong></div>`;
+  return `<div class="detail-item"><span>${escapeHtml(label)}</span><strong>${value ?? "—"}</strong></div>`;
 }
 
 function viewLabel(view) {
@@ -880,6 +1036,7 @@ function viewLabel(view) {
 }
 
 async function navigate(view) {
+  stopPeriodTimers();
   state.currentView = view;
   state.pages[view] = state.pages[view] || 1;
   renderNavigation();
@@ -902,6 +1059,7 @@ async function navigate(view) {
       case "channel_settings": await renderChannelSettings(); break;
       case "broadcast": await renderBroadcast(); break;
       case "telegram": await renderTelegram(); break;
+      case "telegram_support": await renderTelegramSupport(); break;
       case "audit": await renderAudit(); break;
       case "login_attempts": await renderLoginAttempts(); break;
       case "security": await renderSecurity(); break;
@@ -921,7 +1079,61 @@ async function navigate(view) {
   }
 }
 
-/* ============ DASHBOARD (with Today + 24h + All-Time P/L) ============ */
+/* ===== Next result preview (with timer) ===== */
+async function loadNextResultPreview(bodyId, btnId) {
+  const body = $(bodyId);
+  if (!body) return;
+  body.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    const d = await api("next_round");
+    const n = d.next || d.round || {};
+    const period = n.period_number ?? n.round_code ?? "—";
+    const pred = n.predicted_result ?? n.result_number ?? d.predicted_result ?? null;
+    const startsAt = n.starts_at || d.starts_at || null;
+    const endsAt = n.ends_at || d.ends_at || null;
+    body.innerHTML = `
+      <div class="pred-next">
+        <div class="detail-item">
+          <span>Next Period (Game)</span>
+          <strong>${escapeHtml(period)}</strong>
+        </div>
+        <div class="detail-item">
+          <span>Time Left</span>
+          ${endsAt
+            ? `<span class="timer-badge" data-countdown-to="${escapeHtml(endsAt)}" data-refresh-fn="${escapeHtml("__refresh_" + bodyId)}">⏱ —</span>`
+            : `<span class="timer-badge expired">⏱ No end time</span>`}
+        </div>
+        <div class="detail-item">
+          <span>Predicted Result</span>
+          <strong class="yellow result-big">${pred === null || pred === undefined ? "—" : escapeHtml(pred)}</strong>
+        </div>
+      </div>
+      <p class="small muted" style="margin-top:10px">
+        Starts: ${escapeHtml(formatDate(startsAt))} · Ends: ${escapeHtml(formatDate(endsAt))}<br>
+        Admin preview only. Live game result remains authoritative.
+      </p>`;
+    window["__refresh_" + bodyId] = () => loadNextResultPreview(bodyId, btnId);
+    startPeriodTimers();
+  } catch (e) {
+    body.innerHTML = `<div class="notice">Preview not available (${escapeHtml(e.message)}).</div>`;
+  }
+  const btn = $(btnId);
+  if (btn) btn.onclick = async () => {
+    const code = prompt("Next period / round code:");
+    if (!code) return;
+    const val = prompt("Predicted result (0-9):");
+    if (val === null) return;
+    const res = Number(val);
+    if (!Number.isInteger(res) || res < 0 || res > 9) return toast("Result must be 0-9.", true);
+    try {
+      await api("set_next_result", { round_code: code.trim(), result_number: res });
+      toast("Next result set.");
+      loadNextResultPreview(bodyId, btnId);
+    } catch (err) { toast(err.message, true); }
+  };
+}
+
+/* ============ DASHBOARD ============ */
 async function renderDashboard() {
   setPage("Dashboard", "Live overview of users, balances, transactions and game activity.",
     '<button class="btn" id="refreshDashboard">↻ Refresh</button>');
@@ -944,6 +1156,14 @@ async function renderDashboard() {
   };
 
   $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head">
+        <h3>🔮 Next Upcoming Result (Admin Preview)</h3>
+        <button class="btn small" id="setNextResultBtn" type="button">Set / Change</button>
+      </div>
+      <div id="nextResultBody"><div class="loading">Loading...</div></div>
+    </div>
+
     <div class="card">
       <div class="card-head">
         <h3>📅 Today's Summary</h3>
@@ -1041,18 +1261,33 @@ async function renderDashboard() {
     </div>
   `;
   $("openRounds").addEventListener("click", () => navigate("rounds"));
+  await loadNextResultPreview("nextResultBody", "setNextResultBtn");
+  startPeriodTimers();
 }
 
 function roundTable(rows) {
   return table(
-    ["Round", "Status", "Start", "Result", "Bets", "Stake", "Payout", "Pending", "Settlement"],
-    rows.map(r => [
-      escapeHtml(r.round_code), badge(r.status), escapeHtml(formatDate(r.starts_at)),
-      escapeHtml(r.result_number ?? "—"), escapeHtml(statValue(r.bet_count, 0)),
-      escapeHtml(money(r.total_stake)), escapeHtml(money(r.total_payout)),
-      escapeHtml(statValue(r.pending_bets, 0)),
-      r.payout_complete ? badge("complete") : badge("review")
-    ])
+    ["Period (Game)", "Round Code", "Status", "Time Left", "Start", "Result", "Bets", "Stake", "Payout", "Pending", "Settlement"],
+    rows.map(r => {
+      const endsAt = r.ends_at;
+      const isActive = endsAt && (r.result_number === null || r.result_number === undefined);
+      const timeCell = isActive
+        ? `<span class="timer-badge" data-countdown-to="${escapeHtml(endsAt)}">⏱ —</span>`
+        : `<span class="muted small">—</span>`;
+      return [
+        `<strong>${escapeHtml(r.period_number ?? r.round_code ?? "—")}</strong>`,
+        escapeHtml(r.round_code ?? "—"),
+        badge(r.status),
+        timeCell,
+        escapeHtml(formatDate(r.starts_at)),
+        escapeHtml(r.result_number ?? "—"),
+        escapeHtml(statValue(r.bet_count, 0)),
+        escapeHtml(money(r.total_stake)),
+        escapeHtml(money(r.total_payout)),
+        escapeHtml(statValue(r.pending_bets, 0)),
+        r.payout_complete ? badge("complete") : badge("review")
+      ];
+    })
   );
 }
 
@@ -1109,21 +1344,26 @@ async function renderAnalytics() {
     <div class="card">
       <div class="card-head"><h3>Top Users by Total Stake</h3></div>
       ${table(
-        ["User ID", "Username", "Bets", "Stake", "Payout", "Net"],
-        (data.top_users || []).map(u => [
-          escapeHtml(u.id), escapeHtml(u.username || "—"),
-          escapeHtml(statValue(u.bets, 0)), escapeHtml(money(u.stake)),
-          escapeHtml(money(u.payout)), escapeHtml(money(u.user_net))
-        ])
+        ["User ID", "Username", "Bets", "Stake", "Payout", "Net", "Win %"],
+        (data.top_users || []).map(u => {
+          const w = Number(u.wins || 0), l = Number(u.losses || 0), tot = w + l;
+          return [
+            escapeHtml(u.id), escapeHtml(u.username || "—"),
+            escapeHtml(statValue(u.bets, 0)), escapeHtml(money(u.stake)),
+            escapeHtml(money(u.payout)), escapeHtml(money(u.user_net)),
+            escapeHtml(tot ? ((w / tot) * 100).toFixed(0) + "%" : "—")
+          ];
+        })
       )}
     </div>
 
     <div class="card">
       <div class="card-head"><h3>Largest Stakes</h3></div>
       ${table(
-        ["Bet ID", "User ID", "Round", "Type", "Stake", "Created"],
+        ["Bet ID", "User ID", "Period (Game)", "Type", "Stake", "Created"],
         (data.large_stakes || []).map(b => [
-          escapeHtml(b.id), escapeHtml(b.user_id), escapeHtml(b.round_code || "—"),
+          escapeHtml(b.id), escapeHtml(b.user_id),
+          escapeHtml(b.period_number ?? b.round_code ?? "—"),
           escapeHtml(b.bet_type), escapeHtml(money(b.stake)), escapeHtml(formatDate(b.created_at))
         ])
       )}
@@ -1310,14 +1550,17 @@ async function renderUsers() {
   $("viewBody").innerHTML = `
     ${filterToolbar({ search: "Search username, user ID or Telegram ID", segment: true })}
     ${table(
-      ["User ID", "Name", "Telegram ID", "Username", "Balance", "Referred By", "Referral Code", "Referrals", "Joined", "Details"],
+      ["User ID", "Name", "Telegram ID", "Username", "Balance", "Referred By", "Referral Code", "Referrals", "Win %", "Joined", "Details"],
       (data.users || []).map(u => {
         const fn = [u.first_name, u.last_name].filter(Boolean).join(" ");
+        const w = Number(u.wins || 0), l = Number(u.losses || 0), tot = w + l;
+        const winPct = tot ? ((w / tot) * 100).toFixed(0) + "%" : "—";
         return [
           escapeHtml(u.id), escapeHtml(fn || "—"), escapeHtml(u.telegram_id),
           escapeHtml(u.username || "—"), escapeHtml(money(u.balance)),
           escapeHtml(u.referred_by ?? "—"), escapeHtml(u.referral_code || "—"),
-          escapeHtml(statValue(u.referral_count, 0)), escapeHtml(formatDate(u.created_at)),
+          escapeHtml(statValue(u.referral_count, 0)), escapeHtml(winPct),
+          escapeHtml(formatDate(u.created_at)),
           `<button class="btn" data-user-detail="${escapeHtml(u.id)}">View</button>`
         ];
       })
@@ -1339,6 +1582,10 @@ async function renderUserDetail(userId) {
     const data = await api("user_detail", { user_id: userId });
     const p = data.profile || {}, s = data.stats || {};
     const fn = [p.first_name, p.last_name].filter(Boolean).join(" ");
+    const w = Number(s.wins || 0), l = Number(s.losses || 0), tot = w + l;
+    const winPct = tot ? (w / tot) * 100 : 0;
+    const lossPct = tot ? (l / tot) * 100 : 0;
+
     container.innerHTML = `
       <div class="card" style="margin-top:18px">
         <div class="card-head">
@@ -1346,20 +1593,27 @@ async function renderUserDetail(userId) {
           <button class="btn" id="closeUserDetail">Close</button>
         </div>
         <div class="detail-grid">
-          ${detailItem("Telegram ID", p.telegram_id)}
-          ${detailItem("Name", fn || "—")}
-          ${detailItem("Username", p.username || "—")}
-          ${detailItem("Balance", money(p.balance))}
-          ${detailItem("Referral Code", p.referral_code || "—")}
-          ${detailItem("Referred By", p.referred_by ?? "—")}
-          ${detailItem("Joined", formatDate(p.created_at))}
-          ${detailItem("Total Bets", statValue(s.bets, 0))}
-          ${detailItem("Total Stake", money(s.stake))}
-          ${detailItem("Total Payout", money(s.payout))}
-          ${detailItem("Wins", statValue(s.wins, 0))}
-          ${detailItem("Losses", statValue(s.losses, 0))}
-          ${detailItem("Commissions Generated", money(data.commissions_generated))}
+          ${detailItem("Telegram ID", escapeHtml(p.telegram_id))}
+          ${detailItem("Name", escapeHtml(fn || "—"))}
+          ${detailItem("Username", escapeHtml(p.username || "—"))}
+          ${detailItem("Balance", escapeHtml(money(p.balance)))}
+          ${detailItem("Referral Code", escapeHtml(p.referral_code || "—"))}
+          ${detailItem("Referred By", escapeHtml(p.referred_by ?? "—"))}
+          ${detailItem("Joined", escapeHtml(formatDate(p.created_at)))}
+          ${detailItem("Total Bets", escapeHtml(statValue(s.bets, 0)))}
+          ${detailItem("Total Stake", escapeHtml(money(s.stake)))}
+          ${detailItem("Total Payout", escapeHtml(money(s.payout)))}
+          ${detailItem("Wins", `<span class="green">${escapeHtml(statValue(w, 0))}</span>`)}
+          ${detailItem("Losses", `<span class="red">${escapeHtml(statValue(l, 0))}</span>`)}
+          ${detailItem("Win Rate", `<span class="green">${tot ? winPct.toFixed(1) + "%" : "—"}</span>`)}
+          ${detailItem("Loss Rate", `<span class="red">${tot ? lossPct.toFixed(1) + "%" : "—"}</span>`)}
+          ${detailItem("Commissions Generated", escapeHtml(money(data.commissions_generated)))}
         </div>
+        <div class="winloss-bar" title="Win vs Loss">
+          <div class="w" style="width:${winPct}%"></div>
+          <div class="l" style="width:${lossPct}%"></div>
+        </div>
+        <p class="small muted" style="margin-top:6px">Win ${winPct.toFixed(1)}% · Loss ${lossPct.toFixed(1)}% (of settled bets)</p>
 
         <div class="card" style="margin-top:16px">
           <h3>Admin Actions</h3>
@@ -1391,12 +1645,13 @@ async function renderUserDetail(userId) {
 
         <div class="card-head" style="margin-top:22px"><h3>Recent Bets</h3></div>
         ${table(
-          ["Bet ID", "Round", "Type", "Selection", "Stake", "Fee", "Status", "Result", "Payout", "Created"],
+          ["Bet ID", "Period (Game)", "Type", "Selection", "Stake", "Fee", "Status", "Result", "Payout", "Created"],
           (data.recent_bets || []).map(b => [
-            escapeHtml(b.id), escapeHtml(b.round_code || "—"), escapeHtml(b.bet_type),
-            escapeHtml(b.selection), escapeHtml(money(b.stake)), escapeHtml(money(b.fee)),
-            badge(b.status), escapeHtml(b.result_number ?? "—"), escapeHtml(money(b.payout)),
-            escapeHtml(formatDate(b.created_at))
+            escapeHtml(b.id),
+            escapeHtml(b.period_number ?? b.round_code ?? "—"),
+            escapeHtml(b.bet_type), escapeHtml(b.selection), escapeHtml(money(b.stake)),
+            escapeHtml(money(b.fee)), badge(b.status), escapeHtml(b.result_number ?? "—"),
+            escapeHtml(money(b.payout)), escapeHtml(formatDate(b.created_at))
           ])
         )}
 
@@ -1405,7 +1660,8 @@ async function renderUserDetail(userId) {
           ["ID", "Type", "Amount", "Status", "Network", "TX Hash", "Created"],
           (data.recent_transactions || []).map(t => [
             escapeHtml(t.id), escapeHtml(t.transaction_type), escapeHtml(money(t.amount)),
-            badge(t.status), escapeHtml(t.network || "—"), escapeHtml(t.tx_hash || "—"),
+            badge(t.status), escapeHtml(t.network || "—"),
+            txHashCell(t.tx_hash, t.network),
             escapeHtml(formatDate(t.created_at))
           ])
         )}
@@ -1414,8 +1670,9 @@ async function renderUserDetail(userId) {
     $("closeUserDetail").addEventListener("click", () => container.innerHTML = "");
     container.querySelectorAll(".user-action").forEach(btn => btn.addEventListener("click", async () => {
       const action = btn.dataset.action;
-      const points = ["add_fund", "remove_fund", "transfer_points"].includes(action) ? prompt("Points amount") : null;
-      if (["add_fund", "remove_fund", "transfer_points"].includes(action) && (!points || Number(points) <= 0)) return;
+      const needPoints = ["add_fund", "remove_fund", "transfer_points"].includes(action);
+      const points = needPoints ? prompt("Points amount") : null;
+      if (needPoints && (!points || Number(points) <= 0)) return;
       const payload = { management_action: action, user_id: btn.dataset.userId };
       if (points) payload.points = points;
       if (action === "transfer_points") {
@@ -1490,22 +1747,32 @@ async function renderTransactions(view) {
     ${filterToolbar({ type: view === "transactions", status: true, userId: true })}
     <div class="notice warning">
       Approve means manual payout/credit. Reject/Refund returns reserved funds. Deposit approval credits 100 points per USDT.
+      Withdrawal wallet address ke saath copy button diya gaya hai.
     </div>
     ${table(
-      ["ID", "User ID", "Type", "Amount", "Status", "Network", "TX Hash", "Payout TX", "Created", "Updated", "Actions"],
+      ["ID", "User ID", "Type", "Amount", "Status", "Network", "Wallet / To Address", "TX Hash", "Payout TX", "Created", "Updated", "Actions"],
       (data.transactions || []).map(t => {
+        const addr = t.to_address || t.wallet_address || t.to_wallet || t.address || t.deposit_address || "";
         let actionButtons = "—";
         if (t.status === "pending") {
           if (t.transaction_type === "deposit") {
-            actionButtons = `<div class="row-actions"><button class="btn btn-primary review-tx" data-action="deposit_approve" data-id="${escapeHtml(t.id)}">Approve</button><button class="btn btn-danger review-tx" data-action="deposit_reject" data-id="${escapeHtml(t.id)}">Reject</button></div>`;
+            actionButtons = `<div class="row-actions">
+              <button class="btn btn-primary review-tx" data-action="deposit_approve" data-id="${escapeHtml(t.id)}" data-addr="${escapeHtml(addr)}">Approve</button>
+              <button class="btn btn-danger review-tx" data-action="deposit_reject" data-id="${escapeHtml(t.id)}" data-addr="${escapeHtml(addr)}">Reject</button>
+            </div>`;
           } else if (t.transaction_type === "withdrawal") {
-            actionButtons = `<div class="row-actions"><button class="btn btn-primary review-tx" data-action="withdrawal_approve" data-id="${escapeHtml(t.id)}">Approve</button><button class="btn btn-danger review-tx" data-action="withdrawal_reject" data-id="${escapeHtml(t.id)}">Reject</button></div>`;
+            actionButtons = `<div class="row-actions">
+              <button class="btn btn-primary review-tx" data-action="withdrawal_approve" data-id="${escapeHtml(t.id)}" data-addr="${escapeHtml(addr)}">Approve</button>
+              <button class="btn btn-danger review-tx" data-action="withdrawal_reject" data-id="${escapeHtml(t.id)}" data-addr="${escapeHtml(addr)}">Reject</button>
+            </div>`;
           }
         }
         return [
           escapeHtml(t.id), escapeHtml(t.user_id), badge(t.transaction_type),
           escapeHtml(money(t.amount)), badge(t.status), escapeHtml(t.network || "—"),
-          escapeHtml(t.tx_hash || "—"), escapeHtml(t.payout_tx_hash || "—"),
+          addressCell(addr),
+          txHashCell(t.tx_hash, t.network),
+          txHashCell(t.payout_tx_hash, t.network),
           escapeHtml(formatDate(t.created_at)), escapeHtml(formatDate(t.updated_at)),
           actionButtons
         ];
@@ -1518,13 +1785,15 @@ async function renderTransactions(view) {
 
   document.querySelectorAll(".review-tx").forEach(btn => btn.addEventListener("click", async () => {
     const action = btn.dataset.action;
+    const addr = btn.dataset.addr || "";
     let message = "Are you sure?";
-    if (action === "withdrawal_approve") message = "Approve this withdrawal for manual payout?";
-    const payoutTxHash = action === "withdrawal_approve" ? prompt("Enter the payout transaction hash:") : "";
-    if (action === "withdrawal_approve" && !payoutTxHash?.trim()) return;
+    if (action === "withdrawal_approve") message = `Approve this withdrawal for manual payout?\n\nTo address: ${addr || "(missing)"}`;
     if (action === "withdrawal_reject") message = "Reject and refund this withdrawal?";
     if (action === "deposit_approve") message = "Approve this deposit? Points will be credited.";
     if (action === "deposit_reject") message = "Reject this deposit?";
+
+    const payoutTxHash = action === "withdrawal_approve" ? prompt("Enter the payout transaction hash:") : "";
+    if (action === "withdrawal_approve" && !payoutTxHash?.trim()) return;
     if (!window.confirm(message)) return;
     try {
       await api(action, { transaction_id: btn.dataset.id, payout_tx_hash: payoutTxHash?.trim() || "" });
@@ -1546,6 +1815,11 @@ async function renderDepositAddresses() {
   const coinOptions = ["USDT", "TRON", "BNB", "ETHEREUM", "GRAM", "POLYGON", "BTC", "SOL"];
   const networkOptions = ["BEP-20", "TRC-20", "ERC-20", "BSC", "Mainnet", "Polygon", "Solana"];
 
+  const isActiveOf = item => {
+    if (item.is_active === undefined || item.is_active === null) return true;
+    return item.is_active === true || item.is_active === "1" || Number(item.is_active) === 1;
+  };
+
   const editor = (item = {}) => `
     <form class="card deposit-address-form" data-id="${escapeHtml(item.id || "")}">
       <div class="grid-4">
@@ -1561,7 +1835,7 @@ async function renderDepositAddresses() {
       <input name="address" placeholder="Wallet address" value="${escapeHtml(item.address || "")}" required maxlength="150" style="margin-top:10px;width:100%">
       <input name="qr_payload" placeholder="QR payload (optional)" value="${escapeHtml(item.qr_payload || "")}" maxlength="300" style="margin-top:10px;width:100%">
       <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
-        <label><input type="checkbox" name="is_active" ${item.is_active !== false ? "checked" : ""}> Active</label>
+        <label><input type="checkbox" name="is_active" ${isActiveOf(item) ? "checked" : ""}> Active</label>
         <input name="sort_order" type="number" min="0" max="100" value="${Number(item.sort_order || 0)}" aria-label="Sort" style="width:80px">
       </div>
       <button class="btn btn-primary" type="submit" style="margin-top:10px">Save</button>
@@ -1669,7 +1943,7 @@ async function renderGiftCodeHistory() {
           escapeHtml(c.expires_at ? formatDate(c.expires_at) : "Never"),
           escapeHtml(c.created_by || "—"),
           escapeHtml(formatDate(c.created_at)),
-          `<button class="btn" onclick="copyGiftLink('${escapeHtml(c.code)}')">Copy Link</button>`
+          `<button class="btn copy-gift" data-code="${escapeHtml(c.code)}" type="button">Copy Link</button>`
         ]),
         "No gift codes yet."
       )}
@@ -1681,6 +1955,10 @@ async function renderGiftCodeHistory() {
     const isFixed = e.target.value === "fixed";
     $("perUserField").classList.toggle("hidden", !isFixed);
     $("maxUsersField").classList.toggle("hidden", isFixed);
+  });
+
+  document.querySelectorAll(".copy-gift").forEach(btn => {
+    btn.onclick = () => copyGiftLink(btn.dataset.code);
   });
 
   $("createGiftForm").onsubmit = async e => {
@@ -1707,16 +1985,17 @@ async function renderGiftCodeHistory() {
   attachPagination("gift_codes", data.pagination, renderGiftCodeHistory);
 }
 
-window.copyGiftLink = (code) => {
-  let botName = state.botUsername;
+function copyGiftLink(code) {
+  let botName = state.botUsername || localStorage.getItem("bot_username");
   if (!botName) {
-    botName = prompt("Enter your Bot Username (without @):", "YourBotName");
+    botName = prompt("Bot Username (without @):", "");
     if (!botName) return;
+    botName = botName.replace(/^@/, "");
+    localStorage.setItem("bot_username", botName);
   }
   const link = `https://t.me/${botName}?startapp=gift_${code}`;
-  navigator.clipboard.writeText(link);
-  toast("Gift link copied: " + link);
-};
+  copyText(link);
+}
 
 /* ============ GIFT REDEMPTIONS ============ */
 async function renderGiftHistory() {
@@ -1748,7 +2027,7 @@ async function renderGiftHistory() {
 
 /* ============ ROUNDS ============ */
 async function renderRounds() {
-  setPage("Game Rounds", "Round status, timing, results and settlement indicators.",
+  setPage("Game Rounds", "Round status, game period, result and settlement.",
     '<button class="btn" id="refreshRounds">↻ Refresh</button>');
   $("refreshRounds").addEventListener("click", renderRounds);
 
@@ -1757,14 +2036,88 @@ async function renderRounds() {
     page: state.pages.rounds || 1, page_size: 20,
     q: f.q || "", status: f.status || ""
   });
+
   $("viewBody").innerHTML = `
-    ${filterToolbar({ search: "Search round code" })}
-    <div class="notice warning">Round result changes are not available in this read-only panel.</div>
-    ${roundTable(data.rounds || [])}
-    ${paginationHtml(data.pagination)}
+    <div class="card">
+      <div class="card-head">
+        <h3>🔮 Next Upcoming Result (Admin Preview)</h3>
+        <button class="btn small" id="setNextResultBtnR" type="button">Set / Change</button>
+      </div>
+      <div id="nextResultBodyR"><div class="loading">Loading...</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>🛠️ Manual Result Update</h3>
+        <span class="small muted">Result 0–9. Sirf auto result missing/galat hone par use karein.</span>
+      </div>
+      <form id="manualResultForm" class="inline-form">
+        <div class="field"><label>Period / Round Code</label>
+          <input name="round_code" placeholder="e.g. 20251022-001" required></div>
+        <div class="field" style="max-width:160px"><label>Result (0-9)</label>
+          <input name="result_number" type="number" min="0" max="9" required></div>
+        <button class="btn btn-primary" type="submit">Update Result &amp; Settle</button>
+      </form>
+      <div class="notice warning" style="margin-top:12px">Result update us period ke pending bets settle karega. Ye undo nahi hoga.</div>
+    </div>
+
+    ${filterToolbar({ search: "Search period / round code", status: true })}
+
+    <div class="card">
+      <div class="card-head"><h3>All Rounds</h3></div>
+      ${table(
+        ["Period (Game)", "Round Code", "Status", "Time Left", "Start", "Result", "Bets", "Stake", "Payout", "Pending", "Settlement", "Action"],
+        (data.rounds || []).map(r => {
+          const endsAt = r.ends_at;
+          const isActive = endsAt && (r.result_number === null || r.result_number === undefined);
+          const timeCell = isActive
+            ? `<span class="timer-badge" data-countdown-to="${escapeHtml(endsAt)}">⏱ —</span>`
+            : `<span class="muted small">—</span>`;
+          return [
+            `<strong>${escapeHtml(r.period_number ?? r.round_code ?? "—")}</strong>`,
+            escapeHtml(r.round_code ?? "—"),
+            badge(r.status),
+            timeCell,
+            escapeHtml(formatDate(r.starts_at)),
+            escapeHtml(r.result_number ?? "—"),
+            escapeHtml(statValue(r.bet_count, 0)),
+            escapeHtml(money(r.total_stake)),
+            escapeHtml(money(r.total_payout)),
+            escapeHtml(statValue(r.pending_bets, 0)),
+            r.payout_complete ? badge("complete") : badge("review"),
+            `<button class="btn small set-result" data-code="${escapeHtml(r.round_code ?? "")}" type="button">Set Result</button>`
+          ];
+        })
+      )}
+      ${paginationHtml(data.pagination)}
+    </div>
   `;
   attachFilterActions("rounds", renderRounds);
   attachPagination("rounds", data.pagination, renderRounds);
+  await loadNextResultPreview("nextResultBodyR", "setNextResultBtnR");
+  startPeriodTimers();
+
+  async function submitManualResult(code, res) {
+    if (!code || !Number.isInteger(res) || res < 0 || res > 9) return toast("Valid period aur result 0-9 daalein.", true);
+    if (!confirm(`Set result ${res} for ${code} and settle bets?`)) return;
+    try {
+      await api("set_result", { round_code: code, result_number: res });
+      toast("Result updated.");
+      await renderRounds();
+    } catch (err) { toast(err.message, true); }
+  }
+
+  $("manualResultForm").onsubmit = e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    submitManualResult(String(fd.get("round_code")).trim(), Number(fd.get("result_number")));
+  };
+
+  document.querySelectorAll(".set-result").forEach(btn => btn.addEventListener("click", () => {
+    const val = prompt(`Enter result (0-9) for period ${btn.dataset.code}:`);
+    if (val === null) return;
+    submitManualResult(btn.dataset.code, Number(val));
+  }));
 }
 
 /* ============ BETS ============ */
@@ -1784,10 +2137,12 @@ async function renderBets() {
   $("viewBody").innerHTML = `
     ${filterToolbar({ status: true, userId: true })}
     ${table(
-      ["Bet ID", "User ID", "Round ID", "Round Code", "Type", "Selection", "Stake", "Fee", "Status", "Result", "Payout", "Created", "Settled"],
+      ["Bet ID", "User ID", "Period (Game)", "Round Code", "Type", "Selection", "Stake", "Fee", "Status", "Result", "Payout", "Created", "Settled"],
       (data.bets || []).map(b => [
-        escapeHtml(b.id), escapeHtml(b.user_id), escapeHtml(b.round_id),
-        escapeHtml(b.round_code || "—"), escapeHtml(b.bet_type), escapeHtml(b.selection),
+        escapeHtml(b.id), escapeHtml(b.user_id),
+        escapeHtml(b.period_number ?? b.round_code ?? "—"),
+        escapeHtml(b.round_code ?? "—"),
+        escapeHtml(b.bet_type), escapeHtml(b.selection),
         escapeHtml(money(b.stake)), escapeHtml(money(b.fee)), badge(b.status),
         escapeHtml(b.result_number ?? "—"), escapeHtml(money(b.payout)),
         escapeHtml(formatDate(b.created_at)), escapeHtml(formatDate(b.settled_at))
@@ -1835,9 +2190,8 @@ async function renderReferrals() {
 
 /* ============ CHANNEL SETTINGS (INCLUDING MULTI-CHANNEL) ============ */
 async function renderChannelSettings() {
-  setPage("Channel & Schedule Settings", "Manage bot channel, prediction timing, and multi-channel broadcasting.");
-  
-  // Fetch both settings and the multi-channels list
+  setPage("Channel & Schedule Settings", "Manage bot channel, prediction timing, master on/off and multi-channel posting.");
+
   const data = await api("channel_settings");
   const s = data.settings || {};
   const channels = data.prediction_channels || [];
@@ -1861,8 +2215,13 @@ async function renderChannelSettings() {
 
         <div class="field">
           <label>Prediction Timing (Seconds before round ends)</label>
-          <input type="number" name="prediction_timing" value="${s.prediction_timing || 150}" min="1" max="3600" required>
+          <input type="number" name="prediction_timing" value="${s.prediction_timing ?? 150}" min="1" max="3600" required>
           <div class="small muted">Default 150 (bets close at 150s).</div>
+        </div>
+
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" name="channel_updates_enabled" ${s.channel_updates_enabled ? "checked" : ""} style="width:auto">
+          <label style="margin:0">Channel Updates (Result + Prediction Posts) ON/OFF</label>
         </div>
 
         <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
@@ -1897,22 +2256,27 @@ async function renderChannelSettings() {
     <div class="card">
       <div class="card-head">
         <h3>Multi-Channel Prediction (Auto Send)</h3>
-        <button class="btn btn-primary" id="addPredChannelBtn">+ Add Channel</button>
+        <div class="header-actions">
+          <button class="btn btn-primary" id="postPredNowAll" type="button">📤 Post Prediction to All Now</button>
+          <button class="btn btn-primary" id="addPredChannelBtn" type="button">+ Add Channel</button>
+        </div>
       </div>
+      <div class="notice">Agar post fail ho raha hai to ensure karein bot channel ka admin hai aur Channel ID/@username sahi hai.</div>
+
       <div id="addChannelFormWrap" class="hidden" style="margin-bottom:15px; padding:15px; background:#0b1016; border-radius:8px; border: 1px solid #2a3544;">
-         <form id="addPredChannelForm" style="display:flex; gap:10px; align-items:flex-end;">
-            <div class="field" style="margin:0; flex:2;">
+         <form id="addPredChannelForm" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+            <div class="field" style="margin:0; flex:2 1 220px;">
               <label>Channel ID or @username</label>
               <input name="channel_id" placeholder="@channel_name or -100123456" required>
             </div>
-            <div class="field" style="margin:0; flex:1;">
+            <div class="field" style="margin:0; flex:1 1 140px;">
               <label>Schedule (Mins)</label>
               <input type="number" name="schedule_mins" value="3" required>
             </div>
             <button class="btn btn-primary" type="submit">Add</button>
          </form>
       </div>
-      
+
       ${table(
         ["ID", "Channel ID", "Schedule", "Status", "Action"],
         channels.map(c => [
@@ -1920,14 +2284,16 @@ async function renderChannelSettings() {
           escapeHtml(c.channel_id),
           `${c.schedule_mins} Mins`,
           badge(c.is_active ? "active" : "inactive"),
-          `<div class="row-actions"><button class="btn ${c.is_active ? 'btn-danger' : 'btn-primary'} toggle-channel" data-id="${c.id}" data-active="${c.is_active}">${c.is_active ? 'Turn OFF' : 'Turn ON'}</button>
-           <button class="btn btn-danger delete-channel" data-id="${c.id}">Delete</button></div>`
+          `<div class="row-actions">
+             <button class="btn btn-primary post-channel" data-id="${escapeHtml(c.id)}" type="button">Post Now</button>
+             <button class="btn ${c.is_active ? 'btn-danger' : 'btn-primary'} toggle-channel" data-id="${escapeHtml(c.id)}" data-active="${c.is_active}" type="button">${c.is_active ? 'Turn OFF' : 'Turn ON'}</button>
+             <button class="btn btn-danger delete-channel" data-id="${escapeHtml(c.id)}" type="button">Delete</button>
+           </div>`
         ])
       )}
     </div>
   `;
 
-  // Main Settings Save
   $("channelSettingsForm").onsubmit = async e => {
     e.preventDefault();
     const fd = new FormData(e.target);
@@ -1936,6 +2302,7 @@ async function renderChannelSettings() {
         channel_username: fd.get("channel_username"),
         bot_username: fd.get("bot_username"),
         prediction_timing: fd.get("prediction_timing"),
+        channel_updates_enabled: fd.get("channel_updates_enabled") === "on",
         predictions_enabled: fd.get("predictions_enabled") === "on",
         prediction_message: fd.get("prediction_message"),
         result_message: fd.get("result_message"),
@@ -1944,13 +2311,12 @@ async function renderChannelSettings() {
       });
       toast("Main settings saved!");
       state.botUsername = fd.get("bot_username");
+      localStorage.setItem("bot_username", state.botUsername);
     } catch (err) { toast(err.message, true); }
   };
 
-  // Add Channel Toggle Form
   $("addPredChannelBtn").onclick = () => $("addChannelFormWrap").classList.toggle("hidden");
 
-  // Add Channel Submit
   $("addPredChannelForm").onsubmit = async e => {
     e.preventDefault();
     const fd = new FormData(e.target);
@@ -1965,19 +2331,34 @@ async function renderChannelSettings() {
     } catch (err) { toast(err.message, true); }
   };
 
-  // Toggle Channel
+  $("postPredNowAll").onclick = async () => {
+    if (!confirm("Post prediction to all active channels now?")) return;
+    try {
+      const r = await api("post_prediction", { all: true });
+      toast(r.message || "Posted to all channels.");
+    } catch (err) { toast(err.message, true); }
+  };
+
+  document.querySelectorAll(".post-channel").forEach(btn => btn.onclick = async () => {
+    btn.disabled = true;
+    try {
+      const r = await api("post_prediction", { id: btn.dataset.id });
+      toast(r.message || "Posted.");
+    } catch (err) { toast(err.message, true); }
+    finally { btn.disabled = false; }
+  });
+
   document.querySelectorAll(".toggle-channel").forEach(btn => btn.onclick = async () => {
     try {
       await api("save_prediction_channel", {
         action_type: "toggle",
         id: btn.dataset.id,
-        is_active: btn.dataset.active === "false" 
+        is_active: btn.dataset.active === "false"
       });
       renderChannelSettings();
     } catch (err) { toast(err.message, true); }
   });
 
-  // Delete Channel
   document.querySelectorAll(".delete-channel").forEach(btn => btn.onclick = async () => {
     if (!confirm("Delete this channel?")) return;
     try {
@@ -2088,6 +2469,91 @@ async function renderTelegram() {
   }));
 }
 
+/* ============ TELEGRAM SUPPORT (NEW) ============ */
+async function renderTelegramSupport() {
+  setPage("Telegram Support", "Configure support contact and view recent support messages.");
+  let data = {};
+  try { data = await api("support_settings"); } catch (e) { /* optional endpoint */ }
+  const s = data.settings || data || {};
+
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head"><h3>Support Settings</h3></div>
+      <form id="supportForm">
+        <div class="grid" style="grid-template-columns:1fr 1fr;">
+          <div class="field"><label>Support Username</label>
+            <input name="support_username" value="${escapeHtml(s.support_username || "")}" placeholder="@YourSupport" maxlength="100">
+            <div class="small muted">Shown to users for help.</div></div>
+          <div class="field"><label>Support Channel / Group</label>
+            <input name="support_channel" value="${escapeHtml(s.support_channel || "")}" placeholder="@YourSupportGroup" maxlength="100"></div>
+        </div>
+        <div class="field"><label>Support Message</label>
+          <textarea name="support_message" maxlength="2000" placeholder="Need help? Contact support...">${escapeHtml(s.support_message || "")}</textarea></div>
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" name="support_enabled" ${s.support_enabled ? "checked" : ""} style="width:auto">
+          <label style="margin:0">Enable Support Button</label>
+        </div>
+        <button class="btn btn-primary" type="submit">Save Support Settings</button>
+      </form>
+      <div id="supportPreview" style="margin-top:14px"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Recent Support Messages</h3><button class="btn small" id="refreshSupport">Refresh</button></div>
+      <div id="supportMessages"><div class="loading">Loading...</div></div>
+    </div>
+  `;
+
+  function updateSupportPreview() {
+    const form = $("supportForm");
+    const u = (form.support_username.value || "").trim().replace(/^@/, "");
+    const c = (form.support_channel.value || "").trim().replace(/^@/, "");
+    $("supportPreview").innerHTML = `<div class="notice">
+      User support link: ${u ? `<a class="tx-link" target="_blank" rel="noopener" href="https://t.me/${escapeHtml(u)}">@${escapeHtml(u)}</a>` : "—"}
+      · Group: ${c ? `<a class="tx-link" target="_blank" rel="noopener" href="https://t.me/${escapeHtml(c)}">@${escapeHtml(c)}</a>` : "—"}
+    </div>`;
+  }
+
+  $("supportForm").onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    try {
+      await api("save_support_settings", {
+        support_username: fd.get("support_username"),
+        support_channel: fd.get("support_channel"),
+        support_message: fd.get("support_message"),
+        support_enabled: fd.get("support_enabled") === "on"
+      });
+      toast("Support settings saved.");
+      updateSupportPreview();
+    } catch (err) { toast(err.message, true); }
+  };
+
+  updateSupportPreview();
+
+  async function loadMsgs() {
+    try {
+      const d = await api("support_messages", { page: 1, page_size: 30 });
+      const rows = d.messages || d.entries || [];
+      $("supportMessages").innerHTML = table(
+        ["Time", "User ID", "Username", "Message", "Status"],
+        rows.map(m => [
+          escapeHtml(formatDate(m.created_at)),
+          escapeHtml(m.user_id ?? "—"),
+          escapeHtml(m.username || "—"),
+          escapeHtml(m.message || m.text || "—"),
+          badge(m.status || "open")
+        ]),
+        "No support messages."
+      );
+    } catch (e) {
+      $("supportMessages").innerHTML = `<div class="notice">Support messages endpoint not available (${escapeHtml(e.message)}).</div>`;
+    }
+  }
+  loadMsgs();
+  $("refreshSupport").onclick = loadMsgs;
+}
+
 /* ============ AUDIT ============ */
 async function renderAudit() {
   setPage("Audit Logs", "Review recorded administrative actions.",
@@ -2170,7 +2636,7 @@ function renderSearch() {
     <div class="card">
       <form id="globalSearchForm">
         <div class="toolbar">
-          <input id="globalSearchInput" placeholder="Username, user ID, Telegram ID or round code" required>
+          <input id="globalSearchInput" placeholder="Username, user ID, Telegram ID or period/round code" required>
           <button class="btn btn-primary" type="submit">Search</button>
         </div>
       </form>
@@ -2196,18 +2662,22 @@ function renderSearch() {
         )}
         <div class="card-head" style="margin-top:22px"><h3>Rounds</h3></div>
         ${table(
-          ["ID", "Round Code", "Status", "Start", "End", "Result"],
+          ["ID", "Period (Game)", "Round Code", "Status", "Start", "End", "Result"],
           (data.rounds || []).map(r => [
-            escapeHtml(r.id), escapeHtml(r.round_code), badge(r.status),
+            escapeHtml(r.id),
+            escapeHtml(r.period_number ?? r.round_code ?? "—"),
+            escapeHtml(r.round_code ?? "—"),
+            badge(r.status),
             escapeHtml(formatDate(r.starts_at)), escapeHtml(formatDate(r.ends_at)),
             escapeHtml(r.result_number ?? "—")
           ])
         )}
         <div class="card-head" style="margin-top:22px"><h3>Bets</h3></div>
         ${table(
-          ["ID", "User ID", "Round", "Type", "Stake", "Status", "Payout", "Created"],
+          ["ID", "User ID", "Period (Game)", "Type", "Stake", "Status", "Payout", "Created"],
           (data.bets || []).map(b => [
-            escapeHtml(b.id), escapeHtml(b.user_id), escapeHtml(b.round_code || "—"),
+            escapeHtml(b.id), escapeHtml(b.user_id),
+            escapeHtml(b.period_number ?? b.round_code ?? "—"),
             escapeHtml(b.bet_type), escapeHtml(money(b.stake)), badge(b.status),
             escapeHtml(money(b.payout)), escapeHtml(formatDate(b.created_at))
           ])
