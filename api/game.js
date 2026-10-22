@@ -367,6 +367,9 @@ async function getUser(client, telegramUser) {
   await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS deposit_wallet TEXT`); 
   await client.query(`ALTER TABLE public.referral_rewards ADD COLUMN IF NOT EXISTS credited_at TIMESTAMPTZ`);
 
+  // FIX: Drop old constraint if exists so gift/reward history works
+  await client.query(`ALTER TABLE public.transactions DROP CONSTRAINT IF EXISTS transactions_transaction_type_check`).catch(()=>{});
+
   const result = await client.query(
     `INSERT INTO public.users (telegram_id, username, first_name, last_name)
        VALUES ($1, $2, $3, $4)
@@ -564,8 +567,7 @@ async function autoCreditReferralRewards(client, referrerUserId) {
 // ============================================================================
 
 async function getReferralData(client, userId) {
-  await autoCreditReferralRewards(client, userId);
-
+  // Removed auto-credit so users must click Claim
   const userResult = await client.query(
     `SELECT id, referral_code, referred_by
      FROM public.users
@@ -644,20 +646,12 @@ async function getReferralData(client, userId) {
     [userId]
   );
 
+  // UPDATED: Splitting active and inactive rewards
   const rewardSummary = await client.query(
     `SELECT
-       COUNT(*) FILTER (WHERE status = 'pending')::int
-         AS pending_count,
-       COUNT(*) FILTER (WHERE status = 'credited')::int
-         AS credited_count,
-       COALESCE(
-         SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending'),
-         0
-       )::numeric(20,2) AS pending_points,
-       COALESCE(
-         SUM(rr.reward_points) FILTER (WHERE rr.status = 'credited'),
-         0
-       )::numeric(20,2) AS credited_points
+      COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')), 0)::numeric(20,2) AS active_pending_points,
+      COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' AND NOT EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')), 0)::numeric(20,2) AS inactive_pending_points,
+      COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'credited'), 0)::numeric(20,2) AS credited_points
      FROM public.referral_rewards rr
      WHERE rr.referrer_user_id = $1`,
     [userId]
@@ -720,18 +714,9 @@ async function getReferralData(client, userId) {
         reward_per_eligible_referral: 100,
         qualifying_recharge_points: 100,
         recharge_system_enabled: true,
-        pending_count: Number(
-          rewardSummary.rows[0]?.pending_count || 0
-        ),
-        credited_count: Number(
-          rewardSummary.rows[0]?.credited_count || 0
-        ),
-        pending_points: String(
-          rewardSummary.rows[0]?.pending_points || "0.00"
-        ),
-        credited_points: String(
-          rewardSummary.rows[0]?.credited_points || "0.00"
-        ),
+        active_pending_points: String(rewardSummary.rows[0]?.active_pending_points || "0.00"),
+        pending_points: String(rewardSummary.rows[0]?.inactive_pending_points || "0.00"),
+        credited_points: String(rewardSummary.rows[0]?.credited_points || "0.00"),
         message:
           "Earn 100 points for each direct referral after their qualifying recharge of 100 points is confirmed.",
       },
@@ -746,8 +731,6 @@ async function getReferralData(client, userId) {
 }
 
 async function getReferralMembers(client, userId) {
-  await autoCreditReferralRewards(client, userId);
-
   const members = await client.query(
     `SELECT
        u.id,
@@ -781,12 +764,12 @@ async function getReferralMembers(client, userId) {
          WHERE b.user_id = u.id
            AND b.created_at > NOW() - INTERVAL '7 days'
        ))::int AS active,
-       COUNT(*) FILTER (WHERE rr.status = 'pending')::int AS pending_count,
-       COALESCE(SUM(rr.reward_points)
-         FILTER (WHERE rr.status = 'pending'), 0)::text AS pending_points,
+       COUNT(*) FILTER (WHERE rr.status = 'pending' AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days'))::int AS active_pending_count,
+       COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')), 0)::text AS active_pending_points,
+       COUNT(*) FILTER (WHERE rr.status = 'pending' AND NOT EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days'))::int AS inactive_pending_count,
+       COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' AND NOT EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')), 0)::text AS inactive_pending_points,
        COUNT(*) FILTER (WHERE rr.status = 'credited')::int AS credited_count,
-       COALESCE(SUM(rr.reward_points)
-         FILTER (WHERE rr.status = 'credited'), 0)::text AS credited_points
+       COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'credited'), 0)::text AS credited_points
      FROM public.users u
      LEFT JOIN public.referral_rewards rr
        ON rr.referred_user_id = u.id
@@ -1391,12 +1374,6 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === "claim_rewards") {
-      const autoCredited = await autoCreditReferralRewards(client, user.id);
-      if (autoCredited > 0) {
-        await client.query("COMMIT"); transactionStarted = false;
-        return json(res, 200, { success: true, claimed_points: autoCredited.toFixed(2), auto: true });
-      }
-
       const claimable = await client.query(`
         SELECT rr.id, rr.reward_points FROM public.referral_rewards rr
         JOIN public.users u ON u.id = rr.referred_user_id
