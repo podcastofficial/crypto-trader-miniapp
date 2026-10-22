@@ -272,7 +272,10 @@ async function ensureManagementTables() {
   await query(`ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS destination_address TEXT`);
 
   await query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS period_number TEXT`);
-  await query(`UPDATE public.game_rounds SET period_number = round_code WHERE period_number IS NULL`);
+  await query(`UPDATE public.game_rounds SET period_number =
+    to_char(starts_at AT TIME ZONE 'UTC','YYYYMMDD') ||
+    lpad((FLOOR((EXTRACT(HOUR FROM starts_at AT TIME ZONE 'UTC')*60 + EXTRACT(MINUTE FROM starts_at AT TIME ZONE 'UTC'))/3)+1)::int::text,4,'0')
+    WHERE period_number IS NULL OR period_number = round_code`);
   await query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS predicted_result INT`);
   await query(`CREATE INDEX IF NOT EXISTS idx_game_rounds_period_number ON public.game_rounds(period_number)`);
   
@@ -281,6 +284,10 @@ async function ensureManagementTables() {
   await query(`ALTER TABLE public.bets ADD COLUMN IF NOT EXISTS settled_at TIMESTAMPTZ`);
   await query(`ALTER TABLE public.bets ADD COLUMN IF NOT EXISTS result_number INT`);
 
+  await query(`CREATE TABLE IF NOT EXISTS public.channel_settings (id INT PRIMARY KEY DEFAULT 1)`);
+  for (const c of ["channel_username TEXT DEFAULT '@crypto_trader_results'","bot_username TEXT DEFAULT 'YourBot'","predictions_enabled BOOLEAN DEFAULT TRUE","prediction_timing INT DEFAULT 150","prediction_message TEXT","result_message TEXT","result_image_url TEXT","inline_link_text TEXT DEFAULT 'Play'","created_at TIMESTAMPTZ DEFAULT NOW()"]) {
+    await query(`ALTER TABLE public.channel_settings ADD COLUMN IF NOT EXISTS ${c}`);
+  }
   await query(`ALTER TABLE public.channel_settings ADD COLUMN IF NOT EXISTS channel_updates_enabled BOOLEAN DEFAULT TRUE`);
   await query(`ALTER TABLE public.channel_settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`);
   
@@ -307,6 +314,7 @@ async function ensureManagementTables() {
     UNIQUE (gift_code_id, user_id)
   )`);
   await query(`ALTER TABLE public.gift_code_redemptions ADD COLUMN IF NOT EXISTS points_earned NUMERIC(20,2)`);
+  await query(`ALTER TABLE public.gift_code_redemptions ADD COLUMN IF NOT EXISTS id BIGSERIAL`);
 
   await query(`CREATE TABLE IF NOT EXISTS public.user_notifications (
     id BIGSERIAL PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
@@ -1168,6 +1176,19 @@ async function getChannelSettings() {
   return { ok: true, settings: settingsRows[0] || {}, prediction_channels: channelRows };
 }
 
+async function setAppSetting(key, value) {
+  await query(`CREATE TABLE IF NOT EXISTS public.app_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+  await query(`INSERT INTO public.app_settings(key,value) VALUES($1,$2) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value, updated_at=NOW()`, [key, String(value)]);
+}
+
+function tgLink(v) {
+  v = String(v || "").trim();
+  if (!v) return "";
+  if (/^https?:\/\//i.test(v)) return v;
+  if (/^-?\d+$/.test(v)) return "";
+  return "https://t.me/" + v.replace(/^@/, "");
+}
+
 async function saveChannelSettings(body, session, req) {
   await ensureManagementTables();
   await query(`UPDATE public.channel_settings SET
@@ -1187,6 +1208,9 @@ async function saveChannelSettings(body, session, req) {
       body.channel_updates_enabled === true || body.channel_updates_enabled === "true"
     ]
   );
+  const chUrl = tgLink(body.channel_username);
+  await setAppSetting("channel_url", chUrl);
+  await setAppSetting("channel_button_enabled", !!chUrl);
   await audit(session.username, "save_channel_settings", req, "success");
   return { ok: true, message: "Channel settings saved." };
 }
@@ -1278,7 +1302,7 @@ async function setResult(body, session, req) {
     await client.query("BEGIN");
 
     const rounds = await client.query(
-      `SELECT id, round_code, COALESCE(period_number, round_code) AS period_number
+      `SELECT id, round_code, status, COALESCE(period_number, round_code) AS period_number
        FROM public.game_rounds
        WHERE round_code=$1 OR period_number=$1
        FOR UPDATE`,
@@ -1286,6 +1310,7 @@ async function setResult(body, session, req) {
     );
     if (!rounds.rows.length) throw new Error("Round not found.");
     const round = rounds.rows[0];
+    if (round.status === "settled") throw new Error("Invalid request: round is already settled.");
 
     await client.query(
       `UPDATE public.game_rounds
@@ -1299,47 +1324,37 @@ async function setResult(body, session, req) {
     let totalPayout = 0;
 
     if (autoSettle) {
-      const settlementResult = await client.query(
-        `UPDATE public.bets
-         SET result_number=$1,
-             status = CASE
-               WHEN LOWER(selection) = $1::text THEN 'won'
-               WHEN LOWER(selection) LIKE '%' || LOWER($2) || '%' THEN 'won'
-               WHEN LOWER(selection) = LOWER($3) THEN 'won'
-               WHEN selection ~ '^[0-9]+$' OR LOWER(selection) IN ('green','red','violet','violet-green','violet-red','big','small') THEN 'lost'
-               ELSE status
-             END,
-             payout = CASE
-               WHEN LOWER(selection) = $1::text THEN stake * $4
-               WHEN LOWER(selection) LIKE '%' || LOWER($2) || '%' THEN stake * $5
-               WHEN LOWER(selection) = LOWER($3) THEN stake * $6
-               ELSE 0
-             END,
-             settled_at = CASE
-               WHEN selection ~ '^[0-9]+$' OR LOWER(selection) IN ('green','red','violet','violet-green','violet-red','big','small') THEN NOW()
-               ELSE settled_at
-             END
-         WHERE round_id=$7 AND status='pending'
-         RETURNING user_id, payout, status`,
-        [String(resultNumber), colour, bigSmall, NUMBER_PAYOUT_MULTIPLIER, colourMultiplier, BIG_SMALL_PAYOUT_MULTIPLIER, round.id]
+      const st = await client.query(
+        `WITH calc AS (
+           SELECT b.id,
+             ((b.bet_type='Number' AND b.selection::text = $1::int::text)
+              OR (b.bet_type='Red' AND $1::int IN (0,2,4,6,8))
+              OR (b.bet_type='Green' AND $1::int IN (1,3,5,7,9))
+              OR (b.bet_type='Violet' AND $1::int IN (0,5))
+              OR (b.bet_type='Big' AND $1::int >= 5)
+              OR (b.bet_type='Small' AND $1::int < 5)) AS win,
+             CASE b.bet_type WHEN 'Number' THEN $3::numeric WHEN 'Violet' THEN $4::numeric ELSE $5::numeric END AS mult
+           FROM public.bets b WHERE b.round_id=$2 AND b.status='pending')
+         UPDATE public.bets b SET
+           result_number=$1::int,
+           status=CASE WHEN c.win THEN 'won' ELSE 'lost' END,
+           payout=CASE WHEN c.win THEN ROUND((b.stake-COALESCE(b.fee,0))*c.mult,2) ELSE 0 END,
+           settled_at=NOW()
+         FROM calc c WHERE b.id=c.id
+         RETURNING b.user_id, b.payout, b.status`,
+        [resultNumber, round.id, NUMBER_PAYOUT_MULTIPLIER, VIOLET_PAYOUT_MULTIPLIER, COLOUR_PAYOUT_MULTIPLIER]
       );
-
-      settledCount = settlementResult.rowCount;
-      wonCount = settlementResult.rows.filter(r => r.status === "won").length;
-      totalPayout = settlementResult.rows.reduce((sum, r) => sum + Number(r.payout || 0), 0);
-
-      if (totalPayout > 0) {
-        await client.query(
-          `INSERT INTO public.wallet_balances (user_id, balance, updated_at)
-           SELECT user_id, SUM(payout), NOW()
-           FROM public.bets
-           WHERE round_id=$1 AND status='won' AND payout > 0
-           GROUP BY user_id
-           ON CONFLICT (user_id) DO UPDATE SET
-             balance = public.wallet_balances.balance + EXCLUDED.balance,
-             updated_at = NOW()`,
-          [round.id]
-        );
+      settledCount = st.rowCount;
+      const byUser = {};
+      for (const r of st.rows) {
+        if (r.status === "won" && Number(r.payout) > 0) {
+          wonCount++;
+          totalPayout += Number(r.payout);
+          byUser[r.user_id] = (byUser[r.user_id] || 0) + Number(r.payout);
+        }
+      }
+      for (const [uid, amt] of Object.entries(byUser)) {
+        await client.query(`UPDATE public.wallet_balances SET balance=balance+$1, updated_at=NOW() WHERE user_id=$2`, [amt.toFixed(2), uid]);
       }
     }
 
@@ -1464,6 +1479,11 @@ async function saveSupportSettings(body, session, req) {
       body.support_enabled === true || body.support_enabled === "true"
     ]
   );
+  const supportUrl = tgLink(body.support_username) || tgLink(body.support_channel);
+  const supportOn = (body.support_enabled === true || body.support_enabled === "true") && !!supportUrl;
+  await setAppSetting("support_url", supportUrl);
+  await setAppSetting("support_type", "telegram");
+  await setAppSetting("support_button_enabled", supportOn);
   await audit(session.username, "save_support_settings", req, "success");
   return { ok: true, message: "Support settings saved." };
 }
