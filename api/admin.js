@@ -285,7 +285,7 @@ async function ensureManagementTables() {
   await query(`ALTER TABLE public.bets ADD COLUMN IF NOT EXISTS result_number INT`);
 
   await query(`CREATE TABLE IF NOT EXISTS public.channel_settings (id INT PRIMARY KEY DEFAULT 1)`);
-  for (const c of ["channel_username TEXT DEFAULT '@crypto_trader_results'","bot_username TEXT DEFAULT 'YourBot'","predictions_enabled BOOLEAN DEFAULT TRUE","prediction_timing INT DEFAULT 150","prediction_message TEXT","result_message TEXT","result_image_url TEXT","inline_link_text TEXT DEFAULT 'Play'","created_at TIMESTAMPTZ DEFAULT NOW()"]) {
+  for (const c of ["channel_username TEXT DEFAULT '@crypto_trader_results'","bot_username TEXT DEFAULT 'YourBot'","predictions_enabled BOOLEAN DEFAULT TRUE","prediction_timing INT DEFAULT 150","prediction_message TEXT","result_message TEXT","result_image_url TEXT","inline_link_text TEXT DEFAULT 'Play'","batch_windows TEXT","created_at TIMESTAMPTZ DEFAULT NOW()"]) {
     await query(`ALTER TABLE public.channel_settings ADD COLUMN IF NOT EXISTS ${c}`);
   }
   await query(`ALTER TABLE public.channel_settings ADD COLUMN IF NOT EXISTS channel_updates_enabled BOOLEAN DEFAULT TRUE`);
@@ -1191,10 +1191,14 @@ function tgLink(v) {
 
 async function saveChannelSettings(body, session, req) {
   await ensureManagementTables();
+  const batchWindows = String(body.batch_windows || "").replace(/\s+/g, "").slice(0, 300);
+  if (batchWindows && !/^(([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d)(,([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d)*$/.test(batchWindows)) {
+    throw new Error("Invalid batch time format. Use HH:MM-HH:MM, comma separated.");
+  }
   await query(`UPDATE public.channel_settings SET
       channel_username=$1, bot_username=$2, predictions_enabled=$3, prediction_timing=$4,
       prediction_message=$5, result_message=$6, result_image_url=$7, inline_link_text=$8,
-      channel_updates_enabled=$9, updated_at=NOW()
+      channel_updates_enabled=$9, batch_windows=$10, updated_at=NOW()
     WHERE id=1`,
     [
       String(body.channel_username || "").slice(0, 200),
@@ -1205,7 +1209,8 @@ async function saveChannelSettings(body, session, req) {
       body.result_message ? String(body.result_message).slice(0, 4000) : null,
       body.result_image_url ? String(body.result_image_url).slice(0, 500) : null,
       String(body.inline_link_text || "Play").slice(0, 100),
-      body.channel_updates_enabled === true || body.channel_updates_enabled === "true"
+      body.channel_updates_enabled === true || body.channel_updates_enabled === "true",
+      batchWindows
     ]
   );
   const chUrl = tgLink(body.channel_username);
@@ -1237,16 +1242,46 @@ async function savePredictionChannel(body, session, req) {
   return { ok: true };
 }
 
+function numberColour(n) {
+  n = Number(n);
+  if (n === 0 || n === 5) return "Violet";
+  return n % 2 === 0 ? "Red" : "Green";
+}
+
+// Auto prediction: independent random guess, stored in prediction_history. Never reads the real result.
+async function getAutoPrediction(roundCode) {
+  await query(`CREATE TABLE IF NOT EXISTS public.prediction_history (
+    id BIGSERIAL PRIMARY KEY, round_code TEXT NOT NULL, predicted_number INT,
+    predicted_colour TEXT, actual_number INT, actual_colour TEXT,
+    result TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
+  )`);
+  const found = await query(`SELECT predicted_number FROM public.prediction_history WHERE round_code=$1 ORDER BY id ASC LIMIT 1`, [roundCode]);
+  if (found.length && found[0].predicted_number != null) return Number(found[0].predicted_number);
+  const n = Math.floor(Math.random() * 10);
+  await query(`INSERT INTO public.prediction_history (round_code, predicted_number, predicted_colour) VALUES ($1,$2,$3)`, [roundCode, n, numberColour(n)]);
+  return n;
+}
+
 async function nextRound() {
   const rows = await query(
     `SELECT COALESCE(r.period_number, r.round_code) AS period_number,
       r.round_code, r.status, r.starts_at, r.betting_closes_at, r.ends_at,
-      r.result_number, r.predicted_result
+      CASE WHEN r.ends_at <= NOW() THEN r.result_number ELSE NULL END AS result_number,
+      r.predicted_result
      FROM public.game_rounds r
      WHERE r.status IN ('open','locked') OR r.starts_at > NOW()
      ORDER BY r.starts_at ASC LIMIT 1`
   );
-  return { ok: true, next: rows[0] || null };
+  const next = rows[0] || null;
+  if (next) {
+    if (next.predicted_result === null || next.predicted_result === undefined) {
+      next.predicted_result = await getAutoPrediction(next.round_code);
+      next.prediction_source = "auto";
+    } else {
+      next.prediction_source = "manual";
+    }
+  }
+  return { ok: true, next };
 }
 
 async function setNextResult(body, session, req) {
@@ -1420,17 +1455,17 @@ async function postPrediction(body, session, req) {
   const round = rounds[0];
 
   if (round.predicted_result === null || round.predicted_result === undefined) {
-    throw new Error("No prediction set for the upcoming round. Use 'Set / Change' on Dashboard first.");
+    round.predicted_result = await getAutoPrediction(round.round_code);
   }
 
   const settings = await query(`SELECT * FROM public.channel_settings WHERE id=1`);
   const s = settings[0] || {};
-  const template = s.prediction_message || "🎯 Next Period: {round}\n🔮 Prediction: {prediction}";
+  const template = s.prediction_message || "🎯 Next Period: {round}\n🔮 Prediction: {prediction} ({colour})\n⚠️ Not guaranteed. Play responsibly.";
 
   const message = template
     .replace(/\{round\}/g, round.period_number || round.round_code || "")
     .replace(/\{prediction\}/g, String(round.predicted_result))
-    .replace(/\{colour\}/g, colourOf(round.predicted_result));
+    .replace(/\{colour\}/g, numberColour(round.predicted_result));
 
   let sent = 0;
   let failed = 0;
