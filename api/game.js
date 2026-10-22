@@ -19,7 +19,7 @@ const ROUND_LOCK_KEY = 739184205;
 const RESULTS_CHANNEL = "@crypto_trader_results";
 
 // ============================================================================
-// SAFE ETHERS LOADER (Prevents 500 errors on server crash if library missing)
+// SAFE ETHERS LOADER
 // ============================================================================
 let _ethers = null;
 let _provider = null;
@@ -43,17 +43,25 @@ function getProvider() {
   }
   return _provider;
 }
-// ============================================================================
 
 async function notifyTelegram(text, chats = [process.env.ADMIN_CHAT_ID]) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return;
-  await Promise.allSettled(chats.filter(Boolean).map((chatId) => fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
-    signal: AbortSignal.timeout(10000)
-  })));
+
+  await Promise.allSettled(
+    chats.filter(Boolean).map((chatId) =>
+      fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: text,
+          disable_web_page_preview: true
+        }),
+        signal: AbortSignal.timeout(10000)
+      })
+    )
+  );
 }
 
 function json(res, status, data) {
@@ -134,14 +142,18 @@ function parseSettingValue(raw) {
   if (!isNaN(Number(raw)) && String(raw).trim() !== '') return Number(raw);
   return raw;
 }
-// ============================================================================
 
 // ============================================================================
-// BEP-20 Auto-Deposit Verification (Using getTransactionReceipt to avoid limits)
+// BEP-20 Auto-Deposit Verification
 // ============================================================================
 async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
-  const usdtContract = (process.env.USDT_BEP20_TOKEN_ADDRESS || "0x55d398326f99059fF775485246999027B3197955").toLowerCase();
-  const depositAddress = String(process.env.USDT_BEP20_DEPOSIT_ADDRESS || "").toLowerCase();
+  const usdtContract = (
+    process.env.USDT_BEP20_TOKEN_ADDRESS || "0x55d398326f99059fF775485246999027B3197955"
+  ).toLowerCase();
+  
+  const depositAddress = String(
+    process.env.USDT_BEP20_DEPOSIT_ADDRESS || ""
+  ).toLowerCase();
 
   if (!depositAddress) {
     console.warn("Deposit Address missing in .env");
@@ -169,7 +181,8 @@ async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
     const log = receipt.logs.find(l => 
       l.address.toLowerCase() === usdtContract &&
       l.topics[0] === transferTopic &&
-      l.topics[2] && ethers.getAddress("0x" + l.topics[2].slice(26)).toLowerCase() === depositAddress
+      l.topics[2] && 
+      ethers.getAddress("0x" + l.topics[2].slice(26)).toLowerCase() === depositAddress
     );
 
     if (!log) {
@@ -180,7 +193,10 @@ async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
     const onChainAmount = Number(ethers.formatUnits(log.data, 18));
 
     if (onChainAmount + 0.01 < expectedAmountUsdt) {
-      return { success: false, reason: `Amount mismatch. You sent ${onChainAmount} USDT but entered ${expectedAmountUsdt} USDT.` };
+      return { 
+        success: false, 
+        reason: `Amount mismatch. You sent ${onChainAmount} USDT but entered ${expectedAmountUsdt} USDT.` 
+      };
     }
 
     return { 
@@ -191,26 +207,32 @@ async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
 
   } catch (error) {
     console.error("Blockchain verify error:", error.message);
-    return { success: false, reason: "Blockchain network error. Submitted for manual review." };
+    return { 
+      success: false, 
+      reason: "Blockchain network error. Submitted for manual review." 
+    };
   }
 }
-// ============================================================================
 
-// Makes sure the current round and a few future rounds exist,
-// so the game never depends on the cron timing.
+// ============================================================================
+// Rounds & Settlement
+// ============================================================================
 async function ensureRounds(client) {
   try {
-    await client.query(`CREATE TABLE IF NOT EXISTS public.game_rounds (
-      id BIGSERIAL PRIMARY KEY,
-      round_code TEXT UNIQUE NOT NULL,
-      status TEXT NOT NULL DEFAULT 'open',
-      starts_at TIMESTAMPTZ NOT NULL,
-      betting_closes_at TIMESTAMPTZ NOT NULL,
-      ends_at TIMESTAMPTZ NOT NULL,
-      result_number INTEGER,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      settled_at TIMESTAMPTZ
-    )`);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS public.game_rounds (
+        id BIGSERIAL PRIMARY KEY,
+        round_code TEXT UNIQUE NOT NULL,
+        status TEXT NOT NULL DEFAULT 'open',
+        starts_at TIMESTAMPTZ NOT NULL,
+        betting_closes_at TIMESTAMPTZ NOT NULL,
+        ends_at TIMESTAMPTZ NOT NULL,
+        result_number INTEGER,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        settled_at TIMESTAMPTZ
+      )
+    `);
+
     await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS betting_closes_at TIMESTAMPTZ`);
     await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS result_number INTEGER`);
     await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
@@ -271,18 +293,17 @@ async function ensureRounds(client) {
   }
 }
 
-// Settles rounds whose end time has passed.
 async function settleDueRounds(client) {
   try {
-    const due = await client.query(
-      `SELECT 1
-       FROM public.game_rounds
-       WHERE status IN ('open', 'locked')
-         AND ends_at <= NOW()
-         AND result_number IS NULL
-         AND settled_at IS NULL
-       LIMIT 1`
-    );
+    const due = await client.query(`
+      SELECT 1
+      FROM public.game_rounds
+      WHERE status IN ('open', 'locked')
+        AND ends_at <= NOW()
+        AND result_number IS NULL
+        AND settled_at IS NULL
+      LIMIT 1
+    `);
 
     if (!due.rowCount) return;
 
@@ -367,7 +388,6 @@ async function getUser(client, telegramUser) {
   await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS deposit_wallet TEXT`); 
   await client.query(`ALTER TABLE public.referral_rewards ADD COLUMN IF NOT EXISTS credited_at TIMESTAMPTZ`);
 
-  // FIX: Drop old constraint if exists so gift/reward history works
   await client.query(`ALTER TABLE public.transactions DROP CONSTRAINT IF EXISTS transactions_transaction_type_check`).catch(()=>{});
 
   const result = await client.query(
@@ -382,23 +402,40 @@ async function getUser(client, telegramUser) {
   const user = result.rows[0];
 
   await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT FALSE`);
-  await client.query(`CREATE TABLE IF NOT EXISTS public.user_notifications (
-    id BIGSERIAL PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-    kind TEXT NOT NULL, title TEXT NOT NULL, message TEXT NOT NULL, is_read BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-  )`);
-  await client.query(`CREATE TABLE IF NOT EXISTS public.gift_codes (
-    id BIGSERIAL PRIMARY KEY, code TEXT UNIQUE NOT NULL, points NUMERIC(20,2) NOT NULL,
-    max_uses INTEGER NOT NULL DEFAULT 1, uses INTEGER NOT NULL DEFAULT 0, expires_at TIMESTAMPTZ,
-    created_by TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-  )`);
+  
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS public.user_notifications (
+      id BIGSERIAL PRIMARY KEY, 
+      user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL, 
+      title TEXT NOT NULL, 
+      message TEXT NOT NULL, 
+      is_read BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
 
-  await client.query(`CREATE TABLE IF NOT EXISTS public.gift_code_redemptions (
-    gift_code_id BIGINT REFERENCES public.gift_codes(id) ON DELETE CASCADE,
-    user_id BIGINT REFERENCES public.users(id) ON DELETE CASCADE,
-    redeemed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    PRIMARY KEY(gift_code_id, user_id)
-  )`);
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS public.gift_codes (
+      id BIGSERIAL PRIMARY KEY, 
+      code TEXT UNIQUE NOT NULL, 
+      points NUMERIC(20,2) NOT NULL,
+      max_uses INTEGER NOT NULL DEFAULT 1, 
+      uses INTEGER NOT NULL DEFAULT 0, 
+      expires_at TIMESTAMPTZ,
+      created_by TEXT, 
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS public.gift_code_redemptions (
+      gift_code_id BIGINT REFERENCES public.gift_codes(id) ON DELETE CASCADE,
+      user_id BIGINT REFERENCES public.users(id) ON DELETE CASCADE,
+      redeemed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY(gift_code_id, user_id)
+    )
+  `);
 
   await client.query(
     `INSERT INTO public.wallet_balances (user_id, balance)
@@ -433,7 +470,6 @@ async function getUser(client, telegramUser) {
         await client.query("RELEASE SAVEPOINT sp_bonus_tx");
       } catch (err) {
         await client.query("ROLLBACK TO SAVEPOINT sp_bonus_tx");
-        console.warn("Signup bonus txn insert skipped:", err.message);
       }
 
       await client.query("SAVEPOINT sp_bonus_notif");
@@ -446,7 +482,6 @@ async function getUser(client, telegramUser) {
         await client.query("RELEASE SAVEPOINT sp_bonus_notif");
       } catch (err) {
         await client.query("ROLLBACK TO SAVEPOINT sp_bonus_notif");
-        console.warn("Signup bonus notif skipped:", err.message);
       }
     } else {
       await client.query(
@@ -509,9 +544,6 @@ function telegramBotUsername() {
     .replace(/^@/, "");
 }
 
-// ============================================================================
-// Auto-credit pending rewards for active users
-// ============================================================================
 async function autoCreditReferralRewards(client, referrerUserId) {
   await client.query("SAVEPOINT sp_auto_credit");
   try {
@@ -560,14 +592,11 @@ async function autoCreditReferralRewards(client, referrerUserId) {
     return total;
   } catch (err) {
     await client.query("ROLLBACK TO SAVEPOINT sp_auto_credit");
-    console.warn("Auto credit skipped:", err.message);
     return 0;
   }
 }
-// ============================================================================
 
 async function getReferralData(client, userId) {
-  // Removed auto-credit so users must click Claim
   const userResult = await client.query(
     `SELECT id, referral_code, referred_by
      FROM public.users
@@ -646,7 +675,6 @@ async function getReferralData(client, userId) {
     [userId]
   );
 
-  // UPDATED: Splitting active and inactive rewards
   const rewardSummary = await client.query(
     `SELECT
       COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')), 0)::numeric(20,2) AS active_pending_points,
@@ -668,9 +696,7 @@ async function getReferralData(client, userId) {
 
   const referralLink =
     botUsername && profile.referral_code
-      ? `https://t.me/${botUsername}?start=ref_${encodeURIComponent(
-          profile.referral_code
-        )}`
+      ? `https://t.me/${botUsername}?start=ref_${encodeURIComponent(profile.referral_code)}`
       : null;
 
   const levels = [1, 2, 3].map((level) => {
@@ -851,7 +877,6 @@ module.exports = async function handler(req, res) {
       });
     } catch (error) {
       console.error("GET /api/game:", error);
-
       return json(res, 500, {
         success: false,
         message: "Unable to load game data.",
@@ -865,7 +890,6 @@ module.exports = async function handler(req, res) {
 
   if (req.method !== "POST") {
     res.setHeader("Allow", "GET, POST");
-
     return json(res, 405, {
       success: false,
       message: "Method not allowed.",
@@ -895,7 +919,6 @@ module.exports = async function handler(req, res) {
     const user = await getUser(client, telegramUser);
     await client.query(`ALTER TABLE public.referral_commissions ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ`);
 
-    // NEW: Check if user is blocked
     if (user.is_blocked) {
       await client.query("ROLLBACK");
       transactionStarted = false;
@@ -1012,27 +1035,14 @@ module.exports = async function handler(req, res) {
            b.selection,
            b.stake,
            b.fee,
-           CASE
-             WHEN r.ends_at <= NOW() THEN b.status
-             ELSE 'pending'
-           END AS status,
-           CASE
-             WHEN r.ends_at <= NOW() THEN b.payout
-             ELSE 0
-           END AS payout,
+           CASE WHEN r.ends_at <= NOW() THEN b.status ELSE 'pending' END AS status,
+           CASE WHEN r.ends_at <= NOW() THEN b.payout ELSE 0 END AS payout,
            b.created_at,
-           CASE
-             WHEN r.ends_at <= NOW() THEN b.settled_at
-             ELSE NULL
-           END AS settled_at,
+           CASE WHEN r.ends_at <= NOW() THEN b.settled_at ELSE NULL END AS settled_at,
            r.round_code,
-           CASE
-             WHEN r.ends_at <= NOW() THEN r.result_number
-             ELSE NULL
-           END AS result_number
+           CASE WHEN r.ends_at <= NOW() THEN r.result_number ELSE NULL END AS result_number
          FROM public.bets b
-         JOIN public.game_rounds r
-           ON r.id = b.round_id
+         JOIN public.game_rounds r ON r.id = b.round_id
          WHERE b.user_id = $1
          ORDER BY b.id DESC
          LIMIT $2 OFFSET $3`,
@@ -1070,15 +1080,30 @@ module.exports = async function handler(req, res) {
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )`);
+      
       const seedAddress = process.env.USDT_BEP20_DEPOSIT_ADDRESS || "";
       if (seedAddress) {
-        await client.query(`INSERT INTO public.deposit_addresses (coin,network,address)
-          SELECT 'USDT','BSC BEP-20',$1 WHERE NOT EXISTS (SELECT 1 FROM public.deposit_addresses)`, [seedAddress]);
+        await client.query(
+          `INSERT INTO public.deposit_addresses (coin,network,address)
+           SELECT 'USDT','BSC BEP-20',$1 WHERE NOT EXISTS (SELECT 1 FROM public.deposit_addresses)`, 
+          [seedAddress]
+        );
       }
-      const options = await client.query(`SELECT id,coin,network,address,COALESCE(qr_payload,address) AS qr_payload
-      FROM public.deposit_addresses WHERE is_active=TRUE ORDER BY sort_order,id LIMIT 10`);
-      const rows = options.rows.length ? options.rows : (process.env.USDT_BEP20_DEPOSIT_ADDRESS ? [{ id: "env-usdt-bep20", coin: "USDT", network: "BEP-20", address: process.env.USDT_BEP20_DEPOSIT_ADDRESS, qr_payload: process.env.USDT_BEP20_DEPOSIT_ADDRESS }] : []);
-      await client.query("COMMIT"); transactionStarted = false;
+      
+      const options = await client.query(
+        `SELECT id,coin,network,address,COALESCE(qr_payload,address) AS qr_payload
+         FROM public.deposit_addresses 
+         WHERE is_active=TRUE 
+         ORDER BY sort_order,id LIMIT 10`
+      );
+      
+      const rows = options.rows.length ? options.rows : (process.env.USDT_BEP20_DEPOSIT_ADDRESS ? [
+        { id: "env-usdt-bep20", coin: "USDT", network: "BEP-20", address: process.env.USDT_BEP20_DEPOSIT_ADDRESS, qr_payload: process.env.USDT_BEP20_DEPOSIT_ADDRESS }
+      ] : []);
+      
+      await client.query("COMMIT"); 
+      transactionStarted = false;
+      
       return json(res, 200, {
         success: true,
         deposit_options: rows,
@@ -1113,7 +1138,6 @@ module.exports = async function handler(req, res) {
         return json(res, 409, { success: false, message: "This transaction hash has already been submitted." });
       }
 
-      // 🚀 AUTOMATIC VERIFICATION VIA RPC 🚀
       const verification = await verifyBEP20Deposit(txHash, amount);
 
       if (verification.success) {
@@ -1128,8 +1152,10 @@ module.exports = async function handler(req, res) {
 
         await client.query(`UPDATE public.wallet_balances SET balance=balance+$1, updated_at=NOW() WHERE user_id=$2`, [pointsToAdd, user.id]);
 
-        await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'deposit','Deposit Successful',$2)`, 
-          [user.id, `Deposit of ${verification.verifiedAmount} USDT verified automatically. ${pointsToAdd} Points added.`]).catch(() => {});
+        await client.query(
+          `INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'deposit','Deposit Successful',$2)`, 
+          [user.id, `Deposit of ${verification.verifiedAmount} USDT verified automatically. ${pointsToAdd} Points added.`]
+        ).catch(() => {});
 
         await client.query("COMMIT"); transactionStarted = false;
 
@@ -1142,8 +1168,6 @@ module.exports = async function handler(req, res) {
         });
 
       } else {
-        console.warn("Auto-verify failed:", verification.reason);
-
         const submitted = await client.query(
           `INSERT INTO public.transactions (user_id,transaction_type,amount,status,network,tx_hash,created_at,updated_at) 
            VALUES ($1,'deposit',$2::numeric,'pending',$3,$4,NOW(),NOW()) 
@@ -1151,8 +1175,10 @@ module.exports = async function handler(req, res) {
           [user.id, amount.toFixed(6), network, txHash]
         );
 
-        await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'deposit','Deposit pending',$2)`, 
-          [user.id, `Auto-verification failed (${verification.reason}). Submitted to admin for manual approval.`]).catch(() => {});
+        await client.query(
+          `INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'deposit','Deposit pending',$2)`, 
+          [user.id, `Auto-verification failed (${verification.reason}). Submitted to admin for manual approval.`]
+        ).catch(() => {});
 
         await client.query("COMMIT"); transactionStarted = false;
 
@@ -1182,8 +1208,10 @@ module.exports = async function handler(req, res) {
         `UPDATE public.wallet_balances
          SET balance = balance - $1::numeric, updated_at = NOW()
          WHERE user_id = $2 AND balance >= $1::numeric
-         RETURNING balance`, [amount.toFixed(2), user.id]
+         RETURNING balance`, 
+        [amount.toFixed(2), user.id]
       );
+      
       if (!result.rowCount) {
         await client.query("ROLLBACK"); transactionStarted = false;
         return json(res, 400, { success: false, message: "Insufficient available balance." });
@@ -1191,7 +1219,6 @@ module.exports = async function handler(req, res) {
 
       const netPoints = Math.floor(amount * (1 - withdrawalFeeRate) * 100) / 100;
       const netAmountUsdt = (netPoints / POINTS_PER_USDT).toFixed(6);
-
       const grossAmountUsdt = (amount / POINTS_PER_USDT).toFixed(6);
 
       const tx = await client.query(
@@ -1204,13 +1231,17 @@ module.exports = async function handler(req, res) {
 
       await client.query("COMMIT"); transactionStarted = false;
       const displayName = [user.first_name, user.last_name].filter(Boolean).join(" ") || "User";
-      
-      // Notify Admin
-      await notifyTelegram(`📤 Withdrawal requested\n👤 Name: ${displayName}\n💵 Gross: ${(amount / POINTS_PER_USDT).toFixed(2)} USDT\n💸 Fee: 10%\n✅ Net: ${netAmountUsdt} USDT\n🏦 Wallet: ${destination}\n⏳ Status: Pending approval`, [process.env.ADMIN_CHAT_ID, RESULTS_CHANNEL]);
 
-      // NEW: Notify User via Bot
+      await notifyTelegram(
+        `📤 Withdrawal requested\n👤 Name: ${displayName}\n💵 Gross: ${(amount / POINTS_PER_USDT).toFixed(2)} USDT\n💸 Fee: 10%\n✅ Net: ${netAmountUsdt} USDT\n🏦 Wallet: ${destination}\n⏳ Status: Pending approval`, 
+        [process.env.ADMIN_CHAT_ID, RESULTS_CHANNEL]
+      );
+
       if (user.telegram_id) {
-        await notifyTelegram(`⏳ Withdrawal Request Received\nAmount: ${(amount / POINTS_PER_USDT).toFixed(2)} USDT\nNet Amount: ${netAmountUsdt} USDT\nStatus: Pending Admin Approval\n\nYou will be notified once processed.`, [user.telegram_id]);
+        await notifyTelegram(
+          `⏳ Withdrawal Request Received\nAmount: ${(amount / POINTS_PER_USDT).toFixed(2)} USDT\nNet Amount: ${netAmountUsdt} USDT\nStatus: Pending Admin Approval\n\nYou will be notified once processed.`, 
+          [user.telegram_id]
+        );
       }
 
       return json(res, 200, { success: true, withdrawal: tx.rows[0], balance: result.rows[0].balance });
@@ -1257,10 +1288,8 @@ module.exports = async function handler(req, res) {
 
     if (action === "referral_data") {
       const data = await getReferralData(client, user.id);
-
       await client.query("COMMIT");
       transactionStarted = false;
-
       return json(res, 200, data);
     }
 
@@ -1268,13 +1297,8 @@ module.exports = async function handler(req, res) {
       const referralCode = String(body.referral_code || "").trim();
 
       if (!referralCode || referralCode.length > 100) {
-        await client.query("ROLLBACK");
-        transactionStarted = false;
-
-        return json(res, 400, {
-          success: false,
-          message: "Enter a valid referral code.",
-        });
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 400, { success: false, message: "Enter a valid referral code." });
       }
 
       const result = await client.query(
@@ -1285,18 +1309,12 @@ module.exports = async function handler(req, res) {
       const data = result.rows[0]?.result;
 
       if (!data || data.success !== true) {
-        await client.query("ROLLBACK");
-        transactionStarted = false;
-
-        return json(res, 400, {
-          success: false,
-          message: data?.message || "Unable to apply referral code.",
-        });
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 400, { success: false, message: data?.message || "Unable to apply referral code." });
       }
 
       await client.query("COMMIT");
       transactionStarted = false;
-
       return json(res, 200, data);
     }
 
@@ -1354,10 +1372,8 @@ module.exports = async function handler(req, res) {
 
     if (action === "referral_members") {
       const data = await getReferralMembers(client, user.id);
-
       await client.query("COMMIT");
       transactionStarted = false;
-
       return json(res, 200, data);
     }
 
@@ -1459,7 +1475,6 @@ module.exports = async function handler(req, res) {
       if (!/^\d{14}$/.test(roundCode)) {
         await client.query("ROLLBACK");
         transactionStarted = false;
-
         return json(res, 400, {
           success: false,
           message: "Invalid round code. Expected YYYYMMDDHHMMSS.",
@@ -1469,7 +1484,6 @@ module.exports = async function handler(req, res) {
       if (!validRequestId(requestId)) {
         await client.query("ROLLBACK");
         transactionStarted = false;
-
         return json(res, 400, {
           success: false,
           message: "Invalid request ID. Please retry.",
@@ -1479,7 +1493,6 @@ module.exports = async function handler(req, res) {
       if (!ALLOWED_MULTIPLIERS.includes(multiplier)) {
         await client.query("ROLLBACK");
         transactionStarted = false;
-
         return json(res, 400, {
           success: false,
           message: "Invalid multiplier.",
@@ -1493,18 +1506,15 @@ module.exports = async function handler(req, res) {
       ) {
         await client.query("ROLLBACK");
         transactionStarted = false;
-
         return json(res, 400, {
           success: false,
-          message:
-            "Stake must be at least 10 points, with maximum 2 decimals.",
+          message: "Stake must be at least 10 points, with maximum 2 decimals.",
         });
       }
 
       if (!BET_TYPES.includes(betType)) {
         await client.query("ROLLBACK");
         transactionStarted = false;
-
         return json(res, 400, {
           success: false,
           message: "Invalid bet type.",
@@ -1520,7 +1530,6 @@ module.exports = async function handler(req, res) {
       ) {
         await client.query("ROLLBACK");
         transactionStarted = false;
-
         return json(res, 400, {
           success: false,
           message: "Invalid selection.",
@@ -1547,13 +1556,11 @@ module.exports = async function handler(req, res) {
       );
 
       const data = result.rows[0].result;
-      const success =
-        data?.success === true || data?.success === "true";
+      const success = data?.success === true || data?.success === "true";
 
       if (!success) {
         await client.query("ROLLBACK");
         transactionStarted = false;
-
         return json(res, 400, {
           ...(data && typeof data === "object" ? data : {}),
           success: false,
