@@ -435,7 +435,7 @@ label { font-weight:800; font-size:12px; }
         <div style="text-align: center; margin-bottom: 12px;">
           <img src="https://raw.githubusercontent.com/podcastofficial/crypto-trader-miniapp/main/1792659429580.png" alt="Profile Avatar" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #facc15; background: #1a1a1a; box-shadow: 0 4px 15px rgba(250, 204, 21, 0.2);">
         </div>
-        
+
         <div class="muted small" data-i18n="tgAccount" style="text-align: center;">Telegram account</div>
         <strong id="profileName" style="display: block; text-align: center; font-size: 18px; margin-top: 4px;">…</strong>
         <p class="muted small" id="profileStatus" style="text-align: center;">…</p>
@@ -517,13 +517,15 @@ label { font-weight:800; font-size:12px; }
     <p class="muted small" id="betModalPeriod"></p>
     <div class="muted small" id="betAvailableBalance" style="margin-bottom: 10px; color: #facc15; font-weight: bold;">Available: ... Points</div>
     <label for="betAmount" data-i18n="betAmount">Bet Amount (Points)</label>
+    
     <div class="amount-presets">
       <button data-amount="10" type="button">10</button>
       <button data-amount="20" type="button">20</button>
       <button data-amount="50" type="button">50</button>
       <button data-amount="100" type="button">100</button>
-      <button data-amount="500" type="button">500</button>
+      <button data-amount="max" type="button">Max</button>
     </div>
+    
     <div class="amount-stepper">
       <button id="minusAmount" type="button">−</button>
       <input id="betAmount" type="number" min="10" step="0.01" value="100" inputmode="decimal">
@@ -703,13 +705,20 @@ function signedCents(c){ const sign = c > 0 ? "+" : c < 0 ? "−" : ""; return s
 function dateUTC(value){ const d = new Date(value); if(Number.isNaN(d.getTime())) return ""; return d.toLocaleString("en-GB",{ timeZone:"UTC", day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit", second:"2-digit", hourCycle:"h23" }) + " UTC"; }
 function nowMs(){ return Date.now() + serverTimeOffset; }
 
-// 🚨 FIX 1: Ab UI par 14-digit ka period number show hoga (YYYYMMDDHHMMSS)
+// 🚨 FIX: Serial Number (12-digit) format ke liye
 function fmtPeriod(code){ 
-  return String(code || ""); 
+  const raw = String(code || ""); 
+  if (!/^\d{14}$/.test(raw)) return raw.slice(0,12); 
+  const day = raw.slice(0,8); 
+  const hour = Number(raw.slice(8,10)); 
+  const minute = Number(raw.slice(10,12)); 
+  const serial = Math.floor((hour * 60 + minute) / 3) + 1; 
+  return `${day}${String(serial).padStart(4, "0")}`; 
 }
 
 function p2(n){ return String(n).padStart(2,"0"); }
 
+// API ko 14-digit bhejne ke liye
 function slotInfo(ms){ 
   const size = ROUND_SECONDS * 1000; 
   const startMs = Math.floor(ms / size) * size; 
@@ -784,13 +793,13 @@ function renderWallet(){
     html = `<div class="empty">${esc(t(authed ? "noTx" : "needTg"))}</div>`; 
   } 
   $("walletList").innerHTML = html + pager("wallet",walletPage,walletData.total); 
-  
+
   const historyTable = (type) => { 
     const filtered = items.filter(x => String(x.transaction_type || "").toLowerCase() === type); 
     if (!filtered.length) return `<div class="empty">No ${type} history yet.</div>`; 
     return `<div class="wrap"><table class="tbl"><thead><tr><th>Type</th><th>Amount</th><th>Status</th></tr></thead><tbody>${filtered.map(x => `<tr><td>${esc(tk("tx_", x.transaction_type))}<div class="utc-time">${esc(dateUTC(x.created_at))}</div></td><td>${esc(money(x.amount))} <small class="usdt-value">(${esc(transactionUsdt(x))} USDT)</small></td><td>${esc(txStatusLabel(x))}</td></tr>`).join("")}</tbody></table></div>`; 
   }; 
-  
+
   $("depositHistoryList").innerHTML = historyTable("deposit"); 
   $("withdrawHistoryList").innerHTML = historyTable("withdrawal"); 
 }
@@ -922,7 +931,7 @@ function renderReferral(){
     } else if (profStatus && profStatus.raw) {
       errorMsg = profStatus.raw;
     }
-    
+
     box.innerHTML = `<div class="card">
       <div class="empty" style="color:#ef4444; font-weight:bold; margin-bottom:10px;">⚠️ Authentication Failed</div>
       <div class="empty" style="font-size:13px; margin-bottom:15px; line-height:1.5;">${esc(errorMsg)}</div>
@@ -933,11 +942,11 @@ function renderReferral(){
     return; 
   } 
   if(!referralData){ box.innerHTML = `<div class="card"><div class="empty">${esc(t("loading"))}</div></div>`; return; } 
-  
+
   const r = referralData; 
   const link = r.referral_link; 
   const linkCard = `<div class="card"><label>${esc(t("yourLink"))}</label>${link ? `<div class="copybox" style="margin-top:7px"><input type="text" readonly value="${esc(link)}"><button class="sec-btn" type="button" data-copy="link">${esc(t("copy"))}</button></div><button class="primary-btn" type="button" data-share="1" style="margin-top:12px">📤 ${esc(t("share"))}</button>` : `<div class="notice">${esc(t("noLink"))}</div>`}<label style="display:block;margin-top:14px">${esc(t("yourCode"))}</label><div class="copybox" style="margin-top:7px"><input type="text" readonly value="${esc(r.referral_code || "")}"><button class="sec-btn" type="button" data-copy="code">${esc(t("copy"))}</button></div><div class="notice" style="margin-top:12px">${esc(t("rewardPromo"))}</div></div>`; 
-  
+
   const reward = r.reward || {}; 
   const activeRewards = Number(reward.active_pending_points || 0); 
   const inactiveRewards = Number(reward.pending_points || 0); 
@@ -946,24 +955,24 @@ function renderReferral(){
   const claimRewardBtn = activeRewards > 0 ? `<button class="primary-btn" id="claimRewardBtn" type="button" style="background:#22c55e; color:#fff; margin-top:10px;">${esc(t("claimRewards"))} (${money(activeRewards)} pts)</button>` : `<div class="muted small" style="margin-top:10px;">No active rewards to claim.</div>`; 
   const claimCommissionBtn = Number(r.total_commission || 0) > 0 ? `<button class="primary-btn" id="claimCommissionBtn" type="button" style="margin-top:10px;">Claim commission to wallet</button>` : `<div class="muted small" style="margin-top:10px;">No commission available to claim.</div>`; 
   const teamRows = (r.team_levels || []).map(l => `<div class="kv"><span>Level ${esc(l.level)}</span><strong>${esc(l.count)} members</strong></div>`).join(""); 
-  
+
   const stats = `<div class="stats">
     <div class="stat"><div class="l">${esc(t("directRef"))}</div><div class="v">${esc(r.total_direct_referrals || 0)}</div></div>
     <div class="stat"><div class="l">${esc(t("availableComm"))}</div><div class="v">${esc(money(r.total_commission || 0))}</div></div>
     <div class="stat"><div class="l">${esc(t("availableReward"))}</div><div class="v" style="color:#22c55e;">${esc(money(activeRewards))}</div></div>
     <div class="stat"><div class="l">${esc(t("claimedRewards"))}</div><div class="v">${esc(money(creditedRewards))}</div></div>
   </div>`; 
-  
+
   const levelRows = (r.commission_levels || []).map(l => `<tr><td>L${esc(l.level)}</td><td>${esc(l.rate_percent)}%</td><td>${esc(l.commission_count)}</td><td>${esc(money(l.total_commission))}</td></tr>`).join(""); 
   const levelsCard = `<div class="card"><div class="section-title">${esc(t("levels"))}</div><div class="notice"><strong>Team · 3 levels</strong>${teamRows}<div style="margin-top:12px">${claimCommissionBtn}</div></div><div class="wrap"><table class="tbl"><thead><tr><th>${esc(t("lvl"))}</th><th>${esc(t("rate"))}</th><th>${esc(t("cnt"))}</th><th>${esc(t("total"))}</th></tr></thead><tbody>${levelRows}</tbody></table></div></div>`; 
-  
+
   const applyCard = r.referred_by ? `<div class="card"><div class="muted small">${esc(t("referredBy"))}</div></div>` : `<div class="card"><div class="section-title">${esc(t("haveCode"))}</div><input id="refCodeInput" type="text" maxlength="100" autocomplete="off" placeholder="${esc(t("enterCode"))}"><button class="primary-btn" type="button" data-apply-ref="1">${esc(t("apply"))}</button></div>`; 
-  
+
   const commRows = (commData.items || []).map(c => `<tr><td class="period">${esc(fmtPeriod(c.round_code) || "—")}<div class="utc-time">${esc(dateUTC(c.created_at))}</div></td><td>L${esc(c.referral_level)}</td><td class="n-green">+${esc(money(c.commission_amount))}</td></tr>`).join(""); 
   const commCard = `<div class="card"><div class="section-title">${esc(t("commHistory"))}</div>${commRows ? `<div class="wrap"><table class="tbl"><thead><tr><th>${esc(t("colPeriod"))}</th><th>${esc(t("lvl"))}</th><th>${esc(t("comm"))}</th></tr></thead><tbody>${commRows}</tbody></table></div>` : `<div class="empty">${esc(t("noTx"))}</div>`}${pager("comm",commPage,commData.total)}</div>`; 
-  
+
   const rewardClaimCard = `<div class="card"><div class="section-title">${esc(t("availableReward"))}</div><div class="stats" style="margin-bottom:10px;"><div class="stat"><div class="l">${esc(t("availableReward"))}</div><div class="v" style="color:#22c55e;">${esc(money(activeRewards))}</div></div><div class="stat"><div class="l">${esc(t("mSumPending"))}</div><div class="v" style="color:#facc15;">${esc(money(inactiveRewards))}</div></div></div>${claimRewardBtn}</div>`; 
-  
+
   box.innerHTML = linkCard + stats + rewardClaimCard + membersCardHtml() + levelsCard + applyCard + commCard; 
 }
 async function loadReferral(silent){ if(!authed){ renderReferral(); return; } try { const d = await api("referral_data"); referralData = d.referral; const h = await api("referral_history",{page:commPage,page_size:PAGE}); commData = {items:h.commissions || [],total:Number(h.pagination && h.pagination.total || 0)}; renderReferral(); } catch(error) { if(!silent) toast(error.message); } }
@@ -1023,7 +1032,7 @@ function openBet(type,selection = null){
   document.querySelectorAll("[data-mult]").forEach(b => b.classList.toggle("active", Number(b.dataset.mult) === 1));
   $("betModalTitle").textContent = t("betOn") + " " + tk("bt_",type) + (selection === null ? "" : " " + selection);
   $("betModalPeriod").textContent = t("serverRound") + " " + fmtPeriod(round.round_code);
-  
+
   const balEl = $("betAvailableBalance");
   if (balEl) balEl.textContent = `Available: ${money(balance)} Points`;
 
@@ -1249,8 +1258,13 @@ function init(){
   document.querySelectorAll(".modal-backdrop").forEach(modal => { modal.addEventListener("click", event => { if (event.target === modal && modal.id !== "resultModal") { modal.classList.remove("open"); } }); });
   document.querySelectorAll("[data-amount]").forEach(button => {
     button.onclick = () => {
-      betStep = Number(button.dataset.amount);
-      $("betAmount").value = button.dataset.amount;
+      const amt = button.dataset.amount;
+      if (amt === "max") {
+        $("betAmount").value = balance ? Number(balance).toFixed(2) : "100";
+      } else {
+        betStep = Number(amt);
+        $("betAmount").value = amt;
+      }
       pendingBetRequest = null;
       renderBreakdown();
     };
@@ -1279,7 +1293,7 @@ function init(){
   });
   $("betAmount").addEventListener("input", () => {
     const val = Number($("betAmount").value);
-    const presets = [10, 20, 50, 100, 500];
+    const presets = [10, 20, 50, 100];
     if (presets.includes(val)) betStep = val;
     pendingBetRequest = null;
     renderBreakdown();
