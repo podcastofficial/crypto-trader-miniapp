@@ -140,9 +140,19 @@ module.exports = async function handler(req, res) {
       /^ref_([A-Za-z0-9_-]{1,64})$/
     );
 
+    // ==========================================
+    // 🔥 PREMIUM WELCOME MESSAGE (IMAGE STYLE)
+    // ==========================================
     let welcomeText =
-      "🎮 Welcome to Crypto Trader Pro!\n\n" +
-      "Open the Mini App to explore the game, wallet, records and referral program.";
+      "🚀 <b>Welcome to Crypto Trader Pro!</b> 🚀\n\n" +
+      "🎮 <b>Game Kya Hai?</b>\n" +
+      "Fast-paced crypto prediction game! Crypto price movements ko predict karo aur jeeto big rewards.\n\n" +
+      "✨ <b>Features:</b>\n" +
+      "⚡ Instant Payouts\n" +
+      "🎯 Fair & Transparent Results\n" +
+      "🎁 Exclusive Gift Codes\n" +
+      "🤝 Refer & Earn Commissions\n\n" +
+      "👇 <b>Tap the button below to start playing!</b>";
 
     if (referralMatch) {
       try {
@@ -152,19 +162,23 @@ module.exports = async function handler(req, res) {
         );
 
         welcomeText += outcome.applied
-          ? "\n\n🎁 Referral applied successfully!"
-          : "\n\nℹ️ " + outcome.message;
+          ? "\n\n🎁 <b>Referral applied successfully!</b>"
+          : "\n\nℹ️ <i>" + outcome.message + "</i>";
       } catch (error) {
         console.error("Referral apply error:", error.message);
 
         welcomeText +=
-          "\n\n⚠️ Referral could not be processed right now. " +
-          "Open the Mini App and enter the code in the Referral tab.";
+          "\n\n⚠️ <i>Referral could not be processed right now. " +
+          "Open the Mini App and enter the code in the Referral tab.</i>";
       }
     }
 
+    // 🚨 AAPKA DIRECT IMAGE LINK YAHAN HAI 🚨
+    const bannerImageUrl = "https://raw.githubusercontent.com/podcastofficial/crypto-trader-miniapp/main/1792659429580.png"; 
+
+    // Telegram API Call (Changed to sendPhoto)
     const response = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendMessage`,
+      `https://api.telegram.org/bot${botToken}/sendPhoto`,
       {
         method: "POST",
         headers: {
@@ -172,12 +186,14 @@ module.exports = async function handler(req, res) {
         },
         body: JSON.stringify({
           chat_id: chatId,
-          text: welcomeText,
+          photo: bannerImageUrl, // Image URL
+          caption: welcomeText,  // Text message (Image ke neeche aayega)
+          parse_mode: "HTML", 
           reply_markup: {
             inline_keyboard: [
               [
                 {
-                  text: "🚀 Open Crypto Trader Pro",
+                  text: "🚀 Play Now",
                   web_app: { url: APP_URL }
                 }
               ]
@@ -191,7 +207,7 @@ module.exports = async function handler(req, res) {
 
     if (!response.ok || !result.ok) {
       console.error(
-        "Telegram sendMessage failed:",
+        "Telegram sendPhoto failed:",
         result.description || response.status
       );
 
