@@ -23,9 +23,7 @@
   --radius: 14px;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -35,49 +33,17 @@ body {
   font-size: 14px;
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+button:disabled { opacity: .45; cursor: not-allowed; }
 
-button {
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: .45;
-  cursor: not-allowed;
-}
-
-.hidden {
-  display: none !important;
-}
-
-.muted {
-  color: var(--muted);
-}
-
-.small {
-  font-size: 12px;
-}
-
-.green {
-  color: var(--green);
-}
-
-.red {
-  color: var(--red);
-}
-
-.yellow {
-  color: var(--yellow);
-}
-
-.violet {
-  color: var(--violet);
-}
+.hidden { display: none !important; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.green { color: var(--green); }
+.red { color: var(--red); }
+.yellow { color: var(--yellow); }
+.violet { color: var(--violet); }
 
 #loginView {
   min-height: 100vh;
@@ -85,9 +51,7 @@ button:disabled {
   justify-content: center;
   align-items: center;
   padding: 20px;
-  background:
-    radial-gradient(circle at 50% 0%, #292200 0, transparent 45%),
-    var(--bg);
+  background: radial-gradient(circle at 50% 0%, #292200 0, transparent 45%), var(--bg);
 }
 
 .login-card {
@@ -100,11 +64,7 @@ button:disabled {
   box-shadow: 0 20px 80px #0008;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.brand { display: flex; align-items: center; gap: 12px; }
 
 .brand-icon {
   display: grid;
@@ -118,42 +78,15 @@ button:disabled {
   font-weight: 900;
 }
 
-.brand h1 {
-  margin: 0;
-  font-size: 18px;
-}
+.brand h1 { margin: 0; font-size: 18px; }
+.brand p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+.login-card h2 { margin: 28px 0 6px; font-size: 24px; }
+.login-card > p { margin: 0 0 24px; color: var(--muted); }
 
-.brand p {
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 12px;
-}
+.field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; }
+.field label { color: #ccc; font-size: 12px; }
 
-.login-card h2 {
-  margin: 28px 0 6px;
-  font-size: 24px;
-}
-
-.login-card > p {
-  margin: 0 0 24px;
-  color: var(--muted);
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  margin-bottom: 16px;
-}
-
-.field label {
-  color: #ccc;
-  font-size: 12px;
-}
-
-input,
-select,
-textarea {
+input, select, textarea {
   min-width: 0;
   width: 100%;
   padding: 11px 12px;
@@ -164,16 +97,8 @@ textarea {
   outline: none;
 }
 
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: var(--yellow);
-}
-
-textarea {
-  resize: vertical;
-  min-height: 120px;
-}
+input:focus, select:focus, textarea:focus { border-color: var(--yellow); }
+textarea { resize: vertical; min-height: 120px; }
 
 .btn {
   padding: 10px 14px;
@@ -184,9 +109,7 @@ textarea {
   font-weight: 700;
 }
 
-.btn:hover {
-  border-color: #666;
-}
+.btn:hover { border-color: #666; }
 
 .btn-primary {
   background: var(--yellow);
@@ -194,9 +117,7 @@ textarea {
   border-color: var(--yellow);
 }
 
-.btn-primary:hover {
-  background: var(--yellow2);
-}
+.btn-primary:hover { background: var(--yellow2); }
 
 .btn-danger {
   color: var(--red);
@@ -204,24 +125,13 @@ textarea {
   background: #2a1216;
 }
 
-.btn-danger:hover {
-  background: #3a181d;
-}
+.btn-danger:hover { background: #3a181d; }
 
-.btn-block {
-  width: 100%;
-}
+.btn-block { width: 100%; }
 
-.error {
-  color: var(--red);
-  font-size: 12px;
-  margin-top: 12px;
-  line-height: 1.5;
-}
+.error { color: var(--red); font-size: 12px; margin-top: 12px; line-height: 1.5; }
 
-#appView {
-  min-height: 100vh;
-}
+#appView { min-height: 100vh; }
 
 .topbar {
   position: sticky;
@@ -238,21 +148,9 @@ textarea {
   border-bottom: 1px solid var(--border);
 }
 
-.topbar .brand-icon {
-  width: 38px;
-  height: 38px;
-  font-size: 19px;
-}
-
-.topbar .brand h1 {
-  font-size: 15px;
-}
-
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.topbar .brand-icon { width: 38px; height: 38px; font-size: 19px; }
+.topbar .brand h1 { font-size: 15px; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
 
 .admin-badge {
   color: var(--yellow);
@@ -264,7 +162,6 @@ textarea {
   font-weight: 800;
 }
 
-/* --- NOTIFICATION BELL STYLES --- */
 .notif-btn {
   position: relative;
   background: transparent;
@@ -277,9 +174,7 @@ textarea {
   transition: background 0.2s;
 }
 
-.notif-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
+.notif-btn:hover { background: rgba(255, 255, 255, 0.1); }
 
 .notif-badge {
   position: absolute;
@@ -317,41 +212,14 @@ textarea {
   align-items: center;
 }
 
-.notif-item {
-  padding: 12px 15px;
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
-}
+.notif-item { padding: 12px 15px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.notif-item:last-child { border-bottom: none; }
+.notif-item strong { display: block; margin-bottom: 4px; }
+.notif-item small { color: var(--muted); display: block; font-size: 11px; margin-top: 4px; }
 
-.notif-item:last-child {
-  border-bottom: none;
-}
+.layout { display: grid; grid-template-columns: 225px minmax(0, 1fr); min-height: calc(100vh - 68px); }
 
-.notif-item strong {
-  display: block;
-  margin-bottom: 4px;
-}
-
-.notif-item small {
-  color: var(--muted);
-  display: block;
-  font-size: 11px;
-  margin-top: 4px;
-}
-
-/* -------------------------------- */
-
-.layout {
-  display: grid;
-  grid-template-columns: 225px minmax(0, 1fr);
-  min-height: calc(100vh - 68px);
-}
-
-.sidebar {
-  padding: 18px 12px;
-  background: #0c0c0c;
-  border-right: 1px solid var(--border);
-}
+.sidebar { padding: 18px 12px; background: #0c0c0c; border-right: 1px solid var(--border); }
 
 .nav-label {
   margin: 14px 10px 8px;
@@ -376,10 +244,7 @@ textarea {
   font-size: 13px;
 }
 
-.nav-btn:hover {
-  background: #181818;
-  color: #fff;
-}
+.nav-btn:hover { background: #181818; color: #fff; }
 
 .nav-btn.active {
   background: #292300;
@@ -388,16 +253,8 @@ textarea {
   font-weight: 800;
 }
 
-.nav-icon {
-  width: 20px;
-  text-align: center;
-  font-size: 16px;
-}
-
-.main {
-  min-width: 0;
-  padding: 24px;
-}
+.nav-icon { width: 20px; text-align: center; font-size: 16px; }
+.main { min-width: 0; padding: 24px; }
 
 .page-header {
   display: flex;
@@ -408,36 +265,13 @@ textarea {
   margin-bottom: 22px;
 }
 
-.page-header h2 {
-  margin: 0;
-  font-size: 25px;
-  letter-spacing: -.5px;
-}
+.page-header h2 { margin: 0; font-size: 25px; letter-spacing: -.5px; }
+.page-header p { margin: 7px 0 0; color: var(--muted); line-height: 1.5; }
+.header-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.grid { display: grid; gap: 14px; }
+.stats-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 20px; }
 
-.page-header p {
-  margin: 7px 0 0;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-.header-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.grid {
-  display: grid;
-  gap: 14px;
-}
-
-.stats-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin-bottom: 20px;
-}
-
-.stat-card,
-.card {
+.stat-card, .card {
   min-width: 0;
   padding: 17px;
   background: var(--panel);
@@ -445,27 +279,10 @@ textarea {
   border-radius: var(--radius);
 }
 
-.stat-label {
-  color: var(--muted);
-  font-size: 12px;
-  margin-bottom: 12px;
-}
-
-.stat-value {
-  font-size: clamp(20px, 2vw, 28px);
-  font-weight: 850;
-  overflow-wrap: anywhere;
-}
-
-.stat-note {
-  margin-top: 9px;
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.card {
-  margin-bottom: 18px;
-}
+.stat-label { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+.stat-value { font-size: clamp(20px, 2vw, 28px); font-weight: 850; overflow-wrap: anywhere; }
+.stat-note { margin-top: 9px; font-size: 11px; color: var(--muted); }
+.card { margin-bottom: 18px; }
 
 .card-head {
   display: flex;
@@ -478,50 +295,14 @@ textarea {
   padding-bottom: 12px;
 }
 
-.card-head h3 {
-  margin: 0;
-  font-size: 15px;
-}
+.card-head h3 { margin: 0; font-size: 15px; }
 
-.two-col {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
+.toolbar { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 16px; }
+.toolbar > * { flex: 1 1 150px; }
 
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 9px;
-  margin-bottom: 16px;
-}
-
-.toolbar > * {
-  flex: 1 1 150px;
-}
-
-.table-wrap {
-  width: 100%;
-  overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-}
-
-table {
-  border-collapse: collapse;
-  width: 100%;
-  min-width: 720px;
-  font-size: 12px;
-}
-
-th,
-td {
-  padding: 12px;
-  border-bottom: 1px solid #242424;
-  text-align: left;
-  vertical-align: top;
-  white-space: nowrap;
-}
+.table-wrap { width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 12px; }
+th, td { padding: 12px; border-bottom: 1px solid #242424; text-align: left; vertical-align: top; white-space: nowrap; }
 
 th {
   background: #1a1a1a;
@@ -532,17 +313,9 @@ th {
   letter-spacing: 0.5px;
 }
 
-td {
-  color: #e0e0e0;
-}
-
-tbody tr:hover {
-  background: #191919;
-}
-
-tbody tr:last-child td {
-  border-bottom: 0;
-}
+td { color: #e0e0e0; }
+tbody tr:hover { background: #191919; }
+tbody tr:last-child td { border-bottom: 0; }
 
 .badge {
   display: inline-block;
@@ -555,36 +328,13 @@ tbody tr:last-child td {
   text-transform: uppercase;
 }
 
-.badge.success {
-  background: #10382c;
-  color: var(--green);
-}
+.badge.success { background: #10382c; color: var(--green); }
+.badge.danger { background: #401a21; color: var(--red); }
+.badge.warning { background: #3a3008; color: var(--yellow); }
+.badge.info { background: #1a2b45; color: var(--blue); }
+.badge.violet { background: #302044; color: var(--violet); }
 
-.badge.danger {
-  background: #401a21;
-  color: var(--red);
-}
-
-.badge.warning {
-  background: #3a3008;
-  color: var(--yellow);
-}
-
-.badge.info {
-  background: #1a2b45;
-  color: var(--blue);
-}
-
-.badge.violet {
-  background: #302044;
-  color: var(--violet);
-}
-
-.status-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
+.status-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 
 .status-item {
   padding: 13px;
@@ -593,17 +343,8 @@ tbody tr:last-child td {
   background: #0e0e0e;
 }
 
-.status-item span {
-  display: block;
-  color: var(--muted);
-  font-size: 11px;
-  margin-bottom: 8px;
-}
-
-.status-item strong {
-  font-size: 17px;
-  overflow-wrap: anywhere;
-}
+.status-item span { display: block; color: var(--muted); font-size: 11px; margin-bottom: 8px; }
+.status-item strong { font-size: 17px; overflow-wrap: anywhere; }
 
 .pagination {
   display: flex;
@@ -614,10 +355,7 @@ tbody tr:last-child td {
   margin-top: 14px;
 }
 
-.pagination-actions {
-  display: flex;
-  gap: 7px;
-}
+.pagination-actions { display: flex; gap: 7px; }
 
 .notice {
   padding: 12px 14px;
@@ -629,29 +367,10 @@ tbody tr:last-child td {
   line-height: 1.6;
 }
 
-.notice.warning {
-  background: #211c08;
-  border-color: #5a4b0b;
-  color: #f0dc86;
-}
-
-.notice.danger {
-  background: #291217;
-  border-color: #5c2730;
-  color: #ffb3bd;
-}
-
-.empty {
-  padding: 35px 15px;
-  text-align: center;
-  color: var(--muted);
-}
-
-.loading {
-  padding: 22px;
-  text-align: center;
-  color: var(--muted);
-}
+.notice.warning { background: #211c08; border-color: #5a4b0b; color: #f0dc86; }
+.notice.danger { background: #291217; border-color: #5c2730; color: #ffb3bd; }
+.empty { padding: 35px 15px; text-align: center; color: var(--muted); }
+.loading { padding: 22px; text-align: center; color: var(--muted); }
 
 .toast {
   position: fixed;
@@ -670,14 +389,8 @@ tbody tr:last-child td {
   transition: .3s;
 }
 
-.toast.show {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.toast.error-toast {
-  border-color: #7b2935;
-}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.error-toast { border-color: #7b2935; }
 
 .chart-bars {
   display: flex;
@@ -688,11 +401,7 @@ tbody tr:last-child td {
   padding: 15px 5px 0;
 }
 
-.chart-col {
-  flex: 1;
-  min-width: 25px;
-  text-align: center;
-}
+.chart-col { flex: 1; min-width: 25px; text-align: center; }
 
 .chart-bar {
   min-height: 3px;
@@ -701,22 +410,9 @@ tbody tr:last-child td {
   width: 100%;
 }
 
-.chart-label {
-  margin-top: 7px;
-  color: var(--muted);
-  font-size: 10px;
-}
-
-.chart-number {
-  font-size: 10px;
-  margin-bottom: 5px;
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
+.chart-label { margin-top: 7px; color: var(--muted); font-size: 10px; }
+.chart-number { font-size: 10px; margin-bottom: 5px; }
+.detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 
 .detail-item {
   border: 1px solid var(--border);
@@ -726,16 +422,8 @@ tbody tr:last-child td {
   min-width: 0;
 }
 
-.detail-item span {
-  display: block;
-  color: var(--muted);
-  font-size: 11px;
-  margin-bottom: 7px;
-}
-
-.detail-item strong {
-  overflow-wrap: anywhere;
-}
+.detail-item span { display: block; color: var(--muted); font-size: 11px; margin-bottom: 7px; }
+.detail-item strong { overflow-wrap: anywhere; }
 
 pre {
   max-width: 100%;
@@ -748,7 +436,6 @@ pre {
   font-size: 12px;
 }
 
-/* Refined operations dashboard */
 :root {
   --bg: #07090d;
   --panel: #10141b;
@@ -770,69 +457,18 @@ body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
-#loginView {
-  background: radial-gradient(circle at 50% 0%, #3a3014 0, transparent 42%), var(--bg);
-}
-
-.login-card {
-  background: rgba(16, 20, 27, .94);
-  border-color: #354050;
-  box-shadow: 0 28px 90px #000b;
-}
-
-.brand-icon {
-  border-radius: 14px;
-  background: linear-gradient(135deg, #f8d66a, #d79f21);
-  box-shadow: 0 8px 22px #c9972630;
-}
-
-.topbar {
-  min-height: 76px;
-  padding: 14px 28px;
-  background: rgba(7, 9, 13, .84);
-  border-bottom-color: #222c39;
-}
-
-.topbar .brand h1 {
-  letter-spacing: .6px;
-}
-
-.topbar .brand p {
-  color: #748195;
-}
-
-.admin-badge {
-  background: #2b2411;
-  border-color: #6a5318;
-  color: #f5d36d;
-}
-
-.layout {
-  grid-template-columns: 248px minmax(0, 1fr);
-}
-
-.sidebar {
-  padding: 22px 15px;
-  background: rgba(10, 13, 18, .82);
-  border-right-color: #222c39;
-}
-
-.nav-label {
-  color: #647085;
-  letter-spacing: 1.5px;
-}
-
-.nav-btn {
-  padding: 12px 13px;
-  border-radius: 11px;
-  color: #9da8b7;
-}
-
-.nav-btn:hover {
-  background: #171e28;
-  color: #fff;
-}
-
+#loginView { background: radial-gradient(circle at 50% 0%, #3a3014 0, transparent 42%), var(--bg); }
+.login-card { background: rgba(16, 20, 27, .94); border-color: #354050; box-shadow: 0 28px 90px #000b; }
+.brand-icon { border-radius: 14px; background: linear-gradient(135deg, #f8d66a, #d79f21); box-shadow: 0 8px 22px #c9972630; }
+.topbar { min-height: 76px; padding: 14px 28px; background: rgba(7, 9, 13, .84); border-bottom-color: #222c39; }
+.topbar .brand h1 { letter-spacing: .6px; }
+.topbar .brand p { color: #748195; }
+.admin-badge { background: #2b2411; border-color: #6a5318; color: #f5d36d; }
+.layout { grid-template-columns: 248px minmax(0, 1fr); }
+.sidebar { padding: 22px 15px; background: rgba(10, 13, 18, .82); border-right-color: #222c39; }
+.nav-label { color: #647085; letter-spacing: 1.5px; }
+.nav-btn { padding: 12px 13px; border-radius: 11px; color: #9da8b7; }
+.nav-btn:hover { background: #171e28; color: #fff; }
 .nav-btn.active {
   background: linear-gradient(90deg, #302710, #211e15);
   border-color: #6a5318;
@@ -840,149 +476,47 @@ body {
   box-shadow: inset 3px 0 0 #f5c84b;
 }
 
-.main {
-  padding: 30px;
-  max-width: 1680px;
-}
+.main { padding: 30px; max-width: 1680px; }
+.page-header { margin-bottom: 26px; }
+.page-header h2 { font-size: 30px; letter-spacing: -.8px; }
+.page-header p { color: #8d98a8; }
 
-.page-header {
-  margin-bottom: 26px;
-}
-
-.page-header h2 {
-  font-size: 30px;
-  letter-spacing: -.8px;
-}
-
-.page-header p {
-  color: #8d98a8;
-}
-
-.stat-card,
-.card {
+.stat-card, .card {
   background: linear-gradient(145deg, rgba(20, 26, 35, .98), rgba(13, 17, 23, .98));
   border-color: #273241;
   border-radius: 16px;
   box-shadow: 0 12px 30px #0002;
 }
 
-.stat-card {
-  padding: 19px;
-}
+.stat-card { padding: 19px; }
+.stat-label { color: #8d98a8; letter-spacing: .2px; }
+.stat-value { letter-spacing: -.5px; }
+.card { padding: 20px; }
+.card-head h3 { font-size: 16px; }
 
-.stat-label {
-  color: #8d98a8;
-  letter-spacing: .2px;
-}
-
-.stat-value {
-  letter-spacing: -.5px;
-}
-
-.card {
-  padding: 20px;
-}
-
-.card-head h3 {
-  font-size: 16px;
-}
-
-input,
-select,
-textarea {
-  background: #0b0f15;
-  border-color: #2a3544;
-  border-radius: 10px;
-  padding: 12px 13px;
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: #e4b83d;
-  box-shadow: 0 0 0 3px #e4b83d1c;
-}
-
-.btn {
-  border-radius: 10px;
-  background: #19202a;
-  border-color: #2c3746;
-}
-
-.btn:hover {
-  border-color: #657387;
-  background: #222b37;
-}
-
+input, select, textarea { background: #0b0f15; border-color: #2a3544; border-radius: 10px; padding: 12px 13px; }
+input:focus, select:focus, textarea:focus { border-color: #e4b83d; box-shadow: 0 0 0 3px #e4b83d1c; }
+.btn { border-radius: 10px; background: #19202a; border-color: #2c3746; }
+.btn:hover { border-color: #657387; background: #222b37; }
 .btn-primary {
   background: linear-gradient(135deg, #f5cd58, #dfa92d);
   border-color: #f5cd58;
   box-shadow: 0 7px 18px #d6a52e24;
   color: #111;
 }
+.btn-primary:hover { background: linear-gradient(135deg, #ffdc73, #eaba3b); }
+.btn-danger { background: #291820; border-color: #5e2935; }
+.row-actions { display: flex; gap: 6px; flex-wrap: wrap; min-width: 170px; }
+.row-actions .btn { padding: 7px 9px; font-size: 12px; }
+.table-wrap { border-color: #293544; border-radius: 12px; }
+th { background: #18202b; color: #aeb8c6; }
+th, td { border-bottom-color: #25303d; }
+tbody tr:hover { background: #19212b; }
+.status-item, .detail-item { background: #0b1016; border-color: #293544; }
+.notice { background: #161d27; border-color: #2c3746; }
+.notice.warning { background: #29230f; border-color: #6a5318; }
+.toast { background: #1b222c; border-color: #4b596b; }
 
-.btn-primary:hover {
-  background: linear-gradient(135deg, #ffdc73, #eaba3b);
-}
-
-.btn-danger {
-  background: #291820;
-  border-color: #5e2935;
-}
-
-.row-actions {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  min-width: 170px;
-}
-
-.row-actions .btn {
-  padding: 7px 9px;
-  font-size: 12px;
-}
-
-.table-wrap {
-  border-color: #293544;
-  border-radius: 12px;
-}
-
-th {
-  background: #18202b;
-  color: #aeb8c6;
-}
-
-th,
-td {
-  border-bottom-color: #25303d;
-}
-
-tbody tr:hover {
-  background: #19212b;
-}
-
-.status-item,
-.detail-item {
-  background: #0b1016;
-  border-color: #293544;
-}
-
-.notice {
-  background: #161d27;
-  border-color: #2c3746;
-}
-
-.notice.warning {
-  background: #29230f;
-  border-color: #6a5318;
-}
-
-.toast {
-  background: #1b222c;
-  border-color: #4b596b;
-}
-
-/* NEW STYLES */
 .copy-btn {
   background: transparent;
   border: none;
@@ -993,18 +527,9 @@ tbody tr:hover {
   padding: 0;
 }
 
-.copy-btn:hover {
-  color: #fff;
-}
-
-a.tx-link {
-  color: var(--blue);
-  text-decoration: none;
-}
-
-a.tx-link:hover {
-  text-decoration: underline;
-}
+.copy-btn:hover { color: #fff; }
+a.tx-link { color: var(--blue); text-decoration: none; }
+a.tx-link:hover { text-decoration: underline; }
 
 .switch {
   width: 48px;
@@ -1027,42 +552,20 @@ a.tx-link:hover {
   transition: transform 0.2s;
 }
 
-.switch.on {
-  background: var(--green);
-}
-
-.switch.on i {
-  transform: translateX(22px);
-}
-
-.grid-4 {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
+.switch.on { background: var(--green); }
+.switch.on i { transform: translateX(22px); }
+.grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 
 @media (max-width: 1100px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .layout {
-    grid-template-columns: 190px minmax(0, 1fr);
-  }
-  .main {
-    padding: 18px;
-  }
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .layout { grid-template-columns: 190px minmax(0, 1fr); }
+  .main { padding: 18px; }
 }
 
 @media (max-width: 720px) {
-  .topbar {
-    padding: 10px 13px;
-  }
-  .topbar .brand p {
-    display: none;
-  }
-  .layout {
-    display: block;
-  }
+  .topbar { padding: 10px 13px; }
+  .topbar .brand p { display: none; }
+  .layout { display: block; }
   .sidebar {
     display: flex;
     gap: 6px;
@@ -1071,9 +574,7 @@ a.tx-link:hover {
     border-right: 0;
     border-bottom: 1px solid var(--border);
   }
-  .nav-label {
-    display: none;
-  }
+  .nav-label { display: none; }
   .nav-btn {
     flex: 0 0 auto;
     width: auto;
@@ -1081,62 +582,27 @@ a.tx-link:hover {
     margin: 0;
     padding: 10px;
   }
-  .main {
-    padding: 15px;
-  }
-  .page-header h2 {
-    font-size: 22px;
-  }
-  .two-col {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-  .status-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .detail-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .notif-dropdown {
-    width: 290px;
-    right: 10px;
-  }
-  .card {
-    padding: 15px;
-  }
-  .grid-4 {
-    grid-template-columns: 1fr;
-  }
+  .main { padding: 15px; }
+  .page-header h2 { font-size: 22px; }
+  .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .notif-dropdown { width: 290px; right: 10px; }
+  .card { padding: 15px; }
+  .grid-4 { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 420px) {
-  .stats-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 9px;
-  }
-  .stat-card {
-    padding: 12px;
-  }
-  .stat-value {
-    font-size: 19px;
-  }
-  .stat-label {
-    font-size: 11px;
-  }
-  .topbar-right .admin-badge {
-    display: none;
-  }
-  .status-grid,
-  .detail-grid {
-    grid-template-columns: 1fr 1fr;
-  }
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 9px; }
+  .stat-card { padding: 12px; }
+  .stat-value { font-size: 19px; }
+  .stat-label { font-size: 11px; }
+  .topbar-right .admin-badge { display: none; }
+  .status-grid, .detail-grid { grid-template-columns: 1fr 1fr; }
 }
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
 <section id="loginView">
   <div class="login-card">
     <div class="brand">
@@ -1153,47 +619,24 @@ a.tx-link:hover {
     <form id="loginForm">
       <div class="field">
         <label for="loginUsername">Username</label>
-        <input
-          id="loginUsername"
-          name="username"
-          autocomplete="username"
-          required
-          maxlength="200"
-        >
+        <input id="loginUsername" name="username" autocomplete="username" required maxlength="200">
       </div>
 
       <div class="field">
         <label for="loginPassword">Password</label>
-        <input
-          id="loginPassword"
-          name="password"
-          type="password"
-          autocomplete="current-password"
-          required
-          maxlength="500"
-        >
+        <input id="loginPassword" name="password" type="password" autocomplete="current-password" required maxlength="500">
       </div>
 
-      <button
-        class="btn btn-primary btn-block"
-        id="loginButton"
-        type="submit"
-      >
-        Sign In Securely
-      </button>
+      <button class="btn btn-primary btn-block" id="loginButton" type="submit">Sign In Securely</button>
 
       <div id="loginError" class="error"></div>
     </form>
 
-    <p class="small muted" style="margin-top:22px">
-      Authorized administrators only.
-    </p>
+    <p class="small muted" style="margin-top:22px">Authorized administrators only.</p>
   </div>
 </section>
 
-<!-- APPLICATION -->
 <section id="appView" class="hidden">
-
   <header class="topbar">
     <div class="brand">
       <div class="brand-icon">₿</div>
@@ -1207,19 +650,15 @@ a.tx-link:hover {
       <span class="admin-badge">ADMIN</span>
       <span id="adminUsername" class="small muted"></span>
 
-      <!-- NOTIFICATION BELL -->
       <button class="notif-btn" id="notifBell">
         🔔
         <span id="notifBadge" class="notif-badge hidden">0</span>
       </button>
 
-      <button class="btn btn-danger" id="logoutButton">
-        Logout
-      </button>
+      <button class="btn btn-danger" id="logoutButton">Logout</button>
     </div>
   </header>
 
-  <!-- NOTIFICATION DROPDOWN -->
   <div id="notifDropdown" class="notif-dropdown hidden">
     <div class="notif-header">
       <span>Pending Requests</span>
@@ -1231,19 +670,16 @@ a.tx-link:hover {
   </div>
 
   <div class="layout">
-
     <aside class="sidebar" id="sidebar"></aside>
-
     <main class="main">
       <div id="pageContent">
         <div class="loading">Loading dashboard...</div>
       </div>
     </main>
-
   </div>
 </section>
 
-<div id="toast" class="toast hidden" role="status"></div>
+<div id="toast" class="toast" role="status"></div>
 
 <script>
 "use strict";
@@ -1251,46 +687,35 @@ a.tx-link:hover {
 const API_URL = "/api/admin";
 
 const VIEWS = [
-  {
-    group: "OVERVIEW",
-    items: [
-      ["dashboard", "▦", "Dashboard"],
-      ["analytics", "◫", "Analytics"],
-      ["reconcile", "⇄", "Reconciliation"]
-    ]
-  },
-  {
-    group: "PLATFORM",
-    items: [
-      ["users", "♙", "Users"],
-      ["wallets", "◈", "Wallets"],
-      ["transactions", "⇄", "Transactions"],
-      ["deposit_addresses", "⌁", "Deposit Addresses"],
-      ["deposits", "↓", "Deposits"],
-      ["withdrawals", "↑", "Withdrawals"],
-      ["gift_codes", "🎁", "Gift Codes"],
-      ["gift_history", "🎟️", "Gift Redemptions"],
-      ["rounds", "◷", "Game Rounds"],
-      ["bets", "♠", "Bets"],
-      ["referrals", "♧", "Referrals"]
-    ]
-  },
-  {
-    group: "CONTROL & BOT",
-    items: [
-      ["channel_settings", "⚙️", "Channel Settings"],
-      ["broadcast", "📢", "Broadcast"],
-      ["telegram", "✈", "Telegram Logs"]
-    ]
-  },
-  {
-    group: "SECURITY",
-    items: [
-      ["audit", "▤", "Audit Logs"],
-      ["login_attempts", "⌁", "Login Attempts"],
-      ["search", "⌕", "Global Search"]
-    ]
-  }
+  { group: "OVERVIEW", items: [
+    ["dashboard", "▦", "Dashboard"],
+    ["analytics", "◫", "Analytics"],
+    ["reconcile", "⇄", "Reconciliation"]
+  ]},
+  { group: "PLATFORM", items: [
+    ["users", "♙", "Users"],
+    ["wallets", "◈", "Wallets"],
+    ["transactions", "⇄", "Transactions"],
+    ["deposit_addresses", "⌁", "Deposit Addresses"],
+    ["deposits", "↓", "Deposits"],
+    ["withdrawals", "↑", "Withdrawals"],
+    ["gift_codes", "🎁", "Gift Codes"],
+    ["gift_history", "🎟️", "Gift Redemptions"],
+    ["rounds", "◷", "Game Rounds"],
+    ["bets", "♠", "Bets"],
+    ["referrals", "♧", "Referrals"]
+  ]},
+  { group: "CONTROL & BOT", items: [
+    ["channel_settings", "⚙️", "Channel Settings"],
+    ["broadcast", "📢", "Broadcast"],
+    ["telegram", "✈", "Telegram Logs"]
+  ]},
+  { group: "SECURITY", items: [
+    ["audit", "▤", "Audit Logs"],
+    ["login_attempts", "⌁", "Login Attempts"],
+    ["security", "🛡️", "Security Summary"],
+    ["search", "⌕", "Global Search"]
+  ]}
 ];
 
 const state = {
@@ -1299,189 +724,131 @@ const state = {
   pages: {},
   filters: {},
   userDetailId: null,
-  busy: false
+  busy: false,
+  notifInterval: null,
+  botUsername: null
 };
 
 const $ = id => document.getElementById(id);
 
 function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[char]);
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[c]);
 }
 
 function formatNumber(value, decimals = 2) {
-  if (value === null || value === undefined || value === "") {
-    return "—";
-  }
-
+  if (value === null || value === undefined || value === "") return "—";
   const n = Number(value);
-
-  if (!Number.isFinite(n)) {
-    return String(value);
-  }
-
-  return n.toLocaleString("en-US", {
-    maximumFractionDigits: decimals
-  });
+  if (!Number.isFinite(n)) return String(value);
+  return n.toLocaleString("en-US", { maximumFractionDigits: decimals });
 }
 
 function formatDate(value) {
   if (!value) return "—";
-
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return String(value);
-  }
-
-  return date.toLocaleString("en-IN", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    hour12: true
-  });
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", hour12: true });
 }
 
-function money(value) {
-  return formatNumber(value, 4);
-}
+function money(v) { return formatNumber(v, 4); }
+function statValue(v, d = 2) { return formatNumber(v ?? 0, d); }
 
 function badge(value) {
   const text = String(value ?? "unknown");
+  const low = text.toLowerCase();
   let cls = "";
-
-  if (
-    ["completed", "confirmed", "settled", "won", "success"]
-      .includes(text.toLowerCase())
-  ) {
-    cls = "success";
-  } else if (
-    ["failed", "rejected", "lost", "cancelled", "error"]
-      .includes(text.toLowerCase())
-  ) {
-    cls = "danger";
-  } else if (
-    ["pending", "open", "locked"]
-      .includes(text.toLowerCase())
-  ) {
-    cls = "warning";
-  } else if (
-    ["active", "info"]
-      .includes(text.toLowerCase())
-  ) {
-    cls = "info";
-  }
-
+  if (["completed", "confirmed", "settled", "won", "success"].includes(low)) cls = "success";
+  else if (["failed", "rejected", "lost", "cancelled", "error"].includes(low)) cls = "danger";
+  else if (["pending", "open", "locked"].includes(low)) cls = "warning";
+  else if (["active", "info"].includes(low)) cls = "info";
   return `<span class="badge ${cls}">${escapeHtml(text)}</span>`;
 }
 
 function toast(message, isError = false) {
   const el = $("toast");
-
   el.textContent = message;
   el.className = "toast show" + (isError ? " error-toast" : "");
-
   clearTimeout(toast.timer);
-
-  toast.timer = setTimeout(() => {
-    el.classList.remove("show");
-  }, 3500);
+  toast.timer = setTimeout(() => el.classList.remove("show"), 3500);
 }
 
 async function api(action, data = {}) {
   const response = await fetch(API_URL, {
     method: "POST",
     credentials: "same-origin",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Admin-Request": "1"
-    },
-    body: JSON.stringify({
-      action,
-      ...data
-    })
+    headers: { "Content-Type": "application/json", "X-Admin-Request": "1" },
+    body: JSON.stringify({ action, ...data })
   });
-
   let result;
-
-  try {
-    result = await response.json();
-  } catch {
-    throw new Error("Server returned an invalid response.");
-  }
-
+  try { result = await response.json(); }
+  catch { throw new Error("Server returned an invalid response."); }
   if (response.status === 401) {
     showLogin("Your session expired. Please sign in again.");
-    throw new Error(result.error || "Session expired.");
+    throw new Error(result.error || result.message || "Session expired.");
   }
-
   if (!response.ok || result.ok === false) {
     throw new Error(result.error || result.message || "Request failed.");
   }
-
   return result;
 }
 
 function showLogin(message = "") {
+  if (state.notifInterval) {
+    clearInterval(state.notifInterval);
+    state.notifInterval = null;
+  }
   $("appView").classList.add("hidden");
   $("loginView").classList.remove("hidden");
   $("loginError").textContent = message;
   $("loginPassword").value = "";
   state.username = "";
+  state.botUsername = null;
 }
 
-function showApp(username) {
+async function showApp(username) {
   state.username = username || "Admin";
-
   $("adminUsername").textContent = state.username;
   $("loginView").classList.add("hidden");
   $("appView").classList.remove("hidden");
-
   renderNavigation();
   navigate("dashboard");
   fetchNotifications();
-  setInterval(fetchNotifications, 30000);
+  if (state.notifInterval) clearInterval(state.notifInterval);
+  state.notifInterval = setInterval(fetchNotifications, 30000);
+  loadBotUsername();
+}
+
+async function loadBotUsername() {
+  try {
+    const data = await api("channel_settings");
+    state.botUsername = (data.settings && data.settings.bot_username) || null;
+  } catch { /* ignore */ }
 }
 
 function renderNavigation() {
   const sidebar = $("sidebar");
-
   sidebar.innerHTML = VIEWS.map(group => `
     <div class="nav-label">${escapeHtml(group.group)}</div>
     ${group.items.map(item => `
-      <button
-        class="nav-btn ${state.currentView === item[0] ? "active" : ""}"
-        data-view="${escapeHtml(item[0])}"
-      >
+      <button class="nav-btn ${state.currentView === item[0] ? "active" : ""}" data-view="${escapeHtml(item[0])}">
         <span class="nav-icon">${item[1]}</span>
         <span>${escapeHtml(item[2])}</span>
       </button>
     `).join("")}
   `).join("");
-
-  sidebar.querySelectorAll("[data-view]").forEach(button => {
-    button.addEventListener("click", () => {
-      navigate(button.dataset.view);
-    });
+  sidebar.querySelectorAll("[data-view]").forEach(btn => {
+    btn.addEventListener("click", () => navigate(btn.dataset.view));
   });
 }
 
 function setPage(title, description, actions = "") {
   $("pageContent").innerHTML = `
     <div class="page-header">
-      <div>
-        <h2>${escapeHtml(title)}</h2>
-        <p>${escapeHtml(description)}</p>
-      </div>
+      <div><h2>${escapeHtml(title)}</h2><p>${escapeHtml(description)}</p></div>
       <div class="header-actions">${actions}</div>
     </div>
-    <div id="viewBody">
-      <div class="loading">Loading data...</div>
-    </div>
+    <div id="viewBody"><div class="loading">Loading data...</div></div>
   `;
 }
 
@@ -1491,112 +858,54 @@ function metricCard(label, value, note = "", color = "") {
       <div class="stat-label">${escapeHtml(label)}</div>
       <div class="stat-value ${color}">${escapeHtml(value)}</div>
       <div class="stat-note">${escapeHtml(note)}</div>
-    </div>
-  `;
+    </div>`;
 }
 
 function table(headers, rows, emptyText = "No records found.") {
-  if (!rows || !rows.length) {
-    return `<div class="empty">${escapeHtml(emptyText)}</div>`;
-  }
-
+  if (!rows || !rows.length) return `<div class="empty">${escapeHtml(emptyText)}</div>`;
   return `
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join("")}</tr>
-        </thead>
-        <tbody>
-          ${rows.map(row => `
-            <tr>${row.map(cell => `<td>${cell ?? "—"}</td>`).join("")}</tr>
-          `).join("")}
-        </tbody>
-      </table>
-    </div>
-  `;
+    <div class="table-wrap"><table>
+      <thead><tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
+      <tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c ?? "—"}</td>`).join("")}</tr>`).join("")}</tbody>
+    </table></div>`;
 }
 
 function detailItem(label, value) {
-  return `
-    <div class="detail-item">
-      <span>${escapeHtml(label)}</span>
-      <strong>${escapeHtml(value ?? "—")}</strong>
-    </div>
-  `;
+  return `<div class="detail-item"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value ?? "—")}</strong></div>`;
 }
 
-function statValue(value, decimals = 2) {
-  return formatNumber(value ?? 0, decimals);
+function viewLabel(view) {
+  for (const g of VIEWS) for (const i of g.items) if (i[0] === view) return i[2];
+  return view;
 }
 
 async function navigate(view) {
   state.currentView = view;
   state.pages[view] = state.pages[view] || 1;
-
   renderNavigation();
-
   try {
     switch (view) {
-      case "dashboard":
-        await renderDashboard();
-        break;
-      case "analytics":
-        await renderAnalytics();
-        break;
-      case "reconcile":
-        await renderReconcile();
-        break;
-      case "users":
-        await renderUsers();
-        break;
-      case "wallets":
-        await renderWallets();
-        break;
-      case "transactions":
-        await renderTransactions("transactions");
-        break;
-      case "deposit_addresses":
-        await renderDepositAddresses();
-        break;
-      case "deposits":
-        await renderTransactions("deposits");
-        break;
-      case "withdrawals":
-        await renderTransactions("withdrawals");
-        break;
-      case "gift_codes":
-        await renderGiftCodeHistory();
-        break;
-      case "gift_history":
-        await renderGiftHistory();
-        break;
-      case "rounds":
-        await renderRounds();
-        break;
-      case "bets":
-        await renderBets();
-        break;
-      case "referrals":
-        await renderReferrals();
-        break;
-      case "channel_settings":
-        await renderChannelSettings();
-        break;
-      case "broadcast":
-        await renderBroadcast();
-        break;
-      case "telegram":
-        await renderTelegram();
-        break;
-      case "audit":
-        await renderAudit();
-        break;
-      case "login_attempts":
-        await renderLoginAttempts();
-        break;
-      case "search":
-        renderSearch();
-        break;
+      case "dashboard": await renderDashboard(); break;
+      case "analytics": await renderAnalytics(); break;
+      case "reconcile": await renderReconcile(); break;
+      case "users": await renderUsers(); break;
+      case "wallets": await renderWallets(); break;
+      case "transactions": await renderTransactions("transactions"); break;
+      case "deposit_addresses": await renderDepositAddresses(); break;
+      case "deposits": await renderTransactions("deposits"); break;
+      case "withdrawals": await renderTransactions("withdrawals"); break;
+      case "gift_codes": await renderGiftCodeHistory(); break;
+      case "gift_history": await renderGiftHistory(); break;
+      case "rounds": await renderRounds(); break;
+      case "bets": await renderBets(); break;
+      case "referrals": await renderReferrals(); break;
+      case "channel_settings": await renderChannelSettings(); break;
+      case "broadcast": await renderBroadcast(); break;
+      case "telegram": await renderTelegram(); break;
+      case "audit": await renderAudit(); break;
+      case "login_attempts": await renderLoginAttempts(); break;
+      case "security": await renderSecurity(); break;
+      case "search": renderSearch(); break;
       default:
         setPage("Not Found", "Unknown dashboard section.");
         $("viewBody").innerHTML = '<div class="empty">This section is unavailable.</div>';
@@ -1604,524 +913,153 @@ async function navigate(view) {
   } catch (error) {
     if (view === state.currentView) {
       $("pageContent").innerHTML = `
-        <div class="page-header">
-          <div>
-            <h2>${escapeHtml(viewLabel(view))}</h2>
-            <p>Unable to load this section.</p>
-          </div>
-          <button class="btn" id="retryButton">Retry</button>
-        </div>
-        <div class="notice danger">${escapeHtml(error.message)}</div>
-      `;
+        <div class="page-header"><div><h2>${escapeHtml(viewLabel(view))}</h2><p>Unable to load this section.</p></div>
+          <button class="btn" id="retryButton">Retry</button></div>
+        <div class="notice danger">${escapeHtml(error.message)}</div>`;
       $("retryButton").addEventListener("click", () => navigate(view));
     }
   }
 }
 
-function viewLabel(view) {
-  for (const group of VIEWS) {
-    for (const item of group.items) {
-      if (item[0] === view) return item[2];
-    }
-  }
-  return view;
-}
-
-// --- DASHBOARD ---
+/* ============ DASHBOARD (with Today + 24h + All-Time P/L) ============ */
 async function renderDashboard() {
-  setPage("Dashboard", "Live overview of users, balances, transactions and game activity.", '<button class="btn" id="refreshDashboard">↻ Refresh</button>');
+  setPage("Dashboard", "Live overview of users, balances, transactions and game activity.",
+    '<button class="btn" id="refreshDashboard">↻ Refresh</button>');
   $("refreshDashboard").addEventListener("click", renderDashboard);
 
   const data = await api("dashboard");
   const t = data.totals || {};
   const m = data.user_metrics || {};
   const h = data.health || {};
-  const security = data.security || {};
+  const sec = data.security || {};
+
+  const netToday = Number(t.stake_today || 0) - Number(t.payout_today || 0);
+  const net24h = Number(t.stake_24h || 0) - Number(t.payout_24h || 0);
+  const allTimePL = Number(t.total_stake || 0) - Number(t.total_payouts || 0);
+
+  const netClass = v => Number(v) >= 0 ? "green" : "red";
+  const netDisplay = v => {
+    const n = Number(v) || 0;
+    return (n >= 0 ? "+" : "") + money(n);
+  };
 
   $("viewBody").innerHTML = `
-    <div class="grid stats-grid">
-      ${metricCard("Total Users", statValue(t.users, 0), `${statValue(t.blocked_users, 0)} blocked`)}
-      ${metricCard("Total Bets", statValue(t.bets, 0), "All recorded bets")}
-      ${metricCard("Total Stake", money(t.total_stake), "Recorded bet stakes", "yellow")}
-      ${metricCard("Total Payouts", money(t.total_payouts), "Recorded payouts", "green")}
-      ${metricCard("Wallet Balance", money(t.total_wallet_balance), "Sum of wallet balances")}
-      ${metricCard("Confirmed Deposits", money(t.total_deposits), `${statValue(t.deposit_count, 0)} transactions`, "green")}
-      ${metricCard("Deposits Today", money(t.deposits_today), `${statValue(t.pending_deposits, 0)} pending`, "green")}
-      ${metricCard("Confirmed Withdrawals", money(t.total_withdrawals), `${statValue(t.withdrawal_count, 0)} transactions`, "red")}
-      ${metricCard("Withdrawals Today", money(t.withdrawals_today), `${statValue(t.pending_withdrawals, 0)} pending`, "red")}
-      ${metricCard("Referral Commissions", money(t.total_commissions), `${statValue(t.total_referrals, 0)} referrals`, "violet")}
+    <div class="card">
+      <div class="card-head">
+        <h3>📅 Today's Summary</h3>
+        <span class="small muted">Calendar day — from 00:00 today</span>
+      </div>
+      <div class="grid stats-grid">
+        ${metricCard("Bets Today", statValue(t.bets_today, 0), "Bets placed today")}
+        ${metricCard("Stake Today", money(t.stake_today), "Total staked today", "yellow")}
+        ${metricCard("Payout Today", money(t.payout_today), "Paid out today", "green")}
+        ${metricCard("Net Today", netDisplay(netToday), netToday >= 0 ? "Platform profit today" : "Platform loss today", netClass(netToday))}
+      </div>
     </div>
 
     <div class="card">
       <div class="card-head">
-        <h3>User Activity</h3>
+        <h3>⏱️ Last 24 Hours</h3>
+        <span class="small muted">Rolling — past 24 hours</span>
       </div>
+      <div class="grid stats-grid">
+        ${metricCard("Bets (24h)", statValue(t.bets_24h, 0), "Bets in last 24h")}
+        ${metricCard("Stake (24h)", money(t.stake_24h), "Total staked", "yellow")}
+        ${metricCard("Payout (24h)", money(t.payout_24h), "Paid out", "green")}
+        ${metricCard("Net (24h)", netDisplay(net24h), net24h >= 0 ? "Platform profit (24h)" : "Platform loss (24h)", netClass(net24h))}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>💰 All-Time Profit &amp; Loss</h3>
+        <span class="small muted">Since beginning</span>
+      </div>
+      <div class="grid stats-grid">
+        ${metricCard("Total Stake", money(t.total_stake), "All-time staked", "yellow")}
+        ${metricCard("Total Payout", money(t.total_payouts), "All-time paid out", "green")}
+        ${metricCard("Total Fees", money(t.total_fees), "Platform fees collected")}
+        ${metricCard("Platform P/L", netDisplay(allTimePL), allTimePL >= 0 ? "Net platform profit" : "Net platform loss", netClass(allTimePL))}
+      </div>
+      <p class="small muted" style="margin-top:12px;line-height:1.6;">
+        <strong>Formula:</strong> Platform P/L = Total Stake − Total Payout.<br>
+        Positive = platform profit (players lost overall). Negative = platform loss (players won overall).<br>
+        Total Fees is shown separately as reference revenue.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>📊 General Stats</h3></div>
+      <div class="grid stats-grid">
+        ${metricCard("Total Users", statValue(t.users, 0), `${statValue(t.blocked_users, 0)} blocked`)}
+        ${metricCard("Total Bets", statValue(t.bets, 0), "All recorded bets")}
+        ${metricCard("Wallet Balance", money(t.total_wallet_balance), "Sum of wallet balances")}
+        ${metricCard("Referral Commissions", money(t.total_commissions), `${statValue(t.total_referrals, 0)} referrals`, "violet")}
+        ${metricCard("Confirmed Deposits", money(t.total_deposits), `${statValue(t.deposit_count, 0)} transactions`, "green")}
+        ${metricCard("Deposits Today", money(t.deposits_today), `${statValue(t.pending_deposits, 0)} pending`, "green")}
+        ${metricCard("Confirmed Withdrawals", money(t.total_withdrawals), `${statValue(t.withdrawal_count, 0)} transactions`, "red")}
+        ${metricCard("Withdrawals Today", money(t.withdrawals_today), `${statValue(t.pending_withdrawals, 0)} pending`, "red")}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>👥 User Activity</h3></div>
       <div class="status-grid">
         <div class="status-item"><span>New Today</span><strong>${statValue(m.new_today, 0)}</strong></div>
         <div class="status-item"><span>New in 7 Days</span><strong>${statValue(m.new_7d, 0)}</strong></div>
         <div class="status-item"><span>Active in 24 Hours</span><strong>${statValue(m.active_24h, 0)}</strong></div>
         <div class="status-item"><span>Active in 7 Days</span><strong>${statValue(m.active_7d, 0)}</strong></div>
         <div class="status-item"><span>Inactive 30 Days</span><strong>${statValue(m.inactive_30d, 0)}</strong></div>
-        <div class="status-item"><span>Failed Logins (24h)</span><strong class="red">${statValue(security.failed_logins_24h, 0)}</strong></div>
+        <div class="status-item"><span>Failed Logins (24h)</span><strong class="red">${statValue(sec.failed_logins_24h, 0)}</strong></div>
       </div>
+      <p class="small muted">Activity is based on recorded bets.</p>
     </div>
 
     <div class="card">
-      <div class="card-head"><h3>System Health</h3></div>
+      <div class="card-head"><h3>🩺 System Health</h3></div>
       <div class="status-grid">
-        <div class="status-item">
-          <span>Database Query</span>
-          <strong class="green">Responding</strong>
-        </div>
-        <div class="status-item">
-          <span>Round / Pending Check</span>
-          <strong class="${h.cron_ok ? "green" : "red"}">${h.cron_ok ? "No Detected Issues" : "Needs Review"}</strong>
-        </div>
-        <div class="status-item">
-          <span>Overdue Rounds</span>
-          <strong class="${Number(h.overdue_rounds || 0) ? "red" : "green"}">${statValue(h.overdue_rounds, 0)}</strong>
-        </div>
-        <div class="status-item">
-          <span>Old Pending Bets</span>
-          <strong class="${Number(h.old_pending_bets || 0) ? "red" : "green"}">${statValue(h.old_pending_bets, 0)}</strong>
-        </div>
-        <div class="status-item">
-          <span>Latest Round Start</span>
-          <strong style="font-size:12px">${escapeHtml(formatDate(h.latest_round_start))}</strong>
-        </div>
-        <div class="status-item">
-          <span>Last Settled Round</span>
-          <strong style="font-size:12px">${escapeHtml(formatDate(h.last_settled_at))}</strong>
-        </div>
+        <div class="status-item"><span>Database Query</span><strong class="green">Responding</strong></div>
+        <div class="status-item"><span>Round / Pending Check</span><strong class="${h.cron_ok ? "green" : "red"}">${h.cron_ok ? "No Detected Issues" : "Needs Review"}</strong></div>
+        <div class="status-item"><span>Overdue Rounds</span><strong class="${Number(h.overdue_rounds || 0) ? "red" : "green"}">${statValue(h.overdue_rounds, 0)}</strong></div>
+        <div class="status-item"><span>Old Pending Bets</span><strong class="${Number(h.old_pending_bets || 0) ? "red" : "green"}">${statValue(h.old_pending_bets, 0)}</strong></div>
+        <div class="status-item"><span>Latest Round Start</span><strong style="font-size:12px">${escapeHtml(formatDate(h.latest_round_start))}</strong></div>
+        <div class="status-item"><span>Last Settled Round</span><strong style="font-size:12px">${escapeHtml(formatDate(h.last_settled_at))}</strong></div>
       </div>
     </div>
-  `;
-}
 
-// --- USERS (UPDATED WITH NAMES) ---
-async function renderUsers() {
-  setPage("User Management", "Browse registered users and filter by activity segment.", '<button class="btn" id="exportUsers">Export CSV</button>');
+    <div class="card">
+      <div class="card-head"><h3>🎯 Round Statuses</h3></div>
+      ${table(["Status", "Count"], (data.round_statuses || []).map(r => [badge(r.status), escapeHtml(statValue(r.count, 0))]))}
+    </div>
 
-  $("viewBody").innerHTML = filterToolbar({
-    search: "Search username, user ID or Telegram ID",
-    segment: true
-  });
-
-  attachFilterActions("users", renderUsers);
-
-  $("exportUsers").addEventListener("click", async () => {
-    try {
-      await downloadCsv("users", state.filters.users || {});
-    } catch (error) {
-      toast(error.message, true);
-    }
-  });
-
-  const f = state.filters.users || {};
-
-  const data = await api("users", {
-    page: state.pages.users || 1,
-    page_size: 20,
-    q: f.q || "",
-    segment: f.segment || "all"
-  });
-
-  $("viewBody").innerHTML = `
-    ${filterToolbar({
-      search: "Search username, user ID or Telegram ID",
-      segment: true
-    })}
-    ${table(
-      ["User ID", "Name", "Telegram ID", "Username", "Balance", "Referrals", "Joined", "Details"],
-      (data.users || []).map(u => {
-        const fullName = [u.first_name, u.last_name].filter(Boolean).join(" ");
-        return [
-          escapeHtml(u.id),
-          escapeHtml(fullName || "—"),
-          escapeHtml(u.telegram_id),
-          escapeHtml(u.username || "—"),
-          escapeHtml(money(u.balance)),
-          escapeHtml(statValue(u.referral_count, 0)),
-          escapeHtml(formatDate(u.created_at)),
-          `<button class="btn" data-user-detail="${escapeHtml(u.id)}">View</button>`
-        ];
-      })
-    )}
-    ${paginationHtml(data.pagination)}
-    <div id="userDetail"></div>
-  `;
-
-  attachFilterActions("users", renderUsers);
-  attachPagination("users", data.pagination, renderUsers);
-
-  $("exportUsers").addEventListener("click", async () => {
-    try {
-      await downloadCsv("users", state.filters.users || {});
-    } catch (error) {
-      toast(error.message, true);
-    }
-  });
-
-  $("viewBody").querySelectorAll("[data-user-detail]").forEach(button => {
-    button.addEventListener("click", () => renderUserDetail(button.dataset.userDetail));
-  });
-}
-
-async function renderUserDetail(userId) {
-  const container = $("userDetail");
-  container.innerHTML = '<div class="loading">Loading user details...</div>';
-
-  try {
-    const data = await api("user_detail", { user_id: userId });
-    const p = data.profile || {};
-    const s = data.stats || {};
-    const fullName = [p.first_name, p.last_name].filter(Boolean).join(" ");
-
-    container.innerHTML = `
-      <div class="card" style="margin-top:18px">
-        <div class="card-head">
-          <h3>User Details — #${escapeHtml(p.id)} ${fullName ? `(${escapeHtml(fullName)})` : ''}</h3>
-          <button class="btn" id="closeUserDetail">Close</button>
-        </div>
-
-        <div class="detail-grid">
-          ${detailItem("Telegram ID", p.telegram_id)}
-          ${detailItem("Name", fullName || "—")}
-          ${detailItem("Username", p.username || "—")}
-          ${detailItem("Balance", money(p.balance))}
-          ${detailItem("Referral Code", p.referral_code || "—")}
-          ${detailItem("Referred By", p.referred_by ?? "—")}
-          ${detailItem("Joined", formatDate(p.created_at))}
-          ${detailItem("Total Bets", statValue(s.bets, 0))}
-          ${detailItem("Total Stake", money(s.stake))}
-          ${detailItem("Total Payout", money(s.payout))}
-          ${detailItem("Wins", statValue(s.wins, 0))}
-          ${detailItem("Losses", statValue(s.losses, 0))}
-        </div>
-
-        <div class="card" style="margin-top:16px">
-          <h3>Admin actions</h3>
-          <div class="row-actions" style="margin-top:10px">
-            <button class="btn user-action" data-action="block" data-user-id="${escapeHtml(p.id)}">Block</button>
-            <button class="btn user-action" data-action="unblock" data-user-id="${escapeHtml(p.id)}">Unblock</button>
-            <button class="btn user-action" data-action="add_fund" data-user-id="${escapeHtml(p.id)}">Add fund</button>
-            <button class="btn user-action" data-action="remove_fund" data-user-id="${escapeHtml(p.id)}">Remove fund</button>
-            <button class="btn user-action" data-action="create_gift" data-user-id="${escapeHtml(p.id)}">Generate gift code</button>
-            <button class="btn user-action" data-action="transfer_points" data-user-id="${escapeHtml(p.id)}">Transfer points</button>
-          </div>
-        </div>
+    <div class="card">
+      <div class="card-head">
+        <h3>🕹️ Recent Game Rounds</h3>
+        <button class="btn" id="openRounds">View All</button>
       </div>
-    `;
-
-    $("closeUserDetail").addEventListener("click", () => container.innerHTML = "");
-
-    container.querySelectorAll(".user-action").forEach(button => button.addEventListener("click", async () => {
-      const action = button.dataset.action;
-      const points = ["add_fund", "remove_fund", "transfer_points"].includes(action) ? prompt("Points amount") : null;
-      if (["add_fund", "remove_fund", "transfer_points"].includes(action) && (!points || Number(points) <= 0)) return;
-
-      const payload = { management_action: action, user_id: button.dataset.userId };
-      if (points) payload.points = points;
-      if (action === "transfer_points") {
-        payload.to_user_id = prompt("Target user ID") || "";
-        if (!payload.to_user_id) return;
-      }
-      if (action === "create_gift") {
-        payload.points = prompt("Gift code points") || "";
-        payload.max_uses = prompt("Maximum uses", "1") || "1";
-      }
-
-      try {
-        const result = await api("user_management", payload);
-        toast(action === "create_gift" ? `Gift code: ${result.gift_code.code}` : "User action completed.");
-        await renderUserDetail(button.dataset.userId);
-      } catch (error) {
-        toast(error.message, true);
-      }
-    }));
-  } catch (error) {
-    container.innerHTML = `<div class="notice danger">${escapeHtml(error.message)}</div>`;
-  }
+      ${roundTable(data.recent_rounds || [])}
+    </div>
+  `;
+  $("openRounds").addEventListener("click", () => navigate("rounds"));
 }
 
-// --- TRANSACTIONS (UPDATED WITH WALLET & TX LINK) ---
-async function renderTransactions(view) {
-  const title = view === "deposits"
-    ? "Deposits"
-    : view === "withdrawals"
-      ? "Withdrawals"
-      : "Transactions";
-
-  setPage(
-    title,
-    "Review and approve pending deposits and withdrawals.",
-    '<button class="btn" id="exportTransactions">Export CSV</button>'
+function roundTable(rows) {
+  return table(
+    ["Round", "Status", "Start", "Result", "Bets", "Stake", "Payout", "Pending", "Settlement"],
+    rows.map(r => [
+      escapeHtml(r.round_code), badge(r.status), escapeHtml(formatDate(r.starts_at)),
+      escapeHtml(r.result_number ?? "—"), escapeHtml(statValue(r.bet_count, 0)),
+      escapeHtml(money(r.total_stake)), escapeHtml(money(r.total_payout)),
+      escapeHtml(statValue(r.pending_bets, 0)),
+      r.payout_complete ? badge("complete") : badge("review")
+    ])
   );
-
-  $("viewBody").innerHTML = filterToolbar({
-    type: view === "transactions",
-    status: true,
-    userId: true
-  });
-
-  attachFilterActions(view, () => renderTransactions(view));
-
-  const f = state.filters[view] || {};
-
-  let type = f.type || "";
-
-  if (view === "deposits") type = "deposit";
-  if (view === "withdrawals") type = "withdrawal";
-
-  const data = await api("transactions", {
-    page: state.pages[view] || 1,
-    page_size: 20,
-    type,
-    status: f.status || "",
-    user_id: f.user_id || ""
-  });
-
-  $("viewBody").innerHTML = `
-    ${filterToolbar({
-      type: view === "transactions",
-      status: true,
-      userId: true
-    })}
-    <div class="notice warning">
-      Approve means manual payout/credit. Reject/Refund returns reserved funds to the user. Deposit approval credits 100 points per USDT.
-    </div>
-    ${table(
-      ["ID", "User ID", "Type", "Amount", "Status", "Destination / TX Hash", "Created", "Actions"],
-      (data.transactions || []).map(t => {
-        let actionButtons = "—";
-
-        if (t.status === "pending") {
-          if (t.transaction_type === "deposit") {
-            actionButtons = `<div class="row-actions"><button class="btn btn-primary review-tx" data-action="deposit_approve" data-id="${escapeHtml(t.id)}">Approve</button><button class="btn btn-danger review-tx" data-action="deposit_reject" data-id="${escapeHtml(t.id)}">Reject</button></div>`;
-          } else if (t.transaction_type === "withdrawal") {
-            actionButtons = `<div class="row-actions"><button class="btn btn-primary review-tx" data-action="withdrawal_approve" data-id="${escapeHtml(t.id)}">Approve</button><button class="btn btn-danger review-tx" data-action="withdrawal_reject" data-id="${escapeHtml(t.id)}">Reject</button></div>`;
-          }
-        }
-
-        let txInfo = "—";
-        if (t.transaction_type === "withdrawal" && t.destination_address) {
-          txInfo = `<div style="font-size:10px; color:#65a9ff; word-break:break-all;">${escapeHtml(t.destination_address)} <button class="copy-btn" onclick="navigator.clipboard.writeText('${t.destination_address}'); toast('Copied!')">📋</button></div>`;
-        } else if (t.tx_hash) {
-          txInfo = `<a class="tx-link" href="https://bscscan.com/tx/${t.tx_hash}" target="_blank">${t.tx_hash.slice(0, 8)}...${t.tx_hash.slice(-6)}</a>`;
-        }
-
-        return [
-          escapeHtml(t.id),
-          escapeHtml(t.user_id),
-          badge(t.transaction_type),
-          escapeHtml(money(t.amount)),
-          badge(t.status),
-          txInfo,
-          escapeHtml(formatDate(t.created_at)),
-          actionButtons
-        ];
-      })
-    )}
-    ${paginationHtml(data.pagination)}
-  `;
-
-  attachFilterActions(view, () => renderTransactions(view));
-  attachPagination(view, data.pagination, () => renderTransactions(view));
-
-  document.querySelectorAll(".review-tx").forEach(button => button.addEventListener("click", async () => {
-    const action = button.dataset.action;
-
-    let message = "Are you sure?";
-    if (action === "withdrawal_approve") message = "Approve this withdrawal for manual payout?";
-    const payoutTxHash = action === "withdrawal_approve" ? prompt("Enter the payout transaction hash:") : "";
-    if (action === "withdrawal_approve" && !payoutTxHash?.trim()) return;
-    if (action === "withdrawal_reject") message = "Reject and refund this withdrawal?";
-    if (action === "deposit_approve") message = "Approve this deposit? Points will be credited to the user.";
-    if (action === "deposit_reject") message = "Reject this deposit?";
-
-    if (!window.confirm(message)) return;
-    try {
-      await api(action, { transaction_id: button.dataset.id, payout_tx_hash: payoutTxHash?.trim() || "" });
-      toast("Action successful.");
-      fetchNotifications();
-      await renderTransactions(view);
-    } catch (error) {
-      toast(error.message, true);
-    }
-  }));
-
-  $("exportTransactions").addEventListener("click", async () => {
-    try {
-      await downloadCsv("transactions", {
-        ...state.filters[view],
-        type
-      });
-    } catch (error) {
-      toast(error.message, true);
-    }
-  });
 }
 
-// --- GIFT CODES (ADDED COPY LINK) ---
-async function renderGiftCodeHistory() {
-  setPage("Gift Codes", "View generated gift codes and share them.", '<button class="btn" id="refreshGiftCodes">↻ Refresh</button>');
-  $("refreshGiftCodes").addEventListener("click", renderGiftCodeHistory);
-
-  const data = await api("gift_codes", {
-    page: state.pages.gift_codes || 1,
-    page_size: 20
-  });
-
-  $("viewBody").innerHTML = `
-    ${table(
-      ["ID", "Code", "Points", "Uses", "Created", "Actions"],
-      (data.gift_codes || []).map(c => [
-        escapeHtml(c.id),
-        `<strong>${escapeHtml(c.code)}</strong>`,
-        money(c.points),
-        `${c.uses}/${c.max_uses}`,
-        formatDate(c.created_at),
-        `<button class="btn" onclick="copyGiftLink('${c.code}')">Copy Link</button>`
-      ])
-    )}
-    ${paginationHtml(data.pagination)}
-  `;
-  attachPagination("gift_codes", data.pagination, renderGiftCodeHistory);
-}
-
-window.copyGiftLink = (code) => {
-  const botName = prompt("Enter your Bot Username (without @):", "YourBotName");
-  if (!botName) return;
-  const link = `https://t.me/${botName}?startapp=gift_${code}`;
-  navigator.clipboard.writeText(link);
-  toast("Gift link copied: " + link);
-};
-
-// --- NEW: GIFT REDEMPTIONS ---
-async function renderGiftHistory() {
-  setPage("Gift Redemptions", "Track who redeemed which gift code.");
-
-  const data = await api("gift_redemptions", {
-    page: state.pages.gift_history || 1,
-    page_size: 20
-  });
-
-  $("viewBody").innerHTML = `
-    ${table(
-      ["Date", "User ID", "Name", "Gift Code", "Points"],
-      (data.redemptions || []).map(r => {
-        const fullName = [r.first_name, r.last_name].filter(Boolean).join(" ");
-        return [
-          formatDate(r.redeemed_at),
-          escapeHtml(r.user_id),
-          escapeHtml(fullName || r.username || "—"),
-          `<strong>${escapeHtml(r.code)}</strong>`,
-          `<span class="green">+${money(r.points)}</span>`
-        ];
-      })
-    )}
-    ${paginationHtml(data.pagination)}
-  `;
-  attachPagination("gift_history", data.pagination, renderGiftHistory);
-}
-
-// --- NEW: CHANNEL SETTINGS ---
-async function renderChannelSettings() {
-  setPage("Channel & Schedule Settings", "Manage bot channel and prediction timing.");
-  const data = await api("channel_settings");
-  const s = data.settings || {};
-
-  $("viewBody").innerHTML = `
-    <div class="card">
-      <form id="channelSettingsForm">
-        <div class="grid" style="grid-template-columns: 1fr 1fr;">
-          <div class="field">
-            <label>Channel Username</label>
-            <input name="channel_username" value="${escapeHtml(s.channel_username || '')}" placeholder="@your_channel" required>
-          </div>
-          <div class="field">
-            <label>Bot Username</label>
-            <input name="bot_username" value="${escapeHtml(s.bot_username || '')}" placeholder="YourBot" required>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Prediction Timing (Seconds before round ends)</label>
-          <input type="number" name="prediction_timing" value="${s.prediction_timing || 150}" required>
-          <div class="small muted" style="margin-top:4px;">Default is 150 (bets close at 150s).</div>
-        </div>
-
-        <div class="field" style="flex-direction: row; align-items: center; gap: 10px;">
-          <input type="checkbox" name="predictions_enabled" ${s.predictions_enabled ? 'checked' : ''} style="width:auto;">
-          <label style="margin:0;">Enable Predictions in Channel</label>
-        </div>
-
-        <button class="btn btn-primary" type="submit">Save Settings</button>
-      </form>
-    </div>
-  `;
-
-  $("channelSettingsForm").onsubmit = async (e) => {
-    e.preventDefault();
-    const f = new FormData(e.target);
-    try {
-      await api("save_channel_settings", {
-        channel_username: f.get("channel_username"),
-        bot_username: f.get("bot_username"),
-        prediction_timing: f.get("prediction_timing"),
-        predictions_enabled: f.get("predictions_enabled") === "on"
-      });
-      toast("Settings saved!");
-    } catch (err) {
-      toast(err.message, true);
-    }
-  };
-}
-
-// --- NEW: BROADCAST ---
-async function renderBroadcast() {
-  setPage("Broadcast Message", "Send a message to your users and channel.");
-
-  $("viewBody").innerHTML = `
-    <div class="card">
-      <form id="broadcastForm">
-        <div class="field">
-          <label>Message Target</label>
-          <select name="target">
-            <option value="both">Both (Channel & Users)</option>
-            <option value="channel">Only Channel</option>
-            <option value="users">Only Users (Bot)</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Message</label>
-          <textarea name="message" required placeholder="Enter message here..."></textarea>
-        </div>
-        <button class="btn btn-primary" type="submit">Send Broadcast</button>
-      </form>
-    </div>
-  `;
-
-  $("broadcastForm").onsubmit = async (e) => {
-    e.preventDefault();
-    if (!confirm("Are you sure you want to send this broadcast?")) return;
-    const f = new FormData(e.target);
-    try {
-      await api("broadcast", {
-        target: f.get("target"),
-        message: f.get("message")
-      });
-      toast("Broadcast sent successfully!");
-      e.target.reset();
-    } catch (err) {
-      toast(err.message, true);
-    }
-  };
-}
-
-// --- OTHER EXISTING VIEWS ---
+/* ============ ANALYTICS ============ */
 async function renderAnalytics() {
-  setPage("Analytics", "Historical betting activity, user rankings and result distribution.", '<button class="btn" id="refreshAnalytics">↻ Refresh</button>');
+  setPage("Analytics", "Historical betting activity, user rankings and result distribution.",
+    '<button class="btn" id="refreshAnalytics">↻ Refresh</button>');
   $("refreshAnalytics").addEventListener("click", renderAnalytics);
 
   const data = await api("analytics");
@@ -2135,34 +1073,81 @@ async function renderAnalytics() {
       <div class="card-head"><h3>Daily Bet Volume — 14 Days</h3></div>
       <div class="chart-bars">
         ${daily.map(d => {
-          const count = Number(d.bets || 0);
-          const height = Math.max(3, count / maxBets * 125);
-          return `
-            <div class="chart-col">
-              <div class="chart-number">${count}</div>
-              <div class="chart-bar" style="height:${height}px"></div>
-              <div class="chart-label">${escapeHtml(String(d.day || "").slice(5, 10))}</div>
-            </div>
-          `;
+          const c = Number(d.bets || 0);
+          const height = Math.max(3, c / maxBets * 125);
+          return `<div class="chart-col">
+            <div class="chart-number">${c}</div>
+            <div class="chart-bar" style="height:${height}px"></div>
+            <div class="chart-label">${escapeHtml(String(d.day || "").slice(5, 10))}</div>
+          </div>`;
         }).join("")}
       </div>
     </div>
+
     <div class="card">
-      <div class="card-head"><h3>Settled Result Distribution</h3></div>
-      <div class="notice warning">${escapeHtml(fairness.verdict || "Distribution information only.")}</div>
+      <div class="card-head"><h3>Daily Performance</h3></div>
       ${table(
-        ["Result Number", "Count"],
-        counts.map((count, number) => [
-          escapeHtml(number),
-          escapeHtml(statValue(count, 0))
+        ["Date", "Bets", "Stake", "Payout", "Net", "Active Users", "New Users"],
+        daily.map(d => [
+          escapeHtml(String(d.day || "—").slice(0, 10)),
+          escapeHtml(statValue(d.bets, 0)),
+          escapeHtml(money(d.stake)), escapeHtml(money(d.payout)),
+          `<span class="${Number(d.net) >= 0 ? "green" : "red"}">${escapeHtml(money(d.net))}</span>`,
+          escapeHtml(statValue(d.active_users, 0)),
+          escapeHtml(statValue(d.new_users, 0))
         ])
       )}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Settled Result Distribution</h3></div>
+      <div class="notice warning">${escapeHtml(fairness.verdict || "Distribution info only.")}</div>
+      ${table(["Result Number", "Count"], counts.map((c, n) => [escapeHtml(n), escapeHtml(statValue(c, 0))]))}
+      <p class="small muted">Observed frequencies alone do not prove fairness.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Top Users by Total Stake</h3></div>
+      ${table(
+        ["User ID", "Username", "Bets", "Stake", "Payout", "Net"],
+        (data.top_users || []).map(u => [
+          escapeHtml(u.id), escapeHtml(u.username || "—"),
+          escapeHtml(statValue(u.bets, 0)), escapeHtml(money(u.stake)),
+          escapeHtml(money(u.payout)), escapeHtml(money(u.user_net))
+        ])
+      )}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Largest Stakes</h3></div>
+      ${table(
+        ["Bet ID", "User ID", "Round", "Type", "Stake", "Created"],
+        (data.large_stakes || []).map(b => [
+          escapeHtml(b.id), escapeHtml(b.user_id), escapeHtml(b.round_code || "—"),
+          escapeHtml(b.bet_type), escapeHtml(money(b.stake)), escapeHtml(formatDate(b.created_at))
+        ])
+      )}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Highest Payout-to-Stake Ratios</h3></div>
+      ${table(
+        ["User ID", "Bets", "Stake", "Payout", "Return %"],
+        (data.high_return_users || []).map(u => [
+          escapeHtml(u.user_id), escapeHtml(statValue(u.bets, 0)),
+          escapeHtml(money(u.stake)), escapeHtml(money(u.payout)),
+          escapeHtml(u.return_percent == null ? "—" : `${u.return_percent}%`)
+        ])
+      )}
+      <p class="small muted">High historical return is not proof of fraud.</p>
     </div>
   `;
 }
 
+/* ============ RECONCILE ============ */
 async function renderReconcile() {
-  setPage("Financial Reconciliation", "Read-only totals and consistency indicators.", '<button class="btn" id="refreshReconcile">↻ Refresh</button>');
+  setPage("Financial Reconciliation", "Read-only totals and consistency indicators.",
+    '<button class="btn" id="refreshReconcile">↻ Refresh</button>');
   $("refreshReconcile").addEventListener("click", renderReconcile);
 
   const data = await api("reconcile");
@@ -2172,183 +1157,388 @@ async function renderReconcile() {
     <div class="notice warning">
       This report is incomplete until every wallet balance change is mapped to an auditable ledger entry.
     </div>
-
     <div class="grid stats-grid">
       ${metricCard("Wallet Total", money(t.wallet_total))}
       ${metricCard("Recorded Commissions", money(t.commissions))}
       ${metricCard("Bet Stakes", money(t.bets_stake))}
       ${metricCard("Won Bet Payouts", money(t.bets_payout))}
     </div>
+    <div class="card">
+      <div class="card-head"><h3>Consistency Checks</h3></div>
+      ${table(
+        ["Check", "Value", "Interpretation"],
+        [
+          ["Bet count", escapeHtml(statValue(t.bet_count_diff, 0)), "Difference from recorded bet transactions"],
+          ["Stake transaction count", escapeHtml(statValue(t.bet_tx, 0)), "Recorded transaction count"],
+          ["Stake difference", escapeHtml(t.stake_diff), "Full ledger mapping required"],
+          ["Payout transaction count", escapeHtml(statValue(t.payout_tx, 0)), "Recorded transaction count"],
+          ["Payout difference", escapeHtml(t.payout_diff), "Full ledger mapping required"],
+          ["Unrecorded balance changes", escapeHtml(t.unrecorded), "Cannot be verified by current query"]
+        ]
+      )}
+    </div>
+    <div class="notice danger">
+      A complete reconciliation requires the actual transaction and wallet-update rules.
+    </div>
   `;
 }
 
-async function renderRounds() {
-  setPage("Game Rounds", "Round status, timing, results and settlement indicators.", '<button class="btn" id="refreshRounds">↻ Refresh</button>');
+/* ============ FILTER HELPERS ============ */
+function filterToolbar(options = {}) {
+  return `
+    <div class="toolbar">
+      ${options.search ? `<input id="filterQ" placeholder="${escapeHtml(options.search)}" value="${escapeHtml(options.q || "")}">` : ""}
+      ${options.segment ? `
+        <select id="filterSegment">
+          <option value="all">All Users</option>
+          <option value="new_today">New Today</option>
+          <option value="new_7d">New in 7 Days</option>
+          <option value="active_24h">Active 24 Hours</option>
+          <option value="active_7d">Active 7 Days</option>
+          <option value="inactive_30d">Inactive 30 Days</option>
+        </select>` : ""}
+      ${options.type ? `
+        <select id="filterType">
+          <option value="">All Types</option>
+          <option value="deposit">Deposit</option>
+          <option value="withdrawal">Withdrawal</option>
+        </select>` : ""}
+      ${options.status ? `
+        <select id="filterStatus">
+          <option value="">All Statuses</option>
+          ${["pending","confirmed","rejected","completed","failed","open","locked","settled","won","lost","cancelled"]
+            .map(s => `<option value="${s}">${s}</option>`).join("")}
+        </select>` : ""}
+      ${options.userId ? `<input id="filterUserId" inputmode="numeric" placeholder="User ID">` : ""}
+      <button class="btn btn-primary" id="applyFilters">Apply Filters</button>
+      <button class="btn" id="clearFilters">Clear</button>
+    </div>`;
+}
 
-  $("viewBody").innerHTML = filterToolbar({
-    search: "Search round code"
+function getFilters(view) {
+  const saved = state.filters[view] || {};
+  return {
+    q: $("filterQ") ? $("filterQ").value.trim() : (saved.q || ""),
+    segment: $("filterSegment") ? $("filterSegment").value : (saved.segment || "all"),
+    type: $("filterType") ? $("filterType").value : (saved.type || ""),
+    status: $("filterStatus") ? $("filterStatus").value : (saved.status || ""),
+    user_id: $("filterUserId") ? $("filterUserId").value.trim() : (saved.user_id || "")
+  };
+}
+
+function attachFilterActions(view, renderFn) {
+  const f = state.filters[view] || {};
+  if ($("filterQ")) $("filterQ").value = f.q || "";
+  if ($("filterSegment")) $("filterSegment").value = f.segment || "all";
+  if ($("filterType")) $("filterType").value = f.type || "";
+  if ($("filterStatus")) $("filterStatus").value = f.status || "";
+  if ($("filterUserId")) $("filterUserId").value = f.user_id || "";
+
+  if ($("applyFilters")) $("applyFilters").addEventListener("click", () => {
+    state.filters[view] = getFilters(view);
+    state.pages[view] = 1;
+    renderFn();
+  });
+  if ($("clearFilters")) $("clearFilters").addEventListener("click", () => {
+    state.filters[view] = {};
+    state.pages[view] = 1;
+    renderFn();
+  });
+  if ($("filterQ")) $("filterQ").addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      state.filters[view] = getFilters(view);
+      state.pages[view] = 1;
+      renderFn();
+    }
+  });
+}
+
+function paginationHtml(info) {
+  if (!info) return "";
+  return `
+    <div class="pagination">
+      <span class="small muted">Page ${escapeHtml(info.page)} of ${escapeHtml(info.total_pages)} · ${escapeHtml(info.total)} records</span>
+      <div class="pagination-actions">
+        <button class="btn" id="previousPage" ${info.has_previous ? "" : "disabled"}>← Previous</button>
+        <button class="btn" id="nextPage" ${info.has_next ? "" : "disabled"}>Next →</button>
+      </div>
+    </div>`;
+}
+
+function attachPagination(view, info, renderFn) {
+  if (!info) return;
+  if ($("previousPage")) $("previousPage").addEventListener("click", () => {
+    state.pages[view] = Math.max(1, (state.pages[view] || 1) - 1);
+    renderFn();
+  });
+  if ($("nextPage")) $("nextPage").addEventListener("click", () => {
+    state.pages[view] = (state.pages[view] || 1) + 1;
+    renderFn();
+  });
+}
+
+async function downloadCsv(dataset, filters = {}) {
+  const data = await api("export", { dataset, ...filters });
+  if (!data.csv) return toast("No rows available to export.");
+  const blob = new Blob(["\uFEFF", data.csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `crypto-trader-${dataset}-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  toast(`Exported ${data.row_count} rows` + (data.truncated ? ". Export limit reached." : "."));
+}
+
+/* ============ USERS ============ */
+async function renderUsers() {
+  setPage("User Management", "Browse registered users and filter by activity segment.",
+    '<button class="btn" id="exportUsers">Export CSV</button>');
+  $("exportUsers").addEventListener("click", async () => {
+    try { await downloadCsv("users", state.filters.users || {}); }
+    catch (e) { toast(e.message, true); }
   });
 
-  attachFilterActions("rounds", renderRounds);
-
-  const f = state.filters.rounds || {};
-  const data = await api("rounds", {
-    page: state.pages.rounds || 1,
-    page_size: 20,
-    q: f.q || "",
-    status: f.status || ""
+  const f = state.filters.users || {};
+  const data = await api("users", {
+    page: state.pages.users || 1, page_size: 20,
+    q: f.q || "", segment: f.segment || "all"
   });
 
   $("viewBody").innerHTML = `
-    ${filterToolbar({ search: "Search round code" })}
-    ${roundTable(data.rounds || [])}
-    ${paginationHtml(data.pagination)}
-  `;
-
-  attachFilterActions("rounds", renderRounds);
-  attachPagination("rounds", data.pagination, renderRounds);
-  $("refreshRounds").addEventListener("click", renderRounds);
-}
-
-function roundTable(rows) {
-  return table(
-    ["Round", "Status", "Start", "Result", "Bets", "Stake", "Payout"],
-    rows.map(r => [
-      escapeHtml(r.round_code),
-      badge(r.status),
-      escapeHtml(formatDate(r.starts_at)),
-      escapeHtml(r.result_number ?? "—"),
-      escapeHtml(statValue(r.bet_count, 0)),
-      escapeHtml(money(r.total_stake)),
-      escapeHtml(money(r.total_payout))
-    ])
-  );
-}
-
-async function renderBets() {
-  setPage("Bets", "Review bet records.", '<button class="btn" id="exportBets">Export CSV</button>');
-
-  $("viewBody").innerHTML = filterToolbar({
-    status: true,
-    userId: true
-  });
-
-  attachFilterActions("bets", renderBets);
-
-  const f = state.filters.bets || {};
-
-  const data = await api("bets", {
-    page: state.pages.bets || 1,
-    page_size: 20,
-    user_id: f.user_id || "",
-    status: f.status || ""
-  });
-
-  $("viewBody").innerHTML = `
-    ${filterToolbar({ status: true, userId: true })}
+    ${filterToolbar({ search: "Search username, user ID or Telegram ID", segment: true })}
     ${table(
-      ["Bet ID", "User ID", "Round Code", "Type", "Selection", "Stake", "Fee", "Status", "Payout"],
-      (data.bets || []).map(b => [
-        escapeHtml(b.id),
-        escapeHtml(b.user_id),
-        escapeHtml(b.round_code || "—"),
-        escapeHtml(b.bet_type),
-        escapeHtml(b.selection),
-        escapeHtml(money(b.stake)),
-        escapeHtml(money(b.fee)),
-        badge(b.status),
-        escapeHtml(money(b.payout))
-      ])
+      ["User ID", "Name", "Telegram ID", "Username", "Balance", "Referred By", "Referral Code", "Referrals", "Joined", "Details"],
+      (data.users || []).map(u => {
+        const fn = [u.first_name, u.last_name].filter(Boolean).join(" ");
+        return [
+          escapeHtml(u.id), escapeHtml(fn || "—"), escapeHtml(u.telegram_id),
+          escapeHtml(u.username || "—"), escapeHtml(money(u.balance)),
+          escapeHtml(u.referred_by ?? "—"), escapeHtml(u.referral_code || "—"),
+          escapeHtml(statValue(u.referral_count, 0)), escapeHtml(formatDate(u.created_at)),
+          `<button class="btn" data-user-detail="${escapeHtml(u.id)}">View</button>`
+        ];
+      })
     )}
     ${paginationHtml(data.pagination)}
+    <div id="userDetail"></div>
   `;
-
-  attachFilterActions("bets", renderBets);
-  attachPagination("bets", data.pagination, renderBets);
-}
-
-async function renderReferrals() {
-  setPage("Referrals", "Referral commissions and referral rewards overview.");
-  $("viewBody").innerHTML = '<div class="loading">Loading referral information...</div>';
-
-  const [usersData, auditData] = await Promise.all([
-    api("users", { page: 1, page_size: 20, segment: "all" }),
-    api("audit", { page: 1, page_size: 10 })
-  ]);
-
-  $("viewBody").innerHTML = `
-    <div class="notice">
-      Referral tree and commission details are available through the Users → View action.
-    </div>
-
-    <div class="card">
-      <div class="card-head"><h3>Users with Referral Codes</h3></div>
-      ${table(
-        ["User ID", "Username", "Referral Code", "Referred By", "Referral Count", "Joined"],
-        (usersData.users || []).filter(u => u.referral_code || Number(u.referral_count) > 0).map(u => [
-          escapeHtml(u.id),
-          escapeHtml(u.username || "—"),
-          escapeHtml(u.referral_code || "—"),
-          escapeHtml(u.referred_by ?? "—"),
-          escapeHtml(statValue(u.referral_count, 0)),
-          escapeHtml(formatDate(u.created_at))
-        ])
-      )}
-    </div>
-
-    <div class="card">
-      <div class="card-head"><h3>Recent Administrative Actions</h3></div>
-      ${table(
-        ["Time", "Admin", "Action", "Outcome"],
-        (auditData.entries || []).map(a => [
-          escapeHtml(formatDate(a.created_at)),
-          escapeHtml(a.admin_username),
-          escapeHtml(a.action),
-          badge(a.outcome)
-        ])
-      )}
-    </div>
-  `;
-}
-
-async function renderWallets() {
-  setPage("Wallets", "Read-only view of wallet balances.", '<button class="btn" id="exportWallets">Export CSV</button>');
-
-  $("viewBody").innerHTML = filterToolbar({
-    search: "Search user ID or username"
+  attachFilterActions("users", renderUsers);
+  attachPagination("users", data.pagination, renderUsers);
+  document.querySelectorAll("[data-user-detail]").forEach(btn => {
+    btn.addEventListener("click", () => renderUserDetail(btn.dataset.userDetail));
   });
+}
 
-  attachFilterActions("wallets", renderWallets);
+async function renderUserDetail(userId) {
+  const container = $("userDetail");
+  container.innerHTML = '<div class="loading">Loading user details...</div>';
+  try {
+    const data = await api("user_detail", { user_id: userId });
+    const p = data.profile || {}, s = data.stats || {};
+    const fn = [p.first_name, p.last_name].filter(Boolean).join(" ");
+    container.innerHTML = `
+      <div class="card" style="margin-top:18px">
+        <div class="card-head">
+          <h3>User Details — #${escapeHtml(p.id)} ${fn ? `(${escapeHtml(fn)})` : ""}</h3>
+          <button class="btn" id="closeUserDetail">Close</button>
+        </div>
+        <div class="detail-grid">
+          ${detailItem("Telegram ID", p.telegram_id)}
+          ${detailItem("Name", fn || "—")}
+          ${detailItem("Username", p.username || "—")}
+          ${detailItem("Balance", money(p.balance))}
+          ${detailItem("Referral Code", p.referral_code || "—")}
+          ${detailItem("Referred By", p.referred_by ?? "—")}
+          ${detailItem("Joined", formatDate(p.created_at))}
+          ${detailItem("Total Bets", statValue(s.bets, 0))}
+          ${detailItem("Total Stake", money(s.stake))}
+          ${detailItem("Total Payout", money(s.payout))}
+          ${detailItem("Wins", statValue(s.wins, 0))}
+          ${detailItem("Losses", statValue(s.losses, 0))}
+          ${detailItem("Commissions Generated", money(data.commissions_generated))}
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <h3>Admin Actions</h3>
+          <div class="row-actions" style="margin-top:10px">
+            <button class="btn user-action" data-action="block" data-user-id="${escapeHtml(p.id)}">Block</button>
+            <button class="btn user-action" data-action="unblock" data-user-id="${escapeHtml(p.id)}">Unblock</button>
+            <button class="btn user-action" data-action="add_fund" data-user-id="${escapeHtml(p.id)}">Add fund</button>
+            <button class="btn user-action" data-action="remove_fund" data-user-id="${escapeHtml(p.id)}">Remove fund</button>
+            <button class="btn user-action" data-action="transfer_points" data-user-id="${escapeHtml(p.id)}">Transfer points</button>
+          </div>
+        </div>
+
+        <div class="card-head" style="margin-top:22px"><h3>Referral Tree</h3></div>
+        ${table(
+          ["User ID", "Username", "Referred By", "Level", "Joined"],
+          (data.referral_tree || []).map(r => [
+            escapeHtml(r.id), escapeHtml(r.username || "—"),
+            escapeHtml(r.referred_by), escapeHtml(r.level), escapeHtml(formatDate(r.created_at))
+          ])
+        )}
+
+        <div class="card-head" style="margin-top:22px"><h3>Commissions Earned by Level</h3></div>
+        ${table(
+          ["Level", "Count", "Total"],
+          (data.commissions_earned || []).map(c => [
+            escapeHtml(c.referral_level), escapeHtml(statValue(c.count, 0)), escapeHtml(money(c.total))
+          ])
+        )}
+
+        <div class="card-head" style="margin-top:22px"><h3>Recent Bets</h3></div>
+        ${table(
+          ["Bet ID", "Round", "Type", "Selection", "Stake", "Fee", "Status", "Result", "Payout", "Created"],
+          (data.recent_bets || []).map(b => [
+            escapeHtml(b.id), escapeHtml(b.round_code || "—"), escapeHtml(b.bet_type),
+            escapeHtml(b.selection), escapeHtml(money(b.stake)), escapeHtml(money(b.fee)),
+            badge(b.status), escapeHtml(b.result_number ?? "—"), escapeHtml(money(b.payout)),
+            escapeHtml(formatDate(b.created_at))
+          ])
+        )}
+
+        <div class="card-head" style="margin-top:22px"><h3>Recent Transactions</h3></div>
+        ${table(
+          ["ID", "Type", "Amount", "Status", "Network", "TX Hash", "Created"],
+          (data.recent_transactions || []).map(t => [
+            escapeHtml(t.id), escapeHtml(t.transaction_type), escapeHtml(money(t.amount)),
+            badge(t.status), escapeHtml(t.network || "—"), escapeHtml(t.tx_hash || "—"),
+            escapeHtml(formatDate(t.created_at))
+          ])
+        )}
+      </div>
+    `;
+    $("closeUserDetail").addEventListener("click", () => container.innerHTML = "");
+    container.querySelectorAll(".user-action").forEach(btn => btn.addEventListener("click", async () => {
+      const action = btn.dataset.action;
+      const points = ["add_fund", "remove_fund", "transfer_points"].includes(action) ? prompt("Points amount") : null;
+      if (["add_fund", "remove_fund", "transfer_points"].includes(action) && (!points || Number(points) <= 0)) return;
+      const payload = { management_action: action, user_id: btn.dataset.userId };
+      if (points) payload.points = points;
+      if (action === "transfer_points") {
+        payload.to_user_id = prompt("Target user ID") || "";
+        if (!payload.to_user_id) return;
+      }
+      try {
+        await api("user_management", payload);
+        toast("User action completed.");
+        await renderUserDetail(btn.dataset.userId);
+      } catch (e) { toast(e.message, true); }
+    }));
+  } catch (e) {
+    container.innerHTML = `<div class="notice danger">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+/* ============ WALLETS ============ */
+async function renderWallets() {
+  setPage("Wallets", "Read-only view of wallet balances.",
+    '<button class="btn" id="exportWallets">Export CSV</button>');
+  $("exportWallets").addEventListener("click", async () => {
+    try { await downloadCsv("wallets", state.filters.wallets || {}); }
+    catch (e) { toast(e.message, true); }
+  });
 
   const f = state.filters.wallets || {};
-
   const data = await api("wallets", {
-    page: state.pages.wallets || 1,
-    page_size: 20,
-    q: f.q || ""
+    page: state.pages.wallets || 1, page_size: 20, q: f.q || ""
   });
-
   $("viewBody").innerHTML = `
     ${filterToolbar({ search: "Search user ID or username" })}
     ${table(
       ["User ID", "Telegram ID", "Username", "Balance", "Updated"],
       (data.wallets || []).map(w => [
-        escapeHtml(w.user_id),
-        escapeHtml(w.telegram_id),
-        escapeHtml(w.username || "—"),
-        escapeHtml(money(w.balance)),
+        escapeHtml(w.user_id), escapeHtml(w.telegram_id),
+        escapeHtml(w.username || "—"), escapeHtml(money(w.balance)),
         escapeHtml(formatDate(w.updated_at))
       ])
     )}
     ${paginationHtml(data.pagination)}
   `;
-
   attachFilterActions("wallets", renderWallets);
   attachPagination("wallets", data.pagination, renderWallets);
 }
 
+/* ============ TRANSACTIONS ============ */
+async function renderTransactions(view) {
+  const title = view === "deposits" ? "Deposits" : view === "withdrawals" ? "Withdrawals" : "Transactions";
+  setPage(title, "Review and approve pending deposits and withdrawals.",
+    '<button class="btn" id="exportTransactions">Export CSV</button>');
+  $("exportTransactions").addEventListener("click", async () => {
+    const f = state.filters[view] || {};
+    let type = f.type || "";
+    if (view === "deposits") type = "deposit";
+    if (view === "withdrawals") type = "withdrawal";
+    try { await downloadCsv("transactions", { ...f, type }); }
+    catch (e) { toast(e.message, true); }
+  });
+
+  const f = state.filters[view] || {};
+  let type = f.type || "";
+  if (view === "deposits") type = "deposit";
+  if (view === "withdrawals") type = "withdrawal";
+
+  const data = await api("transactions", {
+    page: state.pages[view] || 1, page_size: 20,
+    type, status: f.status || "", user_id: f.user_id || ""
+  });
+
+  $("viewBody").innerHTML = `
+    ${filterToolbar({ type: view === "transactions", status: true, userId: true })}
+    <div class="notice warning">
+      Approve means manual payout/credit. Reject/Refund returns reserved funds. Deposit approval credits 100 points per USDT.
+    </div>
+    ${table(
+      ["ID", "User ID", "Type", "Amount", "Status", "Network", "TX Hash", "Payout TX", "Created", "Updated", "Actions"],
+      (data.transactions || []).map(t => {
+        let actionButtons = "—";
+        if (t.status === "pending") {
+          if (t.transaction_type === "deposit") {
+            actionButtons = `<div class="row-actions"><button class="btn btn-primary review-tx" data-action="deposit_approve" data-id="${escapeHtml(t.id)}">Approve</button><button class="btn btn-danger review-tx" data-action="deposit_reject" data-id="${escapeHtml(t.id)}">Reject</button></div>`;
+          } else if (t.transaction_type === "withdrawal") {
+            actionButtons = `<div class="row-actions"><button class="btn btn-primary review-tx" data-action="withdrawal_approve" data-id="${escapeHtml(t.id)}">Approve</button><button class="btn btn-danger review-tx" data-action="withdrawal_reject" data-id="${escapeHtml(t.id)}">Reject</button></div>`;
+          }
+        }
+        return [
+          escapeHtml(t.id), escapeHtml(t.user_id), badge(t.transaction_type),
+          escapeHtml(money(t.amount)), badge(t.status), escapeHtml(t.network || "—"),
+          escapeHtml(t.tx_hash || "—"), escapeHtml(t.payout_tx_hash || "—"),
+          escapeHtml(formatDate(t.created_at)), escapeHtml(formatDate(t.updated_at)),
+          actionButtons
+        ];
+      })
+    )}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachFilterActions(view, () => renderTransactions(view));
+  attachPagination(view, data.pagination, () => renderTransactions(view));
+
+  document.querySelectorAll(".review-tx").forEach(btn => btn.addEventListener("click", async () => {
+    const action = btn.dataset.action;
+    let message = "Are you sure?";
+    if (action === "withdrawal_approve") message = "Approve this withdrawal for manual payout?";
+    const payoutTxHash = action === "withdrawal_approve" ? prompt("Enter the payout transaction hash:") : "";
+    if (action === "withdrawal_approve" && !payoutTxHash?.trim()) return;
+    if (action === "withdrawal_reject") message = "Reject and refund this withdrawal?";
+    if (action === "deposit_approve") message = "Approve this deposit? Points will be credited.";
+    if (action === "deposit_reject") message = "Reject this deposit?";
+    if (!window.confirm(message)) return;
+    try {
+      await api(action, { transaction_id: btn.dataset.id, payout_tx_hash: payoutTxHash?.trim() || "" });
+      toast("Action successful.");
+      fetchNotifications();
+      await renderTransactions(view);
+    } catch (e) { toast(e.message, true); }
+  }));
+}
+
+/* ============ DEPOSIT ADDRESSES ============ */
 async function renderDepositAddresses() {
-  setPage("Deposit Addresses", "Manage up to 10 active coin and network deposit addresses shown to users.", '<button class="btn btn-primary" id="addDepositAddress">Add address</button>');
+  setPage("Deposit Addresses", "Manage up to 10 active coin and network deposit addresses.",
+    '<button class="btn btn-primary" id="addDepositAddress">Add address</button>');
 
   const data = await api("deposit_addresses");
   const rows = data.deposit_addresses || [];
@@ -2361,21 +1551,21 @@ async function renderDepositAddresses() {
       <div class="grid-4">
         <select name="coin" required>
           <option value="">Select Coin</option>
-          ${coinOptions.map(c => `<option value="${c}" ${item.coin === c ? 'selected' : ''}>${c}</option>`).join('')}
+          ${coinOptions.map(c => `<option value="${c}" ${item.coin === c ? "selected" : ""}>${c}</option>`).join("")}
         </select>
         <select name="network" required>
           <option value="">Select Network</option>
-          ${networkOptions.map(n => `<option value="${n}" ${item.network === n ? 'selected' : ''}>${n}</option>`).join('')}
+          ${networkOptions.map(n => `<option value="${n}" ${item.network === n ? "selected" : ""}>${n}</option>`).join("")}
         </select>
       </div>
-      <input name="address" placeholder="Wallet address" value="${escapeHtml(item.address || "")}" required style="margin-top:10px; width:100%;">
-      <input name="qr_payload" placeholder="QR payload (optional)" value="${escapeHtml(item.qr_payload || "")}" style="margin-top:10px; width:100%;">
-      <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
+      <input name="address" placeholder="Wallet address" value="${escapeHtml(item.address || "")}" required maxlength="150" style="margin-top:10px;width:100%">
+      <input name="qr_payload" placeholder="QR payload (optional)" value="${escapeHtml(item.qr_payload || "")}" maxlength="300" style="margin-top:10px;width:100%">
+      <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
         <label><input type="checkbox" name="is_active" ${item.is_active !== false ? "checked" : ""}> Active</label>
-        <input name="sort_order" type="number" value="${Number(item.sort_order || 0)}" style="width: 80px;">
+        <input name="sort_order" type="number" min="0" max="100" value="${Number(item.sort_order || 0)}" aria-label="Sort" style="width:80px">
       </div>
-      <button class="btn btn-primary" type="submit" style="margin-top:10px;">Save</button>
-      ${item.id ? '<button class="btn btn-danger delete-deposit" type="button" style="margin-top:10px;">Delete</button>' : ''}
+      <button class="btn btn-primary" type="submit" style="margin-top:10px">Save</button>
+      ${item.id ? '<button class="btn btn-danger delete-deposit" type="button" style="margin-top:10px">Delete</button>' : ""}
     </form>
   `;
 
@@ -2385,380 +1575,630 @@ async function renderDepositAddresses() {
   `;
 
   $("addDepositAddress").onclick = () => {
-    if (rows.length >= 10) return toast("Max 10 allowed.", true);
+    if (rows.length >= 10) return toast("Maximum 10 allowed.", true);
     $("newDepositAddress").innerHTML = editor();
     bindDepositForms();
   };
-
   bindDepositForms();
 
   function bindDepositForms() {
-    document.querySelectorAll(".deposit-address-form").forEach(form => form.onsubmit = async event => {
-      event.preventDefault();
-      const f = new FormData(form);
+    document.querySelectorAll(".deposit-address-form").forEach(form => form.onsubmit = async e => {
+      e.preventDefault();
+      const fd = new FormData(form);
       try {
         await api("deposit_addresses", {
-          mode: "save",
-          id: form.dataset.id,
-          coin: f.get("coin"),
-          network: f.get("network"),
-          address: f.get("address"),
-          qr_payload: f.get("qr_payload"),
-          is_active: f.get("is_active") === "on",
-          sort_order: f.get("sort_order")
+          mode: "save", id: form.dataset.id,
+          coin: fd.get("coin"), network: fd.get("network"),
+          address: fd.get("address"), qr_payload: fd.get("qr_payload"),
+          is_active: fd.get("is_active") === "on", sort_order: fd.get("sort_order")
         });
         await renderDepositAddresses();
-      } catch (error) {
-        toast(error.message, true);
-      }
+      } catch (e) { toast(e.message, true); }
     });
-
-    document.querySelectorAll(".delete-deposit").forEach(button => button.onclick = async () => {
-      const form = button.closest("form");
+    document.querySelectorAll(".delete-deposit").forEach(btn => btn.onclick = async () => {
+      const form = btn.closest("form");
       try {
         await api("deposit_addresses", { mode: "delete", id: form.dataset.id });
         await renderDepositAddresses();
-      } catch (error) {
-        toast(error.message, true);
-      }
+      } catch (e) { toast(e.message, true); }
     });
   }
 }
 
-async function renderTelegram() {
-  setPage("Telegram Logs", "Review delivery history.");
+/* ============ GIFT CODES ============ */
+async function renderGiftCodeHistory() {
+  setPage("Gift Codes", "Create and manage gift codes. Two modes: Fixed or Distribution.",
+    '<button class="btn btn-primary" id="toggleCreateGift">+ Create Gift Code</button>');
+  $("toggleCreateGift").addEventListener("click", () => {
+    $("createGiftWrap").classList.toggle("hidden");
+  });
 
-  const data = await api("telegram", {
-    mode: "history",
-    page: state.pages.telegram || 1,
-    page_size: 25
+  const data = await api("gift_codes", {
+    page: state.pages.gift_codes || 1, page_size: 20
   });
 
   $("viewBody").innerHTML = `
+    <div id="createGiftWrap" class="card hidden">
+      <div class="card-head"><h3>Create New Gift Code</h3></div>
+      <form id="createGiftForm">
+        <div class="field">
+          <label>Mode</label>
+          <select name="mode" id="giftMode">
+            <option value="fixed">Fixed — Equal points per user</option>
+            <option value="distribution">Distribution — Early birds get more</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Total Points (Pool)</label>
+          <input name="total_points" type="number" min="1" step="0.01" required placeholder="e.g. 1000">
+        </div>
+        <div class="field" id="perUserField">
+          <label>Points Per User</label>
+          <input name="per_user_points" type="number" min="0.01" step="0.01" placeholder="e.g. 10">
+          <div class="small muted">Max users = floor(Total / Per-user). e.g. 1000 / 10 = 100 users.</div>
+        </div>
+        <div class="field hidden" id="maxUsersField">
+          <label>Max Users (Distribution Mode)</label>
+          <input name="max_users" type="number" min="1" step="1" placeholder="e.g. 100">
+          <div class="small muted">First redeemer gets most, last gets least. Total always equals pool.</div>
+        </div>
+        <div class="field">
+          <label>Custom Code (optional)</label>
+          <input name="code" placeholder="Leave blank to auto-generate" maxlength="50">
+        </div>
+        <div class="field">
+          <label>Expires At (optional)</label>
+          <input name="expires_at" type="datetime-local">
+        </div>
+        <button class="btn btn-primary" type="submit">Create Gift Code</button>
+      </form>
+    </div>
+
     <div class="card">
-      <div class="card-head">
-        <h3>Notification history</h3>
-        <button class="btn small" id="refreshTelegram">Refresh</button>
-      </div>
+      <div class="card-head"><h3>Gift Codes List</h3></div>
       ${table(
-        ["ID", "Event", "Channel", "Status", "Sent", "Error"],
-        (data.notifications || []).map(item => [
-          escapeHtml(item.id),
-          escapeHtml(item.event_type),
-          escapeHtml(item.channel),
-          badge(item.status),
-          escapeHtml(formatDate(item.sent_at)),
-          escapeHtml(item.error_message || "—")
+        ["ID", "Code", "Mode", "Total Points", "Per User", "Max Uses", "Redeemed", "Expires", "Created By", "Created", "Actions"],
+        (data.gift_codes || []).map(c => [
+          escapeHtml(c.id),
+          `<strong>${escapeHtml(c.code)}</strong>`,
+          badge(c.mode || "fixed"),
+          escapeHtml(money(c.total_points ?? c.points)),
+          escapeHtml(c.per_user_points ? money(c.per_user_points) : "Varies"),
+          escapeHtml(c.max_uses ?? 1),
+          escapeHtml(statValue(c.redeem_count, 0)),
+          escapeHtml(c.expires_at ? formatDate(c.expires_at) : "Never"),
+          escapeHtml(c.created_by || "—"),
+          escapeHtml(formatDate(c.created_at)),
+          `<button class="btn" onclick="copyGiftLink('${escapeHtml(c.code)}')">Copy Link</button>`
+        ]),
+        "No gift codes yet."
+      )}
+      ${paginationHtml(data.pagination)}
+    </div>
+  `;
+
+  $("giftMode").addEventListener("change", e => {
+    const isFixed = e.target.value === "fixed";
+    $("perUserField").classList.toggle("hidden", !isFixed);
+    $("maxUsersField").classList.toggle("hidden", isFixed);
+  });
+
+  $("createGiftForm").onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const mode = fd.get("mode");
+    const payload = {
+      management_action: "create_gift",
+      mode,
+      total_points: fd.get("total_points"),
+      expires_at: fd.get("expires_at") ? new Date(fd.get("expires_at")).toISOString() : null,
+      code: fd.get("code") || undefined
+    };
+    if (mode === "fixed") payload.per_user_points = fd.get("per_user_points");
+    else payload.max_users = fd.get("max_users");
+    try {
+      const r = await api("user_management", payload);
+      toast(`Gift code created: ${r.gift_code.code}`);
+      await renderGiftCodeHistory();
+      $("createGiftWrap").classList.add("hidden");
+    } catch (err) { toast(err.message, true); }
+  };
+
+  attachPagination("gift_codes", data.pagination, renderGiftCodeHistory);
+}
+
+window.copyGiftLink = (code) => {
+  let botName = state.botUsername;
+  if (!botName) {
+    botName = prompt("Enter your Bot Username (without @):", "YourBotName");
+    if (!botName) return;
+  }
+  const link = `https://t.me/${botName}?startapp=gift_${code}`;
+  navigator.clipboard.writeText(link);
+  toast("Gift link copied: " + link);
+};
+
+/* ============ GIFT REDEMPTIONS ============ */
+async function renderGiftHistory() {
+  setPage("Gift Redemptions", "Track who redeemed which gift code and how much they earned.");
+  const data = await api("gift_redemptions", {
+    page: state.pages.gift_history || 1, page_size: 20
+  });
+  $("viewBody").innerHTML = `
+    ${table(
+      ["Date", "User ID", "Name", "Username", "Gift Code", "Mode", "Points Earned"],
+      (data.redemptions || []).map(r => {
+        const fn = [r.first_name, r.last_name].filter(Boolean).join(" ");
+        const earned = r.points_earned ?? r.per_user_points ?? r.legacy_points ?? 0;
+        return [
+          escapeHtml(formatDate(r.redeemed_at)),
+          escapeHtml(r.user_id),
+          escapeHtml(fn || "—"),
+          escapeHtml(r.username || "—"),
+          `<strong>${escapeHtml(r.code)}</strong>`,
+          badge(r.mode || "fixed"),
+          `<span class="green">+${money(earned)}</span>`
+        ];
+      })
+    )}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachPagination("gift_history", data.pagination, renderGiftHistory);
+}
+
+/* ============ ROUNDS ============ */
+async function renderRounds() {
+  setPage("Game Rounds", "Round status, timing, results and settlement indicators.",
+    '<button class="btn" id="refreshRounds">↻ Refresh</button>');
+  $("refreshRounds").addEventListener("click", renderRounds);
+
+  const f = state.filters.rounds || {};
+  const data = await api("rounds", {
+    page: state.pages.rounds || 1, page_size: 20,
+    q: f.q || "", status: f.status || ""
+  });
+  $("viewBody").innerHTML = `
+    ${filterToolbar({ search: "Search round code" })}
+    <div class="notice warning">Round result changes are not available in this read-only panel.</div>
+    ${roundTable(data.rounds || [])}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachFilterActions("rounds", renderRounds);
+  attachPagination("rounds", data.pagination, renderRounds);
+}
+
+/* ============ BETS ============ */
+async function renderBets() {
+  setPage("Bets", "Review bet records, stakes, status and payout information.",
+    '<button class="btn" id="exportBets">Export CSV</button>');
+  $("exportBets").addEventListener("click", async () => {
+    try { await downloadCsv("bets", state.filters.bets || {}); }
+    catch (e) { toast(e.message, true); }
+  });
+
+  const f = state.filters.bets || {};
+  const data = await api("bets", {
+    page: state.pages.bets || 1, page_size: 20,
+    user_id: f.user_id || "", status: f.status || ""
+  });
+  $("viewBody").innerHTML = `
+    ${filterToolbar({ status: true, userId: true })}
+    ${table(
+      ["Bet ID", "User ID", "Round ID", "Round Code", "Type", "Selection", "Stake", "Fee", "Status", "Result", "Payout", "Created", "Settled"],
+      (data.bets || []).map(b => [
+        escapeHtml(b.id), escapeHtml(b.user_id), escapeHtml(b.round_id),
+        escapeHtml(b.round_code || "—"), escapeHtml(b.bet_type), escapeHtml(b.selection),
+        escapeHtml(money(b.stake)), escapeHtml(money(b.fee)), badge(b.status),
+        escapeHtml(b.result_number ?? "—"), escapeHtml(money(b.payout)),
+        escapeHtml(formatDate(b.created_at)), escapeHtml(formatDate(b.settled_at))
+      ])
+    )}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachFilterActions("bets", renderBets);
+  attachPagination("bets", data.pagination, renderBets);
+}
+
+/* ============ REFERRALS ============ */
+async function renderReferrals() {
+  setPage("Referrals", "Referral commissions and referral rewards overview.");
+  $("viewBody").innerHTML = '<div class="loading">Loading...</div>';
+  const [usersData, auditData] = await Promise.all([
+    api("users", { page: 1, page_size: 20, segment: "all" }),
+    api("audit", { page: 1, page_size: 10 })
+  ]);
+  $("viewBody").innerHTML = `
+    <div class="notice">Referral tree and commission details are available via Users → View.</div>
+    <div class="card">
+      <div class="card-head"><h3>Users with Referral Codes</h3></div>
+      ${table(
+        ["User ID", "Username", "Referral Code", "Referred By", "Referral Count", "Joined"],
+        (usersData.users || []).filter(u => u.referral_code || Number(u.referral_count) > 0).map(u => [
+          escapeHtml(u.id), escapeHtml(u.username || "—"), escapeHtml(u.referral_code || "—"),
+          escapeHtml(u.referred_by ?? "—"), escapeHtml(statValue(u.referral_count, 0)),
+          escapeHtml(formatDate(u.created_at))
+        ])
+      )}
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Recent Administrative Actions</h3></div>
+      ${table(
+        ["Time", "Admin", "Action", "Outcome"],
+        (auditData.entries || []).map(a => [
+          escapeHtml(formatDate(a.created_at)), escapeHtml(a.admin_username),
+          escapeHtml(a.action), badge(a.outcome)
         ])
       )}
     </div>
   `;
+}
+
+/* ============ CHANNEL SETTINGS ============ */
+async function renderChannelSettings() {
+  setPage("Channel & Schedule Settings", "Manage bot channel, prediction timing, and message templates.");
+  const data = await api("channel_settings");
+  const s = data.settings || {};
+
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <form id="channelSettingsForm">
+        <div class="grid" style="grid-template-columns: 1fr 1fr;">
+          <div class="field">
+            <label>Channel Username</label>
+            <input name="channel_username" value="${escapeHtml(s.channel_username || "")}" placeholder="@your_channel" required>
+            <div class="small muted">Result messages and predictions go here.</div>
+          </div>
+          <div class="field">
+            <label>Bot Username</label>
+            <input name="bot_username" value="${escapeHtml(s.bot_username || "")}" placeholder="YourBot" required>
+            <div class="small muted">Gift links use this: t.me/BotName?startapp=gift_CODE</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Prediction Timing (Seconds before round ends)</label>
+          <input type="number" name="prediction_timing" value="${s.prediction_timing || 150}" min="1" max="3600" required>
+          <div class="small muted">Default 150 (bets close at 150s).</div>
+        </div>
+
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" name="predictions_enabled" ${s.predictions_enabled ? "checked" : ""} style="width:auto">
+          <label style="margin:0">Enable Predictions in Channel</label>
+        </div>
+
+        <div class="field">
+          <label>Inline Link Text</label>
+          <input name="inline_link_text" value="${escapeHtml(s.inline_link_text || "Play")}" maxlength="100">
+        </div>
+
+        <div class="field">
+          <label>Result Image URL (optional)</label>
+          <input name="result_image_url" value="${escapeHtml(s.result_image_url || "")}" placeholder="https://..." maxlength="500">
+        </div>
+
+        <div class="field">
+          <label>Prediction Message Template</label>
+          <textarea name="prediction_message" maxlength="4000" placeholder="Placeholders: {round}, {prediction}, {colour}">${escapeHtml(s.prediction_message || "")}</textarea>
+        </div>
+
+        <div class="field">
+          <label>Result Message Template</label>
+          <textarea name="result_message" maxlength="4000" placeholder="Placeholders: {round}, {result}, {colour}">${escapeHtml(s.result_message || "")}</textarea>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Save Settings</button>
+      </form>
+    </div>
+  `;
+
+  $("channelSettingsForm").onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    try {
+      await api("save_channel_settings", {
+        channel_username: fd.get("channel_username"),
+        bot_username: fd.get("bot_username"),
+        prediction_timing: fd.get("prediction_timing"),
+        predictions_enabled: fd.get("predictions_enabled") === "on",
+        prediction_message: fd.get("prediction_message"),
+        result_message: fd.get("result_message"),
+        result_image_url: fd.get("result_image_url"),
+        inline_link_text: fd.get("inline_link_text")
+      });
+      toast("Settings saved!");
+      state.botUsername = fd.get("bot_username");
+    } catch (err) { toast(err.message, true); }
+  };
+}
+
+/* ============ BROADCAST ============ */
+async function renderBroadcast() {
+  setPage("Broadcast Message", "Send a message to your users and/or channel. Supports images.");
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <form id="broadcastForm">
+        <div class="field">
+          <label>Target</label>
+          <select name="target">
+            <option value="both">Both (Channel & Users)</option>
+            <option value="channel">Only Channel</option>
+            <option value="users">Only Users (Bot)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Image URL (optional)</label>
+          <input name="image_url" placeholder="https://... (leave blank for text-only)" maxlength="500">
+        </div>
+        <div class="field">
+          <label>Message</label>
+          <textarea name="message" required placeholder="Enter message here..." maxlength="4000"></textarea>
+        </div>
+        <button class="btn btn-primary" type="submit">Send Broadcast</button>
+      </form>
+      <div id="broadcastResult" style="margin-top:12px"></div>
+    </div>
+  `;
+
+  $("broadcastForm").onsubmit = async e => {
+    e.preventDefault();
+    if (!confirm("Are you sure you want to send this broadcast?")) return;
+    const fd = new FormData(e.target);
+    try {
+      const r = await api("broadcast", {
+        target: fd.get("target"),
+        message: fd.get("message"),
+        image_url: fd.get("image_url") || undefined
+      });
+      toast(r.message || "Broadcast sent.");
+      $("broadcastResult").innerHTML = `<div class="notice">${escapeHtml(r.message)}</div>`;
+      e.target.reset();
+    } catch (err) { toast(err.message, true); }
+  };
+}
+
+/* ============ TELEGRAM LOGS ============ */
+async function renderTelegram() {
+  setPage("Telegram Logs", "Send test messages, retry failed deliveries, and review history.");
+  const data = await api("telegram", {
+    mode: "history", page: state.pages.telegram || 1, page_size: 25
+  });
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head"><h3>Send Test Message</h3><span class="muted small">Bot token stays server-side.</span></div>
+      <form id="telegramForm" class="toolbar">
+        <input id="telegramChannel" placeholder="Channel or chat ID" maxlength="200" required>
+        <input id="telegramImage" placeholder="Image URL (optional)" maxlength="500">
+        <input id="telegramMessage" placeholder="Message" maxlength="4000" required>
+        <button class="btn btn-primary" type="submit">Send</button>
+      </form>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <h3>Notification History</h3>
+        <button class="btn small" id="refreshTelegram">Refresh</button>
+      </div>
+      ${table(
+        ["ID", "Event", "Channel", "Status", "Attempts", "Sent", "Error", "Action"],
+        (data.notifications || []).map(item => [
+          escapeHtml(item.id), escapeHtml(item.event_type), escapeHtml(item.channel),
+          badge(item.status), escapeHtml(item.attempt_count),
+          escapeHtml(formatDate(item.sent_at)), escapeHtml(item.error_message || "—"),
+          item.status === "sent" ? "—" : `<button class="btn small telegram-retry" data-id="${escapeHtml(item.id)}">Retry</button>`
+        ])
+      )}
+    </div>
+  `;
+  $("telegramForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    try {
+      await api("telegram", {
+        mode: "send", event_type: "test",
+        channel: $("telegramChannel").value,
+        message: $("telegramMessage").value,
+        image_url: $("telegramImage").value || undefined
+      });
+      toast("Telegram message sent.");
+      await renderTelegram();
+    } catch (err) { toast(err.message, true); }
+  });
   $("refreshTelegram").addEventListener("click", renderTelegram);
+  document.querySelectorAll(".telegram-retry").forEach(btn => btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    try {
+      await api("telegram", { mode: "retry", id: btn.dataset.id });
+      toast("Retried.");
+      await renderTelegram();
+    } catch (err) { btn.disabled = false; toast(err.message, true); }
+  }));
 }
 
+/* ============ AUDIT ============ */
 async function renderAudit() {
-  setPage("Audit Logs", "Review recorded administrative actions.");
+  setPage("Audit Logs", "Review recorded administrative actions.",
+    '<button class="btn" id="refreshAudit">↻ Refresh</button>');
+  $("refreshAudit").addEventListener("click", renderAudit);
 
+  const f = state.filters.audit || {};
   const data = await api("audit", {
-    page: state.pages.audit || 1,
-    page_size: 20
+    page: state.pages.audit || 1, page_size: 20, q: f.q || ""
   });
-
-  $("viewBody").innerHTML = table(
-    ["Time", "Admin", "Action", "Outcome"],
-    (data.entries || []).map(a => [
-      formatDate(a.created_at),
-      escapeHtml(a.admin_username),
-      escapeHtml(a.action),
-      badge(a.outcome)
-    ])
-  );
+  $("viewBody").innerHTML = `
+    ${filterToolbar({ search: "Search admin username or action" })}
+    ${table(
+      ["ID", "Time", "Admin", "Action", "Target Type", "Target ID", "Outcome", "IP"],
+      (data.entries || []).map(a => [
+        escapeHtml(a.id), escapeHtml(formatDate(a.created_at)), escapeHtml(a.admin_username),
+        escapeHtml(a.action), escapeHtml(a.target_type || "—"), escapeHtml(a.target_id || "—"),
+        badge(a.outcome), escapeHtml(a.ip || "—")
+      ])
+    )}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachFilterActions("audit", renderAudit);
+  attachPagination("audit", data.pagination, renderAudit);
 }
 
+/* ============ LOGIN ATTEMPTS ============ */
 async function renderLoginAttempts() {
-  setPage("Login Attempts", "Monitor admin login attempts.");
-
+  setPage("Login Attempts", "Monitor successful and failed admin login attempts.");
   const data = await api("login_attempts", {
-    page: 1,
-    page_size: 20
+    page: state.pages.login_attempts || 1, page_size: 20
   });
-
-  $("viewBody").innerHTML = table(
-    ["Time", "IP", "Result"],
-    (data.entries || []).map(a => [
-      formatDate(a.attempted_at),
-      escapeHtml(a.ip || "—"),
-      a.success ? badge("success") : badge("failed")
-    ])
-  );
+  $("viewBody").innerHTML = `
+    <div class="notice warning">IP addresses are sensitive. Restrict access to trusted admins.</div>
+    ${table(
+      ["ID", "IP Address", "Result", "Attempted At"],
+      (data.entries || []).map(a => [
+        escapeHtml(a.id), escapeHtml(a.ip || "—"),
+        a.success ? badge("success") : badge("failed"),
+        escapeHtml(formatDate(a.attempted_at))
+      ])
+    )}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachPagination("login_attempts", data.pagination, renderLoginAttempts);
 }
 
-function renderSearch() {
-  setPage("Global Search", "Search users, rounds and bets.");
+/* ============ SECURITY SUMMARY ============ */
+async function renderSecurity() {
+  setPage("Security Summary", "Recent login attempts and audit entries.");
+  const data = await api("security");
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head"><h3>Recent Login Attempts</h3></div>
+      ${table(
+        ["Time", "IP", "Result"],
+        (data.attempts || []).map(a => [
+          escapeHtml(formatDate(a.attempted_at)), escapeHtml(a.ip || "—"),
+          a.success ? badge("success") : badge("failed")
+        ])
+      )}
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Recent Audit Entries</h3></div>
+      ${table(
+        ["Time", "Admin", "Action", "Outcome", "IP"],
+        (data.entries || []).map(a => [
+          escapeHtml(formatDate(a.created_at)), escapeHtml(a.admin_username),
+          escapeHtml(a.action), badge(a.outcome), escapeHtml(a.ip || "—")
+        ])
+      )}
+    </div>
+  `;
+}
 
+/* ============ SEARCH ============ */
+function renderSearch() {
+  setPage("Global Search", "Search users, game rounds and bets.");
   $("viewBody").innerHTML = `
     <div class="card">
       <form id="globalSearchForm">
         <div class="toolbar">
-          <input id="globalSearchInput" placeholder="Username, user ID or round code" required>
+          <input id="globalSearchInput" placeholder="Username, user ID, Telegram ID or round code" required>
           <button class="btn btn-primary" type="submit">Search</button>
         </div>
       </form>
       <div id="searchResults"></div>
     </div>
   `;
-
-  $("globalSearchForm").addEventListener("submit", async event => {
-    event.preventDefault();
+  $("globalSearchForm").addEventListener("submit", async e => {
+    e.preventDefault();
     const q = $("globalSearchInput").value.trim();
     if (!q) return;
-
     $("searchResults").innerHTML = '<div class="loading">Searching...</div>';
-
     try {
       const data = await api("search", { q });
-
       $("searchResults").innerHTML = `
-        <h3>Users</h3>
+        <div class="card-head"><h3>Users</h3></div>
         ${table(
-          ["ID", "Telegram ID", "Username", "Balance"],
+          ["ID", "Telegram ID", "Username", "Balance", "Joined"],
           (data.users || []).map(u => [
-            escapeHtml(u.id),
-            escapeHtml(u.telegram_id),
-            escapeHtml(u.username || "—"),
-            money(u.balance)
+            escapeHtml(u.id), escapeHtml(u.telegram_id),
+            escapeHtml(u.username || "—"), escapeHtml(money(u.balance)),
+            escapeHtml(formatDate(u.created_at))
+          ])
+        )}
+        <div class="card-head" style="margin-top:22px"><h3>Rounds</h3></div>
+        ${table(
+          ["ID", "Round Code", "Status", "Start", "End", "Result"],
+          (data.rounds || []).map(r => [
+            escapeHtml(r.id), escapeHtml(r.round_code), badge(r.status),
+            escapeHtml(formatDate(r.starts_at)), escapeHtml(formatDate(r.ends_at)),
+            escapeHtml(r.result_number ?? "—")
+          ])
+        )}
+        <div class="card-head" style="margin-top:22px"><h3>Bets</h3></div>
+        ${table(
+          ["ID", "User ID", "Round", "Type", "Stake", "Status", "Payout", "Created"],
+          (data.bets || []).map(b => [
+            escapeHtml(b.id), escapeHtml(b.user_id), escapeHtml(b.round_code || "—"),
+            escapeHtml(b.bet_type), escapeHtml(money(b.stake)), badge(b.status),
+            escapeHtml(money(b.payout)), escapeHtml(formatDate(b.created_at))
           ])
         )}
       `;
-    } catch (error) {
-      $("searchResults").innerHTML = `<div class="notice danger">${escapeHtml(error.message)}</div>`;
+    } catch (err) {
+      $("searchResults").innerHTML = `<div class="notice danger">${escapeHtml(err.message)}</div>`;
     }
   });
 }
 
-// --- HELPERS ---
-function filterToolbar(options = {}) {
-  return `
-    <div class="toolbar">
-      ${options.search ? `<input id="filterQ" placeholder="${escapeHtml(options.search)}" value="${escapeHtml(options.q || "")}">` : ""}
-      ${options.segment ? `
-        <select id="filterSegment">
-          <option value="all">All Users</option>
-          <option value="new_today">New Today</option>
-          <option value="new_7d">New in 7 Days</option>
-          <option value="active_24h">Active in 24 Hours</option>
-          <option value="active_7d">Active in 7 Days</option>
-          <option value="inactive_30d">Inactive 30 Days</option>
-        </select>
-      ` : ""}
-      ${options.type ? `
-        <select id="filterType">
-          <option value="">All Types</option>
-          <option value="deposit">Deposit</option>
-          <option value="withdrawal">Withdrawal</option>
-        </select>
-      ` : ""}
-      ${options.status ? `
-        <select id="filterStatus">
-          <option value="">All Statuses</option>
-          ${["pending", "confirmed", "rejected", "completed", "failed", "open", "locked", "settled", "won", "lost", "cancelled"]
-            .map(s => `<option value="${s}">${s}</option>`).join("")}
-        </select>
-      ` : ""}
-      ${options.userId ? `<input id="filterUserId" inputmode="numeric" placeholder="User ID">` : ""}
-      <button class="btn btn-primary" id="applyFilters">Apply Filters</button>
-      <button class="btn" id="clearFilters">Clear</button>
-    </div>
-  `;
-}
-
-function getFilters(view) {
-  const saved = state.filters[view] || {};
-
-  return {
-    q: $("filterQ") ? $("filterQ").value.trim() : (saved.q || ""),
-    segment: $("filterSegment") ? $("filterSegment").value : (saved.segment || "all"),
-    type: $("filterType") ? $("filterType").value : (saved.type || ""),
-    status: $("filterStatus") ? $("filterStatus").value : (saved.status || ""),
-    user_id: $("filterUserId") ? $("filterUserId").value.trim() : (saved.user_id || "")
-  };
-}
-
-function attachFilterActions(view, renderFunction) {
-  const f = state.filters[view] || {};
-
-  if ($("filterQ")) $("filterQ").value = f.q || "";
-  if ($("filterSegment")) $("filterSegment").value = f.segment || "all";
-  if ($("filterType")) $("filterType").value = f.type || "";
-  if ($("filterStatus")) $("filterStatus").value = f.status || "";
-  if ($("filterUserId")) $("filterUserId").value = f.user_id || "";
-
-  $("applyFilters").addEventListener("click", () => {
-    state.filters[view] = getFilters(view);
-    state.pages[view] = 1;
-    renderFunction();
-  });
-
-  $("clearFilters").addEventListener("click", () => {
-    state.filters[view] = {};
-    state.pages[view] = 1;
-    renderFunction();
-  });
-
-  if ($("filterQ")) {
-    $("filterQ").addEventListener("keydown", event => {
-      if (event.key === "Enter") {
-        state.filters[view] = getFilters(view);
-        state.pages[view] = 1;
-        renderFunction();
-      }
-    });
-  }
-}
-
-function paginationHtml(info) {
-  if (!info) return "";
-
-  return `
-    <div class="pagination">
-      <span class="small muted">
-        Page ${escapeHtml(info.page)} of ${escapeHtml(info.total_pages)}
-        · ${escapeHtml(info.total)} records
-      </span>
-      <div class="pagination-actions">
-        <button class="btn" id="previousPage" ${info.has_previous ? "" : "disabled"}>← Previous</button>
-        <button class="btn" id="nextPage" ${info.has_next ? "" : "disabled"}>Next →</button>
-      </div>
-    </div>
-  `;
-}
-
-function attachPagination(view, info, renderFunction) {
-  if (!info) return;
-
-  if ($("previousPage")) {
-    $("previousPage").addEventListener("click", () => {
-      state.pages[view] = Math.max(1, (state.pages[view] || 1) - 1);
-      renderFunction();
-    });
-  }
-
-  if ($("nextPage")) {
-    $("nextPage").addEventListener("click", () => {
-      state.pages[view] = (state.pages[view] || 1) + 1;
-      renderFunction();
-    });
-  }
-}
-
-async function downloadCsv(dataset, filters = {}) {
-  const data = await api("export", {
-    dataset,
-    ...filters
-  });
-
-  if (!data.csv) {
-    return toast("No rows available to export.");
-  }
-
-  const blob = new Blob(["\uFEFF", data.csv], {
-    type: "text/csv;charset=utf-8"
-  });
-
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = `crypto-trader-${dataset}-${new Date().toISOString().slice(0, 10)}.csv`;
-
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-
-  URL.revokeObjectURL(url);
-
-  toast(
-    `Exported ${data.row_count} rows` +
-    (data.truncated ? ". Export limit reached." : ".")
-  );
-}
-
+/* ============ NOTIFICATIONS ============ */
 async function fetchNotifications() {
   try {
-    const data = await api("transactions", {
-      status: "pending",
-      page_size: 50
-    });
-
-    const pendingTxs = (data.transactions || []).filter(t =>
+    const data = await api("transactions", { status: "pending", page_size: 50 });
+    const pending = (data.transactions || []).filter(t =>
       ["deposit", "withdrawal"].includes(t.transaction_type)
     );
+    const badgeEl = $("notifBadge");
+    if (pending.length > 0) {
+      badgeEl.textContent = pending.length > 9 ? "9+" : pending.length;
+      badgeEl.classList.remove("hidden");
+    } else badgeEl.classList.add("hidden");
 
-    const badge = $("notifBadge");
-
-    if (pendingTxs.length > 0) {
-      badge.textContent = pendingTxs.length > 9 ? "9+" : pendingTxs.length;
-      badge.classList.remove("hidden");
-    } else {
-      badge.classList.add("hidden");
-    }
-
-    const list = $("notifList");
-
-    list.innerHTML = pendingTxs.length === 0
+    $("notifList").innerHTML = pending.length === 0
       ? '<div class="empty">No pending requests.</div>'
-      : pendingTxs.map(t => `
+      : pending.map(t => `
         <div class="notif-item">
-          <strong class="${t.transaction_type === 'deposit' ? 'green' : 'red'}">
+          <strong class="${t.transaction_type === "deposit" ? "green" : "red"}">
             ${t.transaction_type.toUpperCase()} #${escapeHtml(t.id)}
           </strong>
           <div>User ${escapeHtml(t.user_id)} | ${money(t.amount)}</div>
           <small>${formatDate(t.created_at)}</small>
         </div>
       `).join("");
-  } catch (error) {
-    console.error("Notification failed", error);
-  }
+  } catch (e) { console.error("Notification failed", e); }
 }
 
-$("notifBell").addEventListener("click", (e) => {
+$("notifBell").addEventListener("click", e => {
   e.stopPropagation();
   $("notifDropdown").classList.toggle("hidden");
 });
-
 $("closeNotif").addEventListener("click", () => $("notifDropdown").classList.add("hidden"));
-
-document.addEventListener("click", (e) => {
-  const dropdown = $("notifDropdown");
-  if (
-    !dropdown.classList.contains("hidden") &&
-    !dropdown.contains(e.target) &&
-    !$("notifBell").contains(e.target)
-  ) {
-    dropdown.classList.add("hidden");
+document.addEventListener("click", e => {
+  const dd = $("notifDropdown");
+  if (!dd.classList.contains("hidden") && !dd.contains(e.target) && !$("notifBell").contains(e.target)) {
+    dd.classList.add("hidden");
   }
 });
 
-$("loginForm").addEventListener("submit", async event => {
-  event.preventDefault();
-
+/* ============ LOGIN / LOGOUT / INIT ============ */
+$("loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
   if (state.busy) return;
-
   state.busy = true;
   $("loginButton").disabled = true;
   $("loginButton").textContent = "Signing In...";
   $("loginError").textContent = "";
-
   try {
-    const result = await api("login", {
+    const r = await api("login", {
       username: $("loginUsername").value.trim(),
       password: $("loginPassword").value
     });
-
     $("loginPassword").value = "";
-    showApp(result.username || $("loginUsername").value);
-  } catch (error) {
-    $("loginError").textContent = error.message;
+    showApp(r.username || $("loginUsername").value);
+  } catch (err) {
+    $("loginError").textContent = err.message;
   } finally {
     state.busy = false;
     $("loginButton").disabled = false;
@@ -2768,25 +2208,16 @@ $("loginForm").addEventListener("submit", async event => {
 
 $("logoutButton").addEventListener("click", async () => {
   if (!confirm("Are you sure you want to log out?")) return;
-
-  try {
-    await api("logout");
-  } catch (error) {}
-
+  try { await api("logout"); } catch { /* ignore */ }
   showLogin("You have been logged out.");
 });
 
 (async function init() {
   try {
-    const result = await api("me");
-    if (result.username) {
-      showApp(result.username);
-    } else {
-      showLogin();
-    }
-  } catch (error) {
-    showLogin();
-  }
+    const r = await api("me");
+    if (r.username) showApp(r.username);
+    else showLogin();
+  } catch { showLogin(); }
 })();
 </script>
 
