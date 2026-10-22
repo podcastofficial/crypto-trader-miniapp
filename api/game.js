@@ -164,7 +164,6 @@ async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
     const ethers = getEthers();
     const provider = getProvider();
 
-    // 1. Fetch receipt directly for this TX hash
     const receipt = await provider.getTransactionReceipt(txHash);
     if (!receipt) {
       return { success: false, reason: "Transaction not found on Blockchain yet. Please wait." };
@@ -173,10 +172,8 @@ async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
       return { success: false, reason: "Transaction failed on the blockchain." };
     }
 
-    // 2. Fetch transaction details
     const tx = await provider.getTransaction(txHash);
 
-    // 3. Check Transfer logs inside the receipt
     const transferTopic = ethers.id("Transfer(address,address,uint256)");
     const log = receipt.logs.find(l => 
       l.address.toLowerCase() === usdtContract &&
@@ -189,7 +186,6 @@ async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
       return { success: false, reason: "Transaction was not sent to the official deposit address." };
     }
 
-    // 4. Decode amount (BEP-20 USDT has 18 decimals)
     const onChainAmount = Number(ethers.formatUnits(log.data, 18));
 
     if (onChainAmount + 0.01 < expectedAmountUsdt) {
@@ -547,10 +543,12 @@ function telegramBotUsername() {
 async function autoCreditReferralRewards(client, referrerUserId) {
   await client.query("SAVEPOINT sp_auto_credit");
   try {
+    // FIX: Added real deposit check
     const check = await client.query(`
       SELECT COUNT(*)::int AS cnt FROM public.referral_rewards rr
       WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
         AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')
+        AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = rr.referred_user_id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
     `, [referrerUserId]);
 
     if (check.rows[0].cnt === 0) {
@@ -562,6 +560,7 @@ async function autoCreditReferralRewards(client, referrerUserId) {
       SELECT rr.id, rr.reward_points FROM public.referral_rewards rr
       WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
         AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')
+        AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = rr.referred_user_id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
       FOR UPDATE
     `, [referrerUserId]);
 
@@ -665,20 +664,27 @@ async function getReferralData(client, userId) {
        b.stake,
        r.round_code
      FROM public.referral_commissions rc
-     LEFT JOIN public.bets b
-       ON b.id = rc.bet_id
-     LEFT JOIN public.game_rounds r
-       ON r.id = b.round_id
+     LEFT JOIN public.bets b ON b.id = rc.bet_id
+     LEFT JOIN public.game_rounds r ON r.id = b.round_id
      WHERE rc.referrer_user_id = $1
      ORDER BY rc.id DESC
      LIMIT 50`,
     [userId]
   );
 
+  // FIX: Added real deposit check for active pending points
   const rewardSummary = await client.query(
     `SELECT
-      COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')), 0)::numeric(20,2) AS active_pending_points,
-      COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' AND NOT EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')), 0)::numeric(20,2) AS inactive_pending_points,
+      COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' 
+        AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')
+        AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = rr.referred_user_id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
+      ), 0)::numeric(20,2) AS active_pending_points,
+      
+      COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' AND NOT (
+        EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')
+        AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = rr.referred_user_id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
+      )), 0)::numeric(20,2) AS inactive_pending_points,
+      
       COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'credited'), 0)::numeric(20,2) AS credited_points
      FROM public.referral_rewards rr
      WHERE rr.referrer_user_id = $1`,
@@ -757,15 +763,25 @@ async function getReferralData(client, userId) {
 }
 
 async function getReferralMembers(client, userId) {
+  // FIX: Added real deposit check for 'is_active'
   const members = await client.query(
     `SELECT
        u.id,
        u.username,
        u.created_at,
-       EXISTS (
-         SELECT 1 FROM public.bets b
-         WHERE b.user_id = u.id
-           AND b.created_at > NOW() - INTERVAL '7 days'
+       (
+         EXISTS (
+           SELECT 1 FROM public.bets b
+           WHERE b.user_id = u.id
+             AND b.created_at > NOW() - INTERVAL '7 days'
+         )
+         AND EXISTS (
+           SELECT 1 FROM public.transactions t
+           WHERE t.user_id = u.id
+             AND t.transaction_type = 'deposit'
+             AND t.status = 'completed'
+             AND t.amount >= 1
+         )
        ) AS is_active,
        (SELECT MAX(b.created_at) FROM public.bets b
          WHERE b.user_id = u.id) AS last_bet_at,
@@ -782,18 +798,35 @@ async function getReferralMembers(client, userId) {
     [userId]
   );
 
+  // FIX: Added real deposit check for summary
   const summary = await client.query(
     `SELECT
        COUNT(*)::int AS total,
-       COUNT(*) FILTER (WHERE EXISTS (
-         SELECT 1 FROM public.bets b
-         WHERE b.user_id = u.id
-           AND b.created_at > NOW() - INTERVAL '7 days'
-       ))::int AS active,
-       COUNT(*) FILTER (WHERE rr.status = 'pending' AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days'))::int AS active_pending_count,
-       COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')), 0)::text AS active_pending_points,
-       COUNT(*) FILTER (WHERE rr.status = 'pending' AND NOT EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days'))::int AS inactive_pending_count,
-       COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' AND NOT EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')), 0)::text AS inactive_pending_points,
+       COUNT(*) FILTER (WHERE 
+         EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
+         AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
+       )::int AS active,
+       
+       COUNT(*) FILTER (WHERE rr.status = 'pending' 
+         AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
+         AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
+       )::int AS active_pending_count,
+       
+       COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' 
+         AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
+         AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
+       ), 0)::text AS active_pending_points,
+       
+       COUNT(*) FILTER (WHERE rr.status = 'pending' AND NOT (
+         EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
+         AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
+       ))::int AS inactive_pending_count,
+       
+       COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' AND NOT (
+         EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
+         AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
+       )), 0)::text AS inactive_pending_points,
+       
        COUNT(*) FILTER (WHERE rr.status = 'credited')::int AS credited_count,
        COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'credited'), 0)::text AS credited_points
      FROM public.users u
@@ -1390,17 +1423,19 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === "claim_rewards") {
+      // FIX: Added real deposit check for claiming rewards
       const claimable = await client.query(`
         SELECT rr.id, rr.reward_points FROM public.referral_rewards rr
         JOIN public.users u ON u.id = rr.referred_user_id
         WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
         AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
+        AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
         FOR UPDATE
       `, [user.id]);
 
       if (!claimable.rowCount) {
         await client.query("ROLLBACK"); transactionStarted = false;
-        return json(res, 400, { success: false, message: "No active referral rewards available to claim." });
+        return json(res, 400, { success: false, message: "No active referral rewards available to claim. Ensure your referred users have made a qualifying deposit." });
       }
 
       const amount = claimable.rows.reduce((sum, r) => sum + Number(r.reward_points), 0);
