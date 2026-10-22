@@ -432,9 +432,14 @@ label { font-weight:800; font-size:12px; }
     <div class="section">
       <div class="section-title">👤 <span data-i18n="profile">Profile</span></div>
       <div class="card">
-        <div class="muted small" data-i18n="tgAccount">Telegram account</div>
-        <strong id="profileName">…</strong>
-        <p class="muted small" id="profileStatus">…</p>
+        <!-- PROFILE LOGO YAHAN ADD KIYA HAI -->
+        <div style="text-align: center; margin-bottom: 12px;">
+          <img src="https://raw.githubusercontent.com/podcastofficial/crypto-trader-miniapp/main/1792659429580.png" alt="Profile Avatar" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #facc15; background: #1a1a1a; box-shadow: 0 4px 15px rgba(250, 204, 21, 0.2);">
+        </div>
+        
+        <div class="muted small" data-i18n="tgAccount" style="text-align: center;">Telegram account</div>
+        <strong id="profileName" style="display: block; text-align: center; font-size: 18px; margin-top: 4px;">…</strong>
+        <p class="muted small" id="profileStatus" style="text-align: center;">…</p>
         <div class="profile-stats">
           <div><span>Joined</span><strong id="profileJoined">—</strong></div>
           <div><span>Available points</span><strong id="profileAvailablePoints">—</strong></div>
@@ -603,11 +608,12 @@ label { font-weight:800; font-size:12px; }
 <div class="modal-backdrop" id="profileModal">
   <div class="modal">
     <div class="row"><div class="modal-title" data-i18n="editProfile">Edit Profile</div><button class="close-btn" data-close="profileModal" type="button">✕</button></div>
+    
+    <!-- YAHAN BHI LOGO LAGA DIYA HAI -->
     <div style="text-align:center; margin-bottom: 15px;">
-      <div style="width: 80px; height: 80px; border-radius: 50%; background: #29292c; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 40px; border: 2px solid #facc15;">
-        👨‍💻
-      </div>
+      <img src="https://raw.githubusercontent.com/podcastofficial/crypto-trader-miniapp/main/1792659429580.png" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #facc15; background: #1a1a1a; margin: 0 auto; display: block; box-shadow: 0 4px 15px rgba(250, 204, 21, 0.2);">
     </div>
+    
     <label for="profileDisplayName" data-i18n="displayName">Display name</label>
     <input id="profileDisplayName" type="text" maxlength="64" autocomplete="name">
     <div class="notice" data-i18n="profileTelegramNote">Your Telegram username is managed by Telegram.</div>
@@ -700,10 +706,31 @@ function cents(value){ return Math.round(Number(value || 0) * 100); }
 function signedCents(c){ const sign = c > 0 ? "+" : c < 0 ? "−" : ""; return sign + money(Math.abs(c) / 100); }
 function dateUTC(value){ const d = new Date(value); if(Number.isNaN(d.getTime())) return ""; return d.toLocaleString("en-GB",{ timeZone:"UTC", day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit", second:"2-digit", hourCycle:"h23" }) + " UTC"; }
 function nowMs(){ return Date.now() + serverTimeOffset; }
-function fmtPeriod(code){ const raw = String(code || ""); if (!/^\d{14}$/.test(raw)) return raw.slice(0,12); const day = raw.slice(0,8); const hour = Number(raw.slice(8,10)); const minute = Number(raw.slice(10,12)); const serial = Math.floor((hour * 60 + minute) / 3) + 1; return `${day}${String(serial).padStart(4, "0")}`; }
+
+// 🚨 FIX 1: GAME WALA PERIOD NUMBER (12-DIGIT)
+function fmtPeriod(code){ 
+  return String(code || ""); 
+}
+
 function p2(n){ return String(n).padStart(2,"0"); }
-function slotInfo(ms){ const size = ROUND_SECONDS * 1000; const startMs = Math.floor(ms / size) * size; const d = new Date(startMs); const code = d.getUTCFullYear() + p2(d.getUTCMonth() + 1) + p2(d.getUTCDate()) + p2(d.getUTCHours()) + p2(d.getUTCMinutes()) + p2(d.getUTCSeconds()); return {code,startMs,closesMs:startMs + BETTING_SECONDS * 1000,endsMs:startMs + size}; }
-function codeEnded(code){ const m = String(code || "").match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/); if(!m) return true; const start = Date.UTC(+m[1],+m[2] - 1,+m[3],+m[4],+m[5],+m[6]); return nowMs() >= start + ROUND_SECONDS * 1000; }
+
+// 🚨 FIX 2: SLOT INFO SE SECONDS HATA DIYE (12-DIGIT)
+function slotInfo(ms){ 
+  const size = ROUND_SECONDS * 1000; 
+  const startMs = Math.floor(ms / size) * size; 
+  const d = new Date(startMs); 
+  const code = d.getUTCFullYear() + p2(d.getUTCMonth() + 1) + p2(d.getUTCDate()) + p2(d.getUTCHours()) + p2(d.getUTCMinutes()); 
+  return {code,startMs,closesMs:startMs + BETTING_SECONDS * 1000,endsMs:startMs + size}; 
+}
+
+// 🚨 FIX 3: CODE ENDED REGEX 12-DIGIT KE LIYE UPDATE KIYA
+function codeEnded(code){ 
+  const m = String(code || "").match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})$/); 
+  if(!m) return true; 
+  const start = Date.UTC(+m[1],+m[2] - 1,+m[3],+m[4],+m[5]); 
+  return nowMs() >= start + ROUND_SECONDS * 1000; 
+}
+
 function revealed(r){ return r && r.result_number !== null && r.result_number !== undefined && new Date(r.ends_at).getTime() <= nowMs(); }
 function numClass(n){ return n === 0 ? "num-zero" : n === 5 ? "num-five" : n % 2 === 0 ? "red" : "green"; }
 function numTone(n){ return n % 2 === 0 ? "n-red" : "n-green"; }
