@@ -1,1658 +1,2383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Crypto Trader Pro | Admin Panel</title>
+
+<style>
+:root {
+  --bg: #090909; --panel: #121212; --panel2: #181818; --border: #292929;
+  --yellow: #ffd400; --yellow2: #e5bd00; --text: #f4f4f4; --muted: #999;
+  --green: #20d49a; --red: #ff5268; --violet: #a78bfa; --blue: #65a9ff;
+  --radius: 14px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, sans-serif; font-size: 14px; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+.hidden { display: none !important; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.green { color: var(--green); }
+.red { color: var(--red); }
+.yellow { color: var(--yellow); }
+.violet { color: var(--violet); }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+#loginView { min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; background: radial-gradient(circle at 50% 0%, #292200 0, transparent 45%), var(--bg); }
+.login-card { width: 100%; max-width: 390px; background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 28px; box-shadow: 0 20px 80px #0008; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-icon { display: grid; place-items: center; width: 45px; height: 45px; border-radius: 13px; background: var(--yellow); color: #111; font-size: 23px; font-weight: 900; }
+.brand h1 { margin: 0; font-size: 18px; }
+.brand p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+.login-card h2 { margin: 28px 0 6px; font-size: 24px; }
+.login-card > p { margin: 0 0 24px; color: var(--muted); }
+.field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; }
+.field label { color: #ccc; font-size: 12px; }
+input, select, textarea { min-width: 0; width: 100%; padding: 11px 12px; border: 1px solid var(--border); border-radius: 9px; background: #0d0d0d; color: var(--text); outline: none; }
+input:focus, select:focus, textarea:focus { border-color: var(--yellow); }
+textarea { resize: vertical; min-height: 120px; }
+.btn { padding: 10px 14px; border: 1px solid var(--border); border-radius: 9px; color: var(--text); background: var(--panel2); font-weight: 700; }
+.btn:hover { border-color: #666; }
+.btn-primary { background: var(--yellow); color: #111; border-color: var(--yellow); }
+.btn-primary:hover { background: var(--yellow2); }
+.btn-danger { color: var(--red); border-color: #61242d; background: #2a1216; }
+.btn-danger:hover { background: #3a181d; }
+.btn-block { width: 100%; }
+.error { color: var(--red); font-size: 12px; margin-top: 12px; line-height: 1.5; }
+#appView { min-height: 100vh; }
+.topbar { position: sticky; top: 0; z-index: 20; min-height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 12px 22px; background: #101010ee; backdrop-filter: blur(15px); border-bottom: 1px solid var(--border); }
+.topbar .brand-icon { width: 38px; height: 38px; font-size: 19px; }
+.topbar .brand h1 { font-size: 15px; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.admin-badge { color: var(--yellow); border: 1px solid #665500; background: #282100; border-radius: 20px; padding: 6px 10px; font-size: 11px; font-weight: 800; }
+
+.notif-wrap { position: relative; }
+.notif-btn { position: relative; background: transparent; border: none; font-size: 20px; color: var(--text); cursor: pointer; padding: 8px; border-radius: 50%; transition: background 0.2s; }
+.notif-btn:hover { background: rgba(255, 255, 255, 0.1); }
+.notif-badge { position: absolute; top: 2px; right: 2px; background: var(--red); color: white; font-size: 10px; font-weight: bold; border-radius: 50%; padding: 2px 6px; border: 2px solid #101010; }
+.notif-dropdown { position: absolute; top: calc(100% + 10px); right: 0; width: 320px; max-height: 400px; overflow-y: auto; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); z-index: 100; }
+.notif-header { padding: 12px 15px; border-bottom: 1px solid var(--border); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+.notif-item { padding: 12px 15px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.notif-item:last-child { border-bottom: none; }
+.notif-item strong { display: block; margin-bottom: 4px; }
+.notif-item small { color: var(--muted); display: block; font-size: 11px; margin-top: 4px; }
+
+.layout { display: grid; grid-template-columns: 225px minmax(0, 1fr); min-height: calc(100vh - 68px); }
+.sidebar { padding: 18px 12px; background: #0c0c0c; border-right: 1px solid var(--border); }
+.nav-label { margin: 14px 10px 8px; font-size: 10px; font-weight: 800; color: #707070; letter-spacing: 1.2px; }
+.nav-btn { width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; padding: 11px 12px; margin: 3px 0; background: transparent; color: #aaa; border: 1px solid transparent; border-radius: 9px; font-size: 13px; }
+.nav-btn:hover { background: #181818; color: #fff; }
+.nav-btn.active { background: #292300; color: var(--yellow); border-color: #514500; font-weight: 800; }
+.nav-icon { width: 20px; text-align: center; font-size: 16px; }
+.main { min-width: 0; padding: 24px; }
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
+.page-header h2 { margin: 0; font-size: 25px; letter-spacing: -.5px; }
+.page-header p { margin: 7px 0 0; color: var(--muted); line-height: 1.5; }
+.header-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.grid { display: grid; gap: 14px; }
+.stats-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 20px; }
+.stat-card, .card { min-width: 0; padding: 17px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); }
+.stat-label { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+.stat-value { font-size: clamp(20px, 2vw, 28px); font-weight: 850; overflow-wrap: anywhere; }
+.stat-note { margin-top: 9px; font-size: 11px; color: var(--muted); }
+.card { margin-bottom: 18px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.card-head h3 { margin: 0; font-size: 15px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 16px; }
+.toolbar > * { flex: 1 1 150px; }
+.table-wrap { width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 12px; }
+th, td { padding: 12px; border-bottom: 1px solid #242424; text-align: left; vertical-align: top; white-space: nowrap; }
+th { background: #1a1a1a; color: #bbb; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+td { color: #e0e0e0; }
+tbody tr:hover { background: #191919; }
+tbody tr:last-child td { border-bottom: 0; }
+.badge { display: inline-block; padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: 800; background: #252525; color: #ccc; text-transform: uppercase; }
+.badge.success { background: #10382c; color: var(--green); }
+.badge.danger { background: #401a21; color: var(--red); }
+.badge.warning { background: #3a3008; color: var(--yellow); }
+.badge.info { background: #1a2b45; color: var(--blue); }
+.badge.violet { background: #302044; color: var(--violet); }
+.status-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.status-item { padding: 13px; border-radius: 10px; border: 1px solid var(--border); background: #0e0e0e; }
+.status-item span { display: block; color: var(--muted); font-size: 11px; margin-bottom: 8px; }
+.status-item strong { font-size: 17px; overflow-wrap: anywhere; }
+.pagination { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.pagination-actions { display: flex; gap: 7px; }
+.notice { padding: 12px 14px; margin-bottom: 16px; border-radius: 9px; background: #171717; border: 1px solid var(--border); color: #bbb; line-height: 1.6; }
+.notice.warning { background: #211c08; border-color: #5a4b0b; color: #f0dc86; }
+.notice.danger { background: #291217; border-color: #5c2730; color: #ffb3bd; }
+.empty { padding: 35px 15px; text-align: center; color: var(--muted); }
+.loading { padding: 22px; text-align: center; color: var(--muted); }
+.toast { position: fixed; z-index: 100; right: 18px; bottom: 18px; max-width: calc(100vw - 36px); padding: 13px 16px; background: #202020; color: white; border: 1px solid #444; border-radius: 10px; box-shadow: 0 10px 40px #0008; opacity: 0; transform: translateY(20px); transition: .3s; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.error-toast { border-color: #7b2935; }
+.chart-bars { display: flex; align-items: flex-end; gap: 8px; min-height: 170px; overflow-x: auto; padding: 15px 5px 0; }
+.chart-col { flex: 1; min-width: 25px; text-align: center; }
+.chart-bar { min-height: 3px; border-radius: 5px 5px 0 0; background: var(--yellow); width: 100%; }
+.chart-label { margin-top: 7px; color: var(--muted); font-size: 10px; }
+.chart-number { font-size: 10px; margin-bottom: 5px; }
+.detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.detail-item { border: 1px solid var(--border); background: #0e0e0e; border-radius: 9px; padding: 12px; min-width: 0; }
+.detail-item span { display: block; color: var(--muted); font-size: 11px; margin-bottom: 7px; }
+.detail-item strong { overflow-wrap: anywhere; }
+pre { max-width: 100%; overflow: auto; color: #ddd; background: #0a0a0a; border: 1px solid var(--border); border-radius: 9px; padding: 13px; font-size: 12px; }
+
+:root {
+  --bg: #07090d; --panel: #10141b; --panel2: #171c24; --border: #26303d;
+  --yellow: #f5c84b; --yellow2: #dfad2e; --text: #f7f8fa; --muted: #8d98a8;
+  --green: #35d39a; --red: #ff6b7c; --blue: #70a9ff; --radius: 16px;
+}
+body { background: radial-gradient(circle at 72% -15%, #1b2638 0, transparent 36%), var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; }
+#loginView { background: radial-gradient(circle at 50% 0%, #3a3014 0, transparent 42%), var(--bg); }
+.login-card { background: rgba(16, 20, 27, .94); border-color: #354050; box-shadow: 0 28px 90px #000b; }
+.brand-icon { border-radius: 14px; background: linear-gradient(135deg, #f8d66a, #d79f21); box-shadow: 0 8px 22px #c9972630; }
+.topbar { min-height: 76px; padding: 14px 28px; background: rgba(7, 9, 13, .84); border-bottom-color: #222c39; }
+.topbar .brand h1 { letter-spacing: .6px; }
+.topbar .brand p { color: #748195; }
+.admin-badge { background: #2b2411; border-color: #6a5318; color: #f5d36d; }
+.layout { grid-template-columns: 248px minmax(0, 1fr); }
+.sidebar { padding: 22px 15px; background: rgba(10, 13, 18, .82); border-right-color: #222c39; }
+.nav-label { color: #647085; letter-spacing: 1.5px; }
+.nav-btn { padding: 12px 13px; border-radius: 11px; color: #9da8b7; }
+.nav-btn:hover { background: #171e28; color: #fff; }
+.nav-btn.active { background: linear-gradient(90deg, #302710, #211e15); border-color: #6a5318; color: #f8d873; box-shadow: inset 3px 0 0 #f5c84b; }
+.main { padding: 30px; max-width: 1680px; }
+.page-header { margin-bottom: 26px; }
+.page-header h2 { font-size: 30px; letter-spacing: -.8px; }
+.page-header p { color: #8d98a8; }
+.stat-card, .card { background: linear-gradient(145deg, rgba(20, 26, 35, .98), rgba(13, 17, 23, .98)); border-color: #273241; border-radius: 16px; box-shadow: 0 12px 30px #0002; }
+.stat-card { padding: 19px; }
+.stat-label { color: #8d98a8; letter-spacing: .2px; }
+.stat-value { letter-spacing: -.5px; }
+.card { padding: 20px; }
+.card-head h3 { font-size: 16px; }
+input, select, textarea { background: #0b0f15; border-color: #2a3544; border-radius: 10px; padding: 12px 13px; }
+input:focus, select:focus, textarea:focus { border-color: #e4b83d; box-shadow: 0 0 0 3px #e4b83d1c; }
+.btn { border-radius: 10px; background: #19202a; border-color: #2c3746; }
+.btn:hover { border-color: #657387; background: #222b37; }
+.btn-primary { background: linear-gradient(135deg, #f5cd58, #dfa92d); border-color: #f5cd58; box-shadow: 0 7px 18px #d6a52e24; color: #111; }
+.btn-primary:hover { background: linear-gradient(135deg, #ffdc73, #eaba3b); }
+.btn-danger { background: #291820; border-color: #5e2935; }
+.row-actions { display: flex; gap: 6px; flex-wrap: wrap; min-width: 170px; }
+.row-actions .btn { padding: 7px 9px; font-size: 12px; }
+.table-wrap { border-color: #293544; border-radius: 12px; }
+th { background: #18202b; color: #aeb8c6; }
+th, td { border-bottom-color: #25303d; }
+tbody tr:hover { background: #19212b; }
+.status-item, .detail-item { background: #0b1016; border-color: #293544; }
+.notice { background: #161d27; border-color: #2c3746; }
+.notice.warning { background: #29230f; border-color: #6a5318; }
+.toast { background: #1b222c; border-color: #4b596b; }
+
+.copy-btn { background: transparent; border: none; color: var(--yellow); cursor: pointer; margin-left: 5px; font-size: 14px; padding: 0; }
+.copy-btn:hover { color: #fff; }
+a.tx-link { color: var(--blue); text-decoration: none; }
+a.tx-link:hover { text-decoration: underline; }
+.switch { width: 48px; height: 26px; border-radius: 30px; background: #333; position: relative; cursor: pointer; transition: background 0.2s; }
+.switch i { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+.switch.on { background: var(--green); }
+.switch.on i { transform: translateX(22px); }
+.grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+.inline-form { display: flex; flex-wrap: wrap; gap: 9px; align-items: flex-end; }
+.inline-form .field { margin: 0; flex: 1 1 180px; }
+.winloss-bar { display: flex; height: 10px; border-radius: 6px; overflow: hidden; background: #222; margin-top: 8px; }
+.winloss-bar .w { background: var(--green); }
+.winloss-bar .l { background: var(--red); }
+.pred-next { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.result-big { font-size: 26px; font-weight: 900; color: var(--yellow); }
+
+.timer-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; background: rgba(245, 200, 75, 0.12); border: 1px solid rgba(245, 200, 75, 0.35); color: var(--yellow); font-weight: 800; font-size: 14px; letter-spacing: 0.5px; font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.timer-badge.urgent { background: rgba(255, 107, 124, 0.15); border-color: rgba(255, 107, 124, 0.5); color: var(--red); animation: pulseUrgent 1s ease-in-out infinite; }
+.timer-badge.expired { background: rgba(141, 152, 168, 0.15); border-color: rgba(141, 152, 168, 0.4); color: var(--muted); }
+@keyframes pulseUrgent { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+@media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .layout { grid-template-columns: 190px minmax(0, 1fr); } .main { padding: 18px; } }
+@media (max-width: 720px) { .topbar { padding: 10px 13px; } .topbar .brand p { display: none; } .layout { display: block; } .sidebar { display: flex; gap: 6px; overflow-x: auto; padding: 9px; border-right: 0; border-bottom: 1px solid var(--border); } .nav-label { display: none; } .nav-btn { flex: 0 0 auto; width: auto; white-space: nowrap; margin: 0; padding: 10px; } .main { padding: 15px; } .page-header h2 { font-size: 22px; } .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .notif-dropdown { width: 290px; right: 0; } .card { padding: 15px; } .grid-4 { grid-template-columns: 1fr; } .pred-next { grid-template-columns: 1fr; } }
+@media (max-width: 420px) { .stats-grid { grid-template-columns: 1fr 1fr; gap: 9px; } .stat-card { padding: 12px; } .stat-value { font-size: 19px; } .stat-label { font-size: 11px; } .topbar-right .admin-badge { display: none; } .status-grid, .detail-grid { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+
+<body>
+
+<section id="loginView">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-icon">₿</div>
+      <div>
+        <h1>CRYPTO TRADER PRO</h1>
+        <p>Secure Administration</p>
+      </div>
+    </div>
+
+    <h2>Admin Login</h2>
+    <p>Sign in to manage and monitor your platform.</p>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="loginUsername">Username</label>
+        <input id="loginUsername" name="username" autocomplete="username" required maxlength="200">
+      </div>
+
+      <div class="field">
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" name="password" type="password" autocomplete="current-password" required maxlength="500">
+      </div>
+
+      <button class="btn btn-primary btn-block" id="loginButton" type="submit">Sign In Securely</button>
+
+      <div id="loginError" class="error"></div>
+    </form>
+
+    <p class="small muted" style="margin-top:22px">Authorized administrators only.</p>
+  </div>
+</section>
+
+<section id="appView" class="hidden">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">₿</div>
+      <div>
+        <h1>CRYPTO TRADER PRO</h1>
+        <p>Administration Dashboard</p>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <span class="admin-badge">ADMIN</span>
+      <span id="adminUsername" class="small muted"></span>
+
+      <div class="notif-wrap">
+        <button class="notif-btn" id="notifBell" type="button">
+          🔔
+          <span id="notifBadge" class="notif-badge hidden">0</span>
+        </button>
+        <div id="notifDropdown" class="notif-dropdown hidden">
+          <div class="notif-header">
+            <span>Pending Requests</span>
+            <button class="btn small" id="closeNotif" style="padding:4px 8px;">✕</button>
+          </div>
+          <div id="notifList">
+            <div class="empty">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-danger" id="logoutButton">Logout</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <div id="pageContent">
+        <div class="loading">Loading dashboard...</div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<div id="toast" class="toast" role="status"></div>
+
+<script>
 "use strict";
 
-const crypto = require("crypto");
-const { Pool } = require("pg");
+const API_URL = "/api/admin";
 
-if (!process.env.DATABASE_URL) {
-  console.error("DATABASE_URL is not configured.");
-}
+const VIEWS = [
+  { group: "OVERVIEW", items: [
+    ["dashboard", "▦", "Dashboard"],
+    ["analytics", "◫", "Analytics"],
+    ["reconcile", "⇄", "Reconciliation"]
+  ]},
+  { group: "PLATFORM", items: [
+    ["users", "♙", "Users"],
+    ["wallets", "◈", "Wallets"],
+    ["transactions", "⇄", "Transactions"],
+    ["deposit_addresses", "⌁", "Deposit Addresses"],
+    ["deposits", "↓", "Deposits"],
+    ["withdrawals", "↑", "Withdrawals"],
+    ["gift_codes", "🎁", "Gift Codes"],
+    ["gift_history", "🎟️", "Gift Redemptions"],
+    ["rounds", "◷", "Game Rounds"],
+    ["bets", "♠", "Bets"],
+    ["referrals", "♧", "Referrals"]
+  ]},
+  { group: "CONTROL & BOT", items: [
+    ["channel_settings", "⚙️", "Channel Settings"],
+    ["broadcast", "📢", "Broadcast"],
+    ["telegram", "✈", "Telegram Logs"],
+    ["telegram_support", "🎧", "Telegram Support"]
+  ]},
+  { group: "SECURITY", items: [
+    ["audit", "▤", "Audit Logs"],
+    ["login_attempts", "⌁", "Login Attempts"],
+    ["security", "🛡️", "Security Summary"],
+    ["search", "⌕", "Global Search"]
+  ]}
+];
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-  max: 3,
-  idleTimeoutMillis: 10000,
-  connectionTimeoutMillis: 10000
-});
-
-pool.on("error", err => console.error("Admin DB pool error:", err.code || err.name));
-
-const COOKIE = "admin_session";
-const SESSION_SECONDS = 7200;
-const PAGE_SIZE_MAX = 100;
-const EXPORT_MAX = 5000;
-const FALLBACK_RESULTS_CHANNEL = "@crypto_trader_results";
-
-// Payout Multipliers (Change here if your game rules differ)
-const NUMBER_PAYOUT_MULTIPLIER = 9; 
-const COLOUR_PAYOUT_MULTIPLIER = 2;
-const VIOLET_PAYOUT_MULTIPLIER = 4.5;
-const BIG_SMALL_PAYOUT_MULTIPLIER = 2;
-
-async function getResultsChannel() {
-  try {
-    const rows = await query(`SELECT channel_username FROM public.channel_settings WHERE id=1`);
-    return (rows[0] && rows[0].channel_username) || FALLBACK_RESULTS_CHANNEL;
-  } catch {
-    return FALLBACK_RESULTS_CHANNEL;
-  }
-}
-
-async function notifyTelegram(text, chats = [process.env.ADMIN_CHAT_ID], imageUrl = null) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) return { ok: false, error: "TELEGRAM_BOT_TOKEN is not configured." };
-  chats = chats.filter(Boolean);
-  if (!chats.length) return { ok: false, error: "No chats provided." };
-
-  const results = await Promise.all(chats.map(async (chatId) => {
-    try {
-      const method = imageUrl ? "sendPhoto" : "sendMessage";
-      const payload = imageUrl
-        ? { chat_id: chatId, photo: imageUrl, caption: text }
-        : { chat_id: chatId, text: text, disable_web_page_preview: true };
-
-      const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(10000)
-      });
-      const data = await response.json();
-      return { chatId, ok: response.ok && data.ok, payload: data };
-    } catch (error) {
-      return { chatId, ok: false, error: error.message };
-    }
-  }));
-
-  return { ok: results.every(item => item.ok), results };
-}
-
-async function telegramAdminAction(body, session, req) {
-  await ensureManagementTables();
-
-  if (body.mode === "retry") {
-    const id = String(body.id || "").trim();
-    if (!/^\d+$/.test(id)) throw new Error("Invalid notification ID.");
-    const rows = await query(`SELECT id,channel,message,status,attempt_count,image_url FROM public.telegram_notifications WHERE id=$1`, [id]);
-    if (!rows.length) throw new Error("Notification not found.");
-    if (rows[0].status === "sent") throw new Error("This notification was already delivered.");
-    const attempt = Number(rows[0].attempt_count || 0) + 1;
-    await query(`UPDATE public.telegram_notifications SET status='pending',attempt_count=$1,error_message=NULL WHERE id=$2`, [attempt, id]);
-    const result = await notifyTelegram(rows[0].message, [rows[0].channel], rows[0].image_url);
-    if (result.ok) {
-      const telegramId = result.results.find(item => item.ok)?.payload?.result?.message_id;
-      await query(`UPDATE public.telegram_notifications SET status='sent',telegram_message_id=$1,sent_at=NOW() WHERE id=$2`, [telegramId ? String(telegramId) : null, id]);
-    } else {
-      const error = result.results.map(item => item.error || item.payload?.description).filter(Boolean).join("; ");
-      await query(`UPDATE public.telegram_notifications SET status='failed',error_message=$1 WHERE id=$2`, [error.slice(0, 500), id]);
-    }
-    await audit(session.username, "telegram_retry", req, result.ok ? "success" : "failed", "telegram_notification", id);
-    if (!result.ok) throw new Error("Telegram retry failed.");
-    return { ok: true, notification_id: id };
-  }
-
-  if (body.mode === "history") {
-    const page = Math.max(1, Number(body.page) || 1);
-    const pageSize = Math.min(PAGE_SIZE_MAX, Math.max(1, Number(body.page_size) || 25));
-    const offset = (page - 1) * pageSize;
-    const [rows, totals] = await Promise.all([
-      query(`SELECT id,event_type,channel,message,image_url,status,telegram_message_id,error_message,attempt_count,created_at,sent_at FROM public.telegram_notifications ORDER BY id DESC LIMIT $1 OFFSET $2`, [pageSize, offset]),
-      query(`SELECT COUNT(*)::int AS total FROM public.telegram_notifications`)
-    ]);
-    const total = Number(totals[0]?.total || 0);
-    return { ok: true, notifications: rows, page, page_size: pageSize, total, total_pages: Math.max(1, Math.ceil(total / pageSize)) };
-  }
-
-  const message = String(body.message || "").trim().slice(0, 4000);
-  const channel = String(body.channel || process.env.ADMIN_CHAT_ID || "").trim().slice(0, 200);
-  const imageUrl = body.image_url ? String(body.image_url).trim().slice(0, 500) : null;
-  if (!message || !channel) throw new Error("Message and channel are required.");
-
-  const created = await query(
-    `INSERT INTO public.telegram_notifications(event_type,channel,message,image_url,status,attempt_count) VALUES($1,$2,$3,$4,'pending',1) RETURNING id`,
-    [body.event_type === "test" ? "test" : "admin", channel, message, imageUrl]
-  );
-  const result = await notifyTelegram(message, [channel], imageUrl);
-  if (result.ok) {
-    const telegramId = result.results.find(item => item.ok)?.payload?.result?.message_id;
-    await query(`UPDATE public.telegram_notifications SET status='sent',telegram_message_id=$1,sent_at=NOW() WHERE id=$2`, [telegramId ? String(telegramId) : null, created[0].id]);
-  } else {
-    const error = result.results.map(item => item.error || item.payload?.description).filter(Boolean).join("; ");
-    await query(`UPDATE public.telegram_notifications SET status='failed',error_message=$1 WHERE id=$2`, [error.slice(0, 500), created[0].id]);
-  }
-  await audit(session.username, "telegram_notification", req, result.ok ? "success" : "failed", "telegram_notification", created[0].id);
-  if (!result.ok) throw new Error("Telegram delivery failed. Check notification history.");
-  return { ok: true, notification_id: created[0].id };
-}
-
-const STATUSES = new Set([
-  "pending", "confirmed", "rejected", "completed", "failed",
-  "open", "locked", "settled", "won", "lost", "cancelled"
-]);
-
-const USER_SEGMENTS = new Set([
-  "all", "new_today", "new_7d", "active_24h", "active_7d", "inactive_30d"
-]);
-
-function json(res, status, data) {
-  res.statusCode = status;
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store, max-age=0");
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("Referrer-Policy", "no-referrer");
-  res.setHeader("X-Frame-Options", "DENY");
-  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-  res.end(JSON.stringify(data));
-}
-
-function safeEqual(a, b) {
-  const x = Buffer.from(String(a ?? ""));
-  const y = Buffer.from(String(b ?? ""));
-  return x.length === y.length && crypto.timingSafeEqual(x, y);
-}
-
-function getConfig() {
-  const username = (process.env.ADMIN_USERNAME || "").trim();
-  const password = process.env.ADMIN_PASSWORD || "";
-  const secret = process.env.ADMIN_SESSION_SECRET || "";
-  if (!username || !password || password.length < 12 || !secret || secret.length < 32) {
-    throw new Error("Admin environment configuration is invalid.");
-  }
-  return { username, password };
-}
-
-function sign(value) {
-  return crypto.createHmac("sha256", process.env.ADMIN_SESSION_SECRET).update(value).digest("base64url");
-}
-
-function createSession(username) {
-  const payload = Buffer.from(JSON.stringify({
-    username,
-    exp: Math.floor(Date.now() / 1000) + SESSION_SECONDS,
-    nonce: crypto.randomBytes(16).toString("hex")
-  })).toString("base64url");
-  return `${payload}.${sign(payload)}`;
-}
-
-function readCookie(req, name) {
-  for (const item of String(req.headers.cookie || "").split(";")) {
-    const i = item.indexOf("=");
-    if (i < 0) continue;
-    if (item.slice(0, i).trim() === name) {
-      try { return decodeURIComponent(item.slice(i + 1).trim()); }
-      catch { return ""; }
-    }
-  }
-  return "";
-}
-
-function verifySession(token) {
-  if (!token || typeof token !== "string") return null;
-  const parts = token.split(".");
-  if (parts.length !== 2) return null;
-  const [payload, signature] = parts;
-  if (!safeEqual(signature, sign(payload))) return null;
-  try {
-    const session = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
-    if (!session.username || !Number.isFinite(session.exp) || session.exp <= Date.now() / 1000 || !safeEqual(session.username, process.env.ADMIN_USERNAME)) return null;
-    return session;
-  } catch { return null; }
-}
-
-function setCookie(res, value, maxAge) {
-  res.setHeader("Set-Cookie", `${COOKIE}=${encodeURIComponent(value)}; Path=/api/admin; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}`);
-}
-
-function validRequest(req) {
-  if (req.headers["x-admin-request"] !== "1") return false;
-  if (req.headers.origin) {
-    try {
-      if (new URL(req.headers.origin).host !== req.headers.host) return false;
-    } catch { return false; }
-  }
-  return true;
-}
-
-async function query(sql, params = []) {
-  const result = await pool.query(sql, params);
-  return result.rows;
-}
-
-async function ensureDepositAddresses() {
-  await query(`CREATE TABLE IF NOT EXISTS public.deposit_addresses (
-    id BIGSERIAL PRIMARY KEY, coin TEXT NOT NULL, network TEXT NOT NULL,
-    address TEXT NOT NULL, qr_payload TEXT,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE, sort_order INTEGER NOT NULL DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-  )`);
-}
-
-async function depositAddressConfig(body, session, req) {
-  await ensureDepositAddresses();
-
-  if (body.mode === "save") {
-    const id = String(body.id || "");
-    const coin = String(body.coin || "").trim().slice(0, 30);
-    const network = String(body.network || "").trim().slice(0, 60);
-    const address = String(body.address || "").trim().slice(0, 150);
-    const qrPayload = String(body.qr_payload || address).trim().slice(0, 300);
-    const active = body.is_active !== false;
-    const order = Math.max(0, Math.min(100, Number(body.sort_order) || 0));
-    if (!coin || !network || !address) throw new Error("Coin, network and address are required.");
-
-    const existing = await query(`SELECT COUNT(*)::int AS c FROM public.deposit_addresses`);
-    if (!id && existing[0].c >= 10) throw new Error("Maximum 10 deposit addresses allowed.");
-
-    const rows = id
-      ? await query(`UPDATE public.deposit_addresses SET coin=$1,network=$2,address=$3,qr_payload=$4,is_active=$5,sort_order=$6,updated_at=NOW() WHERE id=$7 RETURNING *`, [coin, network, address, qrPayload, active, order, id])
-      : await query(`INSERT INTO public.deposit_addresses (coin,network,address,qr_payload,is_active,sort_order) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`, [coin, network, address, qrPayload, active, order]);
-    if (!rows.length) throw new Error("Deposit address not found.");
-    await audit(session.username, "deposit_address_save", req, "success", "deposit_address", rows[0].id);
-  }
-
-  if (body.mode === "delete") {
-    const id = String(body.id || "");
-    await query("DELETE FROM public.deposit_addresses WHERE id=$1", [id]);
-    await audit(session.username, "deposit_address_delete", req, "success", "deposit_address", id);
-  }
-
-  return { ok: true, deposit_addresses: await query("SELECT * FROM public.deposit_addresses ORDER BY sort_order,id LIMIT 10") };
-}
-
-function ipAddress(req) {
-  return String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "").split(",")[0].trim().slice(0, 100);
-}
-
-async function ensureManagementTables() {
-  await query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT FALSE`);
-  await query(`ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS payout_tx_hash TEXT`);
-  await query(`ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS destination_address TEXT`);
-
-  await query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS period_number TEXT`);
-  await query(`UPDATE public.game_rounds SET period_number = round_code WHERE period_number IS NULL`);
-  await query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS predicted_result INT`);
-  await query(`CREATE INDEX IF NOT EXISTS idx_game_rounds_period_number ON public.game_rounds(period_number)`);
-  
-  await query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`);
-  await query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS settled_at TIMESTAMPTZ`);
-  await query(`ALTER TABLE public.bets ADD COLUMN IF NOT EXISTS settled_at TIMESTAMPTZ`);
-  await query(`ALTER TABLE public.bets ADD COLUMN IF NOT EXISTS result_number INT`);
-
-  await query(`ALTER TABLE public.channel_settings ADD COLUMN IF NOT EXISTS channel_updates_enabled BOOLEAN DEFAULT TRUE`);
-  await query(`ALTER TABLE public.channel_settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`);
-  
-  await query(`CREATE TABLE IF NOT EXISTS public.gift_codes (
-    id BIGSERIAL PRIMARY KEY, code TEXT UNIQUE NOT NULL, points NUMERIC(20,2) NOT NULL,
-    max_uses INTEGER NOT NULL DEFAULT 1, uses INTEGER NOT NULL DEFAULT 0,
-    expires_at TIMESTAMPTZ, created_by TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-  )`);
-  await query(`ALTER TABLE public.gift_codes ADD COLUMN IF NOT EXISTS mode TEXT DEFAULT 'fixed'`);
-  await query(`ALTER TABLE public.gift_codes ADD COLUMN IF NOT EXISTS total_points NUMERIC(20,2)`);
-  await query(`ALTER TABLE public.gift_codes ADD COLUMN IF NOT EXISTS per_user_points NUMERIC(20,2)`);
-  await query(`UPDATE public.gift_codes SET
-    mode = COALESCE(mode, 'fixed'),
-    per_user_points = COALESCE(per_user_points, points),
-    total_points = COALESCE(total_points, points * max_uses)
-    WHERE mode IS NULL OR total_points IS NULL OR per_user_points IS NULL`);
-
-  await query(`CREATE TABLE IF NOT EXISTS public.gift_code_redemptions (
-    id BIGSERIAL PRIMARY KEY,
-    gift_code_id BIGINT NOT NULL REFERENCES public.gift_codes(id) ON DELETE CASCADE,
-    user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-    points_earned NUMERIC(20,2),
-    redeemed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (gift_code_id, user_id)
-  )`);
-  await query(`ALTER TABLE public.gift_code_redemptions ADD COLUMN IF NOT EXISTS points_earned NUMERIC(20,2)`);
-
-  await query(`CREATE TABLE IF NOT EXISTS public.user_notifications (
-    id BIGSERIAL PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-    kind TEXT NOT NULL, title TEXT NOT NULL, message TEXT NOT NULL, is_read BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-  )`);
-
-  await query(`CREATE TABLE IF NOT EXISTS public.telegram_notifications (
-    id BIGSERIAL PRIMARY KEY, event_type TEXT NOT NULL, channel TEXT NOT NULL,
-    message TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', telegram_message_id TEXT,
-    error_message TEXT, attempt_count INTEGER NOT NULL DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), sent_at TIMESTAMPTZ
-  )`);
-  await query(`ALTER TABLE public.telegram_notifications ADD COLUMN IF NOT EXISTS image_url TEXT`);
-
-  await query(`CREATE TABLE IF NOT EXISTS public.prediction_history (
-    id BIGSERIAL PRIMARY KEY, round_code TEXT NOT NULL, predicted_number INT,
-    predicted_colour TEXT, actual_number INT, actual_colour TEXT,
-    result TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
-  )`);
-
-  await query(`CREATE TABLE IF NOT EXISTS public.channel_settings (
-    id INT PRIMARY KEY DEFAULT 1, channel_username TEXT DEFAULT '@crypto_trader_results',
-    bot_username TEXT DEFAULT 'YourBot', predictions_enabled BOOLEAN DEFAULT TRUE,
-    prediction_timing INT DEFAULT 150, prediction_message TEXT, result_message TEXT,
-    result_image_url TEXT, inline_link_text TEXT DEFAULT 'Play',
-    created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
-  )`);
-  await query(`INSERT INTO public.channel_settings (id) VALUES (1) ON CONFLICT DO NOTHING`);
-
-  await query(`CREATE TABLE IF NOT EXISTS public.prediction_channels (
-    id BIGSERIAL PRIMARY KEY, channel_id TEXT NOT NULL UNIQUE,
-    is_active BOOLEAN DEFAULT TRUE, schedule_mins INT DEFAULT 3, created_at TIMESTAMPTZ DEFAULT NOW()
-  )`);
-
-  await query(`CREATE TABLE IF NOT EXISTS public.support_settings (
-    id INT PRIMARY KEY DEFAULT 1,
-    support_username TEXT, support_channel TEXT,
-    support_message TEXT, support_enabled BOOLEAN DEFAULT TRUE,
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-  )`);
-  await query(`INSERT INTO public.support_settings (id) VALUES (1) ON CONFLICT DO NOTHING`);
-
-  await query(`CREATE TABLE IF NOT EXISTS public.support_messages (
-    id BIGSERIAL PRIMARY KEY, user_id BIGINT, username TEXT,
-    message TEXT NOT NULL, status TEXT DEFAULT 'open',
-    created_at TIMESTAMPTZ DEFAULT NOW()
-  )`);
-}
-
-async function userManagement(body, session, req) {
-  await ensureManagementTables();
-  const action = String(body.management_action || "");
-  const userId = String(body.user_id || "");
-
-  if (action === "create_gift") {
-    const mode = String(body.mode || "fixed").toLowerCase();
-    if (!["fixed", "distribution"].includes(mode)) throw new Error("Invalid gift mode.");
-
-    let totalPoints, perUserPoints, maxUsers;
-    const requestedExpiry = body.expires_at || null;
-
-    if (mode === "fixed") {
-      perUserPoints = Number(body.per_user_points || body.points);
-      totalPoints = Number(body.total_points || perUserPoints * Number(body.max_users || body.max_uses || 1));
-      if (!Number.isFinite(perUserPoints) || perUserPoints <= 0) throw new Error("Enter valid per-user points.");
-      if (!Number.isFinite(totalPoints) || totalPoints < perUserPoints) throw new Error("Total points must be >= per-user points.");
-      maxUsers = Math.max(1, Math.floor(totalPoints / perUserPoints));
-    } else {
-      totalPoints = Number(body.total_points);
-      maxUsers = Math.max(1, Math.floor(Number(body.max_users || 1)));
-      if (!Number.isFinite(totalPoints) || totalPoints <= 0) throw new Error("Enter valid total points.");
-      perUserPoints = null;
-    }
-
-    const code = String(body.code || `GIFT-${crypto.randomBytes(4).toString("hex").toUpperCase()}`).trim().toUpperCase();
-    const legacyPoints = perUserPoints != null ? perUserPoints : totalPoints;
-
-    const result = await query(
-      `INSERT INTO public.gift_codes(code,points,mode,total_points,per_user_points,max_uses,expires_at,created_by)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8)
-       RETURNING id,code,points,mode,total_points,per_user_points,max_uses,expires_at,created_at`,
-      [code, legacyPoints, mode, totalPoints, perUserPoints, maxUsers, requestedExpiry, session.username]
-    );
-    await audit(session.username, "user_create_gift", req, "success", "gift_code", result[0].id);
-    return { ok: true, gift_code: result[0] };
-  }
-
-  if (!/^\d{1,15}$/.test(userId)) throw new Error("Invalid user ID.");
-
-  if (["block", "unblock"].includes(action)) {
-    await query(`UPDATE public.users SET is_blocked=$1 WHERE id=$2`, [action === "block", userId]);
-    await query(`INSERT INTO public.user_notifications (user_id,kind,title,message) VALUES ($1,'admin', $2, $3)`,
-      [userId, action === "block" ? "Account blocked" : "Account unblocked",
-       action === "block" ? "Your account has been blocked by admin." : "Your account has been unblocked."]);
-  } else if (["add_fund", "remove_fund"].includes(action)) {
-    const points = Number(body.points);
-    if (!Number.isFinite(points) || points <= 0 || points > 100000000) throw new Error("Enter a valid points amount.");
-    const delta = action === "add_fund" ? points : -points;
-    const result = await query(`UPDATE public.wallet_balances SET balance=balance+$1, updated_at=NOW() WHERE user_id=$2 AND balance+$1 >= 0 RETURNING balance`, [delta, userId]);
-    if (!result.length) throw new Error("Insufficient balance or user wallet not found.");
-    await query(`INSERT INTO public.user_notifications (user_id,kind,title,message) VALUES ($1,'wallet','Balance updated',$2)`,
-      [userId, `${action === "add_fund" ? "Added" : "Removed"} ${points} points by admin.`]);
-  } else if (action === "transfer_points") {
-    const toUserId = String(body.to_user_id || "");
-    const points = Number(body.points);
-    if (!/^\d{1,15}$/.test(toUserId) || toUserId === userId || !Number.isFinite(points) || points <= 0 || points > 100000000) {
-      throw new Error("Enter a valid different target user and points.");
-    }
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      const recipient = await client.query(`SELECT id FROM public.users WHERE id=$1 FOR SHARE`, [toUserId]);
-      if (!recipient.rowCount) throw new Error("Target user not found.");
-      const debit = await client.query(`UPDATE public.wallet_balances SET balance=balance-$1,updated_at=NOW() WHERE user_id=$2 AND balance >= $1 RETURNING balance`, [points, userId]);
-      if (!debit.rowCount) throw new Error("Insufficient balance.");
-      await client.query(`INSERT INTO public.wallet_balances(user_id,balance) VALUES($1,0) ON CONFLICT(user_id) DO NOTHING`, [toUserId]);
-      await client.query(`UPDATE public.wallet_balances SET balance=balance+$1,updated_at=NOW() WHERE user_id=$2`, [points, toUserId]);
-      await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'transfer','Points received',$2),($3,'transfer','Points sent',$4)`,
-        [toUserId, `You received ${points} points.`, userId, `You sent ${points} points.`]);
-      await client.query("COMMIT");
-    } catch (error) {
-      await client.query("ROLLBACK");
-      throw error;
-    } finally {
-      client.release();
-    }
-  } else {
-    throw new Error("Unknown user management action.");
-  }
-
-  await audit(session.username, `user_${action}`, req, "success", "user", userId);
-  return { ok: true };
-}
-
-async function audit(username, action, req, outcome = "success", targetType = null, targetId = null) {
-  try {
-    await pool.query(
-      `INSERT INTO public.admin_audit_log
-       (admin_username, action, target_type, target_id, outcome, ip, created_at)
-       VALUES ($1,$2,$3,$4,$5,$6,NOW())`,
-      [
-        String(username || "unknown").slice(0, 200),
-        String(action).slice(0, 100),
-        targetType ? String(targetType).slice(0, 100) : null,
-        targetId == null ? null : String(targetId).slice(0, 100),
-        String(outcome).slice(0, 50),
-        ipAddress(req)
-      ]
-    );
-  } catch (error) {
-    console.error("Admin audit write failed:", error.code || error.name);
-  }
-}
-
-async function loginAllowed(req) {
-  const ip = ipAddress(req);
-  const rows = await query(
-    `SELECT COUNT(*) FILTER (WHERE success = FALSE AND attempted_at > NOW() - INTERVAL '15 minutes') AS failed_ip
-     FROM public.admin_login_attempts WHERE ip = $1`, [ip]
-  );
-  const globalRows = await query(
-    `SELECT COUNT(*) AS failed_global FROM public.admin_login_attempts
-     WHERE success = FALSE AND attempted_at > NOW() - INTERVAL '15 minutes'`
-  );
-  return Number(rows[0]?.failed_ip || 0) < 5 && Number(globalRows[0]?.failed_global || 0) < 30;
-}
-
-async function recordLogin(req, success) {
-  try {
-    await pool.query(`INSERT INTO public.admin_login_attempts (ip, success, attempted_at) VALUES ($1,$2,NOW())`,
-      [ipAddress(req), !!success]);
-  } catch (error) {
-    console.error("Login attempt logging failed:", error.code || error.name);
-  }
-}
-
-function pagination(body) {
-  const page = Math.max(1, Math.min(1000000, Number.parseInt(body.page, 10) || 1));
-  const size = Math.max(1, Math.min(PAGE_SIZE_MAX, Number.parseInt(body.page_size, 10) || 20));
-  return { page, size, offset: (page - 1) * size };
-}
-
-async function dashboard() {
-  const [totalsRows, roundStatuses, recentRounds, healthRows, userMetrics, securityRows] = await Promise.all([
-    query(`SELECT
-      (SELECT COUNT(*) FROM public.users) AS users,
-      (SELECT COUNT(*) FROM public.users WHERE is_blocked=TRUE) AS blocked_users,
-      (SELECT COUNT(*) FROM public.bets) AS bets,
-      (SELECT COALESCE(SUM(stake),0) FROM public.bets) AS total_stake,
-      (SELECT COALESCE(SUM(fee),0) FROM public.bets) AS total_fees,
-      (SELECT COALESCE(SUM(payout),0) FROM public.bets) AS total_payouts,
-      (SELECT COUNT(*) FROM public.bets WHERE created_at >= CURRENT_DATE) AS bets_today,
-      (SELECT COALESCE(SUM(stake),0) FROM public.bets WHERE created_at >= CURRENT_DATE) AS stake_today,
-      (SELECT COALESCE(SUM(payout),0) FROM public.bets WHERE created_at >= CURRENT_DATE) AS payout_today,
-      (SELECT COUNT(*) FROM public.bets WHERE created_at >= NOW() - INTERVAL '24 hours') AS bets_24h,
-      (SELECT COALESCE(SUM(stake),0) FROM public.bets WHERE created_at >= NOW() - INTERVAL '24 hours') AS stake_24h,
-      (SELECT COALESCE(SUM(payout),0) FROM public.bets WHERE created_at >= NOW() - INTERVAL '24 hours') AS payout_24h,
-      (SELECT COALESCE(SUM(balance),0) FROM public.wallet_balances) AS total_wallet_balance,
-      (SELECT COALESCE(SUM(amount),0) FROM public.transactions WHERE transaction_type='deposit' AND status IN ('confirmed','completed')) AS total_deposits,
-      (SELECT COUNT(*) FROM public.transactions WHERE transaction_type='deposit' AND status IN ('confirmed','completed')) AS deposit_count,
-      (SELECT COALESCE(SUM(amount),0) FROM public.transactions WHERE transaction_type='deposit' AND status IN ('confirmed','completed') AND created_at >= CURRENT_DATE) AS deposits_today,
-      (SELECT COUNT(*) FROM public.transactions WHERE transaction_type='deposit' AND status='pending') AS pending_deposits,
-      (SELECT COALESCE(SUM(amount),0) FROM public.transactions WHERE transaction_type='deposit' AND status='pending') AS pending_deposit_amount,
-      (SELECT COALESCE(SUM(amount),0) FROM public.transactions WHERE transaction_type='withdrawal' AND status IN ('confirmed','completed')) AS total_withdrawals,
-      (SELECT COUNT(*) FROM public.transactions WHERE transaction_type='withdrawal' AND status IN ('confirmed','completed')) AS withdrawal_count,
-      (SELECT COALESCE(SUM(amount),0) FROM public.transactions WHERE transaction_type='withdrawal' AND status IN ('confirmed','completed') AND created_at >= CURRENT_DATE) AS withdrawals_today,
-      (SELECT COUNT(*) FROM public.transactions WHERE transaction_type='withdrawal' AND status='pending') AS pending_withdrawals,
-      (SELECT COALESCE(SUM(amount),0) FROM public.transactions WHERE transaction_type='withdrawal' AND status='pending') AS pending_withdrawal_amount,
-      (SELECT COALESCE(SUM(commission_amount),0) FROM public.referral_commissions) AS total_commissions,
-      (SELECT COUNT(*) FROM public.users WHERE referred_by IS NOT NULL) AS total_referrals`),
-    query(`SELECT status, COUNT(*) AS count FROM public.game_rounds GROUP BY status ORDER BY status`),
-    query(`SELECT COALESCE(r.period_number, r.round_code) AS period_number,
-      r.round_code, r.status, r.starts_at, r.betting_closes_at, r.ends_at,
-      CASE WHEN r.ends_at <= NOW() THEN r.result_number ELSE NULL END AS result_number,
-      COUNT(b.id) AS bet_count,
-      COALESCE(SUM(b.stake),0) AS total_stake,
-      COALESCE(SUM(b.payout),0) AS total_payout,
-      COUNT(b.id) FILTER (WHERE b.status='pending') AS pending_bets,
-      (r.status='settled' AND COUNT(b.id) FILTER (WHERE b.status='pending')=0) AS payout_complete
-      FROM public.game_rounds r LEFT JOIN public.bets b ON b.round_id=r.id
-      GROUP BY r.id ORDER BY r.starts_at DESC LIMIT 10`),
-    query(`SELECT
-      (SELECT COUNT(*) FROM public.game_rounds WHERE ends_at<NOW() AND status<>'settled') AS overdue_rounds,
-      (SELECT COUNT(*) FROM public.bets WHERE status='pending' AND created_at<NOW()-INTERVAL '10 minutes') AS old_pending_bets,
-      (SELECT MAX(starts_at) FROM public.game_rounds) AS latest_round_start,
-      (SELECT MAX(settled_at) FROM public.game_rounds WHERE status='settled') AS last_settled_at`),
-    query(`SELECT
-      (SELECT COUNT(*) FROM public.users WHERE created_at >= CURRENT_DATE AND created_at < CURRENT_DATE + INTERVAL '1 day') AS new_today,
-      (SELECT COUNT(*) FROM public.users WHERE created_at >= NOW()-INTERVAL '7 days') AS new_7d,
-      (SELECT COUNT(DISTINCT user_id) FROM public.bets WHERE created_at >= NOW()-INTERVAL '24 hours') AS active_24h,
-      (SELECT COUNT(DISTINCT user_id) FROM public.bets WHERE created_at >= NOW()-INTERVAL '7 days') AS active_7d,
-      (SELECT COUNT(*) FROM public.users u WHERE NOT EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id=u.id AND b.created_at >= NOW()-INTERVAL '30 days')) AS inactive_30d`),
-    query(`SELECT COUNT(*) FILTER (WHERE success=FALSE AND attempted_at>NOW()-INTERVAL '24 hours') AS failed_logins_24h,
-      MAX(attempted_at) AS latest_login_attempt FROM public.admin_login_attempts`)
-  ]);
-
-  const health = healthRows[0] || {};
-  return {
-    totals: totalsRows[0] || {},
-    user_metrics: userMetrics[0] || {},
-    security: securityRows[0] || {},
-    round_statuses: roundStatuses,
-    recent_rounds: recentRounds,
-    health: {
-      database_ok: true,
-      cron_ok: Number(health.overdue_rounds || 0) === 0 && Number(health.old_pending_bets || 0) === 0,
-      overdue_rounds: Number(health.overdue_rounds || 0),
-      old_pending_bets: Number(health.old_pending_bets || 0),
-      latest_round_start: health.latest_round_start,
-      last_settled_at: health.last_settled_at
-    }
-  };
-}
-
-const LISTS = {
-  users: {
-    select: `u.id,u.telegram_id,u.first_name,u.last_name,u.username,w.balance,
-      u.referred_by,u.referral_code,u.created_at,
-      (SELECT COUNT(*) FROM public.users c WHERE c.referred_by=u.id) AS referral_count,
-      (SELECT COUNT(*) FROM public.bets b WHERE b.user_id=u.id AND b.status='won') AS wins,
-      (SELECT COUNT(*) FROM public.bets b WHERE b.user_id=u.id AND b.status='lost') AS losses`,
-    from: `public.users u LEFT JOIN public.wallet_balances w ON w.user_id=u.id`,
-    order: "u.id DESC"
-  },
-  wallets: {
-    select: `w.user_id,u.telegram_id,u.username,w.balance,w.updated_at`,
-    from: `public.wallet_balances w LEFT JOIN public.users u ON u.id=w.user_id`,
-    order: "w.user_id DESC"
-  },
-  transactions: {
-    select: `id,user_id,transaction_type,amount,status,network,tx_hash,payout_tx_hash,
-      destination_address,admin_note,reviewed_at,reviewed_by,created_at,updated_at`,
-    from: "public.transactions",
-    order: "id DESC"
-  },
-  rounds: {
-    select: `COALESCE(r.period_number, r.round_code) AS period_number,
-      r.round_code,r.status,r.starts_at,r.betting_closes_at,r.ends_at,
-      r.predicted_result,
-      CASE WHEN r.ends_at<=NOW() THEN r.result_number ELSE NULL END AS result_number,
-      COUNT(b.id) AS bet_count,
-      COALESCE(SUM(b.stake),0) AS total_stake,
-      COALESCE(SUM(b.payout),0) AS total_payout,
-      COUNT(b.id) FILTER (WHERE b.status='pending') AS pending_bets,
-      (r.status='settled' AND COUNT(b.id) FILTER (WHERE b.status='pending')=0) AS payout_complete`,
-    from: `public.game_rounds r LEFT JOIN public.bets b ON b.round_id=r.id`,
-    order: "r.starts_at DESC",
-    group: "GROUP BY r.id"
-  },
-  bets: {
-    select: `b.id,b.user_id,b.round_id,r.round_code,
-      COALESCE(r.period_number, r.round_code) AS period_number,
-      b.bet_type,b.selection,b.stake,b.fee,b.status,
-      CASE WHEN r.ends_at<=NOW() THEN r.result_number ELSE NULL END AS result_number,
-      b.payout,b.created_at,b.settled_at`,
-    from: `public.bets b LEFT JOIN public.game_rounds r ON r.id=b.round_id`,
-    order: "b.id DESC"
-  },
-  audit: {
-    select: `id,created_at,admin_username,action,target_type,target_id,outcome,ip`,
-    from: "public.admin_audit_log",
-    order: "id DESC"
-  }
+const state = {
+  username: "",
+  currentView: "dashboard",
+  pages: {},
+  filters: {},
+  userDetailId: null,
+  busy: false,
+  notifInterval: null,
+  botUsername: null
 };
 
-function addFilter(conditions, params, sql, value) {
-  params.push(value);
-  conditions.push(sql.replace("?", `$${params.length}`));
+const $ = id => document.getElementById(id);
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[c]);
 }
 
-function userSegmentSql(segment) {
-  switch (segment) {
-    case "new_today": return `u.created_at >= CURRENT_DATE AND u.created_at < CURRENT_DATE + INTERVAL '1 day'`;
-    case "new_7d": return `u.created_at >= NOW()-INTERVAL '7 days'`;
-    case "active_24h": return `EXISTS (SELECT 1 FROM public.bets bx WHERE bx.user_id=u.id AND bx.created_at>=NOW()-INTERVAL '24 hours')`;
-    case "active_7d": return `EXISTS (SELECT 1 FROM public.bets bx WHERE bx.user_id=u.id AND bx.created_at>=NOW()-INTERVAL '7 days')`;
-    case "inactive_30d": return `NOT EXISTS (SELECT 1 FROM public.bets bx WHERE bx.user_id=u.id AND bx.created_at>=NOW()-INTERVAL '30 days')`;
-    default: return null;
-  }
-}
-
-async function listAction(action, body) {
-  const cfg = LISTS[action];
-  if (!cfg) throw new Error("Unsupported list action.");
-
-  const { page, size, offset } = pagination(body);
-  const conditions = [];
-  const params = [];
-
-  if (action === "users") {
-    const segment = String(body.segment || "all");
-    if (!USER_SEGMENTS.has(segment)) throw new Error("Invalid user segment.");
-    const segmentSql = userSegmentSql(segment);
-    if (segmentSql) conditions.push(segmentSql);
-    if (body.q) {
-      const q = String(body.q).trim().slice(0, 100);
-      if (/^\d+$/.test(q)) {
-        params.push(q);
-        conditions.push(`(CAST(u.telegram_id AS TEXT)=$${params.length} OR CAST(u.id AS TEXT)=$${params.length})`);
-      } else {
-        addFilter(conditions, params, "u.username ILIKE ?", `%${q}%`);
-      }
-    }
-  }
-
-  if (action === "wallets" && body.q) {
-    const q = String(body.q).trim().slice(0, 100);
-    if (/^\d+$/.test(q)) addFilter(conditions, params, "CAST(w.user_id AS TEXT)=?", q);
-    else addFilter(conditions, params, "u.username ILIKE ?", `%${q}%`);
-  }
-
-  if (action === "transactions") {
-    const type = body.type || body.transaction_type;
-    if (type) {
-      if (!["deposit", "withdrawal"].includes(String(type))) throw new Error("Invalid transaction type.");
-      addFilter(conditions, params, "transaction_type=?", String(type));
-    }
-    if (body.user_id) {
-      if (!/^\d{1,15}$/.test(String(body.user_id))) throw new Error("Invalid user ID.");
-      addFilter(conditions, params, "user_id=?", String(body.user_id));
-    }
-    if (body.status) {
-      const status = String(body.status);
-      if (!STATUSES.has(status)) throw new Error("Invalid status.");
-      addFilter(conditions, params, "status=?", status);
-    }
-  }
-
-  if (action === "rounds" && body.q) {
-    addFilter(conditions, params, "(r.round_code ILIKE ? OR r.period_number ILIKE ?)", `%${String(body.q).trim().slice(0, 100)}%`);
-    params.push(`%${String(body.q).trim().slice(0, 100)}%`);
-    conditions[conditions.length - 1] = `(r.round_code ILIKE $${params.length - 1} OR r.period_number ILIKE $${params.length})`;
-  }
-
-  if (action === "bets") {
-    if (body.q) addFilter(conditions, params, "(r.round_code ILIKE ? OR r.period_number ILIKE ?)", `%${String(body.q).trim().slice(0, 100)}%`);
-    if (body.user_id) {
-      if (!/^\d{1,15}$/.test(String(body.user_id))) throw new Error("Invalid user ID.");
-      addFilter(conditions, params, "b.user_id=?", String(body.user_id));
-    }
-    if (body.round_code) addFilter(conditions, params, "r.round_code=?", String(body.round_code).slice(0, 100));
-    if (body.status) {
-      const status = String(body.status);
-      if (!STATUSES.has(status)) throw new Error("Invalid status.");
-      addFilter(conditions, params, "b.status=?", status);
-    }
-  }
-
-  if (action === "rounds" && body.status) {
-    const status = String(body.status);
-    if (!STATUSES.has(status)) throw new Error("Invalid status.");
-    addFilter(conditions, params, "r.status=?", status);
-  }
-
-  if (action === "audit") {
-    if (body.outcome) addFilter(conditions, params, "outcome=?", String(body.outcome).slice(0, 50));
-    const search = body.q || body.action_filter;
-    if (search) addFilter(conditions, params, "(action ILIKE ? OR admin_username ILIKE ?)", `%${String(search).slice(0, 80)}%`);
-  }
-
-  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-  const countSql = action === "rounds"
-    ? `SELECT COUNT(DISTINCT r.id) AS total FROM ${cfg.from} ${where}`
-    : `SELECT COUNT(*) AS total FROM ${cfg.from} ${where}`;
-  const countRows = await query(countSql, params);
-
-  const rows = await query(
-    `SELECT ${cfg.select} FROM ${cfg.from} ${where} ${cfg.group || ""} ORDER BY ${cfg.order} LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-    [...params, size, offset]
-  );
-
-  const total = Number(countRows[0]?.total || 0);
-  const totalPages = Math.max(1, Math.ceil(total / size));
-
-  return {
-    [action === "audit" ? "entries" : action]: rows,
-    pagination: {
-      page, page_size: size, total, total_pages: totalPages,
-      has_previous: page > 1, has_next: page < totalPages
-    }
-  };
-}
-
-async function analytics() {
-  const [daily, resultRows, topUsers, largeStakes, highReturnUsers, userMetrics] = await Promise.all([
-    query(`WITH days AS (
-      SELECT generate_series(CURRENT_DATE-INTERVAL '13 days', CURRENT_DATE, INTERVAL '1 day')::date AS day
-    )
-    SELECT d.day,
-      COUNT(b.id) AS bets,
-      COALESCE(SUM(b.stake),0) AS stake,
-      COALESCE(SUM(b.payout),0) AS payout,
-      COALESCE(SUM(b.stake),0)-COALESCE(SUM(b.payout),0) AS net,
-      COUNT(DISTINCT b.user_id) AS active_users,
-      (SELECT COUNT(*) FROM public.users u WHERE u.created_at>=d.day AND u.created_at<d.day+INTERVAL '1 day') AS new_users
-    FROM days d
-    LEFT JOIN public.bets b ON b.created_at>=d.day AND b.created_at<d.day+INTERVAL '1 day'
-    GROUP BY d.day ORDER BY d.day`),
-    query(`SELECT result_number,COUNT(*) AS count FROM public.game_rounds
-      WHERE status='settled' AND result_number BETWEEN 0 AND 9
-      GROUP BY result_number ORDER BY result_number`),
-    query(`SELECT u.id,u.username,COUNT(b.id) AS bets,
-      COALESCE(SUM(b.stake),0) AS stake,
-      COALESCE(SUM(b.payout),0) AS payout,
-      COALESCE(SUM(b.stake),0)-COALESCE(SUM(b.payout),0) AS user_net,
-      COUNT(b.id) FILTER (WHERE b.status='won') AS wins,
-      COUNT(b.id) FILTER (WHERE b.status='lost') AS losses
-      FROM public.users u JOIN public.bets b ON b.user_id=u.id
-      GROUP BY u.id,u.username ORDER BY SUM(b.stake) DESC LIMIT 10`),
-    query(`SELECT b.id,b.user_id,r.round_code,
-      COALESCE(r.period_number, r.round_code) AS period_number,
-      b.bet_type,b.stake,b.created_at
-      FROM public.bets b LEFT JOIN public.game_rounds r ON r.id=b.round_id
-      ORDER BY b.stake DESC LIMIT 20`),
-    query(`SELECT user_id,COUNT(*) AS bets,
-      COALESCE(SUM(stake),0) AS stake,
-      COALESCE(SUM(payout),0) AS payout,
-      ROUND(100.0*COALESCE(SUM(payout),0)/NULLIF(SUM(stake),0),2) AS return_percent
-      FROM public.bets GROUP BY user_id HAVING SUM(stake)>0
-      ORDER BY SUM(payout)/NULLIF(SUM(stake),0) DESC LIMIT 10`),
-    query(`SELECT
-      (SELECT COUNT(*) FROM public.users WHERE created_at>=CURRENT_DATE AND created_at<CURRENT_DATE+INTERVAL '1 day') AS new_today,
-      (SELECT COUNT(*) FROM public.users WHERE created_at>=NOW()-INTERVAL '7 days') AS new_7d,
-      (SELECT COUNT(DISTINCT user_id) FROM public.bets WHERE created_at>=NOW()-INTERVAL '24 hours') AS active_24h,
-      (SELECT COUNT(DISTINCT user_id) FROM public.bets WHERE created_at>=NOW()-INTERVAL '7 days') AS active_7d,
-      (SELECT COUNT(*) FROM public.users u WHERE NOT EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id=u.id AND b.created_at>=NOW()-INTERVAL '30 days')) AS inactive_30d`)
-  ]);
-
-  const counts = Array(10).fill(0);
-  for (const row of resultRows) counts[Number(row.result_number)] = Number(row.count);
-  const totalRounds = counts.reduce((a, b) => a + b, 0);
-
-  return {
-    daily,
-    fairness: {
-      counts, total_rounds: totalRounds,
-      verdict: totalRounds < 100
-        ? "Not enough settled rounds for a useful statistical check"
-        : "Distribution available; not proof of fairness"
-    },
-    top_users: topUsers,
-    large_stakes: largeStakes,
-    high_return_users: highReturnUsers,
-    user_metrics: userMetrics[0] || {}
-  };
-}
-
-async function reconcile() {
-  const rows = await query(`SELECT
-    (SELECT COALESCE(SUM(balance),0) FROM public.wallet_balances) AS wallet_total,
-    (SELECT COALESCE(SUM(commission_amount),0) FROM public.referral_commissions) AS commissions,
-    (SELECT COALESCE(SUM(stake),0) FROM public.bets) AS bets_stake,
-    (SELECT COALESCE(SUM(payout),0) FROM public.bets WHERE status='won') AS bets_payout,
-    (SELECT COUNT(*) FROM public.bets) AS bet_count,
-    (SELECT COUNT(*) FROM public.transactions WHERE transaction_type='bet' AND status IN ('confirmed','completed')) AS bet_tx,
-    (SELECT COUNT(*) FROM public.transactions WHERE transaction_type='payout' AND status IN ('confirmed','completed')) AS payout_tx,
-    (SELECT COUNT(*) FROM public.bets WHERE status='won') AS paid_bets`);
-  const t = rows[0] || {};
-
-  return {
-    clean: false,
-    totals: {
-      wallet_total: Number(t.wallet_total || 0),
-      ledger_net: null,
-      commissions: Number(t.commissions || 0),
-      unrecorded: "Requires full transaction ledger mapping",
-      bets_stake: Number(t.bets_stake || 0),
-      bet_tx: Number(t.bet_tx || 0),
-      stake_diff: "Requires transaction ledger mapping",
-      bets_payout: Number(t.bets_payout || 0),
-      payout_tx: Number(t.payout_tx || 0),
-      payout_diff: "Requires payout ledger mapping",
-      bet_count_diff: Number(t.bet_count || 0) - Number(t.bet_tx || 0),
-      payout_count_diff: Number(t.paid_bets || 0) - Number(t.payout_tx || 0)
-    },
-    mismatches: []
-  };
-}
-
-async function userDetail(userId) {
-  const profiles = await query(
-    `SELECT u.id,u.telegram_id,u.first_name,u.last_name,u.username,w.balance,
-      u.referral_code,u.referred_by,u.created_at
-     FROM public.users u LEFT JOIN public.wallet_balances w ON w.user_id=u.id
-     WHERE u.id=$1 LIMIT 1`, [userId]
-  );
-  if (!profiles.length) return null;
-
-  const [stats, recentBets, recentTransactions, commissions, referralTree, generated, rewards, activity] = await Promise.all([
-    query(`SELECT COUNT(*) AS bets,
-      COALESCE(SUM(stake),0) AS stake, COALESCE(SUM(payout),0) AS payout,
-      COUNT(*) FILTER(WHERE status='won') AS wins, COUNT(*) FILTER(WHERE status='lost') AS losses
-      FROM public.bets WHERE user_id=$1`, [userId]),
-    query(`SELECT b.id,r.round_code,
-      COALESCE(r.period_number, r.round_code) AS period_number,
-      b.bet_type,b.selection,b.stake,b.fee,b.status,
-      CASE WHEN r.ends_at<=NOW() THEN r.result_number ELSE NULL END AS result_number,
-      b.payout,b.created_at,b.settled_at
-      FROM public.bets b LEFT JOIN public.game_rounds r ON r.id=b.round_id
-      WHERE b.user_id=$1 ORDER BY b.id DESC LIMIT 20`, [userId]),
-    query(`SELECT id,transaction_type,amount,status,network,tx_hash,payout_tx_hash,
-      destination_address,admin_note,reviewed_at,reviewed_by,created_at
-      FROM public.transactions WHERE user_id=$1 ORDER BY id DESC LIMIT 20`, [userId]),
-    query(`SELECT referral_level,COUNT(*) AS count,COALESCE(SUM(commission_amount),0) AS total
-      FROM public.referral_commissions WHERE referrer_user_id=$1
-      GROUP BY referral_level ORDER BY referral_level`, [userId]),
-    query(`WITH RECURSIVE rt AS (
-      SELECT id,username,referred_by,created_at,1 AS level FROM public.users WHERE referred_by=$1
-      UNION ALL
-      SELECT u.id,u.username,u.referred_by,u.created_at,rt.level+1
-      FROM public.users u JOIN rt ON u.referred_by=rt.id WHERE rt.level<3
-    ) SELECT id,username,referred_by,created_at,level FROM rt ORDER BY level,id LIMIT 200`, [userId]),
-    query(`SELECT COALESCE(SUM(commission_amount),0) AS total FROM public.referral_commissions WHERE source_user_id=$1`, [userId]),
-    query(`SELECT COUNT(*) AS total,
-      COALESCE(SUM(reward_points),0) AS points,
-      COUNT(*) FILTER(WHERE status='credited') AS credited
-      FROM public.referral_rewards WHERE referrer_user_id=$1`, [userId]),
-    query(`SELECT MAX(created_at) AS last_bet_at,
-      COUNT(*) FILTER(WHERE created_at>=NOW()-INTERVAL '24 hours') AS bets_24h,
-      COUNT(*) FILTER(WHERE created_at>=NOW()-INTERVAL '7 days') AS bets_7d
-      FROM public.bets WHERE user_id=$1`, [userId])
-  ]);
-
-  return {
-    profile: profiles[0],
-    stats: stats[0] || {},
-    recent_bets: recentBets,
-    recent_transactions: recentTransactions,
-    referral_tree: referralTree,
-    commissions_earned: commissions,
-    commissions_generated: Number(generated[0]?.total || 0),
-    referral_rewards: rewards[0] || {},
-    activity: activity[0] || {}
-  };
-}
-
-async function search(q) {
-  q = String(q || "").trim().slice(0, 100);
-  if (!q) return { users: [], rounds: [], bets: [] };
-
-  const users = await query(
-    `SELECT u.id,u.telegram_id,u.username,w.balance
-     FROM public.users u LEFT JOIN public.wallet_balances w ON w.user_id=u.id
-     WHERE CAST(u.id AS TEXT)=$1 OR CAST(u.telegram_id AS TEXT)=$1 OR u.username ILIKE $2
-     ORDER BY u.id DESC LIMIT 20`, [q, `%${q}%`]
-  );
-  const rounds = await query(
-    `SELECT COALESCE(period_number, round_code) AS period_number,
-      round_code,status,starts_at,ends_at,result_number
-     FROM public.game_rounds
-     WHERE round_code=$1 OR period_number=$1 OR round_code ILIKE $2 OR period_number ILIKE $2
-     ORDER BY starts_at DESC LIMIT 10`, [q, `%${q}%`]
-  );
-  const bets = /^\d+$/.test(q)
-    ? await query(`SELECT b.id,b.user_id,r.round_code,
-        COALESCE(r.period_number, r.round_code) AS period_number,
-        b.bet_type,b.stake,b.status
-        FROM public.bets b LEFT JOIN public.game_rounds r ON r.id=b.round_id
-        WHERE b.id=$1 LIMIT 10`, [q])
-    : [];
-  return { users, rounds, bets };
-}
-
-function csvCell(value) {
-  let s = value == null ? "" : String(value);
-  if (/^[\s]*[=+\-@\t\r]/.test(s)) s = "'" + s;
-  return `"${s.replace(/"/g, '""')}"`;
-}
-
-async function exportCsv(body) {
-  const kind = String(body.kind || body.dataset || "");
-  let sql = "";
-  const params = [];
-  const conditions = [];
-
-  if (kind === "users") {
-    const segment = String(body.segment || "all");
-    if (!USER_SEGMENTS.has(segment)) throw new Error("Invalid user segment.");
-    const segmentSql = userSegmentSql(segment);
-    if (segmentSql) conditions.push(segmentSql);
-    if (body.q) {
-      const q = String(body.q).trim().slice(0, 100);
-      if (/^\d+$/.test(q)) {
-        params.push(q);
-        conditions.push(`(CAST(u.telegram_id AS TEXT)=$${params.length} OR CAST(u.id AS TEXT)=$${params.length})`);
-      } else {
-        params.push(`%${q}%`);
-        conditions.push(`u.username ILIKE $${params.length}`);
-      }
-    }
-    sql = `SELECT u.id,u.telegram_id,u.first_name,u.last_name,u.username,w.balance,
-      u.referred_by,u.referral_code,u.created_at
-      FROM public.users u LEFT JOIN public.wallet_balances w ON w.user_id=u.id
-      ${conditions.length ? "WHERE " + conditions.join(" AND ") : ""}
-      ORDER BY u.id DESC LIMIT ${EXPORT_MAX}`;
-  } else if (kind === "bets") {
-    if (body.user_id) {
-      if (!/^\d{1,15}$/.test(String(body.user_id))) throw new Error("Invalid user ID.");
-      params.push(String(body.user_id));
-      conditions.push(`b.user_id=$${params.length}`);
-    }
-    if (body.round_code) { params.push(String(body.round_code).slice(0, 100)); conditions.push(`r.round_code=$${params.length}`); }
-    if (body.status) {
-      const status = String(body.status);
-      if (!STATUSES.has(status)) throw new Error("Invalid status.");
-      params.push(status);
-      conditions.push(`b.status=$${params.length}`);
-    }
-    sql = `SELECT b.id,b.user_id,r.round_code,
-      COALESCE(r.period_number, r.round_code) AS period_number,
-      b.bet_type,b.selection,b.stake,b.fee,b.status,b.payout,
-      b.created_at,b.settled_at
-      FROM public.bets b LEFT JOIN public.game_rounds r ON r.id=b.round_id
-      ${conditions.length ? "WHERE " + conditions.join(" AND ") : ""}
-      ORDER BY b.id DESC LIMIT ${EXPORT_MAX}`;
-  } else if (kind === "transactions") {
-    const type = body.type || body.transaction_type;
-    if (type) {
-      if (!["deposit", "withdrawal"].includes(String(type))) throw new Error("Invalid transaction type.");
-      params.push(String(type));
-      conditions.push(`transaction_type=$${params.length}`);
-    }
-    if (body.user_id) {
-      if (!/^\d{1,15}$/.test(String(body.user_id))) throw new Error("Invalid user ID.");
-      params.push(String(body.user_id));
-      conditions.push(`user_id=$${params.length}`);
-    }
-    if (body.status) {
-      const status = String(body.status);
-      if (!STATUSES.has(status)) throw new Error("Invalid status.");
-      params.push(status);
-      conditions.push(`status=$${params.length}`);
-    }
-    sql = `SELECT id,user_id,transaction_type,amount,status,network,tx_hash,destination_address,admin_note,
-      reviewed_at,reviewed_by,created_at,updated_at
-      FROM public.transactions
-      ${conditions.length ? "WHERE " + conditions.join(" AND ") : ""}
-      ORDER BY id DESC LIMIT ${EXPORT_MAX}`;
-  } else if (kind === "wallets") {
-    if (body.q) {
-      const q = String(body.q).trim().slice(0, 100);
-      if (/^\d+$/.test(q)) {
-        params.push(q);
-        conditions.push(`CAST(w.user_id AS TEXT)=$${params.length}`);
-      } else {
-        params.push(`%${q}%`);
-        conditions.push(`u.username ILIKE $${params.length}`);
-      }
-    }
-    sql = `SELECT w.user_id,u.telegram_id,u.username,w.balance,w.updated_at
-      FROM public.wallet_balances w LEFT JOIN public.users u ON u.id=w.user_id
-      ${conditions.length ? "WHERE " + conditions.join(" AND ") : ""}
-      ORDER BY w.user_id DESC LIMIT ${EXPORT_MAX}`;
-  } else {
-    throw new Error("Invalid export type.");
-  }
-
-  const rows = await query(sql, params);
-  const columns = rows.length ? Object.keys(rows[0]) : [];
-  const csv = [
-    columns.map(csvCell).join(","),
-    ...rows.map(row => columns.map(column => csvCell(row[column])).join(","))
-  ].join("\r\n");
-
-  return { csv, row_count: rows.length, truncated: rows.length === EXPORT_MAX };
-}
-
-async function reviewWalletTransaction(action, body, session, req) {
-  const transactionId = String(body.transaction_id || "");
-  if (!/^\d{1,15}$/.test(transactionId)) throw new Error("Invalid transaction ID.");
-
-  const note = String(body.admin_note || "").trim().slice(0, 500);
-  const payoutTxHash = String(body.payout_tx_hash || "").trim().slice(0, 200);
-  const reviewNote = payoutTxHash ? `${note}${note ? " | " : ""}Payout TX: ${payoutTxHash}`.slice(0, 500) : note;
-  if (action === "withdrawal_approve" && !/^0x[a-fA-F0-9]{64}$/.test(payoutTxHash)) {
-    throw new Error("A valid payout transaction hash is required.");
-  }
-
-  await ensureManagementTables();
-  const client = await pool.connect();
-
-  try {
-    await client.query("BEGIN");
-    const result = await client.query(
-      `SELECT t.id,t.user_id,t.transaction_type,t.amount,t.status,t.network,t.tx_hash,t.payout_tx_hash,
-        u.telegram_id,u.username,u.first_name,u.last_name
-       FROM public.transactions t JOIN public.users u ON u.id=t.user_id
-       WHERE t.id=$1 FOR UPDATE`, [transactionId]
-    );
-    if (!result.rows.length) throw new Error("Transaction not found.");
-    const tx = result.rows[0];
-    if (tx.status !== "pending") throw new Error("Transaction is not pending.");
-    if (!["deposit", "withdrawal"].includes(tx.transaction_type)) throw new Error("Unsupported wallet transaction type.");
-    if (action.startsWith("deposit_") && tx.transaction_type !== "deposit") throw new Error("This is not a deposit transaction.");
-    if (action.startsWith("withdrawal_") && tx.transaction_type !== "withdrawal") throw new Error("This is not a withdrawal transaction.");
-
-    let newStatus;
-    if (action === "deposit_approve") {
-      await client.query(
-        `INSERT INTO public.wallet_balances (user_id,balance,updated_at) VALUES ($1,$2::numeric,NOW())
-         ON CONFLICT (user_id) DO UPDATE SET
-           balance = public.wallet_balances.balance + (EXCLUDED.balance * 100),
-           updated_at = NOW()`, [tx.user_id, tx.amount]
-      );
-      newStatus = "confirmed";
-    } else if (action === "deposit_reject") {
-      newStatus = "rejected";
-    } else if (action === "withdrawal_approve") {
-      newStatus = "confirmed";
-    } else if (action === "withdrawal_reject") {
-      await client.query(
-        `INSERT INTO public.wallet_balances (user_id,balance,updated_at) VALUES ($1,$2::numeric,NOW())
-         ON CONFLICT (user_id) DO UPDATE SET
-           balance = public.wallet_balances.balance + (EXCLUDED.balance * 100),
-           updated_at = NOW()`, [tx.user_id, tx.amount]
-      );
-      newStatus = "rejected";
-    } else {
-      throw new Error("Unsupported wallet review action.");
-    }
-
-    if (action === "withdrawal_approve") {
-      await client.query(
-        `INSERT INTO public.user_notifications(user_id,kind,title,message)
-         VALUES($1,'withdrawal','Withdrawal approved',$2)`,
-        [tx.user_id, `Your withdrawal of ${Number(tx.amount).toFixed(2)} USDT was approved and is ready for payout.`]
-      );
-    }
-
-    await client.query(
-      `UPDATE public.transactions
-       SET status=$1, admin_note=$2,
-           payout_tx_hash=CASE WHEN $5 <> '' THEN $5 ELSE payout_tx_hash END,
-           reviewed_at=NOW(), reviewed_by=$3, updated_at=NOW()
-       WHERE id=$4`,
-      [newStatus, reviewNote, session.username, transactionId, payoutTxHash]
-    );
-
-    await client.query("COMMIT");
-
-    const resultsChannel = await getResultsChannel();
-    if (action === "withdrawal_approve") {
-      await notifyTelegram(
-        `✅ Withdrawal approved\n👤 Name: ${tx.first_name || "User"}${tx.last_name ? ` ${tx.last_name}` : ""}\n💵 Amount: ${Number(tx.amount).toFixed(2)} USDT\n🌐 Network: ${tx.network || "BEP-20"}\n🔗 Transaction: ${payoutTxHash}\n📣 Manual payout approved`,
-        [process.env.ADMIN_CHAT_ID, resultsChannel]
-      );
-    } else if (action === "deposit_approve") {
-      await notifyTelegram(`✅ Deposit approved\n👤 User ID: ${tx.telegram_id}\n💵 Amount credited: ${Number(tx.amount) * 100} points (${Number(tx.amount).toFixed(2)} USDT)`);
-    }
-
-    await audit(session.username, action, req, "success", "transaction", transactionId);
-
-    return {
-      ok: true, transaction_id: transactionId, transaction_type: tx.transaction_type, status: newStatus,
-      message:
-        action === "deposit_approve" ? `Deposit approved. ${Number(tx.amount) * 100} Points credited to user.`
-        : action === "deposit_reject" ? "Deposit rejected."
-        : action === "withdrawal_approve" ? "Withdrawal approved for manual payout."
-        : "Withdrawal rejected and reserved balance refunded."
-    };
-  } catch (error) {
-    await client.query("ROLLBACK").catch(() => {});
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
-async function getGiftCodes(body) {
-  await ensureManagementTables();
-  const { page, size, offset } = pagination(body);
-  const [rows, totals] = await Promise.all([
-    query(`SELECT gc.*,
-      (SELECT COUNT(*)::int FROM public.gift_code_redemptions r WHERE r.gift_code_id=gc.id) AS redeem_count
-      FROM public.gift_codes gc ORDER BY gc.id DESC LIMIT $1 OFFSET $2`, [size, offset]),
-    query(`SELECT COUNT(*)::int AS total FROM public.gift_codes`)
-  ]);
-  const total = Number(totals[0]?.total || 0);
-  return {
-    ok: true,
-    gift_codes: rows,
-    pagination: {
-      page, page_size: size, total, total_pages: Math.max(1, Math.ceil(total / size)),
-      has_previous: page > 1, has_next: page < Math.ceil(total / size)
-    }
-  };
-}
-
-async function getGiftRedemptions(body) {
-  await ensureManagementTables();
-  const { page, size, offset } = pagination(body);
-  const [rows, totals] = await Promise.all([
-    query(`SELECT r.id, r.redeemed_at,
-        gc.code, gc.mode, gc.points AS legacy_points, gc.per_user_points, gc.total_points,
-        COALESCE(r.points_earned, gc.per_user_points, gc.points) AS points_earned,
-        u.id AS user_id, u.first_name, u.last_name, u.username, u.telegram_id
-      FROM public.gift_code_redemptions r
-      JOIN public.gift_codes gc ON gc.id = r.gift_code_id
-      JOIN public.users u ON u.id = r.user_id
-      ORDER BY r.redeemed_at DESC LIMIT $1 OFFSET $2`, [size, offset]),
-    query(`SELECT COUNT(*)::int AS total FROM public.gift_code_redemptions`)
-  ]);
-  const total = Number(totals[0]?.total || 0);
-  return {
-    ok: true,
-    redemptions: rows,
-    pagination: {
-      page, page_size: size, total, total_pages: Math.max(1, Math.ceil(total / size)),
-      has_previous: page > 1, has_next: page < Math.ceil(total / size)
-    }
-  };
-}
-
-async function getChannelSettings() {
-  await ensureManagementTables();
-  const settingsRows = await query(`SELECT * FROM public.channel_settings WHERE id=1`);
-  const channelRows = await query(`SELECT * FROM public.prediction_channels ORDER BY id DESC`);
-  return { ok: true, settings: settingsRows[0] || {}, prediction_channels: channelRows };
-}
-
-async function saveChannelSettings(body, session, req) {
-  await ensureManagementTables();
-  await query(`UPDATE public.channel_settings SET
-      channel_username=$1, bot_username=$2, predictions_enabled=$3, prediction_timing=$4,
-      prediction_message=$5, result_message=$6, result_image_url=$7, inline_link_text=$8,
-      channel_updates_enabled=$9, updated_at=NOW()
-    WHERE id=1`,
-    [
-      String(body.channel_username || "").slice(0, 200),
-      String(body.bot_username || "").slice(0, 200),
-      body.predictions_enabled === true || body.predictions_enabled === "true",
-      Math.max(1, Math.min(3600, Number(body.prediction_timing) || 150)),
-      body.prediction_message ? String(body.prediction_message).slice(0, 4000) : null,
-      body.result_message ? String(body.result_message).slice(0, 4000) : null,
-      body.result_image_url ? String(body.result_image_url).slice(0, 500) : null,
-      String(body.inline_link_text || "Play").slice(0, 100),
-      body.channel_updates_enabled === true || body.channel_updates_enabled === "true"
-    ]
-  );
-  await audit(session.username, "save_channel_settings", req, "success");
-  return { ok: true, message: "Channel settings saved." };
-}
-
-async function savePredictionChannel(body, session, req) {
-  await ensureManagementTables();
-  const action = String(body.action_type);
-
-  if (action === "add") {
-    const channelId = String(body.channel_id || "").trim();
-    const schedule = Number(body.schedule_mins) || 3;
-    if (!channelId) throw new Error("Channel ID required");
-    await query(`INSERT INTO public.prediction_channels (channel_id, schedule_mins) VALUES ($1, $2)
-      ON CONFLICT (channel_id) DO UPDATE SET schedule_mins=$2`, [channelId, schedule]);
-  } else if (action === "toggle") {
-    await query(`UPDATE public.prediction_channels SET is_active=$1 WHERE id=$2`, [body.is_active, body.id]);
-  } else if (action === "delete") {
-    await query(`DELETE FROM public.prediction_channels WHERE id=$1`, [body.id]);
-  } else {
-    throw new Error("Invalid action");
-  }
-
-  await audit(session.username, `pred_channel_${action}`, req, "success");
-  return { ok: true };
-}
-
-async function nextRound() {
-  const rows = await query(
-    `SELECT COALESCE(r.period_number, r.round_code) AS period_number,
-      r.round_code, r.status, r.starts_at, r.betting_closes_at, r.ends_at,
-      r.result_number, r.predicted_result
-     FROM public.game_rounds r
-     WHERE r.status IN ('open','locked') OR r.starts_at > NOW()
-     ORDER BY r.starts_at ASC LIMIT 1`
-  );
-  return { ok: true, next: rows[0] || null };
-}
-
-async function setNextResult(body, session, req) {
-  await ensureManagementTables();
-  const roundCode = String(body.round_code || "").trim().slice(0, 100);
-  const resultNumber = Number(body.result_number);
-
-  if (!roundCode) throw new Error("Round code / period is required.");
-  if (!Number.isInteger(resultNumber) || resultNumber < 0 || resultNumber > 9) {
-    throw new Error("Result must be an integer between 0 and 9.");
-  }
-
-  const rows = await query(
-    `UPDATE public.game_rounds
-     SET predicted_result=$1, updated_at=NOW()
-     WHERE (round_code=$2 OR period_number=$2) AND (status IN ('open','locked') OR starts_at > NOW())
-     RETURNING id, round_code, COALESCE(period_number, round_code) AS period_number`,
-    [resultNumber, roundCode]
-  );
-
-  if (!rows.length) throw new Error("Round not found or already settled.");
-  await audit(session.username, "set_next_result", req, "success", "round", rows[0].round_code);
-  return {
-    ok: true,
-    round_code: rows[0].round_code,
-    period_number: rows[0].period_number,
-    predicted_result: resultNumber
-  };
-}
-
-async function setResult(body, session, req) {
-  await ensureManagementTables();
-  const roundCode = String(body.round_code || "").trim().slice(0, 100);
-  const resultNumber = Number(body.result_number);
-  const autoSettle = body.auto_settle !== false;
-
-  if (!roundCode) throw new Error("Round code / period is required.");
-  if (!Number.isInteger(resultNumber) || resultNumber < 0 || resultNumber > 9) {
-    throw new Error("Result must be an integer between 0 and 9.");
-  }
-
-  const isBig = resultNumber >= 5;
-  const bigSmall = isBig ? 'Big' : 'Small';
-  let colour = '';
-  if (resultNumber === 0 || resultNumber === 5) colour = 'Violet';
-  else if ([1, 3, 7, 9].includes(resultNumber)) colour = 'Green';
-  else if ([2, 4, 6, 8].includes(resultNumber)) colour = 'Red';
-
-  const colourMultiplier = colour === 'Violet' ? VIOLET_PAYOUT_MULTIPLIER : COLOUR_PAYOUT_MULTIPLIER;
-
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-
-    const rounds = await client.query(
-      `SELECT id, round_code, COALESCE(period_number, round_code) AS period_number
-       FROM public.game_rounds
-       WHERE round_code=$1 OR period_number=$1
-       FOR UPDATE`,
-      [roundCode]
-    );
-    if (!rounds.rows.length) throw new Error("Round not found.");
-    const round = rounds.rows[0];
-
-    await client.query(
-      `UPDATE public.game_rounds
-       SET result_number=$1, status='settled', settled_at=NOW(), updated_at=NOW()
-       WHERE id=$2`,
-      [resultNumber, round.id]
-    );
-
-    let settledCount = 0;
-    let wonCount = 0;
-    let totalPayout = 0;
-
-    if (autoSettle) {
-      const settlementResult = await client.query(
-        `UPDATE public.bets
-         SET result_number=$1,
-             status = CASE
-               WHEN LOWER(selection) = $1::text THEN 'won'
-               WHEN LOWER(selection) LIKE '%' || LOWER($2) || '%' THEN 'won'
-               WHEN LOWER(selection) = LOWER($3) THEN 'won'
-               WHEN selection ~ '^[0-9]+$' OR LOWER(selection) IN ('green','red','violet','violet-green','violet-red','big','small') THEN 'lost'
-               ELSE status
-             END,
-             payout = CASE
-               WHEN LOWER(selection) = $1::text THEN stake * $4
-               WHEN LOWER(selection) LIKE '%' || LOWER($2) || '%' THEN stake * $5
-               WHEN LOWER(selection) = LOWER($3) THEN stake * $6
-               ELSE 0
-             END,
-             settled_at = CASE
-               WHEN selection ~ '^[0-9]+$' OR LOWER(selection) IN ('green','red','violet','violet-green','violet-red','big','small') THEN NOW()
-               ELSE settled_at
-             END
-         WHERE round_id=$7 AND status='pending'
-         RETURNING user_id, payout, status`,
-        [String(resultNumber), colour, bigSmall, NUMBER_PAYOUT_MULTIPLIER, colourMultiplier, BIG_SMALL_PAYOUT_MULTIPLIER, round.id]
-      );
-
-      settledCount = settlementResult.rowCount;
-      wonCount = settlementResult.rows.filter(r => r.status === "won").length;
-      totalPayout = settlementResult.rows.reduce((sum, r) => sum + Number(r.payout || 0), 0);
-
-      if (totalPayout > 0) {
-        await client.query(
-          `INSERT INTO public.wallet_balances (user_id, balance, updated_at)
-           SELECT user_id, SUM(payout), NOW()
-           FROM public.bets
-           WHERE round_id=$1 AND status='won' AND payout > 0
-           GROUP BY user_id
-           ON CONFLICT (user_id) DO UPDATE SET
-             balance = public.wallet_balances.balance + EXCLUDED.balance,
-             updated_at = NOW()`,
-          [round.id]
-        );
-      }
-    }
-
-    await client.query("COMMIT");
-
-    await audit(session.username, "set_result", req, "success", "round", round.round_code);
-
-    const resultsChannel = await getResultsChannel();
-    try {
-      await notifyTelegram(
-        `🎲 Result Updated\n📅 Period: ${round.period_number}\n🔢 Result: ${resultNumber} (${colour} | ${bigSmall})\n💰 Settled bets: ${settledCount}\n✅ Winners: ${wonCount}\n💵 Payout: ${totalPayout.toFixed(2)}`,
-        [resultsChannel]
-      );
-    } catch { /* non-blocking */ }
-
-    return {
-      ok: true,
-      round_code: round.round_code,
-      period_number: round.period_number,
-      result_number: resultNumber,
-      colour: colour,
-      big_small: bigSmall,
-      settled_bets: settledCount,
-      won_bets: wonCount,
-      total_payout: totalPayout,
-      message: autoSettle
-        ? `Result set (${resultNumber} - ${colour} - ${bigSmall}). ${settledCount} bets settled, ${wonCount} winners, ${totalPayout.toFixed(2)} points credited.`
-        : "Result set (no auto-settlement)."
-    };
-  } catch (error) {
-    await client.query("ROLLBACK").catch(() => {});
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
-function colourOf(n) {
+function getColour(n) {
+  if (n === null || n === undefined || n === "") return "—";
   const num = Number(n);
   if (num === 0 || num === 5) return "Violet";
   if ([1, 3, 7, 9].includes(num)) return "Green";
   if ([2, 4, 6, 8].includes(num)) return "Red";
-  return "";
+  return "—";
 }
 
-async function postPrediction(body, session, req) {
-  await ensureManagementTables();
+function getBigSmall(n) {
+  if (n === null || n === undefined || n === "") return "—";
+  return Number(n) >= 5 ? "Big" : "Small";
+}
 
-  const channels = body.all
-    ? await query(`SELECT * FROM public.prediction_channels WHERE is_active=TRUE`)
-    : await query(`SELECT * FROM public.prediction_channels WHERE id=$1`, [body.id]);
+function formatNumber(value, decimals = 2) {
+  if (value === null || value === undefined || value === "") return "—";
+  const n = Number(value);
+  if (!Number.isFinite(n)) return String(value);
+  return n.toLocaleString("en-US", { maximumFractionDigits: decimals });
+}
 
-  if (!channels.length) throw new Error("No active channels found.");
+function formatDate(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", hour12: true });
+}
 
-  const rounds = await query(
-    `SELECT COALESCE(period_number, round_code) AS period_number, round_code,
-      status, starts_at, ends_at, predicted_result
-     FROM public.game_rounds
-     WHERE status IN ('open','locked') OR starts_at > NOW()
-     ORDER BY starts_at ASC LIMIT 1`
-  );
-  if (!rounds.length) throw new Error("No upcoming round found.");
-  const round = rounds[0];
+function money(v) { return formatNumber(v, 4); }
+function statValue(v, d = 2) { return formatNumber(v ?? 0, d); }
 
-  if (round.predicted_result === null || round.predicted_result === undefined) {
-    throw new Error("No prediction set for the upcoming round. Use 'Set / Change' on Dashboard first.");
+function badge(value) {
+  const text = String(value ?? "unknown");
+  const low = text.toLowerCase();
+  let cls = "";
+  if (["completed", "confirmed", "settled", "won", "success"].includes(low)) cls = "success";
+  else if (["failed", "rejected", "lost", "cancelled", "error"].includes(low)) cls = "danger";
+  else if (["pending", "open", "locked"].includes(low)) cls = "warning";
+  else if (["active", "info"].includes(low)) cls = "info";
+  return `<span class="badge ${cls}">${escapeHtml(text)}</span>`;
+}
+
+function toast(message, isError = false) {
+  const el = $("toast");
+  el.textContent = message;
+  el.className = "toast show" + (isError ? " error-toast" : "");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => el.classList.remove("show"), 3500);
+}
+
+/* ===== Period countdown timers ===== */
+let periodTimerInterval = null;
+
+function stopPeriodTimers() {
+  if (periodTimerInterval) {
+    clearInterval(periodTimerInterval);
+    periodTimerInterval = null;
   }
-
-  const settings = await query(`SELECT * FROM public.channel_settings WHERE id=1`);
-  const s = settings[0] || {};
-  const template = s.prediction_message || "🎯 Next Period: {round}\n🔮 Prediction: {prediction}";
-
-  const message = template
-    .replace(/\{round\}/g, round.period_number || round.round_code || "")
-    .replace(/\{prediction\}/g, String(round.predicted_result))
-    .replace(/\{colour\}/g, colourOf(round.predicted_result));
-
-  let sent = 0;
-  let failed = 0;
-  const errors = [];
-
-  for (const ch of channels) {
-    const result = await notifyTelegram(message, [ch.channel_id]);
-    if (result.ok) sent++;
-    else {
-      failed++;
-      const err = result.results?.map(r => r.error || r.payload?.description).filter(Boolean).join("; ");
-      if (err) errors.push(`Channel ${ch.channel_id}: ${err}`);
-    }
-  }
-
-  await audit(session.username, "post_prediction", req, failed ? "partial" : "success");
-  
-  if (sent === 0 && failed > 0) {
-    throw new Error(`Failed to post to channels: ${errors.join(" | ")}`);
-  }
-  
-  return {
-    ok: true,
-    message: `Posted to ${sent} channel(s)${failed ? `, failed: ${failed}` : ""}.`,
-    sent, failed,
-    errors: errors.slice(0, 5)
-  };
 }
 
-async function getSupportSettings() {
-  await ensureManagementTables();
-  const rows = await query(`SELECT * FROM public.support_settings WHERE id=1`);
-  return { ok: true, settings: rows[0] || {} };
-}
-
-async function saveSupportSettings(body, session, req) {
-  await ensureManagementTables();
-  await query(`UPDATE public.support_settings SET
-      support_username=$1, support_channel=$2, support_message=$3,
-      support_enabled=$4, updated_at=NOW()
-    WHERE id=1`,
-    [
-      String(body.support_username || "").slice(0, 100),
-      String(body.support_channel || "").slice(0, 100),
-      body.support_message ? String(body.support_message).slice(0, 2000) : null,
-      body.support_enabled === true || body.support_enabled === "true"
-    ]
-  );
-  await audit(session.username, "save_support_settings", req, "success");
-  return { ok: true, message: "Support settings saved." };
-}
-
-async function getSupportMessages(body) {
-  await ensureManagementTables();
-  const { page, size, offset } = pagination(body);
-  const [rows, totals] = await Promise.all([
-    query(`SELECT id, user_id, username, message, status, created_at
-           FROM public.support_messages
-           ORDER BY id DESC LIMIT $1 OFFSET $2`, [size, offset]),
-    query(`SELECT COUNT(*)::int AS total FROM public.support_messages`)
-  ]);
-  const total = Number(totals[0]?.total || 0);
-  return {
-    ok: true,
-    messages: rows,
-    pagination: {
-      page, page_size: size, total, total_pages: Math.max(1, Math.ceil(total / size)),
-      has_previous: page > 1, has_next: page < Math.ceil(total / size)
-    }
-  };
-}
-
-async function broadcastMessage(body, session, req) {
-  await ensureManagementTables();
-  const msg = String(body.message || "").trim().slice(0, 4000);
-  const target = String(body.target || "both");
-  const imageUrl = body.image_url ? String(body.image_url).trim().slice(0, 500) : null;
-  if (!msg) throw new Error("Message is required.");
-
-  let sent = 0;
-  let failed = 0;
-
-  if (target === "channel" || target === "both") {
-    const channel = await query(`SELECT channel_username FROM public.channel_settings WHERE id=1`);
-    if (channel.length && channel[0].channel_username) {
-      const res = await notifyTelegram(msg, [channel[0].channel_username], imageUrl);
-      if (res.ok) sent++; else failed++;
-    } else failed++;
-  }
-
-  if (target === "users" || target === "both") {
-    const users = await query(`SELECT telegram_id FROM public.users WHERE is_blocked=FALSE`);
-    const chatIds = users.map(u => u.telegram_id).filter(Boolean);
-    for (let i = 0; i < chatIds.length; i += 30) {
-      const batch = chatIds.slice(i, i + 30);
-      const results = await Promise.allSettled(batch.map(id => notifyTelegram(msg, [id], imageUrl)));
-      results.forEach(r => {
-        if (r.status === "fulfilled" && r.value.ok) sent++;
-        else failed++;
-      });
-      if (i + 30 < chatIds.length) await new Promise(res => setTimeout(res, 1000));
-    }
-  }
-
-  await audit(session.username, "broadcast", req, "success");
-  return { ok: true, message: `Broadcast complete. Sent: ${sent}, Failed: ${failed}`, sent, failed };
-}
-
-async function getLoginAttempts(body) {
-  const { page, size, offset } = pagination(body);
-  const [rows, totals] = await Promise.all([
-    query(`SELECT id,ip,success,attempted_at FROM public.admin_login_attempts ORDER BY attempted_at DESC LIMIT $1 OFFSET $2`, [size, offset]),
-    query(`SELECT COUNT(*)::int AS total FROM public.admin_login_attempts`)
-  ]);
-  const total = Number(totals[0]?.total || 0);
-  return {
-    ok: true,
-    entries: rows,
-    pagination: {
-      page, page_size: size, total, total_pages: Math.max(1, Math.ceil(total / size)),
-      has_previous: page > 1, has_next: page < Math.ceil(total / size)
-    }
-  };
-}
-
-async function securitySummary() {
-  const [attempts, auditRows] = await Promise.all([
-    query(`SELECT id,ip,success,attempted_at FROM public.admin_login_attempts ORDER BY attempted_at DESC LIMIT 100`),
-    query(`SELECT id,created_at,admin_username,action,target_type,target_id,outcome,ip FROM public.admin_audit_log ORDER BY id DESC LIMIT 100`)
-  ]);
-  return { attempts, entries: auditRows };
-}
-
-module.exports = async function handler(req, res) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
-    return json(res, 405, { message: "Method not allowed." });
-  }
-  if (!validRequest(req)) return json(res, 403, { message: "Request rejected." });
-
-  let settings;
-  try { settings = getConfig(); }
-  catch { return json(res, 500, { message: "Admin configuration error. Check Vercel environment settings." }); }
-
-  const body = req.body || {};
-  const action = String(body.action || "");
-
-  if (action === "login") {
-    try {
-      if (!(await loginAllowed(req))) {
-        await recordLogin(req, false);
-        await audit("unknown", "login_rate_limited", req, "blocked");
-        return json(res, 429, { message: "Too many login attempts. Try again in 15 minutes." });
+function startPeriodTimers() {
+  stopPeriodTimers();
+  const update = () => {
+    document.querySelectorAll("[data-countdown-to]").forEach(el => {
+      const endsAt = el.dataset.countdownTo;
+      const target = new Date(endsAt).getTime();
+      if (!endsAt || isNaN(target)) {
+        el.textContent = "⏱ —";
+        el.className = "timer-badge expired";
+        return;
       }
-      const ok = safeEqual(body.username, settings.username) && safeEqual(body.password, settings.password);
-      await recordLogin(req, ok);
-      if (!ok) {
-        await audit("unknown", "login", req, "failed");
-        return json(res, 401, { message: "Invalid username or password." });
+      const diff = target - Date.now();
+      if (diff <= 0) {
+        el.innerHTML = "⏱ 00:00 · Ended";
+        el.className = "timer-badge expired";
+        if (!el.dataset.refreshed && el.dataset.refreshFn) {
+          el.dataset.refreshed = "1";
+          const fn = el.dataset.refreshFn;
+          setTimeout(() => {
+            if (typeof window[fn] === "function" && state.currentView) {
+              try { window[fn](); } catch { /* ignore */ }
+            }
+          }, 3000);
+        }
+        return;
       }
-      setCookie(res, createSession(settings.username), SESSION_SECONDS);
-      await audit(settings.username, "login", req);
-      return json(res, 200, { ok: true, username: settings.username });
-    } catch (error) {
-      console.error("Admin login error:", error.code || error.name);
-      return json(res, 500, { message: "Login service temporarily unavailable." });
-    }
-  }
+      const totalSec = Math.floor(diff / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      const pad = n => String(n).padStart(2, "0");
+      const display = h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+      el.innerHTML = `⏱ ${display}`;
+      el.className = "timer-badge" + (totalSec <= 30 ? " urgent" : "");
+    });
+  };
+  update();
+  periodTimerInterval = setInterval(update, 1000);
+}
 
-  if (action === "logout") {
-    setCookie(res, "", 0);
-    return json(res, 200, { ok: true });
-  }
-
-  const session = verifySession(readCookie(req, COOKIE));
-  if (!session) return json(res, 401, { message: "Session expired. Please sign in again." });
-
-  try {
-    let result;
-    switch (action) {
-      case "me": result = { ok: true, username: session.username }; break;
-      case "dashboard": result = await dashboard(); break;
-      case "analytics": result = await analytics(); break;
-      case "reconcile": result = await reconcile(); break;
-      case "users":
-      case "wallets":
-      case "transactions":
-      case "rounds":
-      case "bets":
-      case "audit":
-        result = await listAction(action, body); break;
-      case "user_management": result = await userManagement(body, session, req); break;
-      case "user_detail": {
-        const id = String(body.user_id || "");
-        if (!/^\d{1,15}$/.test(id)) return json(res, 400, { message: "Invalid user ID." });
-        result = await userDetail(id);
-        if (!result) return json(res, 404, { message: "User not found." });
-        break;
-      }
-      case "deposit_addresses": result = await depositAddressConfig(body, session, req); break;
-      case "search": result = await search(body.q); break;
-      case "export": result = await exportCsv(body); break;
-      case "security": result = await securitySummary(); break;
-      case "login_attempts": result = await getLoginAttempts(body); break;
-      case "telegram": result = await telegramAdminAction(body, session, req); break;
-      case "gift_codes": result = await getGiftCodes(body); break;
-      case "gift_redemptions": result = await getGiftRedemptions(body); break;
-      case "channel_settings": result = await getChannelSettings(); break;
-      case "save_channel_settings": result = await saveChannelSettings(body, session, req); break;
-      case "save_prediction_channel": result = await savePredictionChannel(body, session, req); break;
-      case "next_round": result = await nextRound(); break;
-      case "set_next_result": result = await setNextResult(body, session, req); break;
-      case "set_result": result = await setResult(body, session, req); break;
-      case "post_prediction": result = await postPrediction(body, session, req); break;
-      case "support_settings": result = await getSupportSettings(); break;
-      case "save_support_settings": result = await saveSupportSettings(body, session, req); break;
-      case "support_messages": result = await getSupportMessages(body); break;
-      case "broadcast": result = await broadcastMessage(body, session, req); break;
-      case "deposit_approve":
-      case "deposit_reject":
-      case "withdrawal_approve":
-      case "withdrawal_reject":
-        result = await reviewWalletTransaction(action, body, session, req); break;
-      default:
-        return json(res, 400, { message: "Unknown admin action." });
-    }
-
-    if (!["deposit_approve", "deposit_reject", "withdrawal_approve", "withdrawal_reject"].includes(action)) {
-      await audit(session.username, action, req);
-    }
-    return json(res, 200, result);
-  } catch (error) {
-    console.error("Admin API error:", action, error.code || error.name || "Error");
-    let message = "Admin request failed. Check server logs.";
-    if (error.code === "42P01") message = "Required database table is missing.";
-    else if (error.code === "42703") message = "Database column mismatch. Check actual table schema.";
-    else if (error.code === "22P02") message = "Invalid database value.";
-    else if (error.message && /Invalid |Unsupported |Transaction |This is not |Maximum 10|Enter valid|Enter a valid|required|Round not found|No upcoming|No prediction|No active channels|Failed to post/.test(error.message)) {
-      message = error.message;
-    }
-    return json(res, 400, { message });
-  }
+/* ===== Blockchain explorers + copy helpers ===== */
+const EXPLORERS = {
+  "BEP-20": "https://bscscan.com/tx/",
+  "BSC": "https://bscscan.com/tx/",
+  "TRC-20": "https://tronscan.org/#/transaction/",
+  "TRON": "https://tronscan.org/#/transaction/",
+  "ERC-20": "https://etherscan.io/tx/",
+  "ETHEREUM": "https://etherscan.io/tx/",
+  "ETH": "https://etherscan.io/tx/",
+  "POLYGON": "https://polygonscan.com/tx/",
+  "SOL": "https://solscan.io/tx/",
+  "SOLANA": "https://solscan.io/tx/",
+  "BTC": "https://mempool.space/tx/",
+  "GRAM": "https://tonscan.org/tx/",
+  "TON": "https://tonscan.org/tx/"
 };
+
+function explorerUrl(network, hash) {
+  if (!hash) return "";
+  const base = EXPLORERS[String(network || "").toUpperCase()];
+  return base ? base + hash : "";
+}
+
+function txHashCell(hash, network) {
+  if (!hash) return "—";
+  const url = explorerUrl(network, hash);
+  const short = hash.length > 18 ? hash.slice(0, 10) + "…" + hash.slice(-6) : hash;
+  if (!url) return `<span class="mono" title="${escapeHtml(hash)}">${escapeHtml(short)}</span>`;
+  return `<a class="tx-link mono" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(hash)}">${escapeHtml(short)} ↗</a>`;
+}
+
+function addressCell(addr) {
+  if (!addr) return "—";
+  const short = addr.length > 18 ? addr.slice(0, 10) + "…" + addr.slice(-6) : addr;
+  return `<span class="mono" title="${escapeHtml(addr)}">${escapeHtml(short)}</span>
+    <button class="copy-btn" data-copy="${escapeHtml(addr)}" title="Copy address" type="button">📋</button>`;
+}
+
+function copyText(text) {
+  if (!text) return;
+  const done = () => toast("Copied");
+  const fallback = () => {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      document.execCommand("copy"); ta.remove(); done();
+    } catch { toast("Copy failed", true); }
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(done).catch(fallback);
+  } else fallback();
+}
+
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-copy]");
+  if (btn) { e.preventDefault(); copyText(btn.dataset.copy); }
+});
+
+async function api(action, data = {}) {
+  const response = await fetch(API_URL, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json", "X-Admin-Request": "1" },
+    body: JSON.stringify({ action, ...data })
+  });
+  let result;
+  try { result = await response.json(); }
+  catch { throw new Error("Server returned an invalid response."); }
+  if (response.status === 401 && action !== "login") {
+    showLogin("Your session expired. Please sign in again.");
+  }
+  if (!response.ok || result.ok === false) {
+    throw new Error(result.error || result.message || "Request failed.");
+  }
+  return result;
+}
+
+function showLogin(message = "") {
+  stopPeriodTimers();
+  if (state.notifInterval) {
+    clearInterval(state.notifInterval);
+    state.notifInterval = null;
+  }
+  $("appView").classList.add("hidden");
+  $("loginView").classList.remove("hidden");
+  $("loginError").textContent = message;
+  $("loginPassword").value = "";
+  state.username = "";
+  state.botUsername = null;
+}
+
+async function showApp(username) {
+  state.username = username || "Admin";
+  $("adminUsername").textContent = state.username;
+  $("loginView").classList.add("hidden");
+  $("appView").classList.remove("hidden");
+  renderNavigation();
+  navigate("dashboard");
+  fetchNotifications();
+  if (state.notifInterval) clearInterval(state.notifInterval);
+  state.notifInterval = setInterval(fetchNotifications, 30000);
+  loadBotUsername();
+}
+
+async function loadBotUsername() {
+  try {
+    const data = await api("channel_settings");
+    state.botUsername = (data.settings && data.settings.bot_username) || null;
+    if (state.botUsername) localStorage.setItem("bot_username", state.botUsername);
+  } catch { /* ignore */ }
+}
+
+function renderNavigation() {
+  const sidebar = $("sidebar");
+  sidebar.innerHTML = VIEWS.map(group => `
+    <div class="nav-label">${escapeHtml(group.group)}</div>
+    ${group.items.map(item => `
+      <button class="nav-btn ${state.currentView === item[0] ? "active" : ""}" data-view="${escapeHtml(item[0])}">
+        <span class="nav-icon">${item[1]}</span>
+        <span>${escapeHtml(item[2])}</span>
+      </button>
+    `).join("")}
+  `).join("");
+  sidebar.querySelectorAll("[data-view]").forEach(btn => {
+    btn.addEventListener("click", () => navigate(btn.dataset.view));
+  });
+}
+
+function setPage(title, description, actions = "") {
+  $("pageContent").innerHTML = `
+    <div class="page-header">
+      <div><h2>${escapeHtml(title)}</h2><p>${escapeHtml(description)}</p></div>
+      <div class="header-actions">${actions}</div>
+    </div>
+    <div id="viewBody"><div class="loading">Loading data...</div></div>
+  `;
+}
+
+function metricCard(label, value, note = "", color = "") {
+  return `
+    <div class="stat-card">
+      <div class="stat-label">${escapeHtml(label)}</div>
+      <div class="stat-value ${color}">${escapeHtml(value)}</div>
+      <div class="stat-note">${escapeHtml(note)}</div>
+    </div>`;
+}
+
+function table(headers, rows, emptyText = "No records found.") {
+  if (!rows || !rows.length) return `<div class="empty">${escapeHtml(emptyText)}</div>`;
+  return `
+    <div class="table-wrap"><table>
+      <thead><tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
+      <tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c ?? "—"}</td>`).join("")}</tr>`).join("")}</tbody>
+    </table></div>`;
+}
+
+function detailItem(label, value) {
+  return `<div class="detail-item"><span>${escapeHtml(label)}</span><strong>${value ?? "—"}</strong></div>`;
+}
+
+function viewLabel(view) {
+  for (const g of VIEWS) for (const i of g.items) if (i[0] === view) return i[2];
+  return view;
+}
+
+async function navigate(view) {
+  stopPeriodTimers();
+  state.currentView = view;
+  state.pages[view] = state.pages[view] || 1;
+  renderNavigation();
+  try {
+    switch (view) {
+      case "dashboard": await renderDashboard(); break;
+      case "analytics": await renderAnalytics(); break;
+      case "reconcile": await renderReconcile(); break;
+      case "users": await renderUsers(); break;
+      case "wallets": await renderWallets(); break;
+      case "transactions": await renderTransactions("transactions"); break;
+      case "deposit_addresses": await renderDepositAddresses(); break;
+      case "deposits": await renderTransactions("deposits"); break;
+      case "withdrawals": await renderTransactions("withdrawals"); break;
+      case "gift_codes": await renderGiftCodeHistory(); break;
+      case "gift_history": await renderGiftHistory(); break;
+      case "rounds": await renderRounds(); break;
+      case "bets": await renderBets(); break;
+      case "referrals": await renderReferrals(); break;
+      case "channel_settings": await renderChannelSettings(); break;
+      case "broadcast": await renderBroadcast(); break;
+      case "telegram": await renderTelegram(); break;
+      case "telegram_support": await renderTelegramSupport(); break;
+      case "audit": await renderAudit(); break;
+      case "login_attempts": await renderLoginAttempts(); break;
+      case "security": await renderSecurity(); break;
+      case "search": renderSearch(); break;
+      default:
+        setPage("Not Found", "Unknown dashboard section.");
+        $("viewBody").innerHTML = '<div class="empty">This section is unavailable.</div>';
+    }
+  } catch (error) {
+    if (view === state.currentView) {
+      $("pageContent").innerHTML = `
+        <div class="page-header"><div><h2>${escapeHtml(viewLabel(view))}</h2><p>Unable to load this section.</p></div>
+          <button class="btn" id="retryButton">Retry</button></div>
+        <div class="notice danger">${escapeHtml(error.message)}</div>`;
+      $("retryButton").addEventListener("click", () => navigate(view));
+    }
+  }
+}
+
+/* ===== Next result preview (with timer) ===== */
+async function loadNextResultPreview(bodyId, btnId) {
+  const body = $(bodyId);
+  if (!body) return;
+  body.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    const d = await api("next_round");
+    const n = d.next || d.round || {};
+    const period = n.period_number ?? n.round_code ?? "—";
+    const pred = n.predicted_result ?? n.result_number ?? d.predicted_result ?? null;
+    const startsAt = n.starts_at || d.starts_at || null;
+    const endsAt = n.ends_at || d.ends_at || null;
+    body.innerHTML = `
+      <div class="pred-next">
+        <div class="detail-item">
+          <span>Next Period (Game)</span>
+          <strong>${escapeHtml(period)}</strong>
+        </div>
+        <div class="detail-item">
+          <span>Time Left</span>
+          ${endsAt
+            ? `<span class="timer-badge" data-countdown-to="${escapeHtml(endsAt)}" data-refresh-fn="${escapeHtml("__refresh_" + bodyId)}">⏱ —</span>`
+            : `<span class="timer-badge expired">⏱ No end time</span>`}
+        </div>
+        <div class="detail-item">
+          <span>Predicted Result</span>
+          <strong class="yellow result-big">${pred === null || pred === undefined ? "—" : escapeHtml(pred)}</strong>
+        </div>
+      </div>
+      <p class="small muted" style="margin-top:10px">
+        Starts: ${escapeHtml(formatDate(startsAt))} · Ends: ${escapeHtml(formatDate(endsAt))}<br>
+        Admin preview only. Live game result remains authoritative.
+      </p>`;
+    window["__refresh_" + bodyId] = () => loadNextResultPreview(bodyId, btnId);
+    startPeriodTimers();
+  } catch (e) {
+    body.innerHTML = `<div class="notice">Preview not available (${escapeHtml(e.message)}).</div>`;
+  }
+  const btn = $(btnId);
+  if (btn) btn.onclick = async () => {
+    const code = prompt("Next period / round code:");
+    if (!code) return;
+    const val = prompt("Predicted result (0-9):");
+    if (val === null) return;
+    const res = Number(val);
+    if (!Number.isInteger(res) || res < 0 || res > 9) return toast("Result must be 0-9.", true);
+    try {
+      await api("set_next_result", { round_code: code.trim(), result_number: res });
+      toast("Next result set.");
+      loadNextResultPreview(bodyId, btnId);
+    } catch (err) { toast(err.message, true); }
+  };
+}
+
+/* ============ DASHBOARD ============ */
+async function renderDashboard() {
+  setPage("Dashboard", "Live overview of users, balances, transactions and game activity.",
+    '<button class="btn" id="refreshDashboard">↻ Refresh</button>');
+  $("refreshDashboard").addEventListener("click", renderDashboard);
+
+  const data = await api("dashboard");
+  const t = data.totals || {};
+  const m = data.user_metrics || {};
+  const h = data.health || {};
+  const sec = data.security || {};
+
+  const netToday = Number(t.stake_today || 0) - Number(t.payout_today || 0);
+  const net24h = Number(t.stake_24h || 0) - Number(t.payout_24h || 0);
+  const allTimePL = Number(t.total_stake || 0) - Number(t.total_payouts || 0);
+
+  const netClass = v => Number(v) >= 0 ? "green" : "red";
+  const netDisplay = v => {
+    const n = Number(v) || 0;
+    return (n >= 0 ? "+" : "") + money(n);
+  };
+
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head">
+        <h3>🔮 Next Upcoming Result (Admin Preview)</h3>
+        <button class="btn small" id="setNextResultBtn" type="button">Set / Change</button>
+      </div>
+      <div id="nextResultBody"><div class="loading">Loading...</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>📅 Today's Summary</h3>
+        <span class="small muted">Calendar day — from 00:00 today</span>
+      </div>
+      <div class="grid stats-grid">
+        ${metricCard("Bets Today", statValue(t.bets_today, 0), "Bets placed today")}
+        ${metricCard("Stake Today", money(t.stake_today), "Total staked today", "yellow")}
+        ${metricCard("Payout Today", money(t.payout_today), "Paid out today", "green")}
+        ${metricCard("Net Today", netDisplay(netToday), netToday >= 0 ? "Platform profit today" : "Platform loss today", netClass(netToday))}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>⏱️ Last 24 Hours</h3>
+        <span class="small muted">Rolling — past 24 hours</span>
+      </div>
+      <div class="grid stats-grid">
+        ${metricCard("Bets (24h)", statValue(t.bets_24h, 0), "Bets in last 24h")}
+        ${metricCard("Stake (24h)", money(t.stake_24h), "Total staked", "yellow")}
+        ${metricCard("Payout (24h)", money(t.payout_24h), "Paid out", "green")}
+        ${metricCard("Net (24h)", netDisplay(net24h), net24h >= 0 ? "Platform profit (24h)" : "Platform loss (24h)", netClass(net24h))}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>💰 All-Time Profit &amp; Loss</h3>
+        <span class="small muted">Since beginning</span>
+      </div>
+      <div class="grid stats-grid">
+        ${metricCard("Total Stake", money(t.total_stake), "All-time staked", "yellow")}
+        ${metricCard("Total Payout", money(t.total_payouts), "All-time paid out", "green")}
+        ${metricCard("Total Fees", money(t.total_fees), "Platform fees collected")}
+        ${metricCard("Platform P/L", netDisplay(allTimePL), allTimePL >= 0 ? "Net platform profit" : "Net platform loss", netClass(allTimePL))}
+      </div>
+      <p class="small muted" style="margin-top:12px;line-height:1.6;">
+        <strong>Formula:</strong> Platform P/L = Total Stake − Total Payout.<br>
+        Positive = platform profit (players lost overall). Negative = platform loss (players won overall).<br>
+        Total Fees is shown separately as reference revenue.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>📊 General Stats</h3></div>
+      <div class="grid stats-grid">
+        ${metricCard("Total Users", statValue(t.users, 0), `${statValue(t.blocked_users, 0)} blocked`)}
+        ${metricCard("Total Bets", statValue(t.bets, 0), "All recorded bets")}
+        ${metricCard("Wallet Balance", money(t.total_wallet_balance), "Sum of wallet balances")}
+        ${metricCard("Referral Commissions", money(t.total_commissions), `${statValue(t.total_referrals, 0)} referrals`, "violet")}
+        ${metricCard("Confirmed Deposits", money(t.total_deposits), `${statValue(t.deposit_count, 0)} transactions`, "green")}
+        ${metricCard("Deposits Today", money(t.deposits_today), `${statValue(t.pending_deposits, 0)} pending`, "green")}
+        ${metricCard("Confirmed Withdrawals", money(t.total_withdrawals), `${statValue(t.withdrawal_count, 0)} transactions`, "red")}
+        ${metricCard("Withdrawals Today", money(t.withdrawals_today), `${statValue(t.pending_withdrawals, 0)} pending`, "red")}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>👥 User Activity</h3></div>
+      <div class="status-grid">
+        <div class="status-item"><span>New Today</span><strong>${statValue(m.new_today, 0)}</strong></div>
+        <div class="status-item"><span>New in 7 Days</span><strong>${statValue(m.new_7d, 0)}</strong></div>
+        <div class="status-item"><span>Active in 24 Hours</span><strong>${statValue(m.active_24h, 0)}</strong></div>
+        <div class="status-item"><span>Active in 7 Days</span><strong>${statValue(m.active_7d, 0)}</strong></div>
+        <div class="status-item"><span>Inactive 30 Days</span><strong>${statValue(m.inactive_30d, 0)}</strong></div>
+        <div class="status-item"><span>Failed Logins (24h)</span><strong class="red">${statValue(sec.failed_logins_24h, 0)}</strong></div>
+      </div>
+      <p class="small muted">Activity is based on recorded bets.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>🩺 System Health</h3></div>
+      <div class="status-grid">
+        <div class="status-item"><span>Database Query</span><strong class="green">Responding</strong></div>
+        <div class="status-item"><span>Round / Pending Check</span><strong class="${h.cron_ok ? "green" : "red"}">${h.cron_ok ? "No Detected Issues" : "Needs Review"}</strong></div>
+        <div class="status-item"><span>Overdue Rounds</span><strong class="${Number(h.overdue_rounds || 0) ? "red" : "green"}">${statValue(h.overdue_rounds, 0)}</strong></div>
+        <div class="status-item"><span>Old Pending Bets</span><strong class="${Number(h.old_pending_bets || 0) ? "red" : "green"}">${statValue(h.old_pending_bets, 0)}</strong></div>
+        <div class="status-item"><span>Latest Round Start</span><strong style="font-size:12px">${escapeHtml(formatDate(h.latest_round_start))}</strong></div>
+        <div class="status-item"><span>Last Settled Round</span><strong style="font-size:12px">${escapeHtml(formatDate(h.last_settled_at))}</strong></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>🎯 Round Statuses</h3></div>
+      ${table(["Status", "Count"], (data.round_statuses || []).map(r => [badge(r.status), escapeHtml(statValue(r.count, 0))]))}
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>🕹️ Recent Game Rounds</h3>
+        <button class="btn" id="openRounds">View All</button>
+      </div>
+      ${roundTable(data.recent_rounds || [])}
+    </div>
+  `;
+  $("openRounds").addEventListener("click", () => navigate("rounds"));
+  await loadNextResultPreview("nextResultBody", "setNextResultBtn");
+  startPeriodTimers();
+}
+
+function roundTable(rows) {
+  return table(
+    ["Period (Game)", "Round Code", "Status", "Time Left", "Start", "Result", "Colour", "Size", "Bets", "Stake", "Payout", "Pending", "Settlement"],
+    rows.map(r => {
+      const endsAt = r.ends_at;
+      const isActive = endsAt && (r.result_number === null || r.result_number === undefined);
+      const timeCell = isActive
+        ? `<span class="timer-badge" data-countdown-to="${escapeHtml(endsAt)}">⏱ —</span>`
+        : `<span class="muted small">—</span>`;
+      return [
+        `<strong>${escapeHtml(r.period_number ?? r.round_code ?? "—")}</strong>`,
+        escapeHtml(r.round_code ?? "—"),
+        badge(r.status),
+        timeCell,
+        escapeHtml(formatDate(r.starts_at)),
+        escapeHtml(r.result_number ?? "—"),
+        escapeHtml(getColour(r.result_number)),
+        escapeHtml(getBigSmall(r.result_number)),
+        escapeHtml(statValue(r.bet_count, 0)),
+        escapeHtml(money(r.total_stake)),
+        escapeHtml(money(r.total_payout)),
+        escapeHtml(statValue(r.pending_bets, 0)),
+        r.payout_complete ? badge("complete") : badge("review")
+      ];
+    })
+  );
+}
+
+/* ============ ANALYTICS ============ */
+async function renderAnalytics() {
+  setPage("Analytics", "Historical betting activity, user rankings and result distribution.",
+    '<button class="btn" id="refreshAnalytics">↻ Refresh</button>');
+  $("refreshAnalytics").addEventListener("click", renderAnalytics);
+
+  const data = await api("analytics");
+  const daily = data.daily || [];
+  const fairness = data.fairness || {};
+  const counts = fairness.counts || Array(10).fill(0);
+  const maxBets = Math.max(1, ...daily.map(d => Number(d.bets || 0)));
+
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head"><h3>Daily Bet Volume — 14 Days</h3></div>
+      <div class="chart-bars">
+        ${daily.map(d => {
+          const c = Number(d.bets || 0);
+          const height = Math.max(3, c / maxBets * 125);
+          return `<div class="chart-col">
+            <div class="chart-number">${c}</div>
+            <div class="chart-bar" style="height:${height}px"></div>
+            <div class="chart-label">${escapeHtml(String(d.day || "").slice(5, 10))}</div>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Daily Performance</h3></div>
+      ${table(
+        ["Date", "Bets", "Stake", "Payout", "Net", "Active Users", "New Users"],
+        daily.map(d => [
+          escapeHtml(String(d.day || "—").slice(0, 10)),
+          escapeHtml(statValue(d.bets, 0)),
+          escapeHtml(money(d.stake)), escapeHtml(money(d.payout)),
+          `<span class="${Number(d.net) >= 0 ? "green" : "red"}">${escapeHtml(money(d.net))}</span>`,
+          escapeHtml(statValue(d.active_users, 0)),
+          escapeHtml(statValue(d.new_users, 0))
+        ])
+      )}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Settled Result Distribution</h3></div>
+      <div class="notice warning">${escapeHtml(fairness.verdict || "Distribution info only.")}</div>
+      ${table(["Result Number", "Count"], counts.map((c, n) => [escapeHtml(n), escapeHtml(statValue(c, 0))]))}
+      <p class="small muted">Observed frequencies alone do not prove fairness.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Top Users by Total Stake</h3></div>
+      ${table(
+        ["User ID", "Username", "Bets", "Stake", "Payout", "Net", "Win %"],
+        (data.top_users || []).map(u => {
+          const w = Number(u.wins || 0), l = Number(u.losses || 0), tot = w + l;
+          return [
+            escapeHtml(u.id), escapeHtml(u.username || "—"),
+            escapeHtml(statValue(u.bets, 0)), escapeHtml(money(u.stake)),
+            escapeHtml(money(u.payout)), escapeHtml(money(u.user_net)),
+            escapeHtml(tot ? ((w / tot) * 100).toFixed(0) + "%" : "—")
+          ];
+        })
+      )}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Largest Stakes</h3></div>
+      ${table(
+        ["Bet ID", "User ID", "Period (Game)", "Type", "Stake", "Created"],
+        (data.large_stakes || []).map(b => [
+          escapeHtml(b.id), escapeHtml(b.user_id),
+          escapeHtml(b.period_number ?? b.round_code ?? "—"),
+          escapeHtml(b.bet_type), escapeHtml(money(b.stake)), escapeHtml(formatDate(b.created_at))
+        ])
+      )}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Highest Payout-to-Stake Ratios</h3></div>
+      ${table(
+        ["User ID", "Bets", "Stake", "Payout", "Return %"],
+        (data.high_return_users || []).map(u => [
+          escapeHtml(u.user_id), escapeHtml(statValue(u.bets, 0)),
+          escapeHtml(money(u.stake)), escapeHtml(money(u.payout)),
+          escapeHtml(u.return_percent == null ? "—" : `${u.return_percent}%`)
+        ])
+      )}
+      <p class="small muted">High historical return is not proof of fraud.</p>
+    </div>
+  `;
+}
+
+/* ============ RECONCILE ============ */
+async function renderReconcile() {
+  setPage("Financial Reconciliation", "Read-only totals and consistency indicators.",
+    '<button class="btn" id="refreshReconcile">↻ Refresh</button>');
+  $("refreshReconcile").addEventListener("click", renderReconcile);
+
+  const data = await api("reconcile");
+  const t = data.totals || {};
+
+  $("viewBody").innerHTML = `
+    <div class="notice warning">
+      This report is incomplete until every wallet balance change is mapped to an auditable ledger entry.
+    </div>
+    <div class="grid stats-grid">
+      ${metricCard("Wallet Total", money(t.wallet_total))}
+      ${metricCard("Recorded Commissions", money(t.commissions))}
+      ${metricCard("Bet Stakes", money(t.bets_stake))}
+      ${metricCard("Won Bet Payouts", money(t.bets_payout))}
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Consistency Checks</h3></div>
+      ${table(
+        ["Check", "Value", "Interpretation"],
+        [
+          ["Bet count", escapeHtml(statValue(t.bet_count_diff, 0)), "Difference from recorded bet transactions"],
+          ["Stake transaction count", escapeHtml(statValue(t.bet_tx, 0)), "Recorded transaction count"],
+          ["Stake difference", escapeHtml(t.stake_diff), "Full ledger mapping required"],
+          ["Payout transaction count", escapeHtml(statValue(t.payout_tx, 0)), "Recorded transaction count"],
+          ["Payout difference", escapeHtml(t.payout_diff), "Full ledger mapping required"],
+          ["Unrecorded balance changes", escapeHtml(t.unrecorded), "Cannot be verified by current query"]
+        ]
+      )}
+    </div>
+    <div class="notice danger">
+      A complete reconciliation requires the actual transaction and wallet-update rules.
+    </div>
+  `;
+}
+
+/* ============ FILTER HELPERS ============ */
+function filterToolbar(options = {}) {
+  return `
+    <div class="toolbar">
+      ${options.search ? `<input id="filterQ" placeholder="${escapeHtml(options.search)}" value="${escapeHtml(options.q || "")}">` : ""}
+      ${options.segment ? `
+        <select id="filterSegment">
+          <option value="all">All Users</option>
+          <option value="new_today">New Today</option>
+          <option value="new_7d">New in 7 Days</option>
+          <option value="active_24h">Active 24 Hours</option>
+          <option value="active_7d">Active 7 Days</option>
+          <option value="inactive_30d">Inactive 30 Days</option>
+        </select>` : ""}
+      ${options.type ? `
+        <select id="filterType">
+          <option value="">All Types</option>
+          <option value="deposit">Deposit</option>
+          <option value="withdrawal">Withdrawal</option>
+        </select>` : ""}
+      ${options.status ? `
+        <select id="filterStatus">
+          <option value="">All Statuses</option>
+          ${["pending","confirmed","rejected","completed","failed","open","locked","settled","won","lost","cancelled"]
+            .map(s => `<option value="${s}">${s}</option>`).join("")}
+        </select>` : ""}
+      ${options.userId ? `<input id="filterUserId" inputmode="numeric" placeholder="User ID">` : ""}
+      <button class="btn btn-primary" id="applyFilters">Apply Filters</button>
+      <button class="btn" id="clearFilters">Clear</button>
+    </div>`;
+}
+
+function getFilters(view) {
+  const saved = state.filters[view] || {};
+  return {
+    q: $("filterQ") ? $("filterQ").value.trim() : (saved.q || ""),
+    segment: $("filterSegment") ? $("filterSegment").value : (saved.segment || "all"),
+    type: $("filterType") ? $("filterType").value : (saved.type || ""),
+    status: $("filterStatus") ? $("filterStatus").value : (saved.status || ""),
+    user_id: $("filterUserId") ? $("filterUserId").value.trim() : (saved.user_id || "")
+  };
+}
+
+function attachFilterActions(view, renderFn) {
+  const f = state.filters[view] || {};
+  if ($("filterQ")) $("filterQ").value = f.q || "";
+  if ($("filterSegment")) $("filterSegment").value = f.segment || "all";
+  if ($("filterType")) $("filterType").value = f.type || "";
+  if ($("filterStatus")) $("filterStatus").value = f.status || "";
+  if ($("filterUserId")) $("filterUserId").value = f.user_id || "";
+
+  if ($("applyFilters")) $("applyFilters").addEventListener("click", () => {
+    state.filters[view] = getFilters(view);
+    state.pages[view] = 1;
+    renderFn();
+  });
+  if ($("clearFilters")) $("clearFilters").addEventListener("click", () => {
+    state.filters[view] = {};
+    state.pages[view] = 1;
+    renderFn();
+  });
+  if ($("filterQ")) $("filterQ").addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      state.filters[view] = getFilters(view);
+      state.pages[view] = 1;
+      renderFn();
+    }
+  });
+}
+
+function paginationHtml(info) {
+  if (!info) return "";
+  return `
+    <div class="pagination">
+      <span class="small muted">Page ${escapeHtml(info.page)} of ${escapeHtml(info.total_pages)} · ${escapeHtml(info.total)} records</span>
+      <div class="pagination-actions">
+        <button class="btn" id="previousPage" ${info.has_previous ? "" : "disabled"}>← Previous</button>
+        <button class="btn" id="nextPage" ${info.has_next ? "" : "disabled"}>Next →</button>
+      </div>
+    </div>`;
+}
+
+function attachPagination(view, info, renderFn) {
+  if (!info) return;
+  if ($("previousPage")) $("previousPage").addEventListener("click", () => {
+    state.pages[view] = Math.max(1, (state.pages[view] || 1) - 1);
+    renderFn();
+  });
+  if ($("nextPage")) $("nextPage").addEventListener("click", () => {
+    state.pages[view] = (state.pages[view] || 1) + 1;
+    renderFn();
+  });
+}
+
+async function downloadCsv(dataset, filters = {}) {
+  const data = await api("export", { dataset, ...filters });
+  if (!data.csv) return toast("No rows available to export.");
+  const blob = new Blob(["\uFEFF", data.csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `crypto-trader-${dataset}-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  toast(`Exported ${data.row_count} rows` + (data.truncated ? ". Export limit reached." : "."));
+}
+
+/* ============ USERS ============ */
+async function renderUsers() {
+  setPage("User Management", "Browse registered users and filter by activity segment.",
+    '<button class="btn" id="exportUsers">Export CSV</button>');
+  $("exportUsers").addEventListener("click", async () => {
+    try { await downloadCsv("users", state.filters.users || {}); }
+    catch (e) { toast(e.message, true); }
+  });
+
+  const f = state.filters.users || {};
+  const data = await api("users", {
+    page: state.pages.users || 1, page_size: 20,
+    q: f.q || "", segment: f.segment || "all"
+  });
+
+  $("viewBody").innerHTML = `
+    ${filterToolbar({ search: "Search username, user ID or Telegram ID", segment: true })}
+    ${table(
+      ["User ID", "Name", "Telegram ID", "Username", "Balance", "Referred By", "Referral Code", "Referrals", "Win %", "Joined", "Details"],
+      (data.users || []).map(u => {
+        const fn = [u.first_name, u.last_name].filter(Boolean).join(" ");
+        const w = Number(u.wins || 0), l = Number(u.losses || 0), tot = w + l;
+        const winPct = tot ? ((w / tot) * 100).toFixed(0) + "%" : "—";
+        return [
+          escapeHtml(u.id), escapeHtml(fn || "—"), escapeHtml(u.telegram_id),
+          escapeHtml(u.username || "—"), escapeHtml(money(u.balance)),
+          escapeHtml(u.referred_by ?? "—"), escapeHtml(u.referral_code || "—"),
+          escapeHtml(statValue(u.referral_count, 0)), escapeHtml(winPct),
+          escapeHtml(formatDate(u.created_at)),
+          `<button class="btn" data-user-detail="${escapeHtml(u.id)}">View</button>`
+        ];
+      })
+    )}
+    ${paginationHtml(data.pagination)}
+    <div id="userDetail"></div>
+  `;
+  attachFilterActions("users", renderUsers);
+  attachPagination("users", data.pagination, renderUsers);
+  document.querySelectorAll("[data-user-detail]").forEach(btn => {
+    btn.addEventListener("click", () => renderUserDetail(btn.dataset.userDetail));
+  });
+}
+
+async function renderUserDetail(userId) {
+  const container = $("userDetail");
+  container.innerHTML = '<div class="loading">Loading user details...</div>';
+  try {
+    const data = await api("user_detail", { user_id: userId });
+    const p = data.profile || {}, s = data.stats || {};
+    const fn = [p.first_name, p.last_name].filter(Boolean).join(" ");
+    const w = Number(s.wins || 0), l = Number(s.losses || 0), tot = w + l;
+    const winPct = tot ? (w / tot) * 100 : 0;
+    const lossPct = tot ? (l / tot) * 100 : 0;
+
+    container.innerHTML = `
+      <div class="card" style="margin-top:18px">
+        <div class="card-head">
+          <h3>User Details — #${escapeHtml(p.id)} ${fn ? `(${escapeHtml(fn)})` : ""}</h3>
+          <button class="btn" id="closeUserDetail">Close</button>
+        </div>
+        <div class="detail-grid">
+          ${detailItem("Telegram ID", escapeHtml(p.telegram_id))}
+          ${detailItem("Name", escapeHtml(fn || "—"))}
+          ${detailItem("Username", escapeHtml(p.username || "—"))}
+          ${detailItem("Balance", escapeHtml(money(p.balance)))}
+          ${detailItem("Referral Code", escapeHtml(p.referral_code || "—"))}
+          ${detailItem("Referred By", escapeHtml(p.referred_by ?? "—"))}
+          ${detailItem("Joined", escapeHtml(formatDate(p.created_at)))}
+          ${detailItem("Total Bets", escapeHtml(statValue(s.bets, 0)))}
+          ${detailItem("Total Stake", escapeHtml(money(s.stake)))}
+          ${detailItem("Total Payout", escapeHtml(money(s.payout)))}
+          ${detailItem("Wins", `<span class="green">${escapeHtml(statValue(w, 0))}</span>`)}
+          ${detailItem("Losses", `<span class="red">${escapeHtml(statValue(l, 0))}</span>`)}
+          ${detailItem("Win Rate", `<span class="green">${tot ? winPct.toFixed(1) + "%" : "—"}</span>`)}
+          ${detailItem("Loss Rate", `<span class="red">${tot ? lossPct.toFixed(1) + "%" : "—"}</span>`)}
+          ${detailItem("Commissions Generated", escapeHtml(money(data.commissions_generated)))}
+        </div>
+        <div class="winloss-bar" title="Win vs Loss">
+          <div class="w" style="width:${winPct}%"></div>
+          <div class="l" style="width:${lossPct}%"></div>
+        </div>
+        <p class="small muted" style="margin-top:6px">Win ${winPct.toFixed(1)}% · Loss ${lossPct.toFixed(1)}% (of settled bets)</p>
+
+        <div class="card" style="margin-top:16px">
+          <h3>Admin Actions</h3>
+          <div class="row-actions" style="margin-top:10px">
+            <button class="btn user-action" data-action="block" data-user-id="${escapeHtml(p.id)}">Block</button>
+            <button class="btn user-action" data-action="unblock" data-user-id="${escapeHtml(p.id)}">Unblock</button>
+            <button class="btn user-action" data-action="add_fund" data-user-id="${escapeHtml(p.id)}">Add fund</button>
+            <button class="btn user-action" data-action="remove_fund" data-user-id="${escapeHtml(p.id)}">Remove fund</button>
+            <button class="btn user-action" data-action="transfer_points" data-user-id="${escapeHtml(p.id)}">Transfer points</button>
+          </div>
+        </div>
+
+        <div class="card-head" style="margin-top:22px"><h3>Referral Tree</h3></div>
+        ${table(
+          ["User ID", "Username", "Referred By", "Level", "Joined"],
+          (data.referral_tree || []).map(r => [
+            escapeHtml(r.id), escapeHtml(r.username || "—"),
+            escapeHtml(r.referred_by), escapeHtml(r.level), escapeHtml(formatDate(r.created_at))
+          ])
+        )}
+
+        <div class="card-head" style="margin-top:22px"><h3>Commissions Earned by Level</h3></div>
+        ${table(
+          ["Level", "Count", "Total"],
+          (data.commissions_earned || []).map(c => [
+            escapeHtml(c.referral_level), escapeHtml(statValue(c.count, 0)), escapeHtml(money(c.total))
+          ])
+        )}
+
+        <div class="card-head" style="margin-top:22px"><h3>Recent Bets</h3></div>
+        ${table(
+          ["Bet ID", "Period (Game)", "Type", "Selection", "Stake", "Fee", "Status", "Result", "Payout", "Created"],
+          (data.recent_bets || []).map(b => [
+            escapeHtml(b.id),
+            escapeHtml(b.period_number ?? b.round_code ?? "—"),
+            escapeHtml(b.bet_type), escapeHtml(b.selection), escapeHtml(money(b.stake)),
+            escapeHtml(money(b.fee)), badge(b.status), escapeHtml(b.result_number ?? "—"),
+            escapeHtml(money(b.payout)), escapeHtml(formatDate(b.created_at))
+          ])
+        )}
+
+        <div class="card-head" style="margin-top:22px"><h3>Recent Transactions</h3></div>
+        ${table(
+          ["ID", "Type", "Amount", "Status", "Network", "TX Hash", "Created"],
+          (data.recent_transactions || []).map(t => [
+            escapeHtml(t.id), escapeHtml(t.transaction_type), escapeHtml(money(t.amount)),
+            badge(t.status), escapeHtml(t.network || "—"),
+            txHashCell(t.tx_hash, t.network),
+            escapeHtml(formatDate(t.created_at))
+          ])
+        )}
+      </div>
+    `;
+    $("closeUserDetail").addEventListener("click", () => container.innerHTML = "");
+    container.querySelectorAll(".user-action").forEach(btn => btn.addEventListener("click", async () => {
+      const action = btn.dataset.action;
+      const needPoints = ["add_fund", "remove_fund", "transfer_points"].includes(action);
+      const points = needPoints ? prompt("Points amount") : null;
+      if (needPoints && (!points || Number(points) <= 0)) return;
+      const payload = { management_action: action, user_id: btn.dataset.userId };
+      if (points) payload.points = points;
+      if (action === "transfer_points") {
+        payload.to_user_id = prompt("Target user ID") || "";
+        if (!payload.to_user_id) return;
+      }
+      try {
+        await api("user_management", payload);
+        toast("User action completed.");
+        await renderUserDetail(btn.dataset.userId);
+      } catch (e) { toast(e.message, true); }
+    }));
+  } catch (e) {
+    container.innerHTML = `<div class="notice danger">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+/* ============ WALLETS ============ */
+async function renderWallets() {
+  setPage("Wallets", "Read-only view of wallet balances.",
+    '<button class="btn" id="exportWallets">Export CSV</button>');
+  $("exportWallets").addEventListener("click", async () => {
+    try { await downloadCsv("wallets", state.filters.wallets || {}); }
+    catch (e) { toast(e.message, true); }
+  });
+
+  const f = state.filters.wallets || {};
+  const data = await api("wallets", {
+    page: state.pages.wallets || 1, page_size: 20, q: f.q || ""
+  });
+  $("viewBody").innerHTML = `
+    ${filterToolbar({ search: "Search user ID or username" })}
+    ${table(
+      ["User ID", "Telegram ID", "Username", "Balance", "Updated"],
+      (data.wallets || []).map(w => [
+        escapeHtml(w.user_id), escapeHtml(w.telegram_id),
+        escapeHtml(w.username || "—"), escapeHtml(money(w.balance)),
+        escapeHtml(formatDate(w.updated_at))
+      ])
+    )}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachFilterActions("wallets", renderWallets);
+  attachPagination("wallets", data.pagination, renderWallets);
+}
+
+/* ============ TRANSACTIONS ============ */
+async function renderTransactions(view) {
+  const title = view === "deposits" ? "Deposits" : view === "withdrawals" ? "Withdrawals" : "Transactions";
+  setPage(title, "Review and approve pending deposits and withdrawals.",
+    '<button class="btn" id="exportTransactions">Export CSV</button>');
+  $("exportTransactions").addEventListener("click", async () => {
+    const f = state.filters[view] || {};
+    let type = f.type || "";
+    if (view === "deposits") type = "deposit";
+    if (view === "withdrawals") type = "withdrawal";
+    try { await downloadCsv("transactions", { ...f, type }); }
+    catch (e) { toast(e.message, true); }
+  });
+
+  const f = state.filters[view] || {};
+  let type = f.type || "";
+  if (view === "deposits") type = "deposit";
+  if (view === "withdrawals") type = "withdrawal";
+
+  const data = await api("transactions", {
+    page: state.pages[view] || 1, page_size: 20,
+    type, status: f.status || "", user_id: f.user_id || ""
+  });
+
+  $("viewBody").innerHTML = `
+    ${filterToolbar({ type: view === "transactions", status: true, userId: true })}
+    <div class="notice warning">
+      Approve means manual payout/credit. Reject/Refund returns reserved funds. Deposit approval credits 100 points per USDT.
+      Withdrawal wallet address ke saath copy button diya gaya hai.
+    </div>
+    ${table(
+      ["ID", "User ID", "Type", "Amount", "Status", "Network", "Wallet / To Address", "TX Hash", "Payout TX", "Created", "Updated", "Actions"],
+      (data.transactions || []).map(t => {
+        const addr = t.to_address || t.wallet_address || t.to_wallet || t.address || t.deposit_address || "";
+        let actionButtons = "—";
+        if (t.status === "pending") {
+          if (t.transaction_type === "deposit") {
+            actionButtons = `<div class="row-actions">
+              <button class="btn btn-primary review-tx" data-action="deposit_approve" data-id="${escapeHtml(t.id)}" data-addr="${escapeHtml(addr)}">Approve</button>
+              <button class="btn btn-danger review-tx" data-action="deposit_reject" data-id="${escapeHtml(t.id)}" data-addr="${escapeHtml(addr)}">Reject</button>
+            </div>`;
+          } else if (t.transaction_type === "withdrawal") {
+            actionButtons = `<div class="row-actions">
+              <button class="btn btn-primary review-tx" data-action="withdrawal_approve" data-id="${escapeHtml(t.id)}" data-addr="${escapeHtml(addr)}">Approve</button>
+              <button class="btn btn-danger review-tx" data-action="withdrawal_reject" data-id="${escapeHtml(t.id)}" data-addr="${escapeHtml(addr)}">Reject</button>
+            </div>`;
+          }
+        }
+        return [
+          escapeHtml(t.id), escapeHtml(t.user_id), badge(t.transaction_type),
+          escapeHtml(money(t.amount)), badge(t.status), escapeHtml(t.network || "—"),
+          addressCell(addr),
+          txHashCell(t.tx_hash, t.network),
+          txHashCell(t.payout_tx_hash, t.network),
+          escapeHtml(formatDate(t.created_at)), escapeHtml(formatDate(t.updated_at)),
+          actionButtons
+        ];
+      })
+    )}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachFilterActions(view, () => renderTransactions(view));
+  attachPagination(view, data.pagination, () => renderTransactions(view));
+
+  document.querySelectorAll(".review-tx").forEach(btn => btn.addEventListener("click", async () => {
+    const action = btn.dataset.action;
+    const addr = btn.dataset.addr || "";
+    let message = "Are you sure?";
+    if (action === "withdrawal_approve") message = `Approve this withdrawal for manual payout?\n\nTo address: ${addr || "(missing)"}`;
+    if (action === "withdrawal_reject") message = "Reject and refund this withdrawal?";
+    if (action === "deposit_approve") message = "Approve this deposit? Points will be credited.";
+    if (action === "deposit_reject") message = "Reject this deposit?";
+
+    const payoutTxHash = action === "withdrawal_approve" ? prompt("Enter the payout transaction hash:") : "";
+    if (action === "withdrawal_approve" && !payoutTxHash?.trim()) return;
+    if (!window.confirm(message)) return;
+    try {
+      await api(action, { transaction_id: btn.dataset.id, payout_tx_hash: payoutTxHash?.trim() || "" });
+      toast("Action successful.");
+      fetchNotifications();
+      await renderTransactions(view);
+    } catch (e) { toast(e.message, true); }
+  }));
+}
+
+/* ============ DEPOSIT ADDRESSES ============ */
+async function renderDepositAddresses() {
+  setPage("Deposit Addresses", "Manage up to 10 active coin and network deposit addresses.",
+    '<button class="btn btn-primary" id="addDepositAddress">Add address</button>');
+
+  const data = await api("deposit_addresses");
+  const rows = data.deposit_addresses || [];
+
+  const coinOptions = ["USDT", "TRON", "BNB", "ETHEREUM", "GRAM", "POLYGON", "BTC", "SOL"];
+  const networkOptions = ["BEP-20", "TRC-20", "ERC-20", "BSC", "Mainnet", "Polygon", "Solana"];
+
+  const isActiveOf = item => {
+    if (item.is_active === undefined || item.is_active === null) return true;
+    return item.is_active === true || item.is_active === "1" || Number(item.is_active) === 1;
+  };
+
+  const editor = (item = {}) => `
+    <form class="card deposit-address-form" data-id="${escapeHtml(item.id || "")}">
+      <div class="grid-4">
+        <select name="coin" required>
+          <option value="">Select Coin</option>
+          ${coinOptions.map(c => `<option value="${c}" ${item.coin === c ? "selected" : ""}>${c}</option>`).join("")}
+        </select>
+        <select name="network" required>
+          <option value="">Select Network</option>
+          ${networkOptions.map(n => `<option value="${n}" ${item.network === n ? "selected" : ""}>${n}</option>`).join("")}
+        </select>
+      </div>
+      <input name="address" placeholder="Wallet address" value="${escapeHtml(item.address || "")}" required maxlength="150" style="margin-top:10px;width:100%">
+      <input name="qr_payload" placeholder="QR payload (optional)" value="${escapeHtml(item.qr_payload || "")}" maxlength="300" style="margin-top:10px;width:100%">
+      <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
+        <label><input type="checkbox" name="is_active" ${isActiveOf(item) ? "checked" : ""}> Active</label>
+        <input name="sort_order" type="number" min="0" max="100" value="${Number(item.sort_order || 0)}" aria-label="Sort" style="width:80px">
+      </div>
+      <button class="btn btn-primary" type="submit" style="margin-top:10px">Save</button>
+      ${item.id ? '<button class="btn btn-danger delete-deposit" type="button" style="margin-top:10px">Delete</button>' : ""}
+    </form>
+  `;
+
+  $("viewBody").innerHTML = `
+    ${rows.map(editor).join("") || '<div class="notice">No addresses configured.</div>'}
+    <div id="newDepositAddress"></div>
+  `;
+
+  $("addDepositAddress").onclick = () => {
+    if (rows.length >= 10) return toast("Maximum 10 allowed.", true);
+    $("newDepositAddress").innerHTML = editor();
+    bindDepositForms();
+  };
+  bindDepositForms();
+
+  function bindDepositForms() {
+    document.querySelectorAll(".deposit-address-form").forEach(form => form.onsubmit = async e => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      try {
+        await api("deposit_addresses", {
+          mode: "save", id: form.dataset.id,
+          coin: fd.get("coin"), network: fd.get("network"),
+          address: fd.get("address"), qr_payload: fd.get("qr_payload"),
+          is_active: fd.get("is_active") === "on", sort_order: fd.get("sort_order")
+        });
+        await renderDepositAddresses();
+      } catch (e) { toast(e.message, true); }
+    });
+    document.querySelectorAll(".delete-deposit").forEach(btn => btn.onclick = async () => {
+      const form = btn.closest("form");
+      try {
+        await api("deposit_addresses", { mode: "delete", id: form.dataset.id });
+        await renderDepositAddresses();
+      } catch (e) { toast(e.message, true); }
+    });
+  }
+}
+
+/* ============ GIFT CODES ============ */
+async function renderGiftCodeHistory() {
+  setPage("Gift Codes", "Create and manage gift codes. Two modes: Fixed or Distribution.",
+    '<button class="btn btn-primary" id="toggleCreateGift">+ Create Gift Code</button>');
+  $("toggleCreateGift").addEventListener("click", () => {
+    $("createGiftWrap").classList.toggle("hidden");
+  });
+
+  const data = await api("gift_codes", {
+    page: state.pages.gift_codes || 1, page_size: 20
+  });
+
+  $("viewBody").innerHTML = `
+    <div id="createGiftWrap" class="card hidden">
+      <div class="card-head"><h3>Create New Gift Code</h3></div>
+      <form id="createGiftForm">
+        <div class="field">
+          <label>Mode</label>
+          <select name="mode" id="giftMode">
+            <option value="fixed">Fixed — Equal points per user</option>
+            <option value="distribution">Distribution — Early birds get more</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Total Points (Pool)</label>
+          <input name="total_points" type="number" min="1" step="0.01" required placeholder="e.g. 1000">
+        </div>
+        <div class="field" id="perUserField">
+          <label>Points Per User</label>
+          <input name="per_user_points" type="number" min="0.01" step="0.01" placeholder="e.g. 10">
+          <div class="small muted">Max users = floor(Total / Per-user). e.g. 1000 / 10 = 100 users.</div>
+        </div>
+        <div class="field hidden" id="maxUsersField">
+          <label>Max Users (Distribution Mode)</label>
+          <input name="max_users" type="number" min="1" step="1" placeholder="e.g. 100">
+          <div class="small muted">First redeemer gets most, last gets least. Total always equals pool.</div>
+        </div>
+        <div class="field">
+          <label>Custom Code (optional)</label>
+          <input name="code" placeholder="Leave blank to auto-generate" maxlength="50">
+        </div>
+        <div class="field">
+          <label>Expires At (optional)</label>
+          <input name="expires_at" type="datetime-local">
+        </div>
+        <button class="btn btn-primary" type="submit">Create Gift Code</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Gift Codes List</h3></div>
+      ${table(
+        ["ID", "Code", "Mode", "Total Points", "Per User", "Max Uses", "Redeemed", "Expires", "Created By", "Created", "Actions"],
+        (data.gift_codes || []).map(c => [
+          escapeHtml(c.id),
+          `<strong>${escapeHtml(c.code)}</strong>`,
+          badge(c.mode || "fixed"),
+          escapeHtml(money(c.total_points ?? c.points)),
+          escapeHtml(c.per_user_points ? money(c.per_user_points) : "Varies"),
+          escapeHtml(c.max_uses ?? 1),
+          escapeHtml(statValue(c.redeem_count, 0)),
+          escapeHtml(c.expires_at ? formatDate(c.expires_at) : "Never"),
+          escapeHtml(c.created_by || "—"),
+          escapeHtml(formatDate(c.created_at)),
+          `<button class="btn copy-gift" data-code="${escapeHtml(c.code)}" type="button">Copy Link</button>`
+        ]),
+        "No gift codes yet."
+      )}
+      ${paginationHtml(data.pagination)}
+    </div>
+  `;
+
+  $("giftMode").addEventListener("change", e => {
+    const isFixed = e.target.value === "fixed";
+    $("perUserField").classList.toggle("hidden", !isFixed);
+    $("maxUsersField").classList.toggle("hidden", isFixed);
+  });
+
+  document.querySelectorAll(".copy-gift").forEach(btn => {
+    btn.onclick = () => copyGiftLink(btn.dataset.code);
+  });
+
+  $("createGiftForm").onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const mode = fd.get("mode");
+    const payload = {
+      management_action: "create_gift",
+      mode,
+      total_points: fd.get("total_points"),
+      expires_at: fd.get("expires_at") ? new Date(fd.get("expires_at")).toISOString() : null,
+      code: fd.get("code") || undefined
+    };
+    if (mode === "fixed") payload.per_user_points = fd.get("per_user_points");
+    else payload.max_users = fd.get("max_users");
+    try {
+      const r = await api("user_management", payload);
+      toast(`Gift code created: ${r.gift_code.code}`);
+      await renderGiftCodeHistory();
+      $("createGiftWrap").classList.add("hidden");
+    } catch (err) { toast(err.message, true); }
+  };
+
+  attachPagination("gift_codes", data.pagination, renderGiftCodeHistory);
+}
+
+function copyGiftLink(code) {
+  let botName = state.botUsername || localStorage.getItem("bot_username");
+  if (!botName) {
+    botName = prompt("Bot Username (without @):", "");
+    if (!botName) return;
+    botName = botName.replace(/^@/, "");
+    localStorage.setItem("bot_username", botName);
+  }
+  const link = `https://t.me/${botName}?startapp=gift_${code}`;
+  copyText(link);
+}
+
+/* ============ GIFT REDEMPTIONS ============ */
+async function renderGiftHistory() {
+  setPage("Gift Redemptions", "Track who redeemed which gift code and how much they earned.");
+  const data = await api("gift_redemptions", {
+    page: state.pages.gift_history || 1, page_size: 20
+  });
+  $("viewBody").innerHTML = `
+    ${table(
+      ["Date", "User ID", "Name", "Username", "Gift Code", "Mode", "Points Earned"],
+      (data.redemptions || []).map(r => {
+        const fn = [r.first_name, r.last_name].filter(Boolean).join(" ");
+        const earned = r.points_earned ?? r.per_user_points ?? r.legacy_points ?? 0;
+        return [
+          escapeHtml(formatDate(r.redeemed_at)),
+          escapeHtml(r.user_id),
+          escapeHtml(fn || "—"),
+          escapeHtml(r.username || "—"),
+          `<strong>${escapeHtml(r.code)}</strong>`,
+          badge(r.mode || "fixed"),
+          `<span class="green">+${money(earned)}</span>`
+        ];
+      })
+    )}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachPagination("gift_history", data.pagination, renderGiftHistory);
+}
+
+/* ============ ROUNDS ============ */
+async function renderRounds() {
+  setPage("Game Rounds", "Round status, game period, result and settlement.",
+    '<button class="btn" id="refreshRounds">↻ Refresh</button>');
+  $("refreshRounds").addEventListener("click", renderRounds);
+
+  const f = state.filters.rounds || {};
+  const data = await api("rounds", {
+    page: state.pages.rounds || 1, page_size: 20,
+    q: f.q || "", status: f.status || ""
+  });
+
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head">
+        <h3>🔮 Next Upcoming Result (Admin Preview)</h3>
+        <button class="btn small" id="setNextResultBtnR" type="button">Set / Change</button>
+      </div>
+      <div id="nextResultBodyR"><div class="loading">Loading...</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>🛠️ Manual Result Update</h3>
+        <span class="small muted">Result 0–9. Sirf auto result missing/galat hone par use karein.</span>
+      </div>
+      <form id="manualResultForm" class="inline-form">
+        <div class="field"><label>Period / Round Code</label>
+          <input name="round_code" placeholder="e.g. 20251022-001" required></div>
+        <div class="field" style="max-width:120px"><label>Result (0-9)</label>
+          <input name="result_number" type="number" min="0" max="9" required oninput="updateManualResultPreview(this.value)"></div>
+        
+        <div class="field" style="min-width:220px">
+          <label>Derived Outcome</label>
+          <div style="padding: 12px 13px; background: #0b0f15; border: 1px solid #2a3544; border-radius: 10px; font-weight:bold; font-size: 13px;">
+            <span id="previewNumber" class="yellow">-</span> | 
+            <span id="previewColour" style="color:var(--violet);">Colour: -</span> | 
+            <span id="previewSize" style="color:var(--blue);">Size: -</span>
+          </div>
+        </div>
+        <button class="btn btn-primary" type="submit">Update Result &amp; Settle</button>
+      </form>
+      <div class="notice warning" style="margin-top:12px">Result update us period ke pending bets (Number, Colour, Big/Small) settle karega. Ye undo nahi hoga.</div>
+    </div>
+
+    ${filterToolbar({ search: "Search period / round code", status: true })}
+
+    <div class="card">
+      <div class="card-head"><h3>All Rounds</h3></div>
+      ${table(
+        ["Period (Game)", "Round Code", "Status", "Time Left", "Start", "Result", "Colour", "Size", "Bets", "Stake", "Payout", "Pending", "Settlement", "Action"],
+        (data.rounds || []).map(r => {
+          const endsAt = r.ends_at;
+          const isActive = endsAt && (r.result_number === null || r.result_number === undefined);
+          const timeCell = isActive
+            ? `<span class="timer-badge" data-countdown-to="${escapeHtml(endsAt)}">⏱ —</span>`
+            : `<span class="muted small">—</span>`;
+          return [
+            `<strong>${escapeHtml(r.period_number ?? r.round_code ?? "—")}</strong>`,
+            escapeHtml(r.round_code ?? "—"),
+            badge(r.status),
+            timeCell,
+            escapeHtml(formatDate(r.starts_at)),
+            escapeHtml(r.result_number ?? "—"),
+            escapeHtml(getColour(r.result_number)),
+            escapeHtml(getBigSmall(r.result_number)),
+            escapeHtml(statValue(r.bet_count, 0)),
+            escapeHtml(money(r.total_stake)),
+            escapeHtml(money(r.total_payout)),
+            escapeHtml(statValue(r.pending_bets, 0)),
+            r.payout_complete ? badge("complete") : badge("review"),
+            `<button class="btn small set-result" data-code="${escapeHtml(r.round_code ?? "")}" type="button">Set Result</button>`
+          ];
+        })
+      )}
+      ${paginationHtml(data.pagination)}
+    </div>
+  `;
+  attachFilterActions("rounds", renderRounds);
+  attachPagination("rounds", data.pagination, renderRounds);
+  await loadNextResultPreview("nextResultBodyR", "setNextResultBtnR");
+  startPeriodTimers();
+
+  window.updateManualResultPreview = function(val) {
+    const nEl = $("previewNumber");
+    const cEl = $("previewColour");
+    const sEl = $("previewSize");
+    if (!nEl || !cEl || !sEl) return;
+    
+    if (val === "" || isNaN(val)) {
+      nEl.textContent = "-";
+      cEl.textContent = "Colour: -";
+      sEl.textContent = "Size: -";
+      return;
+    }
+    const n = Number(val);
+    nEl.textContent = n;
+    
+    let colour = "";
+    let cColor = "var(--text)";
+    if (n === 0 || n === 5) { colour = "Violet/Mix"; cColor = "var(--violet)"; }
+    else if ([1,3,7,9].includes(n)) { colour = "Green"; cColor = "var(--green)"; }
+    else if ([2,4,6,8].includes(n)) { colour = "Red"; cColor = "var(--red)"; }
+    
+    const size = n >= 5 ? "Big" : "Small";
+    
+    cEl.innerHTML = `Colour: <span style="color:${cColor};">${colour}</span>`;
+    sEl.innerHTML = `Size: <span style="color:var(--blue);">${size}</span>`;
+  };
+
+  async function submitManualResult(code, res) {
+    if (!code || !Number.isInteger(res) || res < 0 || res > 9) return toast("Valid period aur result 0-9 daalein.", true);
+    if (!confirm(`Set result ${res} for ${code} and settle bets?`)) return;
+    try {
+      await api("set_result", { round_code: code, result_number: res });
+      toast("Result updated.");
+      await renderRounds();
+    } catch (err) { toast(err.message, true); }
+  }
+
+  $("manualResultForm").onsubmit = e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    submitManualResult(String(fd.get("round_code")).trim(), Number(fd.get("result_number")));
+  };
+
+  document.querySelectorAll(".set-result").forEach(btn => btn.addEventListener("click", () => {
+    const val = prompt(`Enter result (0-9) for period ${btn.dataset.code}:`);
+    if (val === null) return;
+    submitManualResult(btn.dataset.code, Number(val));
+  }));
+}
+
+/* ============ BETS ============ */
+async function renderBets() {
+  setPage("Bets", "Review bet records, stakes, status and payout information.",
+    '<button class="btn" id="exportBets">Export CSV</button>');
+  $("exportBets").addEventListener("click", async () => {
+    try { await downloadCsv("bets", state.filters.bets || {}); }
+    catch (e) { toast(e.message, true); }
+  });
+
+  const f = state.filters.bets || {};
+  const data = await api("bets", {
+    page: state.pages.bets || 1, page_size: 20,
+    user_id: f.user_id || "", status: f.status || ""
+  });
+  $("viewBody").innerHTML = `
+    ${filterToolbar({ status: true, userId: true })}
+    ${table(
+      ["Bet ID", "User ID", "Period (Game)", "Round Code", "Type", "Selection", "Stake", "Fee", "Status", "Result", "Payout", "Created", "Settled"],
+      (data.bets || []).map(b => [
+        escapeHtml(b.id), escapeHtml(b.user_id),
+        escapeHtml(b.period_number ?? b.round_code ?? "—"),
+        escapeHtml(b.round_code ?? "—"),
+        escapeHtml(b.bet_type), escapeHtml(b.selection),
+        escapeHtml(money(b.stake)), escapeHtml(money(b.fee)), badge(b.status),
+        escapeHtml(b.result_number ?? "—"), escapeHtml(money(b.payout)),
+        escapeHtml(formatDate(b.created_at)), escapeHtml(formatDate(b.settled_at))
+      ])
+    )}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachFilterActions("bets", renderBets);
+  attachPagination("bets", data.pagination, renderBets);
+}
+
+/* ============ REFERRALS ============ */
+async function renderReferrals() {
+  setPage("Referrals", "Referral commissions and referral rewards overview.");
+  $("viewBody").innerHTML = '<div class="loading">Loading...</div>';
+  const [usersData, auditData] = await Promise.all([
+    api("users", { page: 1, page_size: 20, segment: "all" }),
+    api("audit", { page: 1, page_size: 10 })
+  ]);
+  $("viewBody").innerHTML = `
+    <div class="notice">Referral tree and commission details are available via Users → View.</div>
+    <div class="card">
+      <div class="card-head"><h3>Users with Referral Codes</h3></div>
+      ${table(
+        ["User ID", "Username", "Referral Code", "Referred By", "Referral Count", "Joined"],
+        (usersData.users || []).filter(u => u.referral_code || Number(u.referral_count) > 0).map(u => [
+          escapeHtml(u.id), escapeHtml(u.username || "—"), escapeHtml(u.referral_code || "—"),
+          escapeHtml(u.referred_by ?? "—"), escapeHtml(statValue(u.referral_count, 0)),
+          escapeHtml(formatDate(u.created_at))
+        ])
+      )}
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Recent Administrative Actions</h3></div>
+      ${table(
+        ["Time", "Admin", "Action", "Outcome"],
+        (auditData.entries || []).map(a => [
+          escapeHtml(formatDate(a.created_at)), escapeHtml(a.admin_username),
+          escapeHtml(a.action), badge(a.outcome)
+        ])
+      )}
+    </div>
+  `;
+}
+
+/* ============ CHANNEL SETTINGS (INCLUDING MULTI-CHANNEL) ============ */
+async function renderChannelSettings() {
+  setPage("Channel & Schedule Settings", "Manage bot channel, prediction timing, master on/off and multi-channel posting.");
+
+  const data = await api("channel_settings");
+  const s = data.settings || {};
+  const channels = data.prediction_channels || [];
+
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head"><h3>Main Channel Settings</h3></div>
+      <form id="channelSettingsForm">
+        <div class="grid" style="grid-template-columns: 1fr 1fr;">
+          <div class="field">
+            <label>Channel Username</label>
+            <input name="channel_username" value="${escapeHtml(s.channel_username || "")}" placeholder="@your_channel" required>
+            <div class="small muted">Result messages and predictions go here.</div>
+          </div>
+          <div class="field">
+            <label>Bot Username</label>
+            <input name="bot_username" value="${escapeHtml(s.bot_username || "")}" placeholder="YourBot" required>
+            <div class="small muted">Gift links use this: t.me/BotName?startapp=gift_CODE</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Prediction Timing (Seconds before round ends)</label>
+          <input type="number" name="prediction_timing" value="${s.prediction_timing ?? 150}" min="1" max="3600" required>
+          <div class="small muted">Default 150 (bets close at 150s).</div>
+        </div>
+
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" name="channel_updates_enabled" ${s.channel_updates_enabled ? "checked" : ""} style="width:auto">
+          <label style="margin:0">Channel Updates (Result + Prediction Posts) ON/OFF</label>
+        </div>
+
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" name="predictions_enabled" ${s.predictions_enabled ? "checked" : ""} style="width:auto">
+          <label style="margin:0">Enable Predictions in Main Channel</label>
+        </div>
+
+        <div class="field">
+          <label>Inline Link Text</label>
+          <input name="inline_link_text" value="${escapeHtml(s.inline_link_text || "Play")}" maxlength="100">
+        </div>
+
+        <div class="field">
+          <label>Result Image URL (optional)</label>
+          <input name="result_image_url" value="${escapeHtml(s.result_image_url || "")}" placeholder="https://..." maxlength="500">
+        </div>
+
+        <div class="field">
+          <label>Prediction Message Template</label>
+          <textarea name="prediction_message" maxlength="4000" placeholder="Placeholders: {round}, {prediction}, {colour}">${escapeHtml(s.prediction_message || "")}</textarea>
+        </div>
+
+        <div class="field">
+          <label>Result Message Template</label>
+          <textarea name="result_message" maxlength="4000" placeholder="Placeholders: {round}, {result}, {colour}">${escapeHtml(s.result_message || "")}</textarea>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Save Main Settings</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Multi-Channel Prediction (Auto Send)</h3>
+        <div class="header-actions">
+          <button class="btn btn-primary" id="postPredNowAll" type="button">📤 Post Prediction to All Now</button>
+          <button class="btn btn-primary" id="addPredChannelBtn" type="button">+ Add Channel</button>
+        </div>
+      </div>
+      <div class="notice">Agar post fail ho raha hai to ensure karein bot channel ka admin hai aur Channel ID/@username sahi hai.</div>
+
+      <div id="addChannelFormWrap" class="hidden" style="margin-bottom:15px; padding:15px; background:#0b1016; border-radius:8px; border: 1px solid #2a3544;">
+         <form id="addPredChannelForm" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+            <div class="field" style="margin:0; flex:2 1 220px;">
+              <label>Channel ID or @username</label>
+              <input name="channel_id" placeholder="@channel_name or -100123456" required>
+            </div>
+            <div class="field" style="margin:0; flex:1 1 140px;">
+              <label>Schedule (Mins)</label>
+              <input type="number" name="schedule_mins" value="3" required>
+            </div>
+            <button class="btn btn-primary" type="submit">Add</button>
+         </form>
+      </div>
+
+      ${table(
+        ["ID", "Channel ID", "Schedule", "Status", "Action"],
+        channels.map(c => [
+          escapeHtml(c.id),
+          escapeHtml(c.channel_id),
+          `${c.schedule_mins} Mins`,
+          badge(c.is_active ? "active" : "inactive"),
+          `<div class="row-actions">
+             <button class="btn btn-primary post-channel" data-id="${escapeHtml(c.id)}" type="button">Post Now</button>
+             <button class="btn ${c.is_active ? 'btn-danger' : 'btn-primary'} toggle-channel" data-id="${escapeHtml(c.id)}" data-active="${c.is_active}" type="button">${c.is_active ? 'Turn OFF' : 'Turn ON'}</button>
+             <button class="btn btn-danger delete-channel" data-id="${escapeHtml(c.id)}" type="button">Delete</button>
+           </div>`
+        ])
+      )}
+    </div>
+  `;
+
+  $("channelSettingsForm").onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    try {
+      await api("save_channel_settings", {
+        channel_username: fd.get("channel_username"),
+        bot_username: fd.get("bot_username"),
+        prediction_timing: fd.get("prediction_timing"),
+        channel_updates_enabled: fd.get("channel_updates_enabled") === "on",
+        predictions_enabled: fd.get("predictions_enabled") === "on",
+        prediction_message: fd.get("prediction_message"),
+        result_message: fd.get("result_message"),
+        result_image_url: fd.get("result_image_url"),
+        inline_link_text: fd.get("inline_link_text")
+      });
+      toast("Main settings saved!");
+      state.botUsername = fd.get("bot_username");
+      localStorage.setItem("bot_username", state.botUsername);
+    } catch (err) { toast(err.message, true); }
+  };
+
+  $("addPredChannelBtn").onclick = () => $("addChannelFormWrap").classList.toggle("hidden");
+
+  $("addPredChannelForm").onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    try {
+      await api("save_prediction_channel", {
+        action_type: "add",
+        channel_id: fd.get("channel_id"),
+        schedule_mins: fd.get("schedule_mins")
+      });
+      toast("Channel added!");
+      renderChannelSettings();
+    } catch (err) { toast(err.message, true); }
+  };
+
+  $("postPredNowAll").onclick = async () => {
+    if (!confirm("Post prediction to all active channels now?")) return;
+    try {
+      const r = await api("post_prediction", { all: true });
+      toast(r.message || "Posted to all channels.");
+    } catch (err) { toast(err.message, true); }
+  };
+
+  document.querySelectorAll(".post-channel").forEach(btn => btn.onclick = async () => {
+    btn.disabled = true;
+    try {
+      const r = await api("post_prediction", { id: btn.dataset.id });
+      toast(r.message || "Posted.");
+    } catch (err) { toast(err.message, true); }
+    finally { btn.disabled = false; }
+  });
+
+  document.querySelectorAll(".toggle-channel").forEach(btn => btn.onclick = async () => {
+    try {
+      await api("save_prediction_channel", {
+        action_type: "toggle",
+        id: btn.dataset.id,
+        is_active: btn.dataset.active === "false"
+      });
+      renderChannelSettings();
+    } catch (err) { toast(err.message, true); }
+  });
+
+  document.querySelectorAll(".delete-channel").forEach(btn => btn.onclick = async () => {
+    if (!confirm("Delete this channel?")) return;
+    try {
+      await api("save_prediction_channel", { action_type: "delete", id: btn.dataset.id });
+      renderChannelSettings();
+    } catch (err) { toast(err.message, true); }
+  });
+}
+
+/* ============ BROADCAST ============ */
+async function renderBroadcast() {
+  setPage("Broadcast Message", "Send a message to your users and/or channel. Supports images.");
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <form id="broadcastForm">
+        <div class="field">
+          <label>Target</label>
+          <select name="target">
+            <option value="both">Both (Channel & Users)</option>
+            <option value="channel">Only Channel</option>
+            <option value="users">Only Users (Bot)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Image URL (optional)</label>
+          <input name="image_url" placeholder="https://... (leave blank for text-only)" maxlength="500">
+        </div>
+        <div class="field">
+          <label>Message</label>
+          <textarea name="message" required placeholder="Enter message here..." maxlength="4000"></textarea>
+        </div>
+        <button class="btn btn-primary" type="submit">Send Broadcast</button>
+      </form>
+      <div id="broadcastResult" style="margin-top:12px"></div>
+    </div>
+  `;
+
+  $("broadcastForm").onsubmit = async e => {
+    e.preventDefault();
+    if (!confirm("Are you sure you want to send this broadcast?")) return;
+    const fd = new FormData(e.target);
+    try {
+      const r = await api("broadcast", {
+        target: fd.get("target"),
+        message: fd.get("message"),
+        image_url: fd.get("image_url") || undefined
+      });
+      toast(r.message || "Broadcast sent.");
+      $("broadcastResult").innerHTML = `<div class="notice">${escapeHtml(r.message)}</div>`;
+      e.target.reset();
+    } catch (err) { toast(err.message, true); }
+  };
+}
+
+/* ============ TELEGRAM LOGS ============ */
+async function renderTelegram() {
+  setPage("Telegram Logs", "Send test messages, retry failed deliveries, and review history.");
+  const data = await api("telegram", {
+    mode: "history", page: state.pages.telegram || 1, page_size: 25
+  });
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head"><h3>Send Test Message</h3><span class="muted small">Bot token stays server-side.</span></div>
+      <form id="telegramForm" class="toolbar">
+        <input id="telegramChannel" placeholder="Channel or chat ID" maxlength="200" required>
+        <input id="telegramImage" placeholder="Image URL (optional)" maxlength="500">
+        <input id="telegramMessage" placeholder="Message" maxlength="4000" required>
+        <button class="btn btn-primary" type="submit">Send</button>
+      </form>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <h3>Notification History</h3>
+        <button class="btn small" id="refreshTelegram">Refresh</button>
+      </div>
+      ${table(
+        ["ID", "Event", "Channel", "Status", "Attempts", "Sent", "Error", "Action"],
+        (data.notifications || []).map(item => [
+          escapeHtml(item.id), escapeHtml(item.event_type), escapeHtml(item.channel),
+          badge(item.status), escapeHtml(item.attempt_count),
+          escapeHtml(formatDate(item.sent_at)), escapeHtml(item.error_message || "—"),
+          item.status === "sent" ? "—" : `<button class="btn small telegram-retry" data-id="${escapeHtml(item.id)}">Retry</button>`
+        ])
+      )}
+    </div>
+  `;
+  $("telegramForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    try {
+      await api("telegram", {
+        mode: "send", event_type: "test",
+        channel: $("telegramChannel").value,
+        message: $("telegramMessage").value,
+        image_url: $("telegramImage").value || undefined
+      });
+      toast("Telegram message sent.");
+      await renderTelegram();
+    } catch (err) { toast(err.message, true); }
+  });
+  $("refreshTelegram").addEventListener("click", renderTelegram);
+  document.querySelectorAll(".telegram-retry").forEach(btn => btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    try {
+      await api("telegram", { mode: "retry", id: btn.dataset.id });
+      toast("Retried.");
+      await renderTelegram();
+    } catch (err) { btn.disabled = false; toast(err.message, true); }
+  }));
+}
+
+/* ============ TELEGRAM SUPPORT (NEW) ============ */
+async function renderTelegramSupport() {
+  setPage("Telegram Support", "Configure support contact and view recent support messages.");
+  let data = {};
+  try { data = await api("support_settings"); } catch (e) { /* optional endpoint */ }
+  const s = data.settings || data || {};
+
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head"><h3>Support Settings</h3></div>
+      <form id="supportForm">
+        <div class="grid" style="grid-template-columns:1fr 1fr;">
+          <div class="field"><label>Support Username</label>
+            <input name="support_username" value="${escapeHtml(s.support_username || "")}" placeholder="@YourSupport" maxlength="100">
+            <div class="small muted">Shown to users for help.</div></div>
+          <div class="field"><label>Support Channel / Group</label>
+            <input name="support_channel" value="${escapeHtml(s.support_channel || "")}" placeholder="@YourSupportGroup" maxlength="100"></div>
+        </div>
+        <div class="field"><label>Support Message</label>
+          <textarea name="support_message" maxlength="2000" placeholder="Need help? Contact support...">${escapeHtml(s.support_message || "")}</textarea></div>
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" name="support_enabled" ${s.support_enabled ? "checked" : ""} style="width:auto">
+          <label style="margin:0">Enable Support Button</label>
+        </div>
+        <button class="btn btn-primary" type="submit">Save Support Settings</button>
+      </form>
+      <div id="supportPreview" style="margin-top:14px"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Recent Support Messages</h3><button class="btn small" id="refreshSupport">Refresh</button></div>
+      <div id="supportMessages"><div class="loading">Loading...</div></div>
+    </div>
+  `;
+
+  function updateSupportPreview() {
+    const form = $("supportForm");
+    const u = (form.support_username.value || "").trim().replace(/^@/, "");
+    const c = (form.support_channel.value || "").trim().replace(/^@/, "");
+    $("supportPreview").innerHTML = `<div class="notice">
+      User support link: ${u ? `<a class="tx-link" target="_blank" rel="noopener" href="https://t.me/${escapeHtml(u)}">@${escapeHtml(u)}</a>` : "—"}
+      · Group: ${c ? `<a class="tx-link" target="_blank" rel="noopener" href="https://t.me/${escapeHtml(c)}">@${escapeHtml(c)}</a>` : "—"}
+    </div>`;
+  }
+
+  $("supportForm").onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    try {
+      await api("save_support_settings", {
+        support_username: fd.get("support_username"),
+        support_channel: fd.get("support_channel"),
+        support_message: fd.get("support_message"),
+        support_enabled: fd.get("support_enabled") === "on"
+      });
+      toast("Support settings saved.");
+      updateSupportPreview();
+    } catch (err) { toast(err.message, true); }
+  };
+
+  updateSupportPreview();
+
+  async function loadMsgs() {
+    try {
+      const d = await api("support_messages", { page: 1, page_size: 30 });
+      const rows = d.messages || d.entries || [];
+      $("supportMessages").innerHTML = table(
+        ["Time", "User ID", "Username", "Message", "Status"],
+        rows.map(m => [
+          escapeHtml(formatDate(m.created_at)),
+          escapeHtml(m.user_id ?? "—"),
+          escapeHtml(m.username || "—"),
+          escapeHtml(m.message || m.text || "—"),
+          badge(m.status || "open")
+        ]),
+        "No support messages."
+      );
+    } catch (e) {
+      $("supportMessages").innerHTML = `<div class="notice">Support messages endpoint not available (${escapeHtml(e.message)}).</div>`;
+    }
+  }
+  loadMsgs();
+  $("refreshSupport").onclick = loadMsgs;
+}
+
+/* ============ AUDIT ============ */
+async function renderAudit() {
+  setPage("Audit Logs", "Review recorded administrative actions.",
+    '<button class="btn" id="refreshAudit">↻ Refresh</button>');
+  $("refreshAudit").addEventListener("click", renderAudit);
+
+  const f = state.filters.audit || {};
+  const data = await api("audit", {
+    page: state.pages.audit || 1, page_size: 20, q: f.q || ""
+  });
+  $("viewBody").innerHTML = `
+    ${filterToolbar({ search: "Search admin username or action" })}
+    ${table(
+      ["ID", "Time", "Admin", "Action", "Target Type", "Target ID", "Outcome", "IP"],
+      (data.entries || []).map(a => [
+        escapeHtml(a.id), escapeHtml(formatDate(a.created_at)), escapeHtml(a.admin_username),
+        escapeHtml(a.action), escapeHtml(a.target_type || "—"), escapeHtml(a.target_id || "—"),
+        badge(a.outcome), escapeHtml(a.ip || "—")
+      ])
+    )}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachFilterActions("audit", renderAudit);
+  attachPagination("audit", data.pagination, renderAudit);
+}
+
+/* ============ LOGIN ATTEMPTS ============ */
+async function renderLoginAttempts() {
+  setPage("Login Attempts", "Monitor successful and failed admin login attempts.");
+  const data = await api("login_attempts", {
+    page: state.pages.login_attempts || 1, page_size: 20
+  });
+  $("viewBody").innerHTML = `
+    <div class="notice warning">IP addresses are sensitive. Restrict access to trusted admins.</div>
+    ${table(
+      ["ID", "IP Address", "Result", "Attempted At"],
+      (data.entries || []).map(a => [
+        escapeHtml(a.id), escapeHtml(a.ip || "—"),
+        a.success ? badge("success") : badge("failed"),
+        escapeHtml(formatDate(a.attempted_at))
+      ])
+    )}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachPagination("login_attempts", data.pagination, renderLoginAttempts);
+}
+
+/* ============ SECURITY SUMMARY ============ */
+async function renderSecurity() {
+  setPage("Security Summary", "Recent login attempts and audit entries.");
+  const data = await api("security");
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head"><h3>Recent Login Attempts</h3></div>
+      ${table(
+        ["Time", "IP", "Result"],
+        (data.attempts || []).map(a => [
+          escapeHtml(formatDate(a.attempted_at)), escapeHtml(a.ip || "—"),
+          a.success ? badge("success") : badge("failed")
+        ])
+      )}
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Recent Audit Entries</h3></div>
+      ${table(
+        ["Time", "Admin", "Action", "Outcome", "IP"],
+        (data.entries || []).map(a => [
+          escapeHtml(formatDate(a.created_at)), escapeHtml(a.admin_username),
+          escapeHtml(a.action), badge(a.outcome), escapeHtml(a.ip || "—")
+        ])
+      )}
+    </div>
+  `;
+}
+
+/* ============ SEARCH ============ */
+function renderSearch() {
+  setPage("Global Search", "Search users, game rounds and bets.");
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <form id="globalSearchForm">
+        <div class="toolbar">
+          <input id="globalSearchInput" placeholder="Username, user ID, Telegram ID or period/round code" required>
+          <button class="btn btn-primary" type="submit">Search</button>
+        </div>
+      </form>
+      <div id="searchResults"></div>
+    </div>
+  `;
+  $("globalSearchForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const q = $("globalSearchInput").value.trim();
+    if (!q) return;
+    $("searchResults").innerHTML = '<div class="loading">Searching...</div>';
+    try {
+      const data = await api("search", { q });
+      $("searchResults").innerHTML = `
+        <div class="card-head"><h3>Users</h3></div>
+        ${table(
+          ["ID", "Telegram ID", "Username", "Balance", "Joined"],
+          (data.users || []).map(u => [
+            escapeHtml(u.id), escapeHtml(u.telegram_id),
+            escapeHtml(u.username || "—"), escapeHtml(money(u.balance)),
+            escapeHtml(formatDate(u.created_at))
+          ])
+        )}
+        <div class="card-head" style="margin-top:22px"><h3>Rounds</h3></div>
+        ${table(
+          ["ID", "Period (Game)", "Round Code", "Status", "Start", "End", "Result"],
+          (data.rounds || []).map(r => [
+            escapeHtml(r.id),
+            escapeHtml(r.period_number ?? r.round_code ?? "—"),
+            escapeHtml(r.round_code ?? "—"),
+            badge(r.status),
+            escapeHtml(formatDate(r.starts_at)), escapeHtml(formatDate(r.ends_at)),
+            escapeHtml(r.result_number ?? "—")
+          ])
+        )}
+        <div class="card-head" style="margin-top:22px"><h3>Bets</h3></div>
+        ${table(
+          ["ID", "User ID", "Period (Game)", "Type", "Stake", "Status", "Payout", "Created"],
+          (data.bets || []).map(b => [
+            escapeHtml(b.id), escapeHtml(b.user_id),
+            escapeHtml(b.period_number ?? b.round_code ?? "—"),
+            escapeHtml(b.bet_type), escapeHtml(money(b.stake)), badge(b.status),
+            escapeHtml(money(b.payout)), escapeHtml(formatDate(b.created_at))
+          ])
+        )}
+      `;
+    } catch (err) {
+      $("searchResults").innerHTML = `<div class="notice danger">${escapeHtml(err.message)}</div>`;
+    }
+  });
+}
+
+/* ============ NOTIFICATIONS ============ */
+async function fetchNotifications() {
+  try {
+    const data = await api("transactions", { status: "pending", page_size: 50 });
+    const pending = (data.transactions || []).filter(t =>
+      ["deposit", "withdrawal"].includes(t.transaction_type)
+    );
+    const badgeEl = $("notifBadge");
+    if (pending.length > 0) {
+      badgeEl.textContent = pending.length > 9 ? "9+" : pending.length;
+      badgeEl.classList.remove("hidden");
+    } else badgeEl.classList.add("hidden");
+
+    $("notifList").innerHTML = pending.length === 0
+      ? '<div class="empty">No pending requests.</div>'
+      : pending.map(t => `
+        <div class="notif-item">
+          <strong class="${t.transaction_type === "deposit" ? "green" : "red"}">
+            ${t.transaction_type.toUpperCase()} #${escapeHtml(t.id)}
+          </strong>
+          <div>User ${escapeHtml(t.user_id)} | ${money(t.amount)}</div>
+          <small>${formatDate(t.created_at)}</small>
+        </div>
+      `).join("");
+  } catch (e) { console.error("Notification failed", e); }
+}
+
+$("notifBell").addEventListener("click", e => {
+  e.stopPropagation();
+  $("notifDropdown").classList.toggle("hidden");
+});
+$("closeNotif").addEventListener("click", () => $("notifDropdown").classList.add("hidden"));
+document.addEventListener("click", e => {
+  const dd = $("notifDropdown");
+  if (!dd.classList.contains("hidden") && !dd.contains(e.target) && !$("notifBell").contains(e.target)) {
+    dd.classList.add("hidden");
+  }
+});
+
+/* ============ LOGIN / LOGOUT / INIT ============ */
+$("loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (state.busy) return;
+  state.busy = true;
+  $("loginButton").disabled = true;
+  $("loginButton").textContent = "Signing In...";
+  $("loginError").textContent = "";
+  try {
+    const r = await api("login", {
+      username: $("loginUsername").value.trim(),
+      password: $("loginPassword").value
+    });
+    $("loginPassword").value = "";
+    showApp(r.username || $("loginUsername").value);
+  } catch (err) {
+    $("loginError").textContent = err.message;
+  } finally {
+    state.busy = false;
+    $("loginButton").disabled = false;
+    $("loginButton").textContent = "Sign In Securely";
+  }
+});
+
+$("logoutButton").addEventListener("click", async () => {
+  if (!confirm("Are you sure you want to log out?")) return;
+  try { await api("logout"); } catch { /* ignore */ }
+  showLogin("You have been logged out.");
+});
+
+(async function init() {
+  try {
+    const r = await api("me");
+    if (r.username) showApp(r.username);
+    else showLogin();
+  } catch { showLogin(); }
+})();
+</script>
+
+</body>
+</html>
