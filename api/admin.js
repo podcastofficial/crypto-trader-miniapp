@@ -25,21 +25,34 @@ const PAGE_SIZE_MAX = 100;
 const EXPORT_MAX = 5000;
 const RESULTS_CHANNEL = "@crypto_trader_results";
 
-async function notifyTelegram(text, chats = [process.env.ADMIN_CHAT_ID]) {
+// UPDATED: Notify Telegram now supports Images
+async function notifyTelegram(text, chats = [process.env.ADMIN_CHAT_ID], imageUrl = null) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return { ok: false, error: "TELEGRAM_BOT_TOKEN is not configured." };
+  
   chats = chats.filter(Boolean);
+  
   const results = await Promise.all(chats.map(async (chatId) => {
     try {
-      const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
+      const method = imageUrl ? "sendPhoto" : "sendMessage";
+      const payload = imageUrl 
+        ? { chat_id: chatId, photo: imageUrl, caption: text }
+        : { chat_id: chatId, text: text, disable_web_page_preview: true };
+
+      const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
         signal: AbortSignal.timeout(10000)
       });
-      const payload = await response.json();
-      return { chatId, ok: response.ok && payload.ok, payload };
-    } catch (error) { return { chatId, ok: false, error: error.message }; }
+      
+      const data = await response.json();
+      return { chatId, ok: response.ok && data.ok, payload: data };
+    } catch (error) { 
+      return { chatId, ok: false, error: error.message }; 
+    }
   }));
+  
   return { ok: results.every(item => item.ok), results };
 }
 
@@ -279,78 +292,104 @@ function ipAddress(req) {
   ).split(",")[0].trim().slice(0, 100);
 }
 
-  async function ensureManagementTables() {
-    await query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT FALSE`);
-    await query(`ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS payout_tx_hash TEXT`);
-    await query(`CREATE TABLE IF NOT EXISTS public.gift_codes (
-      id BIGSERIAL PRIMARY KEY, code TEXT UNIQUE NOT NULL, points NUMERIC(20,2) NOT NULL,
-      max_uses INTEGER NOT NULL DEFAULT 1, uses INTEGER NOT NULL DEFAULT 0,
-      expires_at TIMESTAMPTZ, created_by TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )`);
-    await query(`CREATE TABLE IF NOT EXISTS public.user_notifications (
-      id BIGSERIAL PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-      kind TEXT NOT NULL, title TEXT NOT NULL, message TEXT NOT NULL, is_read BOOLEAN NOT NULL DEFAULT FALSE,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )`);
-    await query(`CREATE TABLE IF NOT EXISTS public.telegram_notifications (
-      id BIGSERIAL PRIMARY KEY, event_type TEXT NOT NULL, channel TEXT NOT NULL,
-      message TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', telegram_message_id TEXT,
-      error_message TEXT, attempt_count INTEGER NOT NULL DEFAULT 0,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), sent_at TIMESTAMPTZ
-    )`);
-  }
+async function ensureManagementTables() {
+  await query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT FALSE`);
+  await query(`ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS payout_tx_hash TEXT`);
+  
+  await query(`CREATE TABLE IF NOT EXISTS public.gift_codes (
+    id BIGSERIAL PRIMARY KEY, code TEXT UNIQUE NOT NULL, points NUMERIC(20,2) NOT NULL,
+    max_uses INTEGER NOT NULL DEFAULT 1, uses INTEGER NOT NULL DEFAULT 0,
+    expires_at TIMESTAMPTZ, created_by TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+  
+  await query(`CREATE TABLE IF NOT EXISTS public.user_notifications (
+    id BIGSERIAL PRIMARY KEY, user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL, title TEXT NOT NULL, message TEXT NOT NULL, is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+  
+  await query(`CREATE TABLE IF NOT EXISTS public.telegram_notifications (
+    id BIGSERIAL PRIMARY KEY, event_type TEXT NOT NULL, channel TEXT NOT NULL,
+    message TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', telegram_message_id TEXT,
+    error_message TEXT, attempt_count INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), sent_at TIMESTAMPTZ
+  )`);
 
-  async function userManagement(body, session, req) {
-    await ensureManagementTables();
-    const userId = String(body.user_id || "");
-    if (!/^\d{1,15}$/.test(userId)) throw new Error("Invalid user ID.");
-    const action = String(body.management_action || "");
-    if (["block", "unblock"].includes(action)) {
-      await query(`UPDATE public.users SET is_blocked=$1 WHERE id=$2`, [action === "block", userId]);
-      await query(`INSERT INTO public.user_notifications (user_id,kind,title,message) VALUES ($1,'admin', $2, $3)`, [userId, action === "block" ? "Account blocked" : "Account unblocked", action === "block" ? "Your account has been blocked by admin." : "Your account has been unblocked."]);
-    } else if (["add_fund", "remove_fund"].includes(action)) {
-      const points = Number(body.points);
-      if (!Number.isFinite(points) || points <= 0 || points > 100000000) throw new Error("Enter a valid points amount.");
-      const delta = action === "add_fund" ? points : -points;
-      const result = await query(`UPDATE public.wallet_balances SET balance=balance+$1, updated_at=NOW() WHERE user_id=$2 AND balance+$1 >= 0 RETURNING balance`, [delta, userId]);
-      if (!result.length) throw new Error("Insufficient balance or user wallet not found.");
-      await query(`INSERT INTO public.user_notifications (user_id,kind,title,message) VALUES ($1,'wallet','Balance updated',$2)`, [userId, `${action === "add_fund" ? "Added" : "Removed"} ${points} points by admin.`]);
-    } else if (action === "transfer_points") {
-      const toUserId = String(body.to_user_id || "");
-      const points = Number(body.points);
-      if (!/^\d{1,15}$/.test(toUserId) || toUserId === userId || !Number.isFinite(points) || points <= 0 || points > 100000000) {
-        throw new Error("Enter a valid different target user and points.");
-      }
-      const client = await pool.connect();
-      try { await client.query("BEGIN");
-        const recipient = await client.query(`SELECT id FROM public.users WHERE id=$1 FOR SHARE`, [toUserId]);
-        if (!recipient.rowCount) throw new Error("Target user not found.");
-        const debit = await client.query(`UPDATE public.wallet_balances SET balance=balance-$1,updated_at=NOW() WHERE user_id=$2 AND balance >= $1 RETURNING balance`, [points, userId]);
-        if (!debit.rowCount) throw new Error("Insufficient balance.");
-        await client.query(`INSERT INTO public.wallet_balances(user_id,balance) VALUES($1,0) ON CONFLICT(user_id) DO NOTHING`, [toUserId]);
-        await client.query(`UPDATE public.wallet_balances SET balance=balance+$1,updated_at=NOW() WHERE user_id=$2`, [points, toUserId]);
-        await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'transfer','Points received',$2),($3,'transfer','Points sent',$4)`, [toUserId, `You received ${points} points.`, userId, `You sent ${points} points.`]);
-        await client.query("COMMIT");
-      } catch (error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); }
-    } else if (action === "create_gift") {
-      const points = Number(body.points), maxUses = Math.min(1000000, Math.max(1, Math.floor(Number(body.max_uses || 1))));
-      if (!Number.isFinite(points) || points <= 0) throw new Error("Enter valid gift points.");
-      const code = String(body.code || `GIFT-${crypto.randomBytes(4).toString("hex").toUpperCase()}`).trim().toUpperCase();
-      const result = await query(`INSERT INTO public.gift_codes(code,points,max_uses,expires_at,created_by) VALUES($1,$2,$3,$4,$5) RETURNING code,points,max_uses,expires_at`, [code, points, maxUses, body.expires_at || null, session.username]);
-      return { ok: true, gift_code: result[0] };
-    } else throw new Error("Unknown user management action.");
-    await audit(session.username, `user_${action}`, req, "success", "user", userId);
-    return { ok: true };
-  }
+  await query(`CREATE TABLE IF NOT EXISTS public.prediction_history (
+    id BIGSERIAL PRIMARY KEY, round_code TEXT NOT NULL, predicted_number INT,
+    predicted_colour TEXT, actual_number INT, actual_colour TEXT,
+    result TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
+  )`);
+  
+  await query(`CREATE TABLE IF NOT EXISTS public.channel_settings (
+    id INT PRIMARY KEY DEFAULT 1, channel_username TEXT DEFAULT '@crypto_trader_results',
+    bot_username TEXT DEFAULT 'YourBot', predictions_enabled BOOLEAN DEFAULT TRUE,
+    prediction_timing INT DEFAULT 150, prediction_message TEXT, result_message TEXT,
+    result_image_url TEXT, inline_link_text TEXT DEFAULT 'Play',
+    created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
+  )`);
+  
+  await query(`INSERT INTO public.channel_settings (id) VALUES (1) ON CONFLICT DO NOTHING`);
+}
 
-  async function audit(
-    username,
-  action,
-  req,
-  outcome = "success",
-  targetType = null,
-  targetId = null
-) {
+async function userManagement(body, session, req) {
+  await ensureManagementTables();
+  const userId = String(body.user_id || "");
+  if (!/^\d{1,15}$/.test(userId)) throw new Error("Invalid user ID.");
+  const action = String(body.management_action || "");
+  
+  if (["block", "unblock"].includes(action)) {
+    await query(`UPDATE public.users SET is_blocked=$1 WHERE id=$2`, [action === "block", userId]);
+    await query(`INSERT INTO public.user_notifications (user_id,kind,title,message) VALUES ($1,'admin', $2, $3)`, [userId, action === "block" ? "Account blocked" : "Account unblocked", action === "block" ? "Your account has been blocked by admin." : "Your account has been unblocked."]);
+  } else if (["add_fund", "remove_fund"].includes(action)) {
+    const points = Number(body.points);
+    if (!Number.isFinite(points) || points <= 0 || points > 100000000) throw new Error("Enter a valid points amount.");
+    const delta = action === "add_fund" ? points : -points;
+    const result = await query(`UPDATE public.wallet_balances SET balance=balance+$1, updated_at=NOW() WHERE user_id=$2 AND balance+$1 >= 0 RETURNING balance`, [delta, userId]);
+    if (!result.length) throw new Error("Insufficient balance or user wallet not found.");
+    await query(`INSERT INTO public.user_notifications (user_id,kind,title,message) VALUES ($1,'wallet','Balance updated',$2)`, [userId, `${action === "add_fund" ? "Added" : "Removed"} ${points} points by admin.`]);
+  } else if (action === "transfer_points") {
+    const toUserId = String(body.to_user_id || "");
+    const points = Number(body.points);
+    if (!/^\d{1,15}$/.test(toUserId) || toUserId === userId || !Number.isFinite(points) || points <= 0 || points > 100000000) {
+      throw new Error("Enter a valid different target user and points.");
+    }
+    const client = await pool.connect();
+    try { 
+      await client.query("BEGIN");
+      const recipient = await client.query(`SELECT id FROM public.users WHERE id=$1 FOR SHARE`, [toUserId]);
+      if (!recipient.rowCount) throw new Error("Target user not found.");
+      
+      const debit = await client.query(`UPDATE public.wallet_balances SET balance=balance-$1,updated_at=NOW() WHERE user_id=$2 AND balance >= $1 RETURNING balance`, [points, userId]);
+      if (!debit.rowCount) throw new Error("Insufficient balance.");
+      
+      await client.query(`INSERT INTO public.wallet_balances(user_id,balance) VALUES($1,0) ON CONFLICT(user_id) DO NOTHING`, [toUserId]);
+      await client.query(`UPDATE public.wallet_balances SET balance=balance+$1,updated_at=NOW() WHERE user_id=$2`, [points, toUserId]);
+      await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'transfer','Points received',$2),($3,'transfer','Points sent',$4)`, [toUserId, `You received ${points} points.`, userId, `You sent ${points} points.`]);
+      await client.query("COMMIT");
+    } catch (error) { 
+      await client.query("ROLLBACK"); 
+      throw error; 
+    } finally { 
+      client.release(); 
+    }
+  } else if (action === "create_gift") {
+    const points = Number(body.points);
+    const maxUses = Math.min(1000000, Math.max(1, Math.floor(Number(body.max_uses || 1))));
+    if (!Number.isFinite(points) || points <= 0) throw new Error("Enter valid gift points.");
+    const code = String(body.code || `GIFT-${crypto.randomBytes(4).toString("hex").toUpperCase()}`).trim().toUpperCase();
+    
+    const result = await query(`INSERT INTO public.gift_codes(code,points,max_uses,expires_at,created_by) VALUES($1,$2,$3,$4,$5) RETURNING code,points,max_uses,expires_at`, [code, points, maxUses, body.expires_at || null, session.username]);
+    return { ok: true, gift_code: result[0] };
+  } else {
+    throw new Error("Unknown user management action.");
+  }
+  
+  await audit(session.username, `user_${action}`, req, "success", "user", userId);
+  return { ok: true };
+}
+
+async function audit(username, action, req, outcome = "success", targetType = null, targetId = null) {
   try {
     await pool.query(
       `INSERT INTO public.admin_audit_log
@@ -366,16 +405,12 @@ function ipAddress(req) {
       ]
     );
   } catch (error) {
-    console.error(
-      "Admin audit write failed:",
-      error.code || error.name
-    );
+    console.error("Admin audit write failed:", error.code || error.name);
   }
 }
 
 async function loginAllowed(req) {
   const ip = ipAddress(req);
-
   const rows = await query(
     `SELECT COUNT(*) FILTER (
        WHERE success = FALSE
@@ -408,29 +443,14 @@ async function recordLogin(req, success) {
       [ipAddress(req), !!success]
     );
   } catch (error) {
-    console.error(
-      "Login attempt logging failed:",
-      error.code || error.name
-    );
+    console.error("Login attempt logging failed:", error.code || error.name);
   }
 }
 
 function pagination(body) {
-  const page = Math.max(
-    1,
-    Math.min(1000000, Number.parseInt(body.page, 10) || 1)
-  );
-
-  const size = Math.max(
-    1,
-    Math.min(PAGE_SIZE_MAX, Number.parseInt(body.page_size, 10) || 20)
-  );
-
-  return {
-    page,
-    size,
-    offset: (page - 1) * size
-  };
+  const page = Math.max(1, Math.min(1000000, Number.parseInt(body.page, 10) || 1));
+  const size = Math.max(1, Math.min(PAGE_SIZE_MAX, Number.parseInt(body.page_size, 10) || 20));
+  return { page, size, offset: (page - 1) * size };
 }
 
 /* =========================
@@ -574,7 +594,7 @@ async function dashboard() {
 
 const LISTS = {
   users: {
-    select: `u.id,u.telegram_id,u.username,w.balance,
+    select: `u.id,u.telegram_id,u.first_name,u.last_name,u.username,w.balance,
       u.referred_by,u.referral_code,u.created_at,
       (SELECT COUNT(*) FROM public.users c
        WHERE c.referred_by=u.id) AS referral_count`,
@@ -592,11 +612,11 @@ const LISTS = {
   },
 
   transactions: {
-select: `id,user_id,transaction_type,amount,status,
-  network,tx_hash,payout_tx_hash,destination_address,admin_note,
-  reviewed_at,reviewed_by,created_at,updated_at`,
-from: "public.transactions",
-  order: "id DESC"
+    select: `id,user_id,transaction_type,amount,status,
+      network,tx_hash,payout_tx_hash,destination_address,admin_note,
+      reviewed_at,reviewed_by,created_at,updated_at`,
+    from: "public.transactions",
+    order: "id DESC"
   },
 
   rounds: {
@@ -646,31 +666,26 @@ function userSegmentSql(segment) {
     case "new_today":
       return `u.created_at >= CURRENT_DATE
         AND u.created_at < CURRENT_DATE + INTERVAL '1 day'`;
-
     case "new_7d":
       return `u.created_at >= NOW()-INTERVAL '7 days'`;
-
     case "active_24h":
       return `EXISTS (
         SELECT 1 FROM public.bets bx
         WHERE bx.user_id=u.id
         AND bx.created_at>=NOW()-INTERVAL '24 hours'
       )`;
-
     case "active_7d":
       return `EXISTS (
         SELECT 1 FROM public.bets bx
         WHERE bx.user_id=u.id
         AND bx.created_at>=NOW()-INTERVAL '7 days'
       )`;
-
     case "inactive_30d":
       return `NOT EXISTS (
         SELECT 1 FROM public.bets bx
         WHERE bx.user_id=u.id
         AND bx.created_at>=NOW()-INTERVAL '30 days'
       )`;
-
     default:
       return null;
   }
@@ -1061,7 +1076,7 @@ async function reconcile() {
 
 async function userDetail(userId) {
   const profiles = await query(
-    `SELECT u.id,u.telegram_id,u.username,w.balance,
+    `SELECT u.id,u.telegram_id,u.first_name,u.last_name,u.username,w.balance,
       u.referral_code,u.referred_by,u.created_at
      FROM public.users u
      LEFT JOIN public.wallet_balances w ON w.user_id=u.id
@@ -1247,7 +1262,7 @@ async function exportCsv(body) {
       }
     }
 
-    sql = `SELECT u.id,u.telegram_id,u.username,w.balance,
+    sql = `SELECT u.id,u.telegram_id,u.first_name,u.last_name,u.username,w.balance,
       u.referred_by,u.referral_code,u.created_at
       FROM public.users u
       LEFT JOIN public.wallet_balances w ON w.user_id=u.id
@@ -1360,7 +1375,7 @@ async function reviewWalletTransaction(action, body, session, req) {
   const payoutTxHash = String(body.payout_tx_hash || "").trim().slice(0, 200);
   const reviewNote = payoutTxHash ? `${note}${note ? " | " : ""}Payout TX: ${payoutTxHash}`.slice(0, 500) : note;
   if (action === "withdrawal_approve" && !/^0x[a-fA-F0-9]{64}$/.test(payoutTxHash)) {
-  throw new Error("A valid payout transaction hash is required.");
+    throw new Error("A valid payout transaction hash is required.");
   }
 
   await ensureManagementTables();
@@ -1465,11 +1480,11 @@ SET status=$1,
            updated_at=NOW()
        WHERE id=$4`,
       [
-newStatus,
-  reviewNote,
-  session.username,
-  transactionId,
-  payoutTxHash
+        newStatus,
+        reviewNote,
+        session.username,
+        transactionId,
+        payoutTxHash
       ]
     );
 
@@ -1510,6 +1525,82 @@ newStatus,
   } finally {
     client.release();
   }
+}
+
+/* =========================
+   NEW: GIFT REDEMPTIONS
+========================= */
+async function getGiftRedemptions(body) {
+  const { page, size, offset } = pagination(body);
+  const rows = await query(`
+    SELECT r.id, r.redeemed_at, c.code, c.points,
+           u.id AS user_id, u.first_name, u.last_name, u.username, u.telegram_id
+    FROM public.gift_code_redemptions r
+    JOIN public.gift_codes c ON c.id = r.gift_code_id
+    JOIN public.users u ON u.id = r.user_id
+    ORDER BY r.redeemed_at DESC LIMIT $1 OFFSET $2
+  `, [size, offset]);
+  const count = await query(`SELECT COUNT(*) AS total FROM public.gift_code_redemptions`);
+  return {
+    ok: true,
+    redemptions: rows,
+    pagination: { page, page_size: size, total: Number(count[0].total), total_pages: Math.ceil(count[0].total / size) }
+  };
+}
+
+/* =========================
+   NEW: CHANNEL SETTINGS
+========================= */
+async function getChannelSettings() {
+  const rows = await query(`SELECT * FROM public.channel_settings WHERE id=1`);
+  return { ok: true, settings: rows[0] || {} };
+}
+
+async function saveChannelSettings(body, session, req) {
+  await query(`
+    UPDATE public.channel_settings SET 
+      channel_username=$1, bot_username=$2, predictions_enabled=$3, prediction_timing=$4, updated_at=NOW()
+    WHERE id=1
+  `, [body.channel_username, body.bot_username, body.predictions_enabled, body.prediction_timing]);
+  await audit(session.username, "save_channel_settings", req, "success");
+  return { ok: true, message: "Channel settings saved." };
+}
+
+/* =========================
+   NEW: BROADCAST
+========================= */
+async function broadcastMessage(body, session, req) {
+  const msg = String(body.message || "").trim();
+  const target = String(body.target || "both");
+  if (!msg) throw new Error("Message is required.");
+
+  let sent = 0;
+  let failed = 0;
+
+  if (target === "channel" || target === "both") {
+    const channel = await query(`SELECT channel_username FROM public.channel_settings WHERE id=1`);
+    if (channel.length && channel[0].channel_username) {
+      const res = await notifyTelegram(msg, [channel[0].channel_username], body.image_url);
+      if (res.ok) sent++; else failed++;
+    }
+  }
+
+  if (target === "users" || target === "both") {
+    const users = await query(`SELECT telegram_id FROM public.users WHERE is_blocked=FALSE`);
+    const chatIds = users.map(u => u.telegram_id).filter(Boolean);
+    for (let i = 0; i < chatIds.length; i += 30) {
+      const batch = chatIds.slice(i, i + 30);
+      const results = await Promise.allSettled(batch.map(id => notifyTelegram(msg, [id], body.image_url)));
+      results.forEach(r => {
+        if (r.status === 'fulfilled' && r.value.ok) sent++;
+        else failed++;
+      });
+      await new Promise(res => setTimeout(res, 1000)); // Rate limit
+    }
+  }
+
+  await audit(session.username, "broadcast", req, "success");
+  return { ok: true, message: `Broadcast sent to ${sent} target(s). Failed: ${failed}` };
 }
 
 /* =========================
@@ -1571,50 +1662,25 @@ module.exports = async function handler(req, res) {
     try {
       if (!(await loginAllowed(req))) {
         await recordLogin(req, false);
-        await audit(
-          "unknown",
-          "login_rate_limited",
-          req,
-          "blocked"
-        );
-
-        return json(res, 429, {
-          message: "Too many login attempts. Try again in 15 minutes."
-        });
+        await audit("unknown", "login_rate_limited", req, "blocked");
+        return json(res, 429, { message: "Too many login attempts. Try again in 15 minutes." });
       }
 
-      const ok =
-        safeEqual(body.username, settings.username) &&
-        safeEqual(body.password, settings.password);
-
+      const ok = safeEqual(body.username, settings.username) && safeEqual(body.password, settings.password);
       await recordLogin(req, ok);
 
       if (!ok) {
         await audit("unknown", "login", req, "failed");
-
-        return json(res, 401, {
-          message: "Invalid username or password."
-        });
+        return json(res, 401, { message: "Invalid username or password." });
       }
 
-      setCookie(
-        res,
-        createSession(settings.username),
-        SESSION_SECONDS
-      );
-
+      setCookie(res, createSession(settings.username), SESSION_SECONDS);
       await audit(settings.username, "login", req);
 
       return json(res, 200, { ok: true });
     } catch (error) {
-      console.error(
-        "Admin login error:",
-        error.code || error.name
-      );
-
-      return json(res, 500, {
-        message: "Login service temporarily unavailable."
-      });
+      console.error("Admin login error:", error.code || error.name);
+      return json(res, 500, { message: "Login service temporarily unavailable." });
     }
   }
 
@@ -1636,10 +1702,7 @@ module.exports = async function handler(req, res) {
 
     switch (action) {
       case "me":
-        result = {
-          ok: true,
-          username: session.username
-        };
+        result = { ok: true, username: session.username };
         break;
 
       case "dashboard":
@@ -1669,21 +1732,13 @@ module.exports = async function handler(req, res) {
 
       case "user_detail": {
         const id = String(body.user_id || "");
-
         if (!/^\d{1,15}$/.test(id)) {
-          return json(res, 400, {
-            message: "Invalid user ID."
-          });
+          return json(res, 400, { message: "Invalid user ID." });
         }
-
         result = await userDetail(id);
-
         if (!result) {
-          return json(res, 404, {
-            message: "User not found."
-          });
+          return json(res, 404, { message: "User not found." });
         }
-
         break;
       }
 
@@ -1707,57 +1762,50 @@ module.exports = async function handler(req, res) {
         result = await telegramAdminAction(body, session, req);
         break;
 
+      // NEW CASES
+      case "gift_redemptions":
+        result = await getGiftRedemptions(body);
+        break;
+
+      case "channel_settings":
+        result = await getChannelSettings();
+        break;
+
+      case "save_channel_settings":
+        result = await saveChannelSettings(body, session, req);
+        break;
+
+      case "broadcast":
+        result = await broadcastMessage(body, session, req);
+        break;
+
       case "deposit_approve":
       case "deposit_reject":
       case "withdrawal_approve":
       case "withdrawal_reject":
-        result = await reviewWalletTransaction(
-          action,
-          body,
-          session,
-          req
-        );
+        result = await reviewWalletTransaction(action, body, session, req);
         break;
 
       default:
-        return json(res, 400, {
-          message: "Unknown admin action."
-        });
+        return json(res, 400, { message: "Unknown admin action." });
     }
 
-    if (
-      ![
-        "deposit_approve",
-        "deposit_reject",
-        "withdrawal_approve",
-        "withdrawal_reject"
-      ].includes(action)
-    ) {
+    if (!["deposit_approve", "deposit_reject", "withdrawal_approve", "withdrawal_reject"].includes(action)) {
       await audit(session.username, action, req);
     }
 
     return json(res, 200, result);
   } catch (error) {
-    console.error(
-      "Admin API error:",
-      action,
-      error.code || error.name || "Error"
-    );
+    console.error("Admin API error:", action, error.code || error.name || "Error");
 
     let message = "Admin request failed. Check server logs.";
-
     if (error.code === "42P01") {
       message = "Required database table is missing.";
     } else if (error.code === "42703") {
       message = "Database column mismatch. Check actual table schema.";
     } else if (error.code === "22P02") {
       message = "Invalid database value.";
-    } else if (
-      error.message &&
-      /Invalid |Unsupported |Transaction |This is not |Deposit approval is disabled/.test(
-        error.message
-      )
-    ) {
+    } else if (error.message && /Invalid |Unsupported |Transaction |This is not |Deposit approval is disabled/.test(error.message)) {
       message = error.message;
     }
 
