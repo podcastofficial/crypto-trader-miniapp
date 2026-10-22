@@ -141,12 +141,12 @@ module.exports = async function handler(req, res) {
     );
 
     // ==========================================
-    // 🔥 PREMIUM WELCOME MESSAGE (IMAGE STYLE)
+    // 🔥 PREMIUM WELCOME MESSAGE (PURE ENGLISH)
     // ==========================================
     let welcomeText =
       "🚀 <b>Welcome to Crypto Trader Pro!</b> 🚀\n\n" +
-      "🎮 <b>Game Kya Hai?</b>\n" +
-      "Fast-paced crypto prediction game! Crypto price movements ko predict karo aur jeeto big rewards.\n\n" +
+      "🎮 <b>About the Game</b>\n" +
+      "A fast-paced crypto prediction game! Predict crypto price movements and win big rewards.\n\n" +
       "✨ <b>Features:</b>\n" +
       "⚡ Instant Payouts\n" +
       "🎯 Fair & Transparent Results\n" +
@@ -173,10 +173,10 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // 🚨 AAPKA DIRECT IMAGE LINK YAHAN HAI 🚨
+    // 🚨 DIRECT IMAGE LINK
     const bannerImageUrl = "https://raw.githubusercontent.com/podcastofficial/crypto-trader-miniapp/main/1792659429580.png"; 
 
-    // Telegram API Call (Changed to sendPhoto)
+    // Telegram API Call
     const response = await fetch(
       `https://api.telegram.org/bot${botToken}/sendPhoto`,
       {
@@ -186,8 +186,8 @@ module.exports = async function handler(req, res) {
         },
         body: JSON.stringify({
           chat_id: chatId,
-          photo: bannerImageUrl, // Image URL
-          caption: welcomeText,  // Text message (Image ke neeche aayega)
+          photo: bannerImageUrl, 
+          caption: welcomeText,  
           parse_mode: "HTML", 
           reply_markup: {
             inline_keyboard: [
