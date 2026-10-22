@@ -40,7 +40,7 @@ function normalizeAddress(value) {
 }
 
 // ==========================================
-// CHANNEL SETTINGS & TELEGRAM SYSTEM
+// CHANNEL SETTINGS & MULTI-CHANNEL TELEGRAM SYSTEM
 // ==========================================
 async function getChannelSettings(client) {
   try {
@@ -59,7 +59,6 @@ async function sendTelegramMessage(client, type, data) {
 
   try {
     const settings = await getChannelSettings(client);
-    const channel = settings.channel_username || RESULTS_CHANNEL;
     const botName = settings.bot_username || "YourBot";
 
     const inlineKeyboard = {
@@ -73,27 +72,45 @@ async function sendTelegramMessage(client, type, data) {
       ]
     };
 
+    // Gather all active channels (Main + Extra)
+    const channels = new Set();
+    if (settings.channel_username) channels.add(settings.channel_username);
+    
+    try {
+      const extraChannels = await client.query(`SELECT channel_id FROM public.prediction_channels WHERE is_active = TRUE`);
+      for (const row of extraChannels.rows) {
+        channels.add(row.channel_id);
+      }
+    } catch (e) { /* Table might not exist on first run */ }
+
+    const channelList = Array.from(channels);
+    if (channelList.length === 0) return;
+
     if (type === 'prediction') {
       if (settings.predictions_enabled === false) return;
 
       let text = settings.prediction_message || 
         "🔮 Prediction (not guaranteed)\n🔢 Round: {round}\n🎯 Suggested number: {number}\n🎨 Suggested colour: {colour}";
 
-      text = text
-        .replace("{round}", data.round)
-        .replace("{number}", data.number)
-        .replace("{colour}", data.colour);
+      // Replace literal \n with actual newlines, and variables
+      text = text.replace(/\\n/g, '\n')
+        .replace(/{round}/g, data.round)
+        .replace(/{number}/g, data.number)
+        .replace(/{colour}/g, data.colour);
 
-      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: channel,
-          text: text,
-          reply_markup: inlineKeyboard,
-          disable_web_page_preview: true
-        })
-      });
+      for (const chatId of channelList) {
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: text,
+            parse_mode: "HTML",
+            reply_markup: inlineKeyboard,
+            disable_web_page_preview: true
+          })
+        }).catch(err => console.error("Telegram Error:", err.message));
+      }
     }
 
     if (type === 'result') {
@@ -112,7 +129,7 @@ async function sendTelegramMessage(client, type, data) {
       const hist = await client.query(
         `SELECT result FROM public.prediction_history`
       );
-      
+
       const total = hist.rowCount;
       const wins = hist.rows.filter(r => r.result === 'win').length;
       const winRatio = total > 0 ? ((wins / total) * 100).toFixed(1) : "0.0";
@@ -121,36 +138,40 @@ async function sendTelegramMessage(client, type, data) {
       let text = settings.result_message || 
         "🎲 Round result published\n🔢 Round: {round}\n🎯 Result: {number}\n🎨 Colour: {colour}\n📏 Size: {size}\n\n📊 Win Ratio: {win_ratio}% | Loss: {loss_ratio}%";
 
-      text = text
-        .replace("{round}", data.round)
-        .replace("{number}", data.result_number)
-        .replace("{colour}", data.result_colour)
-        .replace("{size}", data.result_size)
-        .replace("{win_ratio}", winRatio)
-        .replace("{loss_ratio}", lossRatio);
+      text = text.replace(/\\n/g, '\n')
+        .replace(/{round}/g, data.round)
+        .replace(/{number}/g, data.result_number)
+        .replace(/{colour}/g, data.result_colour)
+        .replace(/{size}/g, data.result_size)
+        .replace(/{win_ratio}/g, winRatio)
+        .replace(/{loss_ratio}/g, lossRatio);
 
-      if (settings.result_image_url && settings.result_image_url.startsWith("http")) {
-        await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: channel,
-            photo: settings.result_image_url,
-            caption: text,
-            reply_markup: inlineKeyboard
-          })
-        });
-      } else {
-        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: channel,
-            text: text,
-            reply_markup: inlineKeyboard,
-            disable_web_page_preview: true
-          })
-        });
+      for (const chatId of channelList) {
+        if (settings.result_image_url && settings.result_image_url.startsWith("http")) {
+          await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: chatId,
+              photo: settings.result_image_url,
+              caption: text,
+              parse_mode: "HTML",
+              reply_markup: inlineKeyboard
+            })
+          }).catch(err => console.error("Telegram Error:", err.message));
+        } else {
+          await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: text,
+              parse_mode: "HTML",
+              reply_markup: inlineKeyboard,
+              disable_web_page_preview: true
+            })
+          }).catch(err => console.error("Telegram Error:", err.message));
+        }
       }
     }
   } catch (error) {
@@ -159,7 +180,7 @@ async function sendTelegramMessage(client, type, data) {
 }
 
 // ==========================================
-// DEPOSIT SCANNER
+// DEPOSIT SCANNER (FULLY INCLUDED)
 // ==========================================
 async function scanDeposits(client) {
   const rpc = process.env.BSC_RPC_URL;
@@ -199,7 +220,7 @@ async function scanDeposits(client) {
   const fromBlock = Math.max(0, latest - blockRange);
   const chunkSize = 5;
   const paddedTo = `0x${depositAddress.slice(2).padStart(64, "0")}`;
-  
+
   let allLogs = [];
 
   for (let i = fromBlock; i <= latest; i += chunkSize) {
@@ -232,7 +253,7 @@ async function scanDeposits(client) {
       0, 
       latest - parseInt(String(log.blockNumber || "0"), 16) + 1
     );
-    
+
     const requiredConfirmations = Math.max(
       1, 
       Number(process.env.BSC_MIN_CONFIRMATIONS || 3)
@@ -345,13 +366,13 @@ module.exports = async function handler(req, res) {
   try {
     client = await getPool().connect();
     await client.query("BEGIN");
-    
+
     await client.query(
       "SELECT pg_advisory_xact_lock($1::bigint)",
       [739184205]
     );
 
-    // Safety check for channel_settings
+    // Database tables safety check
     try { 
       await client.query(`SELECT 1 FROM public.channel_settings LIMIT 1`); 
     } catch (e) {
@@ -368,6 +389,18 @@ module.exports = async function handler(req, res) {
       )`);
       await client.query(`INSERT INTO public.channel_settings (id) VALUES (1) ON CONFLICT DO NOTHING`);
     }
+
+    // Add sent_at to prediction history for tracking prediction message sent status
+    await client.query(`ALTER TABLE public.prediction_history ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ`);
+    
+    // Create extra channels table for multi-channel support
+    await client.query(`CREATE TABLE IF NOT EXISTS public.prediction_channels (
+      id BIGSERIAL PRIMARY KEY, 
+      channel_id TEXT NOT NULL UNIQUE,
+      is_active BOOLEAN DEFAULT TRUE, 
+      schedule_mins INT DEFAULT 3, 
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`);
 
     const timeResult = await client.query(
       `
@@ -424,13 +457,13 @@ module.exports = async function handler(req, res) {
       const bettingClosesAt = new Date((slot + BETTING_SECONDS) * 1000);
       const endsAt = new Date((slot + ROUND_SECONDS) * 1000);
 
+      // 🚨 FIX: Generating 12-digit code to match UI exactly (Removed Seconds)
       const roundCode = [
         startsAt.getUTCFullYear(),
         String(startsAt.getUTCMonth() + 1).padStart(2, "0"),
         String(startsAt.getUTCDate()).padStart(2, "0"),
         String(startsAt.getUTCHours()).padStart(2, "0"),
-        String(startsAt.getUTCMinutes()).padStart(2, "0"),
-        String(startsAt.getUTCSeconds()).padStart(2, "0")
+        String(startsAt.getUTCMinutes()).padStart(2, "0")
       ].join("");
 
       const inserted = await client.query(
@@ -447,7 +480,7 @@ module.exports = async function handler(req, res) {
 
       if (inserted.rowCount) {
         roundsCreated++;
-        
+
         const seed = [...roundCode].reduce((sum, char) => sum + char.charCodeAt(0), 0);
         const predictedNumber = seed % 10;
         const predictedColour = ["Red", "Green", "Violet"][seed % 3];
@@ -456,12 +489,6 @@ module.exports = async function handler(req, res) {
           `INSERT INTO public.prediction_history (round_code, predicted_number, predicted_colour) VALUES ($1, $2, $3)`,
           [roundCode, predictedNumber, predictedColour]
         );
-
-        await sendTelegramMessage(client, 'prediction', {
-          round: roundCode,
-          number: predictedNumber,
-          colour: predictedColour
-        });
       }
     }
 
@@ -498,6 +525,39 @@ module.exports = async function handler(req, res) {
       RETURNING id
     `);
 
+    // ==========================================
+    // 🚨 NEW: PREDICTION SENDING LOGIC BASED ON TIMING
+    // ==========================================
+    const activeRoundRes = await client.query(`
+      SELECT r.round_code, r.starts_at, p.predicted_number, p.predicted_colour
+      FROM public.game_rounds r
+      JOIN public.prediction_history p ON p.round_code = r.round_code
+      WHERE r.status = 'open' AND r.ends_at > NOW() AND p.sent_at IS NULL
+      ORDER BY r.starts_at DESC LIMIT 1
+    `);
+
+    if (activeRoundRes.rows.length > 0) {
+      const r = activeRoundRes.rows[0];
+      const settings = await getChannelSettings(client);
+      const timing = Number(settings.prediction_timing) || 150;
+      const startMs = new Date(r.starts_at).getTime();
+      const nowMs = dbNow.getTime();
+      
+      // Send prediction only when it's the right time (e.g. 30 seconds after round starts for 150s timing)
+      const sendAtMs = startMs + (ROUND_SECONDS - timing) * 1000;
+
+      if (nowMs >= sendAtMs) {
+        await sendTelegramMessage(client, 'prediction', {
+          round: r.round_code,
+          number: r.predicted_number,
+          colour: r.predicted_colour
+        });
+        // Mark as sent so it doesn't spam
+        await client.query(`UPDATE public.prediction_history SET sent_at = NOW() WHERE round_code = $1`, [r.round_code]);
+      }
+    }
+    // ==========================================
+
     let resultsCalculated = 0;
     let payoutsReleased = 0;
 
@@ -522,12 +582,12 @@ module.exports = async function handler(req, res) {
 
       if (result.phase === "result_calculated") {
         resultsCalculated++;
-        
+
         const pred = await client.query(
           `SELECT predicted_number FROM public.prediction_history WHERE round_code=$1`, 
           [result.round_code]
         );
-        
+
         const isWin = pred.rowCount && Number(pred.rows[0].predicted_number) === Number(result.result_number);
 
         await sendTelegramMessage(client, 'result', {
