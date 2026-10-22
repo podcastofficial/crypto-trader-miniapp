@@ -2013,15 +2013,12 @@ async function renderGiftCodeHistory() {
 }
 
 function copyGiftLink(code) {
-  let botName = state.botUsername || localStorage.getItem("bot_username");
-  if (!botName) {
-    botName = prompt("Bot Username (without @):", "");
-    if (!botName) return;
-    botName = botName.replace(/^@/, "");
-    localStorage.setItem("bot_username", botName);
+  const botName = String(state.botUsername || localStorage.getItem("bot_username") || "").replace(/^@/, "");
+  if (!botName || botName === "YourBot") {
+    toast("Save the correct Bot Username in Channel Settings first.", true);
+    return;
   }
-  const link = `https://t.me/${botName}?startapp=gift_${code}`;
-  copyText(link);
+  copyText(`https://t.me/${botName}?startapp=gift_${code}`);
 }
 
 /* ============ GIFT REDEMPTIONS ============ */
@@ -2080,7 +2077,7 @@ async function renderRounds() {
       </div>
       <form id="manualResultForm" class="inline-form">
         <div class="field"><label>Period / Round Code</label>
-          <input name="round_code" placeholder="e.g. 20251022-001" required></div>
+          <input name="round_code" placeholder="e.g. 202610230123 (game period)" required></div>
         <div class="field" style="max-width:120px"><label>Result (0-9)</label>
           <input name="result_number" type="number" min="0" max="9" required oninput="updateManualResultPreview(this.value)"></div>
         
