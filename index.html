@@ -432,7 +432,6 @@ label { font-weight:800; font-size:12px; }
     <div class="section">
       <div class="section-title">👤 <span data-i18n="profile">Profile</span></div>
       <div class="card">
-        <!-- PROFILE LOGO YAHAN ADD KIYA HAI -->
         <div style="text-align: center; margin-bottom: 12px;">
           <img src="https://raw.githubusercontent.com/podcastofficial/crypto-trader-miniapp/main/1792659429580.png" alt="Profile Avatar" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #facc15; background: #1a1a1a; box-shadow: 0 4px 15px rgba(250, 204, 21, 0.2);">
         </div>
@@ -608,12 +607,9 @@ label { font-weight:800; font-size:12px; }
 <div class="modal-backdrop" id="profileModal">
   <div class="modal">
     <div class="row"><div class="modal-title" data-i18n="editProfile">Edit Profile</div><button class="close-btn" data-close="profileModal" type="button">✕</button></div>
-    
-    <!-- YAHAN BHI LOGO LAGA DIYA HAI -->
     <div style="text-align:center; margin-bottom: 15px;">
       <img src="https://raw.githubusercontent.com/podcastofficial/crypto-trader-miniapp/main/1792659429580.png" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #facc15; background: #1a1a1a; margin: 0 auto; display: block; box-shadow: 0 4px 15px rgba(250, 204, 21, 0.2);">
     </div>
-    
     <label for="profileDisplayName" data-i18n="displayName">Display name</label>
     <input id="profileDisplayName" type="text" maxlength="64" autocomplete="name">
     <div class="notice" data-i18n="profileTelegramNote">Your Telegram username is managed by Telegram.</div>
@@ -707,7 +703,13 @@ function signedCents(c){ const sign = c > 0 ? "+" : c < 0 ? "−" : ""; return s
 function dateUTC(value){ const d = new Date(value); if(Number.isNaN(d.getTime())) return ""; return d.toLocaleString("en-GB",{ timeZone:"UTC", day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit", second:"2-digit", hourCycle:"h23" }) + " UTC"; }
 function nowMs(){ return Date.now() + serverTimeOffset; }
 
-// 🚨 FIX: API ko 14-digit bhejne ke liye
+// 🚨 FIX 1: Ab UI par 14-digit ka period number show hoga (YYYYMMDDHHMMSS)
+function fmtPeriod(code){ 
+  return String(code || ""); 
+}
+
+function p2(n){ return String(n).padStart(2,"0"); }
+
 function slotInfo(ms){ 
   const size = ROUND_SECONDS * 1000; 
   const startMs = Math.floor(ms / size) * size; 
@@ -716,20 +718,6 @@ function slotInfo(ms){
   return {code,startMs,closesMs:startMs + BETTING_SECONDS * 1000,endsMs:startMs + size}; 
 }
 
-function p2(n){ return String(n).padStart(2,"0"); }
-
-// 🚨 FIX: UI par Serial Number (12-digit) dikhane ke liye
-function fmtPeriod(code){ 
-  const raw = String(code || ""); 
-  if (!/^\d{14}$/.test(raw)) return raw.slice(0,12); 
-  const day = raw.slice(0,8); 
-  const hour = Number(raw.slice(8,10)); 
-  const minute = Number(raw.slice(10,12)); 
-  const serial = Math.floor((hour * 60 + minute) / 3) + 1; 
-  return `${day}${String(serial).padStart(4, "0")}`; 
-}
-
-// 🚨 FIX: API validation 14-digit ke liye
 function codeEnded(code){ 
   const m = String(code || "").match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/); 
   if(!m) return true; 
