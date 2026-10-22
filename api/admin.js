@@ -314,6 +314,12 @@ async function ensureManagementTables() {
     created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
   )`);
   await query(`INSERT INTO public.channel_settings (id) VALUES (1) ON CONFLICT DO NOTHING`);
+
+  // NEW: Multi-Channel Table
+  await query(`CREATE TABLE IF NOT EXISTS public.prediction_channels (
+    id BIGSERIAL PRIMARY KEY, channel_id TEXT NOT NULL UNIQUE,
+    is_active BOOLEAN DEFAULT TRUE, schedule_mins INT DEFAULT 3, created_at TIMESTAMPTZ DEFAULT NOW()
+  )`);
 }
 
 async function userManagement(body, session, req) {
@@ -1130,12 +1136,13 @@ async function getGiftRedemptions(body) {
 }
 
 /* =========================
-   CHANNEL SETTINGS
+   CHANNEL SETTINGS (UPDATED FOR MULTI-CHANNEL)
 ========================= */
 async function getChannelSettings() {
   await ensureManagementTables();
-  const rows = await query(`SELECT * FROM public.channel_settings WHERE id=1`);
-  return { ok: true, settings: rows[0] || {} };
+  const settingsRows = await query(`SELECT * FROM public.channel_settings WHERE id=1`);
+  const channelRows = await query(`SELECT * FROM public.prediction_channels ORDER BY id DESC`);
+  return { ok: true, settings: settingsRows[0] || {}, prediction_channels: channelRows };
 }
 
 async function saveChannelSettings(body, session, req) {
@@ -1157,6 +1164,28 @@ async function saveChannelSettings(body, session, req) {
   );
   await audit(session.username, "save_channel_settings", req, "success");
   return { ok: true, message: "Channel settings saved." };
+}
+
+async function savePredictionChannel(body, session, req) {
+  await ensureManagementTables();
+  const action = String(body.action_type);
+  
+  if (action === "add") {
+    const channelId = String(body.channel_id || "").trim();
+    const schedule = Number(body.schedule_mins) || 3;
+    if (!channelId) throw new Error("Channel ID required");
+    await query(`INSERT INTO public.prediction_channels (channel_id, schedule_mins) VALUES ($1, $2) 
+      ON CONFLICT (channel_id) DO UPDATE SET schedule_mins=$2`, [channelId, schedule]);
+  } else if (action === "toggle") {
+    await query(`UPDATE public.prediction_channels SET is_active=$1 WHERE id=$2`, [body.is_active, body.id]);
+  } else if (action === "delete") {
+    await query(`DELETE FROM public.prediction_channels WHERE id=$1`, [body.id]);
+  } else {
+    throw new Error("Invalid action");
+  }
+  
+  await audit(session.username, `pred_channel_${action}`, req, "success");
+  return { ok: true };
 }
 
 /* =========================
@@ -1308,6 +1337,10 @@ module.exports = async function handler(req, res) {
       case "gift_redemptions": result = await getGiftRedemptions(body); break;
       case "channel_settings": result = await getChannelSettings(); break;
       case "save_channel_settings": result = await saveChannelSettings(body, session, req); break;
+      
+      // NEW: Multi-Channel Cases
+      case "save_prediction_channel": result = await savePredictionChannel(body, session, req); break;
+      
       case "broadcast": result = await broadcastMessage(body, session, req); break;
       case "deposit_approve":
       case "deposit_reject":
