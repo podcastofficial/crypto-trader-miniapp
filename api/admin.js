@@ -22,6 +22,7 @@ const SESSION_SECONDS = 7200;
 const PAGE_SIZE_MAX = 100;
 const EXPORT_MAX = 5000;
 const FALLBACK_RESULTS_CHANNEL = "@crypto_trader_results";
+const NUMBER_PAYOUT_MULTIPLIER = 9; // 0-9 number game default payout
 
 async function getResultsChannel() {
   try {
@@ -262,6 +263,15 @@ async function ensureManagementTables() {
   await query(`ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS payout_tx_hash TEXT`);
   await query(`ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS destination_address TEXT`);
 
+  // NEW: Period number (game) support
+  await query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS period_number TEXT`);
+  await query(`UPDATE public.game_rounds SET period_number = round_code WHERE period_number IS NULL`);
+  await query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS predicted_result INT`);
+  await query(`CREATE INDEX IF NOT EXISTS idx_game_rounds_period_number ON public.game_rounds(period_number)`);
+
+  // NEW: Channel updates toggle
+  await query(`ALTER TABLE public.channel_settings ADD COLUMN IF NOT EXISTS channel_updates_enabled BOOLEAN DEFAULT TRUE`);
+
   await query(`CREATE TABLE IF NOT EXISTS public.gift_codes (
     id BIGSERIAL PRIMARY KEY, code TEXT UNIQUE NOT NULL, points NUMERIC(20,2) NOT NULL,
     max_uses INTEGER NOT NULL DEFAULT 1, uses INTEGER NOT NULL DEFAULT 0,
@@ -314,11 +324,27 @@ async function ensureManagementTables() {
     created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
   )`);
   await query(`INSERT INTO public.channel_settings (id) VALUES (1) ON CONFLICT DO NOTHING`);
+  await query(`ALTER TABLE public.channel_settings ADD COLUMN IF NOT EXISTS channel_updates_enabled BOOLEAN DEFAULT TRUE`);
 
   // NEW: Multi-Channel Table
   await query(`CREATE TABLE IF NOT EXISTS public.prediction_channels (
     id BIGSERIAL PRIMARY KEY, channel_id TEXT NOT NULL UNIQUE,
     is_active BOOLEAN DEFAULT TRUE, schedule_mins INT DEFAULT 3, created_at TIMESTAMPTZ DEFAULT NOW()
+  )`);
+
+  // NEW: Support Settings + Messages
+  await query(`CREATE TABLE IF NOT EXISTS public.support_settings (
+    id INT PRIMARY KEY DEFAULT 1,
+    support_username TEXT, support_channel TEXT,
+    support_message TEXT, support_enabled BOOLEAN DEFAULT TRUE,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  )`);
+  await query(`INSERT INTO public.support_settings (id) VALUES (1) ON CONFLICT DO NOTHING`);
+
+  await query(`CREATE TABLE IF NOT EXISTS public.support_messages (
+    id BIGSERIAL PRIMARY KEY, user_id BIGINT, username TEXT,
+    message TEXT NOT NULL, status TEXT DEFAULT 'open',
+    created_at TIMESTAMPTZ DEFAULT NOW()
   )`);
 }
 
@@ -490,7 +516,8 @@ async function dashboard() {
       (SELECT COALESCE(SUM(commission_amount),0) FROM public.referral_commissions) AS total_commissions,
       (SELECT COUNT(*) FROM public.users WHERE referred_by IS NOT NULL) AS total_referrals`),
     query(`SELECT status, COUNT(*) AS count FROM public.game_rounds GROUP BY status ORDER BY status`),
-    query(`SELECT r.round_code, r.status, r.starts_at, r.betting_closes_at, r.ends_at,
+    query(`SELECT COALESCE(r.period_number, r.round_code) AS period_number,
+      r.round_code, r.status, r.starts_at, r.betting_closes_at, r.ends_at,
       CASE WHEN r.ends_at <= NOW() THEN r.result_number ELSE NULL END AS result_number,
       COUNT(b.id) AS bet_count,
       COALESCE(SUM(b.stake),0) AS total_stake,
@@ -539,7 +566,9 @@ const LISTS = {
   users: {
     select: `u.id,u.telegram_id,u.first_name,u.last_name,u.username,w.balance,
       u.referred_by,u.referral_code,u.created_at,
-      (SELECT COUNT(*) FROM public.users c WHERE c.referred_by=u.id) AS referral_count`,
+      (SELECT COUNT(*) FROM public.users c WHERE c.referred_by=u.id) AS referral_count,
+      (SELECT COUNT(*) FROM public.bets b WHERE b.user_id=u.id AND b.status='won') AS wins,
+      (SELECT COUNT(*) FROM public.bets b WHERE b.user_id=u.id AND b.status='lost') AS losses`,
     from: `public.users u LEFT JOIN public.wallet_balances w ON w.user_id=u.id`,
     order: "u.id DESC"
   },
@@ -555,7 +584,9 @@ const LISTS = {
     order: "id DESC"
   },
   rounds: {
-    select: `r.round_code,r.status,r.starts_at,r.betting_closes_at,r.ends_at,
+    select: `COALESCE(r.period_number, r.round_code) AS period_number,
+      r.round_code,r.status,r.starts_at,r.betting_closes_at,r.ends_at,
+      r.predicted_result,
       CASE WHEN r.ends_at<=NOW() THEN r.result_number ELSE NULL END AS result_number,
       COUNT(b.id) AS bet_count,
       COALESCE(SUM(b.stake),0) AS total_stake,
@@ -567,7 +598,9 @@ const LISTS = {
     group: "GROUP BY r.id"
   },
   bets: {
-    select: `b.id,b.user_id,b.round_id,r.round_code,b.bet_type,b.selection,b.stake,b.fee,b.status,
+    select: `b.id,b.user_id,b.round_id,r.round_code,
+      COALESCE(r.period_number, r.round_code) AS period_number,
+      b.bet_type,b.selection,b.stake,b.fee,b.status,
       CASE WHEN r.ends_at<=NOW() THEN r.result_number ELSE NULL END AS result_number,
       b.payout,b.created_at,b.settled_at`,
     from: `public.bets b LEFT JOIN public.game_rounds r ON r.id=b.round_id`,
@@ -643,10 +676,15 @@ async function listAction(action, body) {
     }
   }
 
-  if (action === "rounds" && body.q) addFilter(conditions, params, "r.round_code ILIKE ?", `%${String(body.q).trim().slice(0, 100)}%`);
+  if (action === "rounds" && body.q) {
+    addFilter(conditions, params, "(r.round_code ILIKE ? OR r.period_number ILIKE ?)", `%${String(body.q).trim().slice(0, 100)}%`);
+    // Fix double param: add same value again for second placeholder
+    params.push(`%${String(body.q).trim().slice(0, 100)}%`);
+    conditions[conditions.length - 1] = `(r.round_code ILIKE $${params.length - 1} OR r.period_number ILIKE $${params.length})`;
+  }
 
   if (action === "bets") {
-    if (body.q) addFilter(conditions, params, "r.round_code ILIKE ?", `%${String(body.q).trim().slice(0, 100)}%`);
+    if (body.q) addFilter(conditions, params, "(r.round_code ILIKE ? OR r.period_number ILIKE ?)", `%${String(body.q).trim().slice(0, 100)}%`);
     if (body.user_id) {
       if (!/^\d{1,15}$/.test(String(body.user_id))) throw new Error("Invalid user ID.");
       addFilter(conditions, params, "b.user_id=?", String(body.user_id));
@@ -718,10 +756,14 @@ async function analytics() {
     query(`SELECT u.id,u.username,COUNT(b.id) AS bets,
       COALESCE(SUM(b.stake),0) AS stake,
       COALESCE(SUM(b.payout),0) AS payout,
-      COALESCE(SUM(b.stake),0)-COALESCE(SUM(b.payout),0) AS user_net
+      COALESCE(SUM(b.stake),0)-COALESCE(SUM(b.payout),0) AS user_net,
+      COUNT(b.id) FILTER (WHERE b.status='won') AS wins,
+      COUNT(b.id) FILTER (WHERE b.status='lost') AS losses
       FROM public.users u JOIN public.bets b ON b.user_id=u.id
       GROUP BY u.id,u.username ORDER BY SUM(b.stake) DESC LIMIT 10`),
-    query(`SELECT b.id,b.user_id,r.round_code,b.bet_type,b.stake,b.created_at
+    query(`SELECT b.id,b.user_id,r.round_code,
+      COALESCE(r.period_number, r.round_code) AS period_number,
+      b.bet_type,b.stake,b.created_at
       FROM public.bets b LEFT JOIN public.game_rounds r ON r.id=b.round_id
       ORDER BY b.stake DESC LIMIT 20`),
     query(`SELECT user_id,COUNT(*) AS bets,
@@ -809,7 +851,9 @@ async function userDetail(userId) {
       COALESCE(SUM(stake),0) AS stake, COALESCE(SUM(payout),0) AS payout,
       COUNT(*) FILTER(WHERE status='won') AS wins, COUNT(*) FILTER(WHERE status='lost') AS losses
       FROM public.bets WHERE user_id=$1`, [userId]),
-    query(`SELECT b.id,r.round_code,b.bet_type,b.selection,b.stake,b.fee,b.status,
+    query(`SELECT b.id,r.round_code,
+      COALESCE(r.period_number, r.round_code) AS period_number,
+      b.bet_type,b.selection,b.stake,b.fee,b.status,
       CASE WHEN r.ends_at<=NOW() THEN r.result_number ELSE NULL END AS result_number,
       b.payout,b.created_at,b.settled_at
       FROM public.bets b LEFT JOIN public.game_rounds r ON r.id=b.round_id
@@ -864,11 +908,16 @@ async function search(q) {
      ORDER BY u.id DESC LIMIT 20`, [q, `%${q}%`]
   );
   const rounds = await query(
-    `SELECT round_code,status,starts_at,ends_at FROM public.game_rounds
-     WHERE round_code=$1 ORDER BY starts_at DESC LIMIT 10`, [q]
+    `SELECT COALESCE(period_number, round_code) AS period_number,
+      round_code,status,starts_at,ends_at,result_number
+     FROM public.game_rounds
+     WHERE round_code=$1 OR period_number=$1 OR round_code ILIKE $2 OR period_number ILIKE $2
+     ORDER BY starts_at DESC LIMIT 10`, [q, `%${q}%`]
   );
   const bets = /^\d+$/.test(q)
-    ? await query(`SELECT b.id,b.user_id,r.round_code,b.bet_type,b.stake,b.status
+    ? await query(`SELECT b.id,b.user_id,r.round_code,
+        COALESCE(r.period_number, r.round_code) AS period_number,
+        b.bet_type,b.stake,b.status
         FROM public.bets b LEFT JOIN public.game_rounds r ON r.id=b.round_id
         WHERE b.id=$1 LIMIT 10`, [q])
     : [];
@@ -923,7 +972,9 @@ async function exportCsv(body) {
       params.push(status);
       conditions.push(`b.status=$${params.length}`);
     }
-    sql = `SELECT b.id,b.user_id,r.round_code,b.bet_type,b.selection,b.stake,b.fee,b.status,b.payout,
+    sql = `SELECT b.id,b.user_id,r.round_code,
+      COALESCE(r.period_number, r.round_code) AS period_number,
+      b.bet_type,b.selection,b.stake,b.fee,b.status,b.payout,
       b.created_at,b.settled_at
       FROM public.bets b LEFT JOIN public.game_rounds r ON r.id=b.round_id
       ${conditions.length ? "WHERE " + conditions.join(" AND ") : ""}
@@ -1136,7 +1187,7 @@ async function getGiftRedemptions(body) {
 }
 
 /* =========================
-   CHANNEL SETTINGS (UPDATED FOR MULTI-CHANNEL)
+   CHANNEL SETTINGS (UPDATED FOR MULTI-CHANNEL + TOGGLE)
 ========================= */
 async function getChannelSettings() {
   await ensureManagementTables();
@@ -1149,7 +1200,8 @@ async function saveChannelSettings(body, session, req) {
   await ensureManagementTables();
   await query(`UPDATE public.channel_settings SET
       channel_username=$1, bot_username=$2, predictions_enabled=$3, prediction_timing=$4,
-      prediction_message=$5, result_message=$6, result_image_url=$7, inline_link_text=$8, updated_at=NOW()
+      prediction_message=$5, result_message=$6, result_image_url=$7, inline_link_text=$8,
+      channel_updates_enabled=$9, updated_at=NOW()
     WHERE id=1`,
     [
       String(body.channel_username || "").slice(0, 200),
@@ -1159,7 +1211,8 @@ async function saveChannelSettings(body, session, req) {
       body.prediction_message ? String(body.prediction_message).slice(0, 4000) : null,
       body.result_message ? String(body.result_message).slice(0, 4000) : null,
       body.result_image_url ? String(body.result_image_url).slice(0, 500) : null,
-      String(body.inline_link_text || "Play").slice(0, 100)
+      String(body.inline_link_text || "Play").slice(0, 100),
+      body.channel_updates_enabled === true || body.channel_updates_enabled === "true"
     ]
   );
   await audit(session.username, "save_channel_settings", req, "success");
@@ -1169,12 +1222,12 @@ async function saveChannelSettings(body, session, req) {
 async function savePredictionChannel(body, session, req) {
   await ensureManagementTables();
   const action = String(body.action_type);
-  
+
   if (action === "add") {
     const channelId = String(body.channel_id || "").trim();
     const schedule = Number(body.schedule_mins) || 3;
     if (!channelId) throw new Error("Channel ID required");
-    await query(`INSERT INTO public.prediction_channels (channel_id, schedule_mins) VALUES ($1, $2) 
+    await query(`INSERT INTO public.prediction_channels (channel_id, schedule_mins) VALUES ($1, $2)
       ON CONFLICT (channel_id) DO UPDATE SET schedule_mins=$2`, [channelId, schedule]);
   } else if (action === "toggle") {
     await query(`UPDATE public.prediction_channels SET is_active=$1 WHERE id=$2`, [body.is_active, body.id]);
@@ -1183,9 +1236,283 @@ async function savePredictionChannel(body, session, req) {
   } else {
     throw new Error("Invalid action");
   }
-  
+
   await audit(session.username, `pred_channel_${action}`, req, "success");
   return { ok: true };
+}
+
+/* =========================
+   NEW: NEXT ROUND PREVIEW
+========================= */
+async function nextRound() {
+  const rows = await query(
+    `SELECT COALESCE(r.period_number, r.round_code) AS period_number,
+      r.round_code, r.status, r.starts_at, r.betting_closes_at, r.ends_at,
+      r.result_number, r.predicted_result
+     FROM public.game_rounds r
+     WHERE r.status IN ('open','locked') OR r.starts_at > NOW()
+     ORDER BY r.starts_at ASC LIMIT 1`
+  );
+  return { ok: true, next: rows[0] || null };
+}
+
+/* =========================
+   NEW: SET NEXT RESULT (prediction preview)
+========================= */
+async function setNextResult(body, session, req) {
+  await ensureManagementTables();
+  const roundCode = String(body.round_code || "").trim().slice(0, 100);
+  const resultNumber = Number(body.result_number);
+
+  if (!roundCode) throw new Error("Round code / period is required.");
+  if (!Number.isInteger(resultNumber) || resultNumber < 0 || resultNumber > 9) {
+    throw new Error("Result must be an integer between 0 and 9.");
+  }
+
+  const rows = await query(
+    `UPDATE public.game_rounds
+     SET predicted_result=$1, updated_at=NOW()
+     WHERE (round_code=$2 OR period_number=$2) AND (status IN ('open','locked') OR starts_at > NOW())
+     RETURNING id, round_code, COALESCE(period_number, round_code) AS period_number`,
+    [resultNumber, roundCode]
+  );
+
+  if (!rows.length) throw new Error("Round not found or already settled.");
+  await audit(session.username, "set_next_result", req, "success", "round", rows[0].round_code);
+  return {
+    ok: true,
+    round_code: rows[0].round_code,
+    period_number: rows[0].period_number,
+    predicted_result: resultNumber
+  };
+}
+
+/* =========================
+   NEW: MANUAL RESULT UPDATE (settle round)
+========================= */
+async function setResult(body, session, req) {
+  await ensureManagementTables();
+  const roundCode = String(body.round_code || "").trim().slice(0, 100);
+  const resultNumber = Number(body.result_number);
+  const autoSettle = body.auto_settle !== false; // default true
+
+  if (!roundCode) throw new Error("Round code / period is required.");
+  if (!Number.isInteger(resultNumber) || resultNumber < 0 || resultNumber > 9) {
+    throw new Error("Result must be an integer between 0 and 9.");
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const rounds = await client.query(
+      `SELECT id, round_code, COALESCE(period_number, round_code) AS period_number
+       FROM public.game_rounds
+       WHERE round_code=$1 OR period_number=$1
+       FOR UPDATE`,
+      [roundCode]
+    );
+    if (!rounds.rows.length) throw new Error("Round not found.");
+    const round = rounds.rows[0];
+
+    // Update round with result
+    await client.query(
+      `UPDATE public.game_rounds
+       SET result_number=$1, status='settled', settled_at=NOW(), updated_at=NOW()
+       WHERE id=$2`,
+      [resultNumber, round.id]
+    );
+
+    let settledCount = 0;
+    let wonCount = 0;
+    let totalPayout = 0;
+
+    if (autoSettle) {
+      // Auto-settle pending number bets: number match => win, payout = stake * multiplier
+      const settlementResult = await client.query(
+        `UPDATE public.bets
+         SET result_number=$1,
+             status = CASE
+               WHEN selection = $1::text THEN 'won'
+               WHEN selection ~ '^[0-9]+$' AND selection != $1::text THEN 'lost'
+               ELSE status
+             END,
+             payout = CASE
+               WHEN selection = $1::text THEN stake * $3
+               ELSE 0
+             END,
+             settled_at = CASE
+               WHEN selection = $1::text OR selection ~ '^[0-9]+$' THEN NOW()
+               ELSE settled_at
+             END
+         WHERE round_id=$2 AND status='pending'
+         RETURNING user_id, payout, status`,
+        [String(resultNumber), round.id, NUMBER_PAYOUT_MULTIPLIER]
+      );
+
+      settledCount = settlementResult.rowCount;
+      wonCount = settlementResult.rows.filter(r => r.status === "won").length;
+      totalPayout = settlementResult.rows.reduce((sum, r) => sum + Number(r.payout || 0), 0);
+
+      // Credit winning bets to wallet
+      if (totalPayout > 0) {
+        await client.query(
+          `INSERT INTO public.wallet_balances (user_id, balance, updated_at)
+           SELECT user_id, SUM(payout), NOW()
+           FROM public.bets
+           WHERE round_id=$1 AND status='won' AND payout > 0
+           GROUP BY user_id
+           ON CONFLICT (user_id) DO UPDATE SET
+             balance = public.wallet_balances.balance + EXCLUDED.balance,
+             updated_at = NOW()`,
+          [round.id]
+        );
+      }
+    }
+
+    await client.query("COMMIT");
+
+    await audit(session.username, "set_result", req, "success", "round", round.round_code);
+
+    // Notify results channel
+    const resultsChannel = await getResultsChannel();
+    try {
+      await notifyTelegram(
+        `🎲 Result Updated\n📅 Period: ${round.period_number}\n🔢 Result: ${resultNumber}\n💰 Settled bets: ${settledCount}\n✅ Winners: ${wonCount}\n💵 Payout: ${totalPayout.toFixed(2)}`,
+        [resultsChannel]
+      );
+    } catch { /* non-blocking */ }
+
+    return {
+      ok: true,
+      round_code: round.round_code,
+      period_number: round.period_number,
+      result_number: resultNumber,
+      settled_bets: settledCount,
+      won_bets: wonCount,
+      total_payout: totalPayout,
+      message: autoSettle
+        ? `Result set. ${settledCount} bets settled, ${wonCount} winners, ${totalPayout.toFixed(2)} points credited.`
+        : "Result set (no auto-settlement)."
+    };
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/* =========================
+   NEW: POST PREDICTION TO CHANNELS
+========================= */
+function colourOf(n) {
+  const num = Number(n);
+  if (num === 0 || num === 5) return "Violet";
+  if ([1, 3, 7, 9].includes(num)) return "Green";
+  if ([2, 4, 6, 8].includes(num)) return "Red";
+  return "";
+}
+
+async function postPrediction(body, session, req) {
+  await ensureManagementTables();
+
+  const channels = body.all
+    ? await query(`SELECT * FROM public.prediction_channels WHERE is_active=TRUE`)
+    : await query(`SELECT * FROM public.prediction_channels WHERE id=$1`, [body.id]);
+
+  if (!channels.length) throw new Error("No active channels found.");
+
+  const rounds = await query(
+    `SELECT COALESCE(period_number, round_code) AS period_number, round_code,
+      status, starts_at, ends_at, predicted_result
+     FROM public.game_rounds
+     WHERE status IN ('open','locked') OR starts_at > NOW()
+     ORDER BY starts_at ASC LIMIT 1`
+  );
+  if (!rounds.length) throw new Error("No upcoming round found.");
+  const round = rounds[0];
+
+  if (round.predicted_result === null || round.predicted_result === undefined) {
+    throw new Error("No prediction set for the upcoming round. Use 'Set / Change' on Dashboard first.");
+  }
+
+  const settings = await query(`SELECT * FROM public.channel_settings WHERE id=1`);
+  const s = settings[0] || {};
+  const template = s.prediction_message || "🎯 Next Period: {round}\n🔮 Prediction: {prediction}";
+
+  const message = template
+    .replace(/\{round\}/g, round.period_number || round.round_code || "")
+    .replace(/\{prediction\}/g, String(round.predicted_result))
+    .replace(/\{colour\}/g, colourOf(round.predicted_result));
+
+  let sent = 0;
+  let failed = 0;
+  const errors = [];
+
+  for (const ch of channels) {
+    const result = await notifyTelegram(message, [ch.channel_id]);
+    if (result.ok) sent++;
+    else {
+      failed++;
+      const err = result.results?.map(r => r.error || r.payload?.description).filter(Boolean).join("; ");
+      if (err) errors.push(`Channel ${ch.channel_id}: ${err}`);
+    }
+  }
+
+  await audit(session.username, "post_prediction", req, failed ? "partial" : "success");
+  return {
+    ok: true,
+    message: `Posted to ${sent} channel(s)${failed ? `, failed: ${failed}` : ""}.`,
+    sent, failed,
+    errors: errors.slice(0, 5)
+  };
+}
+
+/* =========================
+   NEW: SUPPORT SETTINGS
+========================= */
+async function getSupportSettings() {
+  await ensureManagementTables();
+  const rows = await query(`SELECT * FROM public.support_settings WHERE id=1`);
+  return { ok: true, settings: rows[0] || {} };
+}
+
+async function saveSupportSettings(body, session, req) {
+  await ensureManagementTables();
+  await query(`UPDATE public.support_settings SET
+      support_username=$1, support_channel=$2, support_message=$3,
+      support_enabled=$4, updated_at=NOW()
+    WHERE id=1`,
+    [
+      String(body.support_username || "").slice(0, 100),
+      String(body.support_channel || "").slice(0, 100),
+      body.support_message ? String(body.support_message).slice(0, 2000) : null,
+      body.support_enabled === true || body.support_enabled === "true"
+    ]
+  );
+  await audit(session.username, "save_support_settings", req, "success");
+  return { ok: true, message: "Support settings saved." };
+}
+
+async function getSupportMessages(body) {
+  await ensureManagementTables();
+  const { page, size, offset } = pagination(body);
+  const [rows, totals] = await Promise.all([
+    query(`SELECT id, user_id, username, message, status, created_at
+           FROM public.support_messages
+           ORDER BY id DESC LIMIT $1 OFFSET $2`, [size, offset]),
+    query(`SELECT COUNT(*)::int AS total FROM public.support_messages`)
+  ]);
+  const total = Number(totals[0]?.total || 0);
+  return {
+    ok: true,
+    messages: rows,
+    pagination: {
+      page, page_size: size, total, total_pages: Math.max(1, Math.ceil(total / size)),
+      has_previous: page > 1, has_next: page < Math.ceil(total / size)
+    }
+  };
 }
 
 /* =========================
@@ -1290,7 +1617,7 @@ module.exports = async function handler(req, res) {
       }
       setCookie(res, createSession(settings.username), SESSION_SECONDS);
       await audit(settings.username, "login", req);
-      return json(res, 200, { ok: true });
+      return json(res, 200, { ok: true, username: settings.username });
     } catch (error) {
       console.error("Admin login error:", error.code || error.name);
       return json(res, 500, { message: "Login service temporarily unavailable." });
@@ -1337,10 +1664,17 @@ module.exports = async function handler(req, res) {
       case "gift_redemptions": result = await getGiftRedemptions(body); break;
       case "channel_settings": result = await getChannelSettings(); break;
       case "save_channel_settings": result = await saveChannelSettings(body, session, req); break;
-      
-      // NEW: Multi-Channel Cases
       case "save_prediction_channel": result = await savePredictionChannel(body, session, req); break;
-      
+
+      // NEW: Period/result/prediction/support actions
+      case "next_round": result = await nextRound(); break;
+      case "set_next_result": result = await setNextResult(body, session, req); break;
+      case "set_result": result = await setResult(body, session, req); break;
+      case "post_prediction": result = await postPrediction(body, session, req); break;
+      case "support_settings": result = await getSupportSettings(); break;
+      case "save_support_settings": result = await saveSupportSettings(body, session, req); break;
+      case "support_messages": result = await getSupportMessages(body); break;
+
       case "broadcast": result = await broadcastMessage(body, session, req); break;
       case "deposit_approve":
       case "deposit_reject":
@@ -1361,7 +1695,7 @@ module.exports = async function handler(req, res) {
     if (error.code === "42P01") message = "Required database table is missing.";
     else if (error.code === "42703") message = "Database column mismatch. Check actual table schema.";
     else if (error.code === "22P02") message = "Invalid database value.";
-    else if (error.message && /Invalid |Unsupported |Transaction |This is not |Maximum 10|Enter valid|Enter a valid|required/.test(error.message)) {
+    else if (error.message && /Invalid |Unsupported |Transaction |This is not |Maximum 10|Enter valid|Enter a valid|required|Round not found|No upcoming|No prediction|No active channels/.test(error.message)) {
       message = error.message;
     }
     return json(res, 400, { message });
