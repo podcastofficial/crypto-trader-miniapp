@@ -39,6 +39,17 @@ function normalizeAddress(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+// 🚨 NEW: 14-digit code ko 12-digit serial number me convert karne ke liye
+function fmtPeriod(code) {
+  const raw = String(code || "");
+  if (!/^\d{14}$/.test(raw)) return raw.slice(0, 12);
+  const day = raw.slice(0, 8);
+  const hour = Number(raw.slice(8, 10));
+  const minute = Number(raw.slice(10, 12));
+  const serial = Math.floor((hour * 60 + minute) / 3) + 1;
+  return `${day}${String(serial).padStart(4, "0")}`;
+}
+
 // ==========================================
 // CHANNEL SETTINGS & MULTI-CHANNEL TELEGRAM SYSTEM
 // ==========================================
@@ -75,7 +86,7 @@ async function sendTelegramMessage(client, type, data) {
     // Gather all active channels (Main + Extra)
     const channels = new Set();
     if (settings.channel_username) channels.add(settings.channel_username);
-    
+
     try {
       const extraChannels = await client.query(`SELECT channel_id FROM public.prediction_channels WHERE is_active = TRUE`);
       for (const row of extraChannels.rows) {
@@ -94,7 +105,7 @@ async function sendTelegramMessage(client, type, data) {
 
       // Replace literal \n with actual newlines, and variables
       text = text.replace(/\\n/g, '\n')
-        .replace(/{round}/g, data.round)
+        .replace(/{round}/g, fmtPeriod(data.round)) // <-- Yahan Serial Number use hoga
         .replace(/{number}/g, data.number)
         .replace(/{colour}/g, data.colour);
 
@@ -139,7 +150,7 @@ async function sendTelegramMessage(client, type, data) {
         "🎲 Round result published\n🔢 Round: {round}\n🎯 Result: {number}\n🎨 Colour: {colour}\n📏 Size: {size}\n\n📊 Win Ratio: {win_ratio}% | Loss: {loss_ratio}%";
 
       text = text.replace(/\\n/g, '\n')
-        .replace(/{round}/g, data.round)
+        .replace(/{round}/g, fmtPeriod(data.round)) // <-- Yahan Serial Number use hoga
         .replace(/{number}/g, data.result_number)
         .replace(/{colour}/g, data.result_colour)
         .replace(/{size}/g, data.result_size)
@@ -392,7 +403,7 @@ module.exports = async function handler(req, res) {
 
     // Add sent_at to prediction history for tracking prediction message sent status
     await client.query(`ALTER TABLE public.prediction_history ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ`);
-    
+
     // Create extra channels table for multi-channel support
     await client.query(`CREATE TABLE IF NOT EXISTS public.prediction_channels (
       id BIGSERIAL PRIMARY KEY, 
@@ -457,13 +468,14 @@ module.exports = async function handler(req, res) {
       const bettingClosesAt = new Date((slot + BETTING_SECONDS) * 1000);
       const endsAt = new Date((slot + ROUND_SECONDS) * 1000);
 
-      // 🚨 FIX: Generating 12-digit code to match UI exactly (Removed Seconds)
+      // 🚨 FIX: Wapas 14-digit code generate kar rahe hain (API validation ke liye)
       const roundCode = [
         startsAt.getUTCFullYear(),
         String(startsAt.getUTCMonth() + 1).padStart(2, "0"),
         String(startsAt.getUTCDate()).padStart(2, "0"),
         String(startsAt.getUTCHours()).padStart(2, "0"),
-        String(startsAt.getUTCMinutes()).padStart(2, "0")
+        String(startsAt.getUTCMinutes()).padStart(2, "0"),
+        String(startsAt.getUTCSeconds()).padStart(2, "0")
       ].join("");
 
       const inserted = await client.query(
@@ -526,7 +538,7 @@ module.exports = async function handler(req, res) {
     `);
 
     // ==========================================
-    // 🚨 NEW: PREDICTION SENDING LOGIC BASED ON TIMING
+    // PREDICTION SENDING LOGIC BASED ON TIMING
     // ==========================================
     const activeRoundRes = await client.query(`
       SELECT r.round_code, r.starts_at, p.predicted_number, p.predicted_colour
@@ -542,7 +554,7 @@ module.exports = async function handler(req, res) {
       const timing = Number(settings.prediction_timing) || 150;
       const startMs = new Date(r.starts_at).getTime();
       const nowMs = dbNow.getTime();
-      
+
       // Send prediction only when it's the right time (e.g. 30 seconds after round starts for 150s timing)
       const sendAtMs = startMs + (ROUND_SECONDS - timing) * 1000;
 
