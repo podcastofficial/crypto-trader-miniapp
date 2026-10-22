@@ -22,7 +22,12 @@ const SESSION_SECONDS = 7200;
 const PAGE_SIZE_MAX = 100;
 const EXPORT_MAX = 5000;
 const FALLBACK_RESULTS_CHANNEL = "@crypto_trader_results";
-const NUMBER_PAYOUT_MULTIPLIER = 9; // 0-9 number game default payout
+
+// Payout Multipliers (Change here if your game rules differ)
+const NUMBER_PAYOUT_MULTIPLIER = 9; 
+const COLOUR_PAYOUT_MULTIPLIER = 2;
+const VIOLET_PAYOUT_MULTIPLIER = 4.5;
+const BIG_SMALL_PAYOUT_MULTIPLIER = 2;
 
 async function getResultsChannel() {
   try {
@@ -263,15 +268,19 @@ async function ensureManagementTables() {
   await query(`ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS payout_tx_hash TEXT`);
   await query(`ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS destination_address TEXT`);
 
-  // NEW: Period number (game) support
   await query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS period_number TEXT`);
   await query(`UPDATE public.game_rounds SET period_number = round_code WHERE period_number IS NULL`);
   await query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS predicted_result INT`);
   await query(`CREATE INDEX IF NOT EXISTS idx_game_rounds_period_number ON public.game_rounds(period_number)`);
+  
+  await query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`);
+  await query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS settled_at TIMESTAMPTZ`);
+  await query(`ALTER TABLE public.bets ADD COLUMN IF NOT EXISTS settled_at TIMESTAMPTZ`);
+  await query(`ALTER TABLE public.bets ADD COLUMN IF NOT EXISTS result_number INT`);
 
-  // NEW: Channel updates toggle
   await query(`ALTER TABLE public.channel_settings ADD COLUMN IF NOT EXISTS channel_updates_enabled BOOLEAN DEFAULT TRUE`);
-
+  await query(`ALTER TABLE public.channel_settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()`);
+  
   await query(`CREATE TABLE IF NOT EXISTS public.gift_codes (
     id BIGSERIAL PRIMARY KEY, code TEXT UNIQUE NOT NULL, points NUMERIC(20,2) NOT NULL,
     max_uses INTEGER NOT NULL DEFAULT 1, uses INTEGER NOT NULL DEFAULT 0,
@@ -324,15 +333,12 @@ async function ensureManagementTables() {
     created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
   )`);
   await query(`INSERT INTO public.channel_settings (id) VALUES (1) ON CONFLICT DO NOTHING`);
-  await query(`ALTER TABLE public.channel_settings ADD COLUMN IF NOT EXISTS channel_updates_enabled BOOLEAN DEFAULT TRUE`);
 
-  // NEW: Multi-Channel Table
   await query(`CREATE TABLE IF NOT EXISTS public.prediction_channels (
     id BIGSERIAL PRIMARY KEY, channel_id TEXT NOT NULL UNIQUE,
     is_active BOOLEAN DEFAULT TRUE, schedule_mins INT DEFAULT 3, created_at TIMESTAMPTZ DEFAULT NOW()
   )`);
 
-  // NEW: Support Settings + Messages
   await query(`CREATE TABLE IF NOT EXISTS public.support_settings (
     id INT PRIMARY KEY DEFAULT 1,
     support_username TEXT, support_channel TEXT,
@@ -481,9 +487,6 @@ function pagination(body) {
   return { page, size, offset: (page - 1) * size };
 }
 
-/* =========================
-   DASHBOARD (with today's + 24h + all-time P/L)
-========================= */
 async function dashboard() {
   const [totalsRows, roundStatuses, recentRounds, healthRows, userMetrics, securityRows] = await Promise.all([
     query(`SELECT
@@ -493,15 +496,12 @@ async function dashboard() {
       (SELECT COALESCE(SUM(stake),0) FROM public.bets) AS total_stake,
       (SELECT COALESCE(SUM(fee),0) FROM public.bets) AS total_fees,
       (SELECT COALESCE(SUM(payout),0) FROM public.bets) AS total_payouts,
-
       (SELECT COUNT(*) FROM public.bets WHERE created_at >= CURRENT_DATE) AS bets_today,
       (SELECT COALESCE(SUM(stake),0) FROM public.bets WHERE created_at >= CURRENT_DATE) AS stake_today,
       (SELECT COALESCE(SUM(payout),0) FROM public.bets WHERE created_at >= CURRENT_DATE) AS payout_today,
-
       (SELECT COUNT(*) FROM public.bets WHERE created_at >= NOW() - INTERVAL '24 hours') AS bets_24h,
       (SELECT COALESCE(SUM(stake),0) FROM public.bets WHERE created_at >= NOW() - INTERVAL '24 hours') AS stake_24h,
       (SELECT COALESCE(SUM(payout),0) FROM public.bets WHERE created_at >= NOW() - INTERVAL '24 hours') AS payout_24h,
-
       (SELECT COALESCE(SUM(balance),0) FROM public.wallet_balances) AS total_wallet_balance,
       (SELECT COALESCE(SUM(amount),0) FROM public.transactions WHERE transaction_type='deposit' AND status IN ('confirmed','completed')) AS total_deposits,
       (SELECT COUNT(*) FROM public.transactions WHERE transaction_type='deposit' AND status IN ('confirmed','completed')) AS deposit_count,
@@ -559,9 +559,6 @@ async function dashboard() {
   };
 }
 
-/* =========================
-   LIST CONFIGURATION
-========================= */
 const LISTS = {
   users: {
     select: `u.id,u.telegram_id,u.first_name,u.last_name,u.username,w.balance,
@@ -678,7 +675,6 @@ async function listAction(action, body) {
 
   if (action === "rounds" && body.q) {
     addFilter(conditions, params, "(r.round_code ILIKE ? OR r.period_number ILIKE ?)", `%${String(body.q).trim().slice(0, 100)}%`);
-    // Fix double param: add same value again for second placeholder
     params.push(`%${String(body.q).trim().slice(0, 100)}%`);
     conditions[conditions.length - 1] = `(r.round_code ILIKE $${params.length - 1} OR r.period_number ILIKE $${params.length})`;
   }
@@ -732,9 +728,6 @@ async function listAction(action, body) {
   };
 }
 
-/* =========================
-   ANALYTICS
-========================= */
 async function analytics() {
   const [daily, resultRows, topUsers, largeStakes, highReturnUsers, userMetrics] = await Promise.all([
     query(`WITH days AS (
@@ -799,9 +792,6 @@ async function analytics() {
   };
 }
 
-/* =========================
-   RECONCILE
-========================= */
 async function reconcile() {
   const rows = await query(`SELECT
     (SELECT COALESCE(SUM(balance),0) FROM public.wallet_balances) AS wallet_total,
@@ -834,9 +824,6 @@ async function reconcile() {
   };
 }
 
-/* =========================
-   USER DETAIL
-========================= */
 async function userDetail(userId) {
   const profiles = await query(
     `SELECT u.id,u.telegram_id,u.first_name,u.last_name,u.username,w.balance,
@@ -894,9 +881,6 @@ async function userDetail(userId) {
   };
 }
 
-/* =========================
-   SEARCH
-========================= */
 async function search(q) {
   q = String(q || "").trim().slice(0, 100);
   if (!q) return { users: [], rounds: [], bets: [] };
@@ -924,9 +908,6 @@ async function search(q) {
   return { users, rounds, bets };
 }
 
-/* =========================
-   CSV EXPORT
-========================= */
 function csvCell(value) {
   let s = value == null ? "" : String(value);
   if (/^[\s]*[=+\-@\t\r]/.test(s)) s = "'" + s;
@@ -1031,9 +1012,6 @@ async function exportCsv(body) {
   return { csv, row_count: rows.length, truncated: rows.length === EXPORT_MAX };
 }
 
-/* =========================
-   WALLET TRANSACTION REVIEW
-========================= */
 async function reviewWalletTransaction(action, body, session, req) {
   const transactionId = String(body.transaction_id || "");
   if (!/^\d{1,15}$/.test(transactionId)) throw new Error("Invalid transaction ID.");
@@ -1135,9 +1113,6 @@ async function reviewWalletTransaction(action, body, session, req) {
   }
 }
 
-/* =========================
-   GIFT CODES (admin listing)
-========================= */
 async function getGiftCodes(body) {
   await ensureManagementTables();
   const { page, size, offset } = pagination(body);
@@ -1158,9 +1133,6 @@ async function getGiftCodes(body) {
   };
 }
 
-/* =========================
-   GIFT REDEMPTIONS
-========================= */
 async function getGiftRedemptions(body) {
   await ensureManagementTables();
   const { page, size, offset } = pagination(body);
@@ -1186,9 +1158,6 @@ async function getGiftRedemptions(body) {
   };
 }
 
-/* =========================
-   CHANNEL SETTINGS (UPDATED FOR MULTI-CHANNEL + TOGGLE)
-========================= */
 async function getChannelSettings() {
   await ensureManagementTables();
   const settingsRows = await query(`SELECT * FROM public.channel_settings WHERE id=1`);
@@ -1241,9 +1210,6 @@ async function savePredictionChannel(body, session, req) {
   return { ok: true };
 }
 
-/* =========================
-   NEW: NEXT ROUND PREVIEW
-========================= */
 async function nextRound() {
   const rows = await query(
     `SELECT COALESCE(r.period_number, r.round_code) AS period_number,
@@ -1256,9 +1222,6 @@ async function nextRound() {
   return { ok: true, next: rows[0] || null };
 }
 
-/* =========================
-   NEW: SET NEXT RESULT (prediction preview)
-========================= */
 async function setNextResult(body, session, req) {
   await ensureManagementTables();
   const roundCode = String(body.round_code || "").trim().slice(0, 100);
@@ -1287,19 +1250,25 @@ async function setNextResult(body, session, req) {
   };
 }
 
-/* =========================
-   NEW: MANUAL RESULT UPDATE (settle round)
-========================= */
 async function setResult(body, session, req) {
   await ensureManagementTables();
   const roundCode = String(body.round_code || "").trim().slice(0, 100);
   const resultNumber = Number(body.result_number);
-  const autoSettle = body.auto_settle !== false; // default true
+  const autoSettle = body.auto_settle !== false;
 
   if (!roundCode) throw new Error("Round code / period is required.");
   if (!Number.isInteger(resultNumber) || resultNumber < 0 || resultNumber > 9) {
     throw new Error("Result must be an integer between 0 and 9.");
   }
+
+  const isBig = resultNumber >= 5;
+  const bigSmall = isBig ? 'Big' : 'Small';
+  let colour = '';
+  if (resultNumber === 0 || resultNumber === 5) colour = 'Violet';
+  else if ([1, 3, 7, 9].includes(resultNumber)) colour = 'Green';
+  else if ([2, 4, 6, 8].includes(resultNumber)) colour = 'Red';
+
+  const colourMultiplier = colour === 'Violet' ? VIOLET_PAYOUT_MULTIPLIER : COLOUR_PAYOUT_MULTIPLIER;
 
   const client = await pool.connect();
   try {
@@ -1315,7 +1284,6 @@ async function setResult(body, session, req) {
     if (!rounds.rows.length) throw new Error("Round not found.");
     const round = rounds.rows[0];
 
-    // Update round with result
     await client.query(
       `UPDATE public.game_rounds
        SET result_number=$1, status='settled', settled_at=NOW(), updated_at=NOW()
@@ -1328,33 +1296,35 @@ async function setResult(body, session, req) {
     let totalPayout = 0;
 
     if (autoSettle) {
-      // Auto-settle pending number bets: number match => win, payout = stake * multiplier
       const settlementResult = await client.query(
         `UPDATE public.bets
          SET result_number=$1,
              status = CASE
-               WHEN selection = $1::text THEN 'won'
-               WHEN selection ~ '^[0-9]+$' AND selection != $1::text THEN 'lost'
+               WHEN LOWER(selection) = $1::text THEN 'won'
+               WHEN LOWER(selection) LIKE '%' || LOWER($2) || '%' THEN 'won'
+               WHEN LOWER(selection) = LOWER($3) THEN 'won'
+               WHEN selection ~ '^[0-9]+$' OR LOWER(selection) IN ('green','red','violet','violet-green','violet-red','big','small') THEN 'lost'
                ELSE status
              END,
              payout = CASE
-               WHEN selection = $1::text THEN stake * $3
+               WHEN LOWER(selection) = $1::text THEN stake * $4
+               WHEN LOWER(selection) LIKE '%' || LOWER($2) || '%' THEN stake * $5
+               WHEN LOWER(selection) = LOWER($3) THEN stake * $6
                ELSE 0
              END,
              settled_at = CASE
-               WHEN selection = $1::text OR selection ~ '^[0-9]+$' THEN NOW()
+               WHEN selection ~ '^[0-9]+$' OR LOWER(selection) IN ('green','red','violet','violet-green','violet-red','big','small') THEN NOW()
                ELSE settled_at
              END
-         WHERE round_id=$2 AND status='pending'
+         WHERE round_id=$7 AND status='pending'
          RETURNING user_id, payout, status`,
-        [String(resultNumber), round.id, NUMBER_PAYOUT_MULTIPLIER]
+        [String(resultNumber), colour, bigSmall, NUMBER_PAYOUT_MULTIPLIER, colourMultiplier, BIG_SMALL_PAYOUT_MULTIPLIER, round.id]
       );
 
       settledCount = settlementResult.rowCount;
       wonCount = settlementResult.rows.filter(r => r.status === "won").length;
       totalPayout = settlementResult.rows.reduce((sum, r) => sum + Number(r.payout || 0), 0);
 
-      // Credit winning bets to wallet
       if (totalPayout > 0) {
         await client.query(
           `INSERT INTO public.wallet_balances (user_id, balance, updated_at)
@@ -1374,11 +1344,10 @@ async function setResult(body, session, req) {
 
     await audit(session.username, "set_result", req, "success", "round", round.round_code);
 
-    // Notify results channel
     const resultsChannel = await getResultsChannel();
     try {
       await notifyTelegram(
-        `🎲 Result Updated\n📅 Period: ${round.period_number}\n🔢 Result: ${resultNumber}\n💰 Settled bets: ${settledCount}\n✅ Winners: ${wonCount}\n💵 Payout: ${totalPayout.toFixed(2)}`,
+        `🎲 Result Updated\n📅 Period: ${round.period_number}\n🔢 Result: ${resultNumber} (${colour} | ${bigSmall})\n💰 Settled bets: ${settledCount}\n✅ Winners: ${wonCount}\n💵 Payout: ${totalPayout.toFixed(2)}`,
         [resultsChannel]
       );
     } catch { /* non-blocking */ }
@@ -1388,11 +1357,13 @@ async function setResult(body, session, req) {
       round_code: round.round_code,
       period_number: round.period_number,
       result_number: resultNumber,
+      colour: colour,
+      big_small: bigSmall,
       settled_bets: settledCount,
       won_bets: wonCount,
       total_payout: totalPayout,
       message: autoSettle
-        ? `Result set. ${settledCount} bets settled, ${wonCount} winners, ${totalPayout.toFixed(2)} points credited.`
+        ? `Result set (${resultNumber} - ${colour} - ${bigSmall}). ${settledCount} bets settled, ${wonCount} winners, ${totalPayout.toFixed(2)} points credited.`
         : "Result set (no auto-settlement)."
     };
   } catch (error) {
@@ -1403,9 +1374,6 @@ async function setResult(body, session, req) {
   }
 }
 
-/* =========================
-   NEW: POST PREDICTION TO CHANNELS
-========================= */
 function colourOf(n) {
   const num = Number(n);
   if (num === 0 || num === 5) return "Violet";
@@ -1461,6 +1429,11 @@ async function postPrediction(body, session, req) {
   }
 
   await audit(session.username, "post_prediction", req, failed ? "partial" : "success");
+  
+  if (sent === 0 && failed > 0) {
+    throw new Error(`Failed to post to channels: ${errors.join(" | ")}`);
+  }
+  
   return {
     ok: true,
     message: `Posted to ${sent} channel(s)${failed ? `, failed: ${failed}` : ""}.`,
@@ -1469,9 +1442,6 @@ async function postPrediction(body, session, req) {
   };
 }
 
-/* =========================
-   NEW: SUPPORT SETTINGS
-========================= */
 async function getSupportSettings() {
   await ensureManagementTables();
   const rows = await query(`SELECT * FROM public.support_settings WHERE id=1`);
@@ -1515,9 +1485,6 @@ async function getSupportMessages(body) {
   };
 }
 
-/* =========================
-   BROADCAST
-========================= */
 async function broadcastMessage(body, session, req) {
   await ensureManagementTables();
   const msg = String(body.message || "").trim().slice(0, 4000);
@@ -1554,9 +1521,6 @@ async function broadcastMessage(body, session, req) {
   return { ok: true, message: `Broadcast complete. Sent: ${sent}, Failed: ${failed}`, sent, failed };
 }
 
-/* =========================
-   LOGIN ATTEMPTS (dedicated)
-========================= */
 async function getLoginAttempts(body) {
   const { page, size, offset } = pagination(body);
   const [rows, totals] = await Promise.all([
@@ -1574,9 +1538,6 @@ async function getLoginAttempts(body) {
   };
 }
 
-/* =========================
-   SECURITY SUMMARY
-========================= */
 async function securitySummary() {
   const [attempts, auditRows] = await Promise.all([
     query(`SELECT id,ip,success,attempted_at FROM public.admin_login_attempts ORDER BY attempted_at DESC LIMIT 100`),
@@ -1585,9 +1546,6 @@ async function securitySummary() {
   return { attempts, entries: auditRows };
 }
 
-/* =========================
-   API HANDLER
-========================= */
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -1665,8 +1623,6 @@ module.exports = async function handler(req, res) {
       case "channel_settings": result = await getChannelSettings(); break;
       case "save_channel_settings": result = await saveChannelSettings(body, session, req); break;
       case "save_prediction_channel": result = await savePredictionChannel(body, session, req); break;
-
-      // NEW: Period/result/prediction/support actions
       case "next_round": result = await nextRound(); break;
       case "set_next_result": result = await setNextResult(body, session, req); break;
       case "set_result": result = await setResult(body, session, req); break;
@@ -1674,7 +1630,6 @@ module.exports = async function handler(req, res) {
       case "support_settings": result = await getSupportSettings(); break;
       case "save_support_settings": result = await saveSupportSettings(body, session, req); break;
       case "support_messages": result = await getSupportMessages(body); break;
-
       case "broadcast": result = await broadcastMessage(body, session, req); break;
       case "deposit_approve":
       case "deposit_reject":
@@ -1695,7 +1650,7 @@ module.exports = async function handler(req, res) {
     if (error.code === "42P01") message = "Required database table is missing.";
     else if (error.code === "42703") message = "Database column mismatch. Check actual table schema.";
     else if (error.code === "22P02") message = "Invalid database value.";
-    else if (error.message && /Invalid |Unsupported |Transaction |This is not |Maximum 10|Enter valid|Enter a valid|required|Round not found|No upcoming|No prediction|No active channels/.test(error.message)) {
+    else if (error.message && /Invalid |Unsupported |Transaction |This is not |Maximum 10|Enter valid|Enter a valid|required|Round not found|No upcoming|No prediction|No active channels|Failed to post/.test(error.message)) {
       message = error.message;
     }
     return json(res, 400, { message });
