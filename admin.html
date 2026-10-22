@@ -7,6 +7,9 @@
 <title>Crypto Trader Pro | Admin Panel</title>
 
 <style>
+/* =========================================================
+   ORIGINAL CSS + NEW FEATURE STYLES
+   ========================================================= */
 :root {
   --bg: #090909;
   --panel: #121212;
@@ -44,7 +47,6 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .red { color: var(--red); }
 .yellow { color: var(--yellow); }
 .violet { color: var(--violet); }
-.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
 #loginView {
   min-height: 100vh;
@@ -439,6 +441,7 @@ pre {
   font-size: 12px;
 }
 
+/* Theme overrides */
 :root {
   --bg: #07090d;
   --panel: #10141b;
@@ -520,6 +523,7 @@ tbody tr:hover { background: #19212b; }
 .notice.warning { background: #29230f; border-color: #6a5318; }
 .toast { background: #1b222c; border-color: #4b596b; }
 
+/* New Helper Styles */
 .copy-btn {
   background: transparent;
   border: none;
@@ -559,7 +563,6 @@ a.tx-link:hover { text-decoration: underline; }
 .switch.on i { transform: translateX(22px); }
 .grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 
-/* NEW helpers */
 .inline-form { display: flex; flex-wrap: wrap; gap: 9px; align-items: flex-end; }
 .inline-form .field { margin: 0; flex: 1 1 180px; }
 .winloss-bar { display: flex; height: 10px; border-radius: 6px; overflow: hidden; background: #222; margin-top: 8px; }
@@ -567,6 +570,7 @@ a.tx-link:hover { text-decoration: underline; }
 .winloss-bar .l { background: var(--red); }
 .pred-next { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .result-big { font-size: 26px; font-weight: 900; color: var(--yellow); }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
 .timer-badge {
   display: inline-flex;
@@ -783,6 +787,20 @@ function escapeHtml(value) {
   })[c]);
 }
 
+function getColour(n) {
+  if (n === null || n === undefined || n === "") return "—";
+  const num = Number(n);
+  if (num === 0 || num === 5) return "Violet";
+  if ([1, 3, 7, 9].includes(num)) return "Green";
+  if ([2, 4, 6, 8].includes(num)) return "Red";
+  return "—";
+}
+
+function getBigSmall(n) {
+  if (n === null || n === undefined || n === "") return "—";
+  return Number(n) >= 5 ? "Big" : "Small";
+}
+
 function formatNumber(value, decimals = 2) {
   if (value === null || value === undefined || value === "") return "—";
   const n = Number(value);
@@ -819,7 +837,7 @@ function toast(message, isError = false) {
   toast.timer = setTimeout(() => el.classList.remove("show"), 3500);
 }
 
-/* ===== NEW: Period countdown timers ===== */
+/* ===== Period countdown timers ===== */
 let periodTimerInterval = null;
 
 function stopPeriodTimers() {
@@ -935,9 +953,16 @@ async function api(action, data = {}) {
     headers: { "Content-Type": "application/json", "X-Admin-Request": "1" },
     body: JSON.stringify({ action, ...data })
   });
+  
   let result;
-  try { result = await response.json(); }
-  catch { throw new Error("Server returned an invalid response."); }
+  try {
+    result = await response.json();
+  } catch {
+    const text = await response.text().catch(() => "");
+    console.error("Server returned non-JSON response:", text);
+    throw new Error("Server returned an invalid response. Check Vercel logs.");
+  }
+  
   if (response.status === 401 && action !== "login") {
     showLogin("Your session expired. Please sign in again.");
   }
@@ -1267,7 +1292,7 @@ async function renderDashboard() {
 
 function roundTable(rows) {
   return table(
-    ["Period (Game)", "Round Code", "Status", "Time Left", "Start", "Result", "Bets", "Stake", "Payout", "Pending", "Settlement"],
+    ["Period (Game)", "Round Code", "Status", "Time Left", "Start", "Result", "Colour", "Size", "Bets", "Stake", "Payout", "Pending", "Settlement"],
     rows.map(r => {
       const endsAt = r.ends_at;
       const isActive = endsAt && (r.result_number === null || r.result_number === undefined);
@@ -1281,6 +1306,8 @@ function roundTable(rows) {
         timeCell,
         escapeHtml(formatDate(r.starts_at)),
         escapeHtml(r.result_number ?? "—"),
+        escapeHtml(getColour(r.result_number)),
+        escapeHtml(getBigSmall(r.result_number)),
         escapeHtml(statValue(r.bet_count, 0)),
         escapeHtml(money(r.total_stake)),
         escapeHtml(money(r.total_payout)),
@@ -2054,11 +2081,20 @@ async function renderRounds() {
       <form id="manualResultForm" class="inline-form">
         <div class="field"><label>Period / Round Code</label>
           <input name="round_code" placeholder="e.g. 20251022-001" required></div>
-        <div class="field" style="max-width:160px"><label>Result (0-9)</label>
-          <input name="result_number" type="number" min="0" max="9" required></div>
+        <div class="field" style="max-width:120px"><label>Result (0-9)</label>
+          <input name="result_number" type="number" min="0" max="9" required oninput="updateManualResultPreview(this.value)"></div>
+        
+        <div class="field" style="min-width:220px">
+          <label>Derived Outcome</label>
+          <div style="padding: 12px 13px; background: #0b0f15; border: 1px solid #2a3544; border-radius: 10px; font-weight:bold; font-size: 13px;">
+            <span id="previewNumber" class="yellow">-</span> | 
+            <span id="previewColour" style="color:var(--violet);">Colour: -</span> | 
+            <span id="previewSize" style="color:var(--blue);">Size: -</span>
+          </div>
+        </div>
         <button class="btn btn-primary" type="submit">Update Result &amp; Settle</button>
       </form>
-      <div class="notice warning" style="margin-top:12px">Result update us period ke pending bets settle karega. Ye undo nahi hoga.</div>
+      <div class="notice warning" style="margin-top:12px">Result update us period ke pending bets (Number, Colour, Big/Small) settle karega. Ye undo nahi hoga.</div>
     </div>
 
     ${filterToolbar({ search: "Search period / round code", status: true })}
@@ -2066,7 +2102,7 @@ async function renderRounds() {
     <div class="card">
       <div class="card-head"><h3>All Rounds</h3></div>
       ${table(
-        ["Period (Game)", "Round Code", "Status", "Time Left", "Start", "Result", "Bets", "Stake", "Payout", "Pending", "Settlement", "Action"],
+        ["Period (Game)", "Round Code", "Status", "Time Left", "Start", "Result", "Colour", "Size", "Bets", "Stake", "Payout", "Pending", "Settlement", "Action"],
         (data.rounds || []).map(r => {
           const endsAt = r.ends_at;
           const isActive = endsAt && (r.result_number === null || r.result_number === undefined);
@@ -2080,6 +2116,8 @@ async function renderRounds() {
             timeCell,
             escapeHtml(formatDate(r.starts_at)),
             escapeHtml(r.result_number ?? "—"),
+            escapeHtml(getColour(r.result_number)),
+            escapeHtml(getBigSmall(r.result_number)),
             escapeHtml(statValue(r.bet_count, 0)),
             escapeHtml(money(r.total_stake)),
             escapeHtml(money(r.total_payout)),
@@ -2096,6 +2134,33 @@ async function renderRounds() {
   attachPagination("rounds", data.pagination, renderRounds);
   await loadNextResultPreview("nextResultBodyR", "setNextResultBtnR");
   startPeriodTimers();
+
+  window.updateManualResultPreview = function(val) {
+    const nEl = $("previewNumber");
+    const cEl = $("previewColour");
+    const sEl = $("previewSize");
+    if (!nEl || !cEl || !sEl) return;
+    
+    if (val === "" || isNaN(val)) {
+      nEl.textContent = "-";
+      cEl.textContent = "Colour: -";
+      sEl.textContent = "Size: -";
+      return;
+    }
+    const n = Number(val);
+    nEl.textContent = n;
+    
+    let colour = "";
+    let cColor = "var(--text)";
+    if (n === 0 || n === 5) { colour = "Violet/Mix"; cColor = "var(--violet)"; }
+    else if ([1,3,7,9].includes(n)) { colour = "Green"; cColor = "var(--green)"; }
+    else if ([2,4,6,8].includes(n)) { colour = "Red"; cColor = "var(--red)"; }
+    
+    const size = n >= 5 ? "Big" : "Small";
+    
+    cEl.innerHTML = `Colour: <span style="color:${cColor};">${colour}</span>`;
+    sEl.innerHTML = `Size: <span style="color:var(--blue);">${size}</span>`;
+  };
 
   async function submitManualResult(code, res) {
     if (!code || !Number.isInteger(res) || res < 0 || res > 9) return toast("Valid period aur result 0-9 daalein.", true);
