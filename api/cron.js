@@ -40,6 +40,12 @@ function normalizeAddress(value) {
 }
 
 // 🚨 NEW: 14-digit code ko 12-digit serial number me convert karne ke liye
+function slotOfRound(code) {
+  const m = String(code || "").match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/);
+  if (!m) return 0;
+  return Math.floor(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) / 180000);
+}
+
 function fmtPeriod(code) {
   const raw = String(code || "");
   if (!/^\d{14}$/.test(raw)) return raw.slice(0, 12);
@@ -71,6 +77,8 @@ async function sendTelegramMessage(client, type, data) {
   try {
     const settings = await getChannelSettings(client);
     const botName = settings.bot_username || "YourBot";
+    if (settings.channel_updates_enabled === false) return;
+    const slot = slotOfRound(data.round);
 
     const inlineKeyboard = {
       inline_keyboard: [
@@ -88,9 +96,10 @@ async function sendTelegramMessage(client, type, data) {
     if (settings.channel_username) channels.add(settings.channel_username);
 
     try {
-      const extraChannels = await client.query(`SELECT channel_id FROM public.prediction_channels WHERE is_active = TRUE`);
+      const extraChannels = await client.query(`SELECT channel_id, schedule_mins FROM public.prediction_channels WHERE is_active = TRUE`);
       for (const row of extraChannels.rows) {
-        channels.add(row.channel_id);
+        const every = Math.max(1, Math.round((Number(row.schedule_mins) || 3) / 3));
+        if (slot % every === 0) channels.add(row.channel_id);
       }
     } catch (e) { /* Table might not exist on first run */ }
 
