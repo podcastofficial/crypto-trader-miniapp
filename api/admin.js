@@ -1462,10 +1462,19 @@ async function postPrediction(body, session, req) {
   const s = settings[0] || {};
   const template = s.prediction_message || "🎯 Next Period: {round}\n🔮 Prediction: {prediction} ({colour})\n⚠️ Not guaranteed. Play responsibly.";
 
-  const message = template
-    .replace(/\{round\}/g, round.period_number || round.round_code || "")
-    .replace(/\{prediction\}/g, String(round.predicted_result))
-    .replace(/\{colour\}/g, numberColour(round.predicted_result));
+  const nowTime = new Date().toISOString().slice(11, 19);
+  const pn = round.predicted_result;
+  const vars = {
+    round: round.period_number || round.round_code || "", period: round.period_number || round.round_code || "",
+    number: pn, prediction: pn, colour: numberColour(pn), color: numberColour(pn),
+    size: Number(pn) >= 5 ? "Big" : "Small", time: nowTime
+  };
+  const message = String(template).replace(/\\n/g, "\n")
+    .split("\n").filter(line => !/\{(win_ratio|loss_ratio|win_rate|loss_rate|bets|bet_count|total_bets|total_stake|stake|payout|winners)\}/i.test(line)).join("\n")
+    .replace(/\{(\w+)\}/g, (m, k) => {
+    const v = vars[k.toLowerCase()];
+    return v === undefined || v === null ? m : String(v);
+  });
 
   let sent = 0;
   let failed = 0;
