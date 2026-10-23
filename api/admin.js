@@ -1040,7 +1040,7 @@ async function reviewWalletTransaction(action, body, session, req) {
   try {
     await client.query("BEGIN");
     const result = await client.query(
-      `SELECT t.id,t.user_id,t.transaction_type,t.amount,t.status,t.network,t.tx_hash,t.payout_tx_hash,
+      `SELECT t.id,t.user_id,t.transaction_type,t.amount,t.status,t.network,t.tx_hash,t.payout_tx_hash,t.destination_address,
         u.telegram_id,u.username,u.first_name,u.last_name
        FROM public.transactions t JOIN public.users u ON u.id=t.user_id
        WHERE t.id=$1 FOR UPDATE`, [transactionId]
@@ -1096,12 +1096,20 @@ async function reviewWalletTransaction(action, body, session, req) {
 
     await client.query("COMMIT");
 
-    const resultsChannel = await getResultsChannel();
     if (action === "withdrawal_approve") {
+      const fullName = `${tx.first_name || "User"}${tx.last_name ? ` ${tx.last_name}` : ""}`;
+      // Private admin chat: full details (wallet + hash)
       await notifyTelegram(
-        `✅ Withdrawal approved\n👤 Name: ${tx.first_name || "User"}${tx.last_name ? ` ${tx.last_name}` : ""}\n💵 Amount: ${Number(tx.amount).toFixed(2)} USDT\n🌐 Network: ${tx.network || "BEP-20"}\n🔗 Transaction: ${payoutTxHash}\n📣 Manual payout approved`,
-        [process.env.ADMIN_CHAT_ID, resultsChannel]
+        `✅ Withdrawal approved\n👤 Name: ${fullName}\n💵 Amount: ${Number(tx.amount).toFixed(2)} USDT\n🌐 Network: ${tx.network || "BEP-20"}\n🏦 Wallet: ${tx.destination_address || "—"}\n🔗 Transaction: ${payoutTxHash}`
       );
+      // Public channel: only if admin toggle is ON. Never includes wallet address or tx hash.
+      if (await withdrawalChannelPostsEnabled()) {
+        const resultsChannel = await getResultsChannel();
+        await notifyTelegram(
+          `✅ Withdrawal approved\n👤 Name: ${maskName(fullName)}\n💵 Amount: ${Number(tx.amount).toFixed(2)} USDT\n🌐 Network: ${tx.network || "BEP-20"}\n🔗 Transaction: ${payoutTxHash}\n📣 Payout processed`,
+          [resultsChannel]
+        );
+      }
     } else if (action === "deposit_approve") {
       await notifyTelegram(`✅ Deposit approved\n👤 User ID: ${tx.telegram_id}\n💵 Amount credited: ${Number(tx.amount) * 100} points (${Number(tx.amount).toFixed(2)} USDT)`);
     }
@@ -1169,11 +1177,27 @@ async function getGiftRedemptions(body) {
   };
 }
 
+// Masks a name for public posts: "Crypto Learning" -> "Cr*** Le***"
+function maskName(name) {
+  const words = String(name || "").trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return "User***";
+  return words.map(w => Array.from(w).slice(0, 2).join("") + "***").join(" ");
+}
+
+async function withdrawalChannelPostsEnabled() {
+  try {
+    const rows = await query(`SELECT value FROM public.app_settings WHERE key='withdrawal_channel_posts'`);
+    return !rows.length || rows[0].value !== "false";
+  } catch { return true; }
+}
+
 async function getChannelSettings() {
   await ensureManagementTables();
   const settingsRows = await query(`SELECT * FROM public.channel_settings WHERE id=1`);
   const channelRows = await query(`SELECT * FROM public.prediction_channels ORDER BY id DESC`);
-  return { ok: true, settings: settingsRows[0] || {}, prediction_channels: channelRows };
+  const settings = settingsRows[0] || {};
+  settings.withdrawal_channel_posts = await withdrawalChannelPostsEnabled();
+  return { ok: true, settings, prediction_channels: channelRows };
 }
 
 async function setAppSetting(key, value) {
@@ -1213,6 +1237,9 @@ async function saveChannelSettings(body, session, req) {
       batchWindows
     ]
   );
+  if (body.withdrawal_channel_posts !== undefined) {
+    await setAppSetting("withdrawal_channel_posts", body.withdrawal_channel_posts === true || body.withdrawal_channel_posts === "true");
+  }
   const chUrl = tgLink(body.channel_username);
   await setAppSetting("channel_url", chUrl);
   await setAppSetting("channel_button_enabled", !!chUrl);
@@ -1397,11 +1424,9 @@ async function setResult(body, session, req) {
 
     await audit(session.username, "set_result", req, "success", "round", round.round_code);
 
-    const resultsChannel = await getResultsChannel();
     try {
       await notifyTelegram(
-        `🎲 Result Updated\n📅 Period: ${round.period_number}\n🔢 Result: ${resultNumber} (${colour} | ${bigSmall})\n💰 Settled bets: ${settledCount}\n✅ Winners: ${wonCount}\n💵 Payout: ${totalPayout.toFixed(2)}`,
-        [resultsChannel]
+        `🎲 Result Updated\n📅 Period: ${round.period_number}\n🔢 Result: ${resultNumber} (${colour} | ${bigSmall})\n💰 Settled bets: ${settledCount}\n✅ Winners: ${wonCount}\n💵 Payout: ${totalPayout.toFixed(2)}`
       );
     } catch { /* non-blocking */ }
 
