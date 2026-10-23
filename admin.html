@@ -2091,6 +2091,7 @@ async function renderRounds() {
           </div>
         </div>
         <button class="btn btn-primary" type="submit">Update Result &amp; Settle</button>
+        <button class="btn" id="randomResultBtn" type="button">🎲 Random Result</button>
       </form>
       <div class="notice warning" style="margin-top:12px">Result update us period ke pending bets (Number, Colour, Big/Small) settle karega. Ye undo nahi hoga.</div>
     </div>
@@ -2121,7 +2122,7 @@ async function renderRounds() {
             escapeHtml(money(r.total_payout)),
             escapeHtml(statValue(r.pending_bets, 0)),
             r.payout_complete ? badge("complete") : badge("review"),
-            `<button class="btn small set-result" data-code="${escapeHtml(r.round_code ?? "")}" type="button">Set Result</button>`
+            `<div class="row-actions"><button class="btn small set-result" data-code="${escapeHtml(r.round_code ?? "")}" type="button">Set Result</button><button class="btn small random-result" data-code="${escapeHtml(r.round_code ?? "")}" type="button">🎲 Random</button></div>`
           ];
         })
       )}
@@ -2169,6 +2170,19 @@ async function renderRounds() {
       await renderRounds();
     } catch (err) { toast(err.message, true); }
   }
+
+  async function submitRandomResult(code) {
+    if (!code) return toast("Enter the period first.", true);
+    if (!confirm(`Generate a random result for ${code} and settle its pending bets?`)) return;
+    try {
+      const r = await api("set_result", { round_code: code, random: true });
+      toast(`Random result: ${r.result_number}`);
+      await renderRounds();
+    } catch (err) { toast(err.message, true); }
+  }
+
+  $("randomResultBtn").onclick = () => submitRandomResult(String($("manualResultForm").elements["round_code"].value || "").trim());
+  document.querySelectorAll(".random-result").forEach(btn => btn.addEventListener("click", () => submitRandomResult(btn.dataset.code)));
 
   $("manualResultForm").onsubmit = e => {
     e.preventDefault();
