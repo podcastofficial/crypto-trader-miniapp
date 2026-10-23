@@ -293,6 +293,30 @@ header { background:linear-gradient(180deg,#0a0a0d,#0b0b0e); border-bottom:1px s
 @keyframes haloPulse { 0%,100% { transform:scale(.94); opacity:.7; } 50% { transform:scale(1.08); opacity:1; } }
 @keyframes tickPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.09); } }
 @media (prefers-reduced-motion:reduce) { .timer-card *, .timer-card::after { animation:none !important; } }
+
+/* ===== Wallet card themed like the logo ===== */
+#page-home .balance-card { position:relative; overflow:hidden;
+  background:
+    linear-gradient(90deg, rgba(10,8,3,.97) 0%, rgba(10,8,3,.86) 48%, rgba(10,8,3,.45) 100%),
+    url("/hero-banner.jpg") right center / auto 170% no-repeat,
+    linear-gradient(135deg,#14110a,#1d170a);
+  border:1px solid #8a6d12; box-shadow:0 10px 32px #000b, 0 0 22px #facc1522, inset 0 0 36px #facc1512; animation:walletGlow 4s ease-in-out infinite; }
+#page-home .balance-card > * { position:relative; z-index:1; }
+#page-home .balance-card > .wallet-art { position:absolute; z-index:0; top:44px; right:6px; width:170px; height:140px; pointer-events:none; }
+#page-home .balance-card::after { content:""; position:absolute; top:0; bottom:0; left:-60%; width:50%; z-index:0; pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(255,236,150,.12),transparent); animation:walletShine 6.5s ease-in-out infinite; }
+.wallet-art svg { display:block; filter:drop-shadow(0 6px 14px rgba(0,0,0,.6)); }
+.wallet-art .coin-a { animation:coinFloat 5s ease-in-out infinite; transform-box:fill-box; transform-origin:center; }
+.wallet-art .coin-b { animation:coinFloat 5s ease-in-out -2.2s infinite; transform-box:fill-box; transform-origin:center; }
+.wallet-art .star { transform-box:fill-box; transform-origin:center; animation:starTwinkle 2.6s ease-in-out infinite; }
+.wallet-art .s2 { animation-delay:-.9s; } .wallet-art .s3 { animation-delay:-1.7s; }
+#page-home .balance-value { background:linear-gradient(180deg,#fff0a0,#facc15 55%,#d99a00); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:none; filter:drop-shadow(0 0 10px rgba(250,204,21,.28)); }
+@keyframes coinFloat { 0%,100% { transform:translateY(0) rotate(-2deg); } 50% { transform:translateY(-7px) rotate(2deg); } }
+@keyframes starTwinkle { 0%,100% { transform:scale(.4); opacity:.3; } 50% { transform:scale(1.15); opacity:1; } }
+@keyframes walletShine { 0%,50% { transform:translateX(0); } 100% { transform:translateX(420%); } }
+@keyframes walletGlow { 0%,100% { box-shadow:0 10px 32px #000b, 0 0 14px #facc1518, inset 0 0 30px #facc1510; } 50% { box-shadow:0 10px 32px #000b, 0 0 26px #facc1535, inset 0 0 40px #facc1520; } }
+@media (max-width:380px) { #page-home .balance-card > .wallet-art { width:140px; height:115px; right:0; } }
+@media (prefers-reduced-motion:reduce) { #page-home .balance-card, #page-home .balance-card::after, .wallet-art * { animation:none !important; } }
 </style>
 </head>
 <body>
@@ -319,7 +343,17 @@ header { background:linear-gradient(180deg,#0a0a0d,#0b0b0e); border-bottom:1px s
   <!-- HOME -->
   <section class="page active" id="page-home">
     <div class="hero"><img src="/hero-banner.jpg" alt="" loading="eager" onerror="this.parentNode.style.display='none'"></div>
-    <div class="balance-card">
+    <div class="balance-card"><div class="wallet-art" aria-hidden="true"><svg viewBox="0 0 170 140" width="170" height="140">
+<defs>
+<radialGradient id="gGold" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#fff2a8"/><stop offset=".45" stop-color="#f5c400"/><stop offset="1" stop-color="#9a6a00"/></radialGradient>
+<radialGradient id="gTeal" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#7ff0c8"/><stop offset=".5" stop-color="#1fae80"/><stop offset="1" stop-color="#0b5a42"/></radialGradient>
+</defs>
+<g class="coin-b"><circle cx="112" cy="84" r="34" fill="url(#gTeal)" stroke="#b9ffe6" stroke-opacity=".5" stroke-width="2"/><circle cx="112" cy="84" r="27" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="2"/><text x="112" y="96" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="34" fill="#fff">T</text></g>
+<g class="coin-a"><circle cx="62" cy="62" r="42" fill="url(#gGold)" stroke="#fff3b0" stroke-opacity=".7" stroke-width="2.5"/><circle cx="62" cy="62" r="33" fill="none" stroke="#8a5d00" stroke-opacity=".55" stroke-width="2.5"/><text x="62" y="76" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="44" fill="#7a4e00">B</text><path d="M56 32v8M68 32v8M56 84v8M68 84v8" stroke="#7a4e00" stroke-width="3" stroke-linecap="round"/></g>
+<path class="star s1" d="M150 18l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#fff3b0"/>
+<path class="star s2" d="M20 112l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" fill="#facc15"/>
+<path class="star s3" d="M158 112l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff3b0"/>
+</svg></div>
       <div class="row"><div class="balance-label" data-i18n="walletBalance">WALLET BALANCE</div><button class="rules-corner-btn" id="gameRulesBtn" type="button">Rules</button></div>
       <div class="balance-value"><span id="homePoints">—</span> <span data-i18n="points">Points</span></div>
       <div class="balance-sub"><span id="homeUsdt">—</span> USDT · 100 Points = 1 USDT</div>
