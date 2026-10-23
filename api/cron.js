@@ -600,11 +600,33 @@ module.exports = async function handler(req, res) {
     // ==========================================
     // PREDICTION SENDING LOGIC BASED ON TIMING
     // ==========================================
+    await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS predicted_result INT`);
+
+    // Make sure every upcoming/current round has an auto prediction (rounds can also be created by api/game.js)
+    const missing = await client.query(`
+      SELECT r.round_code FROM public.game_rounds r
+      WHERE r.ends_at > NOW() AND r.starts_at <= NOW() + INTERVAL '10 minutes'
+        AND NOT EXISTS (SELECT 1 FROM public.prediction_history p WHERE p.round_code = r.round_code)
+    `);
+    for (const row of missing.rows) {
+      const n = Math.floor(Math.random() * 10);
+      const c = (n === 0 || n === 5) ? "Violet" : (n % 2 === 0 ? "Red" : "Green");
+      await client.query(
+        `INSERT INTO public.prediction_history (round_code, predicted_number, predicted_colour) VALUES ($1, $2, $3)`,
+        [row.round_code, n, c]
+      );
+    }
+
+    // Only the CURRENT round (not future ones). Admin manual value wins over the auto one.
     const activeRoundRes = await client.query(`
-      SELECT r.round_code, r.starts_at, p.predicted_number, p.predicted_colour
+      SELECT r.round_code, r.starts_at,
+             COALESCE(r.predicted_result, p.predicted_number) AS predicted_number
       FROM public.game_rounds r
-      JOIN public.prediction_history p ON p.round_code = r.round_code
-      WHERE r.status = 'open' AND r.ends_at > NOW() AND p.sent_at IS NULL
+      JOIN LATERAL (
+        SELECT predicted_number, sent_at FROM public.prediction_history
+        WHERE round_code = r.round_code ORDER BY id ASC LIMIT 1
+      ) p ON TRUE
+      WHERE r.status = 'open' AND r.starts_at <= NOW() AND r.ends_at > NOW() AND p.sent_at IS NULL
       ORDER BY r.starts_at DESC LIMIT 1
     `);
 
@@ -615,16 +637,17 @@ module.exports = async function handler(req, res) {
       const startMs = new Date(r.starts_at).getTime();
       const nowMs = dbNow.getTime();
 
-      // Send prediction only when it's the right time (e.g. 30 seconds after round starts for 150s timing)
+      // e.g. timing 150 -> post 30 seconds after the round starts
       const sendAtMs = startMs + (ROUND_SECONDS - timing) * 1000;
 
       if (nowMs >= sendAtMs) {
+        const num = Number(r.predicted_number);
+        const colour = (num === 0 || num === 5) ? "Violet" : (num % 2 === 0 ? "Red" : "Green");
         await sendTelegramMessage(client, 'prediction', {
           round: r.round_code,
-          number: r.predicted_number,
-          colour: r.predicted_colour
+          number: num,
+          colour
         });
-        // Mark as sent so it doesn't spam
         await client.query(`UPDATE public.prediction_history SET sent_at = NOW() WHERE round_code = $1`, [r.round_code]);
       }
     }
