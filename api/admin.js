@@ -1342,7 +1342,9 @@ async function setNextResult(body, session, req) {
 async function setResult(body, session, req) {
   await ensureManagementTables();
   const roundCode = String(body.round_code || "").trim().slice(0, 100);
-  const resultNumber = Number(body.result_number);
+  // Random mode: secure random 0-9, independent of bets and of any prediction
+  const useRandom = body.random === true;
+  const resultNumber = useRandom ? crypto.randomInt(0, 10) : Number(body.result_number);
   const autoSettle = body.auto_settle !== false;
 
   if (!roundCode) throw new Error("Round code / period is required.");
@@ -1364,7 +1366,7 @@ async function setResult(body, session, req) {
     await client.query("BEGIN");
 
     const rounds = await client.query(
-      `SELECT id, round_code, status, COALESCE(period_number, round_code) AS period_number
+      `SELECT id, round_code, status, (ends_at <= NOW()) AS ended, COALESCE(period_number, round_code) AS period_number
        FROM public.game_rounds
        WHERE round_code=$1 OR period_number=$1
        FOR UPDATE`,
@@ -1373,10 +1375,11 @@ async function setResult(body, session, req) {
     if (!rounds.rows.length) throw new Error("Round not found.");
     const round = rounds.rows[0];
     if (round.status === "settled") throw new Error("Invalid request: round is already settled.");
+    if (!round.ended) throw new Error("Invalid request: round has not ended yet. Results are only allowed for ended, unsettled rounds.");
 
     await client.query(
       `UPDATE public.game_rounds
-       SET result_number=$1, status='settled', settled_at=NOW(), updated_at=NOW()
+       SET result_number=$1, status='settled', settled_at=NOW(), updated_at=NOW(), settlement_key=GEN_RANDOM_UUID()
        WHERE id=$2`,
       [resultNumber, round.id]
     );
@@ -1386,43 +1389,47 @@ async function setResult(body, session, req) {
     let totalPayout = 0;
 
     if (autoSettle) {
+      // Same payout rules as the database function settle_expired_round()
       const st = await client.query(
         `WITH calc AS (
            SELECT b.id,
-             ((b.bet_type='Number' AND b.selection::text = $1::int::text)
-              OR (b.bet_type='Red' AND $1::int IN (0,2,4,6,8))
-              OR (b.bet_type='Green' AND $1::int IN (1,3,5,7,9))
-              OR (b.bet_type='Violet' AND $1::int IN (0,5))
-              OR (b.bet_type='Big' AND $1::int >= 5)
-              OR (b.bet_type='Small' AND $1::int < 5)) AS win,
-             CASE b.bet_type WHEN 'Number' THEN $3::numeric WHEN 'Violet' THEN $4::numeric ELSE $5::numeric END AS mult
+             ROUND((b.stake - COALESCE(b.fee,0)) * (CASE b.bet_type
+               WHEN 'Number' THEN CASE WHEN b.selection::text = $1::int::text THEN $3::numeric ELSE 0 END
+               WHEN 'Red' THEN CASE WHEN $1::int = 0 THEN 0.5 WHEN $1::int IN (2,4,6,8) THEN $5::numeric ELSE 0 END
+               WHEN 'Green' THEN CASE WHEN $1::int = 5 THEN 0.5 WHEN $1::int IN (1,3,7,9) THEN $5::numeric ELSE 0 END
+               WHEN 'Violet' THEN CASE WHEN $1::int IN (0,5) THEN $4::numeric ELSE 0 END
+               WHEN 'Big' THEN CASE WHEN $1::int >= 5 THEN $5::numeric ELSE 0 END
+               WHEN 'Small' THEN CASE WHEN $1::int < 5 THEN $5::numeric ELSE 0 END
+               ELSE 0 END), 2) AS pay
            FROM public.bets b WHERE b.round_id=$2 AND b.status='pending')
          UPDATE public.bets b SET
            result_number=$1::int,
-           status=CASE WHEN c.win THEN 'won' ELSE 'lost' END,
-           payout=CASE WHEN c.win THEN ROUND((b.stake-COALESCE(b.fee,0))*c.mult,2) ELSE 0 END,
+           status=CASE WHEN c.pay > 0 THEN 'won' ELSE 'lost' END,
+           payout=c.pay,
            settled_at=NOW()
          FROM calc c WHERE b.id=c.id
          RETURNING b.user_id, b.payout, b.status`,
         [resultNumber, round.id, NUMBER_PAYOUT_MULTIPLIER, VIOLET_PAYOUT_MULTIPLIER, COLOUR_PAYOUT_MULTIPLIER]
       );
       settledCount = st.rowCount;
-      const byUser = {};
       for (const r of st.rows) {
-        if (r.status === "won" && Number(r.payout) > 0) {
+        const pay = Number(r.payout);
+        if (r.status === "won" && pay > 0) {
           wonCount++;
-          totalPayout += Number(r.payout);
-          byUser[r.user_id] = (byUser[r.user_id] || 0) + Number(r.payout);
+          totalPayout += pay;
+          await client.query(`UPDATE public.wallet_balances SET balance=balance+$1, updated_at=NOW() WHERE user_id=$2`, [pay.toFixed(2), r.user_id]);
+          await client.query(
+            `INSERT INTO public.transactions (user_id, transaction_type, amount, status, created_at, updated_at)
+             VALUES ($1, 'payout', $2, 'completed', NOW(), NOW())`,
+            [r.user_id, pay.toFixed(2)]
+          );
         }
-      }
-      for (const [uid, amt] of Object.entries(byUser)) {
-        await client.query(`UPDATE public.wallet_balances SET balance=balance+$1, updated_at=NOW() WHERE user_id=$2`, [amt.toFixed(2), uid]);
       }
     }
 
     await client.query("COMMIT");
 
-    await audit(session.username, "set_result", req, "success", "round", round.round_code);
+    await audit(session.username, useRandom ? "set_result_random" : "set_result", req, "success", "round", round.round_code);
 
     try {
       await notifyTelegram(
