@@ -260,6 +260,39 @@ body { background:#05060a; }
 header { background:linear-gradient(180deg,#0a0a0d,#0b0b0e); border-bottom:1px solid #1e1f25; }
 .card { background:linear-gradient(180deg,#14151a,#0f1014); border-color:#2a2b32; }
 .bottom-nav { background:rgba(10,10,13,.97); border-color:#2a2b32; }
+
+/* ===== Animated timer theme ===== */
+.timer-card::before { display:none; }
+.timer-card > .timer-anim { position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+.timer-anim .candle { position:absolute; bottom:64px; left:var(--l); width:11px; height:var(--h); border-radius:2px; transform-origin:50% 100%;
+  background:linear-gradient(180deg,rgba(250,204,21,.6),rgba(184,134,11,.3)); animation:candlePulse 2.6s ease-in-out var(--d) infinite alternate; will-change:transform; }
+.timer-anim .candle::before { content:""; position:absolute; left:50%; top:-10px; bottom:-8px; width:2px; margin-left:-1px; background:inherit; opacity:.75; }
+.timer-anim .trend { position:absolute; left:0; right:0; bottom:58px; width:100%; height:120px; }
+.timer-anim .trend path { fill:none; stroke-linecap:round; vector-effect:non-scaling-stroke; }
+.timer-anim .trend-base { stroke:rgba(250,204,21,.22); stroke-width:2; }
+.timer-anim .trend-glow { stroke:#facc15; stroke-width:3; stroke-dasharray:.16 1; filter:drop-shadow(0 0 5px #facc15); animation:trendRun 4.8s linear infinite; }
+.timer-anim .spark { position:absolute; bottom:-6px; left:var(--l); width:4px; height:4px; border-radius:50%; background:#facc15; opacity:0; box-shadow:0 0 8px #facc15; animation:sparkRise 5.5s linear var(--d) infinite; }
+.timer-card::after { content:""; position:absolute; top:0; bottom:0; left:-70%; width:60%; pointer-events:none; z-index:0;
+  background:linear-gradient(100deg,transparent,rgba(250,204,21,.09),transparent); animation:cardSweep 7s ease-in-out infinite; }
+.timer-card .ring::before { content:""; position:absolute; inset:-8px; border-radius:50%; z-index:-1;
+  background:radial-gradient(circle,rgba(250,204,21,.26),transparent 68%); animation:haloPulse 2.4s ease-in-out infinite; }
+.timer-card .timer-text { text-shadow:0 0 14px rgba(250,204,21,.35); }
+.timer-card.urgent .timer-text { animation:tickPulse 1s ease-in-out infinite; color:#ffe08a; }
+.timer-card.urgent .candle { animation-duration:.9s; }
+.timer-card.urgent .ring::before { animation-duration:1s; }
+.timer-card.locked-state .candle { background:linear-gradient(180deg,rgba(239,68,68,.55),rgba(127,29,29,.3)); }
+.timer-card.locked-state .trend-base { stroke:rgba(239,68,68,.22); }
+.timer-card.locked-state .trend-glow { stroke:#ef4444; filter:drop-shadow(0 0 5px #ef4444); }
+.timer-card.locked-state .spark { background:#ef4444; box-shadow:0 0 8px #ef4444; }
+.timer-card.locked-state .ring::before { background:radial-gradient(circle,rgba(239,68,68,.24),transparent 68%); }
+.timer-card.locked-state .timer-text { text-shadow:0 0 14px rgba(239,68,68,.4); }
+@keyframes candlePulse { from { transform:scaleY(.55); } to { transform:scaleY(1.12); } }
+@keyframes trendRun { from { stroke-dashoffset:.16; } to { stroke-dashoffset:-1; } }
+@keyframes sparkRise { 0% { transform:translateY(0); opacity:0; } 15% { opacity:.9; } 100% { transform:translateY(-230px); opacity:0; } }
+@keyframes cardSweep { 0%,55% { transform:translateX(0); } 100% { transform:translateX(330%); } }
+@keyframes haloPulse { 0%,100% { transform:scale(.94); opacity:.7; } 50% { transform:scale(1.08); opacity:1; } }
+@keyframes tickPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.09); } }
+@media (prefers-reduced-motion:reduce) { .timer-card *, .timer-card::after { animation:none !important; } }
 </style>
 </head>
 <body>
@@ -298,7 +331,7 @@ header { background:linear-gradient(180deg,#0a0a0d,#0b0b0e); border-bottom:1px s
     </div>
 
     <div class="section">
-      <div class="timer-card">
+      <div class="timer-card" id="timerCard"><div class="timer-anim" aria-hidden="true"><i class="candle" style="--l:3%;--h:38px;--d:0.0s"></i><i class="candle" style="--l:8%;--h:56px;--d:0.4s"></i><i class="candle" style="--l:13%;--h:30px;--d:0.9s"></i><i class="candle" style="--l:18%;--h:66px;--d:0.2s"></i><i class="candle" style="--l:23%;--h:44px;--d:1.1s"></i><i class="candle" style="--l:28%;--h:58px;--d:0.6s"></i><i class="candle" style="--l:68%;--h:40px;--d:0.3s"></i><i class="candle" style="--l:73%;--h:62px;--d:1.0s"></i><i class="candle" style="--l:78%;--h:34px;--d:0.7s"></i><i class="candle" style="--l:83%;--h:68px;--d:0.1s"></i><i class="candle" style="--l:88%;--h:48px;--d:0.8s"></i><i class="candle" style="--l:93%;--h:60px;--d:1.3s"></i><svg class="trend" viewBox="0 0 600 120" preserveAspectRatio="none"><path class="trend-base" d="M0 100C100 95 160 70 260 80S440 55 600 15" pathLength="1"/><path class="trend-glow" d="M0 100C100 95 160 70 260 80S440 55 600 15" pathLength="1"/></svg><b class="spark" style="--l:10%;--d:0s"></b><b class="spark" style="--l:30%;--d:1.6s"></b><b class="spark" style="--l:52%;--d:3.1s"></b><b class="spark" style="--l:74%;--d:0.8s"></b><b class="spark" style="--l:90%;--d:2.4s"></b></div>
         <div class="row">
           <span class="muted small" data-i18n="currentPeriod">Current Period</span>
           <span class="muted small" data-i18n="roundLen">3-minute round</span>
@@ -1025,7 +1058,8 @@ function isBettingOpen(round){ if(!round || round.status !== "open") return fals
 async function syncRounds(){ if(roundsBusy) return roundsOk; roundsBusy = true; try { const d = await getRounds(1); const serverMs = new Date(d.server_time).getTime(); if(Number.isFinite(serverMs)) serverTimeOffset = serverMs - d._mid; currentRound = d.current_round || null; latestRounds = d.rounds || []; roundsLoaded = true; roundsFailed = false; roundsOk = true; if(resultPage === 1){ resultData = {rounds:latestRounds,total:Number(d.rounds_page && d.rounds_page.total || 0)}; renderResults(); } detectResults(); setNotice("nConnected"); } catch(error) { roundsFailed = true; roundsOk = false; setNotice("nUnavailable",{msg:error.message}); } finally { lastRoundsSync = Date.now(); roundsBusy = false; updateRoundDisplay(); } return roundsOk; }
 async function syncUser(){ if(!authed) return false; if(userBusy) return userOk; userBusy = true; try { const [balData,betData] = await Promise.all([ api("balance"), api("my_bets",{page:tradePage,page_size:PAGE}) ]); updateBalance(balData.balance); if (balData.wallet_address !== undefined) savedWalletAddress = balData.wallet_address || null; tradeData = {bets:betData.bets || [],total:Number(betData.pagination && betData.pagination.total || 0)}; renderTrades(); if(activePage === "wallet") await loadWallet(true); if (activePage === "withdraw") populateWithdrawPage(); userOk = true; } catch(error) { userOk = false; } finally { lastUserSync = Date.now(); userBusy = false; } return userOk; }
 function setRing(frac,locked){ const el = $("ringFg"); el.style.transition = frac > lastRingFrac + 0.01 ? "none" : ""; el.style.strokeDashoffset = String(RING_LENGTH * (1 - frac)); el.classList.toggle("locked",locked); lastRingFrac = frac; }
-function updateRoundDisplay(){ const server = getActiveRound(); let info = null; if(server){ info = { code:server.round_code, endsMs:new Date(server.ends_at).getTime(), open:isBettingOpen(server), virtual:false }; } else if(roundsLoaded){ const s = slotInfo(nowMs()); info = {code:s.code,endsMs:s.endsMs,open:false,virtual:true}; } if(!info){ $("periodId").textContent = t("loadingRound"); $("timer").textContent = "--:--"; setRing(0,true); setStatus(authBlock || (roundsFailed ? "stError" : "stConnecting")); updateBetButtons(false); previousBettingOpen = false; lastTickSecond = -1; return; } const left = Math.max(0,Math.ceil((info.endsMs - nowMs()) / 1000)); $("periodId").textContent = fmtPeriod(info.code); $("timer").textContent = String(Math.floor(left / 60)).padStart(2,"0") + ":" + String(left % 60).padStart(2,"0"); setRing(Math.min(1,left / ROUND_SECONDS),!info.open); setStatus(authBlock || (info.virtual ? "stSyncing" : info.open ? "stOpen" : "stLocked")); updateBetButtons(info.open && authed); if(previousBettingOpen === true && !info.open){ playLockSound(); haptic("light"); } previousBettingOpen = info.open; if(left <= 10 && left > 0 && left !== lastTickSecond){ playTickSound(); lastTickSecond = left; } else if(left > 10 || left === 0){ lastTickSecond = -1; } if(lastDisplayedRoundCode !== info.code){ lastDisplayedRoundCode = info.code; lastTickSecond = -1; previousBettingOpen = info.open; } }
+function updateRoundDisplay(){ const server = getActiveRound(); let info = null; if(server){ info = { code:server.round_code, endsMs:new Date(server.ends_at).getTime(), open:isBettingOpen(server), virtual:false }; } else if(roundsLoaded){ const s = slotInfo(nowMs()); info = {code:s.code,endsMs:s.endsMs,open:false,virtual:true}; } if(!info){ $("periodId").textContent = t("loadingRound"); $("timer").textContent = "--:--"; setRing(0,true); setStatus(authBlock || (roundsFailed ? "stError" : "stConnecting")); updateBetButtons(false); previousBettingOpen = false; lastTickSecond = -1; return; } const left = Math.max(0,Math.ceil((info.endsMs - nowMs()) / 1000)); $("periodId").textContent = fmtPeriod(info.code); $("timer").textContent = String(Math.floor(left / 60)).padStart(2,"0") + ":" + String(left % 60).padStart(2,"0"); setRing(Math.min(1,left / ROUND_SECONDS),!info.open); setStatus(authBlock || (info.virtual ? "stSyncing" : info.open ? "stOpen" : "stLocked")); const tc = $("timerCard"); if(tc){ tc.classList.toggle("urgent", !!info.open && left <= 40); tc.classList.toggle("locked-state", !info.open); }
+ updateBetButtons(info.open && authed); if(previousBettingOpen === true && !info.open){ playLockSound(); haptic("light"); } previousBettingOpen = info.open; if(left <= 10 && left > 0 && left !== lastTickSecond){ playTickSound(); lastTickSecond = left; } else if(left > 10 || left === 0){ lastTickSecond = -1; } if(lastDisplayedRoundCode !== info.code){ lastDisplayedRoundCode = info.code; lastTickSecond = -1; previousBettingOpen = info.open; } }
 function updateBetButtons(enabled){ document.querySelectorAll("[data-bet],.number-btn").forEach(button => { button.disabled = !enabled; }); }
 function poll(){ if(document.hidden) return; const now = Date.now(); if(!roundsBusy){ const r = currentRound; const ended = r && nowMs() >= new Date(r.ends_at).getTime(); const slot = slotInfo(nowMs()); const prevCode = slotInfo(slot.startMs - 1).code; const prevMissing = roundsLoaded && nowMs() - slot.startMs < 30000 && !latestRounds.some(x => x.round_code === prevCode && revealed(x)); const due = now - lastRoundsSync >= ROUND_POLL || ((ended || prevMissing) && now - lastRoundsSync >= 1000); if(due) syncRounds(); } if(authed && !userBusy && now - lastUserSync >= USER_POLL){ syncUser(); } }
 async function manualRefresh(button){ if(button) button.classList.add("busy"); try { if(!authed){ await authenticate(); } else { const okRounds = await syncRounds(); const okUser = await syncUser(); if(resultPage !== 1) await loadResults(); if(activePage === "wallet") await loadWallet(true); if(activePage === "referral") await loadReferral(true); toast(okRounds && okUser ? t("refreshed") : t("refreshFailed")); } } catch(error) { toast(error.message || t("refreshFailed")); } finally { if(button) button.classList.remove("busy"); } }
