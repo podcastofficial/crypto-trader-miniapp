@@ -2230,9 +2230,9 @@ async function renderReferrals() {
     <div class="card">
       <div class="card-head"><h3>Users with Referral Codes</h3></div>
       ${table(
-        ["User ID", "Username", "Referral Code", "Referred By", "Referral Count", "Joined"],
+        ["User ID", "Name", "Username", "Referral Code", "Referred By", "Referral Count", "Joined"],
         (usersData.users || []).filter(u => u.referral_code || Number(u.referral_count) > 0).map(u => [
-          escapeHtml(u.id), escapeHtml(u.username || "—"), escapeHtml(u.referral_code || "—"),
+          escapeHtml(u.id), escapeHtml([u.first_name, u.last_name].filter(Boolean).join(" ") || "—"), escapeHtml(u.username || "—"), escapeHtml(u.referral_code || "—"),
           escapeHtml(u.referred_by ?? "—"), escapeHtml(statValue(u.referral_count, 0)),
           escapeHtml(formatDate(u.created_at))
         ])
@@ -2296,6 +2296,11 @@ async function renderChannelSettings() {
         <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
           <input type="checkbox" name="predictions_enabled" ${s.predictions_enabled ? "checked" : ""} style="width:auto">
           <label style="margin:0">Enable Predictions in Main Channel</label>
+        </div>
+
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" name="withdrawal_channel_posts" ${s.withdrawal_channel_posts !== false ? "checked" : ""} style="width:auto">
+          <label style="margin:0">Post "Withdrawal approved" messages in channel (wallet address is never shown)</label>
         </div>
 
         <div class="field">
@@ -2374,6 +2379,7 @@ async function renderChannelSettings() {
         batch_windows: fd.get("batch_windows"),
         channel_updates_enabled: fd.get("channel_updates_enabled") === "on",
         predictions_enabled: fd.get("predictions_enabled") === "on",
+        withdrawal_channel_posts: fd.get("withdrawal_channel_posts") === "on",
         prediction_message: fd.get("prediction_message"),
         result_message: fd.get("result_message"),
         result_image_url: fd.get("result_image_url"),
