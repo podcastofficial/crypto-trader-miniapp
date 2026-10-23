@@ -85,6 +85,42 @@ async function getChannelSettings(client) {
   }
 }
 
+function sizeOfNumber(n) {
+  const x = Number(n);
+  return Number.isFinite(x) ? (x >= 5 ? "Big" : "Small") : "—";
+}
+
+function nowUtcTime() {
+  return new Date().toISOString().slice(11, 19);
+}
+
+// Fills {placeholders} in a template. Unknown placeholders stay unchanged.
+function fillTemplate(tpl, vars) {
+  return String(tpl || "")
+    .replace(/\\n/g, "\n")
+    // Never publish win ratio / bet counts: drop any line that contains those placeholders
+    .split("\n")
+    .filter(line => !/\{(win_ratio|loss_ratio|win_rate|loss_rate|bets|bet_count|total_bets|total_stake|stake|payout|winners)\}/i.test(line))
+    .join("\n")
+    .replace(/\{(\w+)\}/g, (m, key) => {
+      const v = vars[key.toLowerCase()];
+      return v === undefined || v === null ? m : String(v);
+    });
+}
+
+async function getRatios(client) {
+  try {
+    const hist = await client.query(`SELECT result FROM public.prediction_history WHERE result IS NOT NULL`);
+    const total = hist.rowCount;
+    const wins = hist.rows.filter(r => r.result === "win").length;
+    const win = total > 0 ? ((wins / total) * 100).toFixed(1) : "0.0";
+    const loss = total > 0 ? (100 - Number(win)).toFixed(1) : "0.0";
+    return { win, loss };
+  } catch (_) {
+    return { win: "0.0", loss: "0.0" };
+  }
+}
+
 async function sendTelegramMessage(client, type, data) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return;
@@ -129,10 +165,13 @@ async function sendTelegramMessage(client, type, data) {
         "🔮 Prediction (not guaranteed)\n🔢 Round: {round}\n🎯 Suggested number: {number}\n🎨 Suggested colour: {colour}";
 
       // Replace literal \n with actual newlines, and variables
-      text = text.replace(/\\n/g, '\n')
-        .replace(/{round}/g, fmtPeriod(data.round)) // <-- Yahan Serial Number use hoga
-        .replace(/{number}/g, data.number)
-        .replace(/{colour}/g, data.colour);
+      text = fillTemplate(text, {
+        round: fmtPeriod(data.round), period: fmtPeriod(data.round),
+        number: data.number, prediction: data.number,
+        colour: data.colour, color: data.colour,
+        size: sizeOfNumber(data.number),
+        time: nowUtcTime()
+      });
 
       for (const chatId of channelList) {
         await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -162,25 +201,21 @@ async function sendTelegramMessage(client, type, data) {
         ]
       );
 
-      const hist = await client.query(
-        `SELECT result FROM public.prediction_history`
-      );
-
-      const total = hist.rowCount;
-      const wins = hist.rows.filter(r => r.result === 'win').length;
-      const winRatio = total > 0 ? ((wins / total) * 100).toFixed(1) : "0.0";
-      const lossRatio = total > 0 ? (100 - Number(winRatio)).toFixed(1) : "0.0";
+      const predRow = await client.query(`SELECT predicted_number, predicted_colour FROM public.prediction_history WHERE round_code=$1 ORDER BY id ASC LIMIT 1`, [data.round]);
 
       let text = settings.result_message || 
-        "🎲 Round result published\n🔢 Round: {round}\n🎯 Result: {number}\n🎨 Colour: {colour}\n📏 Size: {size}\n\n📊 Win Ratio: {win_ratio}% | Loss: {loss_ratio}%";
+        "🎲 Round result published\n🔢 Round: {round}\n🎯 Result: {number}\n🎨 Colour: {colour}\n📏 Size: {size}";
 
-      text = text.replace(/\\n/g, '\n')
-        .replace(/{round}/g, fmtPeriod(data.round)) // <-- Yahan Serial Number use hoga
-        .replace(/{number}/g, data.result_number)
-        .replace(/{colour}/g, data.result_colour)
-        .replace(/{size}/g, data.result_size)
-        .replace(/{win_ratio}/g, winRatio)
-        .replace(/{loss_ratio}/g, lossRatio);
+      text = fillTemplate(text, {
+        round: fmtPeriod(data.round), period: fmtPeriod(data.round),
+        number: data.result_number, result: data.result_number,
+        colour: data.result_colour, color: data.result_colour,
+        size: data.result_size,
+        time: nowUtcTime(),
+        prediction: predRow.rows[0] ? predRow.rows[0].predicted_number : "—",
+        predicted_colour: predRow.rows[0] ? predRow.rows[0].predicted_colour : "—",
+        status: data.is_win ? "WIN" : "LOSS"
+      });
 
       for (const chatId of channelList) {
         if (settings.result_image_url && settings.result_image_url.startsWith("http")) {
