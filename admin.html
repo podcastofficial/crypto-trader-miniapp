@@ -1780,7 +1780,7 @@ async function renderTransactions(view) {
     ${table(
       ["ID", "User ID", "Type", "Amount", "Status", "Network", "Wallet / To Address", "TX Hash", "Payout TX", "Created", "Updated", "Actions"],
       (data.transactions || []).map(t => {
-        const addr = t.to_address || t.wallet_address || t.to_wallet || t.address || t.deposit_address || "";
+        const addr = t.destination_address || t.to_address || t.wallet_address || t.to_wallet || t.address || t.deposit_address || "";
         let actionButtons = "—";
         if (t.status === "pending") {
           if (t.transaction_type === "deposit") {
