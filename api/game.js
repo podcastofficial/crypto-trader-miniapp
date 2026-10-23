@@ -768,6 +768,8 @@ async function getReferralMembers(client, userId) {
     `SELECT
        u.id,
        u.username,
+       u.first_name,
+       u.last_name,
        u.created_at,
        (
          EXISTS (
@@ -1304,7 +1306,7 @@ module.exports = async function handler(req, res) {
 
       await notifyTelegram(
         `📤 Withdrawal requested\n👤 Name: ${displayName}\n💵 Gross: ${(amount / POINTS_PER_USDT).toFixed(2)} USDT\n💸 Fee: 10%\n✅ Net: ${netAmountUsdt} USDT\n🏦 Wallet: ${destination}\n⏳ Status: Pending approval`, 
-        [process.env.ADMIN_CHAT_ID, RESULTS_CHANNEL]
+        [process.env.ADMIN_CHAT_ID]
       );
 
       if (user.telegram_id) {
