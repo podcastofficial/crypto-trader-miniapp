@@ -317,6 +317,9 @@ header { background:linear-gradient(180deg,#0a0a0d,#0b0b0e); border-bottom:1px s
 @keyframes walletGlow { 0%,100% { box-shadow:0 10px 32px #000b, 0 0 14px #facc1518, inset 0 0 30px #facc1510; } 50% { box-shadow:0 10px 32px #000b, 0 0 26px #facc1535, inset 0 0 40px #facc1520; } }
 @media (max-width:380px) { #page-home .balance-card > .wallet-art { width:140px; height:115px; right:0; } }
 @media (prefers-reduced-motion:reduce) { #page-home .balance-card, #page-home .balance-card::after, .wallet-art * { animation:none !important; } }
+.dash-links { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 13px; }
+.dash-link { flex:1 1 140px; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 10px; border-radius:12px; background:linear-gradient(180deg,#1a1710,#12110c); border:1px solid #6b5514; color:#facc15; font-weight:800; font-size:13px; box-shadow:0 4px 14px #0006; }
+.dash-link:active { transform:scale(.98); }
 </style>
 </head>
 <body>
@@ -365,6 +368,8 @@ header { background:linear-gradient(180deg,#0a0a0d,#0b0b0e); border-bottom:1px s
     </div>
 
     <div class="section">
+      <div class="dash-links" id="dashLinks" style="display:none"></div>
+      <div class="notice" id="maintBanner" style="display:none;margin:0 0 12px"></div>
       <div class="timer-card" id="timerCard"><div class="timer-anim" aria-hidden="true"><i class="candle" style="--l:3%;--h:38px;--d:0.0s"></i><i class="candle" style="--l:8%;--h:56px;--d:0.4s"></i><i class="candle" style="--l:13%;--h:30px;--d:0.9s"></i><i class="candle" style="--l:18%;--h:66px;--d:0.2s"></i><i class="candle" style="--l:23%;--h:44px;--d:1.1s"></i><i class="candle" style="--l:28%;--h:58px;--d:0.6s"></i><i class="candle" style="--l:68%;--h:40px;--d:0.3s"></i><i class="candle" style="--l:73%;--h:62px;--d:1.0s"></i><i class="candle" style="--l:78%;--h:34px;--d:0.7s"></i><i class="candle" style="--l:83%;--h:68px;--d:0.1s"></i><i class="candle" style="--l:88%;--h:48px;--d:0.8s"></i><i class="candle" style="--l:93%;--h:60px;--d:1.3s"></i><svg class="trend" viewBox="0 0 600 120" preserveAspectRatio="none"><path class="trend-base" d="M0 100C100 95 160 70 260 80S440 55 600 15" pathLength="1"/><path class="trend-glow" d="M0 100C100 95 160 70 260 80S440 55 600 15" pathLength="1"/></svg><b class="spark" style="--l:10%;--d:0s"></b><b class="spark" style="--l:30%;--d:1.6s"></b><b class="spark" style="--l:52%;--d:3.1s"></b><b class="spark" style="--l:74%;--d:0.8s"></b><b class="spark" style="--l:90%;--d:2.4s"></b></div>
         <div class="row">
           <span class="muted small" data-i18n="currentPeriod">Current Period</span>
@@ -687,6 +692,9 @@ header { background:linear-gradient(180deg,#0a0a0d,#0b0b0e); border-bottom:1px s
     <div class="row"><div class="modal-title">🆘 Help &amp; Support</div><button class="close-btn" data-close="helpModal" type="button">✕</button></div>
     <div class="setting-row"><span>📺 Official Channel</span><button class="sec-btn" id="helpChannelBtn" type="button">Open</button></div>
     <div class="setting-row"><span>🎧 Support</span><button class="sec-btn" id="helpSupportBtn" type="button">Contact</button></div>
+    <div class="section-title" style="margin-top:16px">Send a message to support</div>
+    <textarea id="supportMsgInput" maxlength="1000" placeholder="Describe your problem..." style="display:block;width:100%;min-height:90px;padding:13px;margin:7px 0 6px;border:1px solid #3a3a40;border-radius:10px;background:#202023;color:#fff;font:inherit"></textarea>
+    <button class="primary-btn" id="sendSupportMsgBtn" type="button">Send to Support</button>
     <div class="section-title" style="margin-top:16px">FAQ</div>
     <div class="faq-card">
       <details><summary>How do I play?</summary><p>Pick a number, colour, or Big/Small option before betting closes, then confirm your points stake.</p></details>
@@ -1208,11 +1216,25 @@ async function loadGiftHistory() {
     box.innerHTML = `<div class="empty">Unable to load gift history.</div>`;
   }
 }
+function renderDashLinks() {
+  const box = $("dashLinks");
+  if (!box) return;
+  let list = [];
+  try { list = JSON.parse(appConfig.dashboard_links || "[]"); } catch (_) { list = []; }
+  list = (Array.isArray(list) ? list : []).filter(x => x && x.enabled && x.url && x.label).slice(0, 4);
+  box.style.display = list.length ? "" : "none";
+  box.innerHTML = list.map((x, i) => `<button class="dash-link" type="button" data-dash="${i}">${esc(x.label)}</button>`).join("");
+  box.querySelectorAll("[data-dash]").forEach(btn => { btn.onclick = () => openExternalLink(list[Number(btn.dataset.dash)].url); });
+}
+
 async function loadAppConfig() {
   try {
     const data = await api("app_config");
     if (data && data.config) appConfig = { ...appConfig, ...data.config };
   } catch (_) {}
+  renderDashLinks();
+  const mb = $("maintBanner");
+  if (mb) { const on = appConfig.maintenance_mode === true; mb.style.display = on ? "" : "none"; mb.textContent = on ? (appConfig.maintenance_message || "Betting is paused for maintenance. Please check back soon.") : ""; }
   renderHeaderButtons();
 }
 function renderHeaderButtons() {
@@ -1279,6 +1301,20 @@ function init(){
   $("settingsResetBtn").onclick = () => { settings.sound = true; settings.vibrate = true; settings.updates = true; saveSettings(); renderSettings(); toast("Preferences reset to defaults"); };
   $("helpChannelBtn").onclick = () => openExternalLink(appConfig.channel_url);
   $("helpSupportBtn").onclick = () => openExternalLink(appConfig.support_url);
+  $("sendSupportMsgBtn").onclick = async () => {
+    const box = $("supportMsgInput");
+    const msg = box.value.trim();
+    if (msg.length < 5) return toast("Write at least 5 characters.");
+    if (!authed) return toast(t("toastAuth"));
+    const btn = $("sendSupportMsgBtn");
+    btn.disabled = true;
+    try {
+      const r = await api("support_message", { message: msg });
+      toast(r.message || "Message sent.");
+      box.value = "";
+    } catch (e) { toast(e.message); }
+    finally { btn.disabled = false; }
+  };
   $("redeemGiftBtn").onclick = async () => {
     const code = $("giftCodeInput").value.trim();
     if (!code) return toast("Enter a gift code.");
@@ -1352,7 +1388,7 @@ function init(){
   $("resultModal").addEventListener("click", event => { if (event.target === $("resultModal")) closeResultPopup(); });
   document.querySelectorAll("[data-bet]").forEach(button => { button.onclick = () => openBet(button.dataset.bet); });
   document.querySelectorAll("[data-close]").forEach(button => { button.onclick = () => $(button.dataset.close).classList.remove("open"); });
-  document.querySelectorAll(".modal-backdrop").forEach(modal => { modal.addEventListener("click", event => { if (event.target === modal && modal.id !== "resultModal") { modal.classList.remove("open"); } }); });
+  document.querySelectorAll(".modal-backdrop").forEach(modal => { modal.addEventListener("click", event => { if (event.target === modal && modal.id !== "resultModal" && modal.id !== "termsModal") { modal.classList.remove("open"); } }); });
   document.querySelectorAll("[data-amount]").forEach(button => {
     button.onclick = () => {
       const amt = button.dataset.amount;
