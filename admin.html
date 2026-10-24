@@ -758,7 +758,8 @@ const VIEWS = [
     ["channel_settings", "⚙️", "Channel Settings"],
     ["broadcast", "📢", "Broadcast"],
     ["telegram", "✈", "Telegram Logs"],
-    ["telegram_support", "🎧", "Telegram Support"]
+    ["telegram_support", "🎧", "Telegram Support"],
+    ["app_settings", "🛠️", "Settings"]
   ]},
   { group: "SECURITY", items: [
     ["audit", "▤", "Audit Logs"],
@@ -1085,6 +1086,7 @@ async function navigate(view) {
       case "broadcast": await renderBroadcast(); break;
       case "telegram": await renderTelegram(); break;
       case "telegram_support": await renderTelegramSupport(); break;
+      case "app_settings": await renderAppSettings(); break;
       case "audit": await renderAudit(); break;
       case "login_attempts": await renderLoginAttempts(); break;
       case "security": await renderSecurity(); break;
@@ -1625,6 +1627,8 @@ async function renderUserDetail(userId) {
           ${detailItem("Name", escapeHtml(fn || "—"))}
           ${detailItem("Username", escapeHtml(p.username || "—"))}
           ${detailItem("Balance", escapeHtml(money(p.balance)))}
+          ${detailItem("Account", p.is_blocked ? '<span class="red">Blocked</span>' : '<span class="green">Active</span>')}
+          ${detailItem("Withdrawals", p.withdraw_blocked ? '<span class="red">Frozen</span>' : '<span class="green">Allowed</span>')}
           ${detailItem("Referral Code", escapeHtml(p.referral_code || "—"))}
           ${detailItem("Referred By", escapeHtml(p.referred_by ?? "—"))}
           ${detailItem("Joined", escapeHtml(formatDate(p.created_at)))}
@@ -1648,6 +1652,8 @@ async function renderUserDetail(userId) {
           <div class="row-actions" style="margin-top:10px">
             <button class="btn user-action" data-action="block" data-user-id="${escapeHtml(p.id)}">Block</button>
             <button class="btn user-action" data-action="unblock" data-user-id="${escapeHtml(p.id)}">Unblock</button>
+            <button class="btn user-action" data-action="freeze_withdraw" data-user-id="${escapeHtml(p.id)}">Freeze withdraw</button>
+            <button class="btn user-action" data-action="unfreeze_withdraw" data-user-id="${escapeHtml(p.id)}">Unfreeze withdraw</button>
             <button class="btn user-action" data-action="add_fund" data-user-id="${escapeHtml(p.id)}">Add fund</button>
             <button class="btn user-action" data-action="remove_fund" data-user-id="${escapeHtml(p.id)}">Remove fund</button>
             <button class="btn user-action" data-action="transfer_points" data-user-id="${escapeHtml(p.id)}">Transfer points</button>
@@ -2484,47 +2490,115 @@ async function renderChannelSettings() {
 }
 
 /* ============ BROADCAST ============ */
+function pickImageToDataUrl(file, maxSide = 1280, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Could not read the picture."));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("This file is not a valid picture."));
+      img.onload = () => {
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(img.width * scale));
+        c.height = Math.max(1, Math.round(img.height * scale));
+        const ctx = c.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL("image/jpeg", quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 async function renderBroadcast() {
-  setPage("Broadcast Message", "Send a message to your users and/or channel. Supports images.");
+  setPage("Broadcast Message", "Send a message to your users and/or channel. Supports a picture from your gallery and inline buttons.");
+  let pickedImage = "";
   $("viewBody").innerHTML = `
     <div class="card">
       <form id="broadcastForm">
         <div class="field">
           <label>Target</label>
           <select name="target">
-            <option value="both">Both (Channel & Users)</option>
+            <option value="both">Both (Channel &amp; Users)</option>
             <option value="channel">Only Channel</option>
             <option value="users">Only Users (Bot)</option>
           </select>
         </div>
+
         <div class="field">
-          <label>Image URL (optional)</label>
-          <input name="image_url" placeholder="https://... (leave blank for text-only)" maxlength="500">
+          <label>Picture (optional)</label>
+          <input type="file" id="broadcastImageFile" accept="image/*">
+          <div id="broadcastImagePreview" style="margin-top:8px"></div>
+          <div class="small muted">Pick a photo from your gallery. It is resized automatically. A copy goes to your admin chat once as the upload.</div>
         </div>
+
+        <div class="field">
+          <label>or Image URL (optional)</label>
+          <input name="image_url" placeholder="https://... (ignored if you picked a picture)" maxlength="500">
+        </div>
+
         <div class="field">
           <label>Message</label>
           <textarea name="message" required placeholder="Enter message here..." maxlength="4000"></textarea>
         </div>
+
+        <div class="card" style="margin:0 0 14px;padding:14px">
+          <div class="card-head" style="margin-bottom:10px"><h3>Inline Buttons (optional)</h3></div>
+          <div class="grid" style="grid-template-columns:1fr 2fr;">
+            <div class="field"><label>Button 1 text</label><input name="b1_text" maxlength="60" placeholder="🚀 Play Now"></div>
+            <div class="field"><label>Button 1 link</label><input name="b1_url" maxlength="500" placeholder="https://t.me/YourBot?start=game"></div>
+          </div>
+          <div class="grid" style="grid-template-columns:1fr 2fr;">
+            <div class="field"><label>Button 2 text</label><input name="b2_text" maxlength="60" placeholder="📢 Join Channel"></div>
+            <div class="field"><label>Button 2 link</label><input name="b2_url" maxlength="500" placeholder="https://t.me/your_channel"></div>
+          </div>
+        </div>
+
         <button class="btn btn-primary" type="submit">Send Broadcast</button>
       </form>
       <div id="broadcastResult" style="margin-top:12px"></div>
     </div>
   `;
 
+  $("broadcastImageFile").onchange = async e => {
+    const file = e.target.files && e.target.files[0];
+    pickedImage = "";
+    $("broadcastImagePreview").innerHTML = "";
+    if (!file) return;
+    try {
+      pickedImage = await pickImageToDataUrl(file);
+      $("broadcastImagePreview").innerHTML = `<img src="${pickedImage}" alt="Preview" style="max-width:220px;max-height:220px;border-radius:10px;border:1px solid var(--border)"><div class="small muted" style="margin-top:4px">Picture ready (${Math.round(pickedImage.length * 0.75 / 1024)} KB)</div>`;
+    } catch (err) { toast(err.message, true); e.target.value = ""; }
+  };
+
   $("broadcastForm").onsubmit = async e => {
     e.preventDefault();
     if (!confirm("Are you sure you want to send this broadcast?")) return;
     const fd = new FormData(e.target);
+    const btn = e.target.querySelector("button[type=submit]");
+    btn.disabled = true;
     try {
       const r = await api("broadcast", {
         target: fd.get("target"),
         message: fd.get("message"),
-        image_url: fd.get("image_url") || undefined
+        image_url: fd.get("image_url") || undefined,
+        image_data: pickedImage || undefined,
+        buttons: [
+          { text: fd.get("b1_text"), url: fd.get("b1_url") },
+          { text: fd.get("b2_text"), url: fd.get("b2_url") }
+        ]
       });
       toast(r.message || "Broadcast sent.");
       $("broadcastResult").innerHTML = `<div class="notice">${escapeHtml(r.message)}</div>`;
       e.target.reset();
+      pickedImage = "";
+      $("broadcastImagePreview").innerHTML = "";
     } catch (err) { toast(err.message, true); }
+    finally { btn.disabled = false; }
   };
 }
 
@@ -2585,6 +2659,79 @@ async function renderTelegram() {
 }
 
 /* ============ TELEGRAM SUPPORT (NEW) ============ */
+async function renderAppSettings() {
+  setPage("Settings", "Game controls and platform settings. Changes apply immediately.");
+  const d = await api("app_settings");
+  const s = d.settings || {};
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head"><h3>Game &amp; Wallet Controls</h3></div>
+      <form id="appSettingsForm">
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" name="maintenance_mode" ${s.maintenance_mode ? "checked" : ""} style="width:auto">
+          <label style="margin:0">Maintenance mode (pause NEW bets)</label>
+        </div>
+        <div class="field">
+          <label>Maintenance message (shown to users)</label>
+          <input name="maintenance_message" value="${escapeHtml(s.maintenance_message || "")}" maxlength="200" placeholder="Betting is paused for maintenance. Back soon!">
+          <div class="small muted">Running rounds still settle normally. Only new bets are blocked.</div>
+        </div>
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" name="withdrawals_paused" ${s.withdrawals_paused ? "checked" : ""} style="width:auto">
+          <label style="margin:0">Pause all withdrawal requests</label>
+        </div>
+        <div class="field">
+          <label>Daily withdrawal limit per user (USDT, 0 = no limit)</label>
+          <input type="number" name="withdraw_daily_limit_usdt" min="0" step="0.01" value="${escapeHtml(s.withdraw_daily_limit_usdt ?? 0)}">
+        </div>
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" name="signup_bonus_enabled" ${s.signup_bonus_enabled ? "checked" : ""} style="width:auto">
+          <label style="margin:0">Joining bonus for new users</label>
+        </div>
+        <div class="field">
+          <label>Joining bonus amount (points)</label>
+          <input type="number" name="signup_bonus_amount" min="0" step="1" value="${escapeHtml(s.signup_bonus_amount ?? 25)}">
+        </div>
+
+        <div class="card" style="margin:6px 0 14px;padding:14px">
+          <div class="card-head" style="margin-bottom:10px"><h3>Dashboard Links (shown on the app home)</h3></div>
+          ${[0, 1, 2, 3].map(i => {
+            const defaults = [{ label: "📢 Channel", url: "", enabled: false }, { label: "💬 Group", url: "", enabled: false }];
+            const l = (s.dashboard_links && s.dashboard_links[i]) || defaults[i] || { label: "", url: "", enabled: false };
+            return `
+          <div class="grid" style="grid-template-columns:auto 1fr 2fr;align-items:end;gap:10px;margin-bottom:8px">
+            <div class="field" style="margin:0"><label>ON</label><input type="checkbox" name="dl${i}_on" ${l.enabled ? "checked" : ""} style="width:auto"></div>
+            <div class="field" style="margin:0"><label>Label</label><input name="dl${i}_label" value="${escapeHtml(l.label || "")}" maxlength="30" placeholder="📢 Channel"></div>
+            <div class="field" style="margin:0"><label>Link</label><input name="dl${i}_url" value="${escapeHtml(l.url || "")}" maxlength="500" placeholder="https://t.me/your_channel"></div>
+          </div>`;
+          }).join("")}
+          <div class="small muted">Turn a link ON to show it as a button on the app home. Empty rows are ignored.</div>
+        </div>
+        <button class="btn btn-primary" type="submit">Save Settings</button>
+      </form>
+    </div>`;
+  $("appSettingsForm").onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    try {
+      await api("save_app_settings", {
+        maintenance_mode: fd.get("maintenance_mode") === "on",
+        maintenance_message: fd.get("maintenance_message"),
+        withdrawals_paused: fd.get("withdrawals_paused") === "on",
+        withdraw_daily_limit_usdt: fd.get("withdraw_daily_limit_usdt"),
+        signup_bonus_enabled: fd.get("signup_bonus_enabled") === "on",
+        signup_bonus_amount: fd.get("signup_bonus_amount"),
+        dashboard_links: [0, 1, 2, 3].map(i => ({
+          enabled: fd.get(`dl${i}_on`) === "on",
+          label: fd.get(`dl${i}_label`),
+          url: fd.get(`dl${i}_url`)
+        }))
+      });
+      toast("Settings saved.");
+    } catch (err) { toast(err.message, true); }
+  };
+}
+
 async function renderTelegramSupport() {
   setPage("Telegram Support", "Configure support contact and view recent support messages.");
   let data = {};
