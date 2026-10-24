@@ -2317,9 +2317,29 @@ async function renderChannelSettings() {
           <label style="margin:0">Post "Withdrawal approved" messages in channel (wallet address is never shown)</label>
         </div>
 
-        <div class="field">
-          <label>Inline Link Text</label>
-          <input name="inline_link_text" value="${escapeHtml(s.inline_link_text || "Play")}" maxlength="100">
+        <div class="card" style="margin:0 0 14px;padding:14px">
+          <div class="card-head" style="margin-bottom:10px"><h3>Inline Buttons (under posts)</h3></div>
+          <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+            <input type="checkbox" name="inline_button_enabled" ${s.inline_button_enabled !== false ? "checked" : ""} style="width:auto">
+            <label style="margin:0">Show buttons under prediction &amp; result posts</label>
+          </div>
+          ${(() => {
+            let list = [];
+            try { list = JSON.parse(s.inline_buttons || "[]"); } catch { list = []; }
+            if (!Array.isArray(list)) list = [];
+            const b1 = list[0] || { text: s.inline_link_text || "🚀 Play Now", url: "" };
+            const b2 = list[1] || { text: "", url: "" };
+            return `
+          <div class="grid" style="grid-template-columns:1fr 2fr;">
+            <div class="field"><label>Button 1 text</label><input name="btn1_text" value="${escapeHtml(b1.text)}" maxlength="60" placeholder="🚀 Play Now"></div>
+            <div class="field"><label>Button 1 link</label><input name="btn1_url" value="${escapeHtml(b1.url)}" maxlength="500" placeholder="https://t.me/YourBot?start=game"></div>
+          </div>
+          <div class="grid" style="grid-template-columns:1fr 2fr;">
+            <div class="field"><label>Button 2 text (optional)</label><input name="btn2_text" value="${escapeHtml(b2.text)}" maxlength="60" placeholder="📢 Join Channel"></div>
+            <div class="field"><label>Button 2 link (optional)</label><input name="btn2_url" value="${escapeHtml(b2.url)}" maxlength="500" placeholder="https://t.me/your_channel"></div>
+          </div>`;
+          })()}
+          <div class="small muted">Links must start with https:// (or t.me/..., @username). Leave Button 1 link empty to use the default: https://t.me/&lt;Bot Username&gt;?start=game</div>
         </div>
 
         <div class="field">
@@ -2397,7 +2417,12 @@ async function renderChannelSettings() {
         prediction_message: fd.get("prediction_message"),
         result_message: fd.get("result_message"),
         result_image_url: fd.get("result_image_url"),
-        inline_link_text: fd.get("inline_link_text")
+        inline_link_text: fd.get("btn1_text") || "Play",
+        inline_button_enabled: fd.get("inline_button_enabled") === "on",
+        inline_buttons: [
+          { text: fd.get("btn1_text"), url: fd.get("btn1_url") },
+          { text: fd.get("btn2_text"), url: fd.get("btn2_url") }
+        ]
       });
       toast("Main settings saved!");
       state.botUsername = fd.get("bot_username");
