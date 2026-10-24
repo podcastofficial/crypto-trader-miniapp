@@ -268,6 +268,7 @@ async function ensureManagementTables() {
   )`);
 
   await query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT FALSE`);
+  await query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS withdraw_blocked BOOLEAN NOT NULL DEFAULT FALSE`);
   await query(`ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS payout_tx_hash TEXT`);
   await query(`ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS destination_address TEXT`);
 
@@ -410,6 +411,11 @@ async function userManagement(body, session, req) {
     await query(`INSERT INTO public.user_notifications (user_id,kind,title,message) VALUES ($1,'admin', $2, $3)`,
       [userId, action === "block" ? "Account blocked" : "Account unblocked",
        action === "block" ? "Your account has been blocked by admin." : "Your account has been unblocked."]);
+  } else if (["freeze_withdraw", "unfreeze_withdraw"].includes(action)) {
+    await query(`UPDATE public.users SET withdraw_blocked=$1 WHERE id=$2`, [action === "freeze_withdraw", userId]);
+    await query(`INSERT INTO public.user_notifications (user_id,kind,title,message) VALUES ($1,'admin',$2,$3)`,
+      [userId, action === "freeze_withdraw" ? "Withdrawals disabled" : "Withdrawals enabled",
+       action === "freeze_withdraw" ? "Withdrawals are disabled for your account. Contact support." : "Withdrawals are enabled for your account."]);
   } else if (["add_fund", "remove_fund"].includes(action)) {
     const points = Number(body.points);
     if (!Number.isFinite(points) || points <= 0 || points > 100000000) throw new Error("Enter a valid points amount.");
@@ -836,9 +842,10 @@ async function reconcile() {
 }
 
 async function userDetail(userId) {
+  await ensureManagementTables();
   const profiles = await query(
     `SELECT u.id,u.telegram_id,u.first_name,u.last_name,u.username,w.balance,
-      u.referral_code,u.referred_by,u.created_at
+      u.referral_code,u.referred_by,u.created_at,u.is_blocked,u.withdraw_blocked
      FROM public.users u LEFT JOIN public.wallet_balances w ON w.user_id=u.id
      WHERE u.id=$1 LIMIT 1`, [userId]
   );
@@ -1085,6 +1092,20 @@ async function reviewWalletTransaction(action, body, session, req) {
       );
     }
 
+    if (action !== "withdrawal_approve") {
+      const notifText = {
+        deposit_approve: ["Deposit approved", `Your deposit of ${Number(tx.amount).toFixed(2)} USDT was approved. ${Math.round(Number(tx.amount) * 100)} points added.`],
+        deposit_reject: ["Deposit rejected", `Your deposit of ${Number(tx.amount).toFixed(2)} USDT was rejected. Contact support if this is a mistake.`],
+        withdrawal_reject: ["Withdrawal rejected", `Your withdrawal of ${Number(tx.amount).toFixed(2)} USDT was rejected and the points were refunded.`]
+      }[action];
+      if (notifText) {
+        await client.query(
+          `INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,$2,$3,$4)`,
+          [tx.user_id, tx.transaction_type, notifText[0], notifText[1]]
+        );
+      }
+    }
+
     await client.query(
       `UPDATE public.transactions
        SET status=$1, admin_note=$2,
@@ -1113,6 +1134,20 @@ async function reviewWalletTransaction(action, body, session, req) {
     } else if (action === "deposit_approve") {
       await notifyTelegram(`✅ Deposit approved\n👤 User ID: ${tx.telegram_id}\n💵 Amount credited: ${Number(tx.amount) * 100} points (${Number(tx.amount).toFixed(2)} USDT)`);
     }
+
+    // Best-effort Telegram message to the user about the decision
+    try {
+      if (tx.telegram_id) {
+        const amt = Number(tx.amount).toFixed(2);
+        const userText = {
+          withdrawal_approve: `✅ Your withdrawal of ${amt} USDT was approved and paid.\n🔗 Transaction: ${payoutTxHash}`,
+          withdrawal_reject: `❌ Your withdrawal of ${amt} USDT was rejected. The points were refunded to your wallet.`,
+          deposit_approve: `✅ Your deposit of ${amt} USDT was approved. ${Math.round(Number(tx.amount) * 100)} points added.`,
+          deposit_reject: `❌ Your deposit of ${amt} USDT was rejected. Contact support if this is a mistake.`
+        }[action];
+        if (userText) await notifyTelegram(userText, [tx.telegram_id]);
+      }
+    } catch { /* ignore */ }
 
     await audit(session.username, action, req, "success", "transaction", transactionId);
 
@@ -1559,6 +1594,55 @@ async function postPrediction(body, session, req) {
   };
 }
 
+const APP_SETTING_DEFAULTS = {
+  maintenance_mode: "false", maintenance_message: "", withdrawals_paused: "false",
+  withdraw_daily_limit_usdt: "0", signup_bonus_enabled: "true", signup_bonus_amount: "25", dashboard_links: "[]"
+};
+
+async function getAppSettings() {
+  const out = { ...APP_SETTING_DEFAULTS };
+  try {
+    const rows = await query(`SELECT key, value FROM public.app_settings WHERE key = ANY($1::text[])`, [Object.keys(APP_SETTING_DEFAULTS)]);
+    rows.forEach(r => { out[r.key] = r.value; });
+  } catch { /* table may not exist yet */ }
+  const isOn = v => v === "true" || v === "1";
+  return { ok: true, settings: {
+    maintenance_mode: isOn(out.maintenance_mode),
+    maintenance_message: out.maintenance_message || "",
+    withdrawals_paused: isOn(out.withdrawals_paused),
+    withdraw_daily_limit_usdt: Number(out.withdraw_daily_limit_usdt) || 0,
+    signup_bonus_enabled: isOn(out.signup_bonus_enabled),
+    signup_bonus_amount: Number(out.signup_bonus_amount) || 0,
+    dashboard_links: (() => { try { const l = JSON.parse(out.dashboard_links || "[]"); return Array.isArray(l) ? l : []; } catch { return []; } })()
+  } };
+}
+
+async function saveAppSettings(body) {
+  const isOn = v => v === true || v === "true";
+  const limit = Number(body.withdraw_daily_limit_usdt || 0);
+  if (!Number.isFinite(limit) || limit < 0 || limit > 1000000000) throw new Error("Invalid daily withdrawal limit.");
+  const bonus = Number(body.signup_bonus_amount || 0);
+  if (!Number.isFinite(bonus) || bonus < 0 || bonus > 100000) throw new Error("Invalid signup bonus amount.");
+  await setAppSetting("maintenance_mode", isOn(body.maintenance_mode));
+  await setAppSetting("maintenance_message", String(body.maintenance_message || "").trim().slice(0, 200));
+  await setAppSetting("withdrawals_paused", isOn(body.withdrawals_paused));
+  await setAppSetting("withdraw_daily_limit_usdt", limit);
+  await setAppSetting("signup_bonus_enabled", isOn(body.signup_bonus_enabled));
+  await setAppSetting("signup_bonus_amount", bonus);
+
+  const links = [];
+  for (const item of (Array.isArray(body.dashboard_links) ? body.dashboard_links.slice(0, 4) : [])) {
+    const label = String((item && item.label) || "").trim().slice(0, 30);
+    const urlRaw = String((item && item.url) || "").trim();
+    if (!label && !urlRaw) continue;
+    const url = normalizeButtonUrl(urlRaw);
+    if (!label || !url) throw new Error("Invalid dashboard link: add a label and a valid https:// link.");
+    links.push({ label, url, enabled: item.enabled === true || item.enabled === "true" });
+  }
+  await setAppSetting("dashboard_links", JSON.stringify(links));
+  return { ok: true, message: "Settings saved." };
+}
+
 async function getSupportSettings() {
   await ensureManagementTables();
   const rows = await query(`SELECT * FROM public.support_settings WHERE id=1`);
@@ -1607,6 +1691,55 @@ async function getSupportMessages(body) {
   };
 }
 
+async function tgSendRich(chatId, { text, photo, keyboard }) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return { ok: false, error: "TELEGRAM_BOT_TOKEN is not configured." };
+  const call = async (method, payload) => {
+    const r = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(15000)
+    });
+    return r.json().catch(() => ({ ok: false, description: "Bad response from Telegram." }));
+  };
+  try {
+    if (photo) {
+      const longText = text.length > 1024;
+      const res = await call("sendPhoto", { chat_id: chatId, photo, ...(longText ? {} : { caption: text, reply_markup: keyboard }) });
+      if (!res.ok) return { ok: false, error: res.description || "sendPhoto failed" };
+      if (longText) {
+        const r2 = await call("sendMessage", { chat_id: chatId, text, disable_web_page_preview: true, reply_markup: keyboard });
+        if (!r2.ok) return { ok: false, error: r2.description || "sendMessage failed" };
+      }
+      return { ok: true };
+    }
+    const res = await call("sendMessage", { chat_id: chatId, text, disable_web_page_preview: true, reply_markup: keyboard });
+    return res.ok ? { ok: true } : { ok: false, error: res.description || "sendMessage failed" };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+// Uploads the picked image once to the admin chat and returns a reusable Telegram file_id.
+async function uploadBroadcastPhoto(dataUrl) {
+  const m = String(dataUrl || "").match(/^data:image\/(jpeg|jpg|png|webp);base64,([A-Za-z0-9+/=]+)$/);
+  if (!m) throw new Error("Invalid image upload: use a JPG, PNG or WEBP picture.");
+  const buffer = Buffer.from(m[2], "base64");
+  if (!buffer.length || buffer.length > 5 * 1024 * 1024) throw new Error("Invalid image upload: picture must be under 5 MB.");
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const adminChat = process.env.ADMIN_CHAT_ID;
+  if (!token || !adminChat) throw new Error("Invalid setup: TELEGRAM_BOT_TOKEN and ADMIN_CHAT_ID are required for image upload.");
+  const form = new FormData();
+  form.append("chat_id", String(adminChat));
+  form.append("photo", new Blob([buffer], { type: "image/" + (m[1] === "jpg" ? "jpeg" : m[1]) }), "broadcast." + (m[1] === "jpeg" ? "jpg" : m[1]));
+  const r = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: "POST", body: form, signal: AbortSignal.timeout(30000) });
+  const data = await r.json().catch(() => null);
+  if (!data || !data.ok) throw new Error("Invalid image upload: " + ((data && data.description) || "Telegram rejected the picture."));
+  const sizes = data.result.photo || [];
+  return sizes[sizes.length - 1].file_id;
+}
+
 async function broadcastMessage(body, session, req) {
   await ensureManagementTables();
   const msg = String(body.message || "").trim().slice(0, 4000);
@@ -1614,33 +1747,48 @@ async function broadcastMessage(body, session, req) {
   const imageUrl = body.image_url ? String(body.image_url).trim().slice(0, 500) : null;
   if (!msg) throw new Error("Message is required.");
 
+  const rows = [];
+  for (const b of (Array.isArray(body.buttons) ? body.buttons.slice(0, 2) : [])) {
+    const text = String((b && b.text) || "").trim().slice(0, 60);
+    const urlRaw = String((b && b.url) || "").trim();
+    if (!text && !urlRaw) continue;
+    const url = normalizeButtonUrl(urlRaw);
+    if (!text || !url) throw new Error("Invalid inline button: add a text and a valid https:// link.");
+    rows.push([{ text, url }]);
+  }
+  const keyboard = rows.length ? { inline_keyboard: rows } : undefined;
+
+  let photo = imageUrl;
+  if (body.image_data) photo = await uploadBroadcastPhoto(body.image_data);
+
   let sent = 0;
   let failed = 0;
+  const errors = [];
 
   if (target === "channel" || target === "both") {
     const channel = await query(`SELECT channel_username FROM public.channel_settings WHERE id=1`);
     if (channel.length && channel[0].channel_username) {
-      const res = await notifyTelegram(msg, [channel[0].channel_username], imageUrl);
-      if (res.ok) sent++; else failed++;
-    } else failed++;
+      const res = await tgSendRich(channel[0].channel_username, { text: msg, photo, keyboard });
+      if (res.ok) sent++; else { failed++; errors.push(`Channel: ${res.error}`); }
+    } else { failed++; errors.push("Channel username is not set."); }
   }
 
   if (target === "users" || target === "both") {
     const users = await query(`SELECT telegram_id FROM public.users WHERE is_blocked=FALSE`);
     const chatIds = users.map(u => u.telegram_id).filter(Boolean);
-    for (let i = 0; i < chatIds.length; i += 30) {
-      const batch = chatIds.slice(i, i + 30);
-      const results = await Promise.allSettled(batch.map(id => notifyTelegram(msg, [id], imageUrl)));
+    for (let i = 0; i < chatIds.length; i += 25) {
+      const batch = chatIds.slice(i, i + 25);
+      const results = await Promise.allSettled(batch.map(id => tgSendRich(id, { text: msg, photo, keyboard })));
       results.forEach(r => {
         if (r.status === "fulfilled" && r.value.ok) sent++;
         else failed++;
       });
-      if (i + 30 < chatIds.length) await new Promise(res => setTimeout(res, 1000));
+      if (i + 25 < chatIds.length) await new Promise(res => setTimeout(res, 1000));
     }
   }
 
   await audit(session.username, "broadcast", req, "success");
-  return { ok: true, message: `Broadcast complete. Sent: ${sent}, Failed: ${failed}`, sent, failed };
+  return { ok: true, message: `Broadcast complete. Sent: ${sent}, Failed: ${failed}${errors.length ? " | " + errors.join("; ") : ""}`, sent, failed };
 }
 
 async function getLoginAttempts(body) {
@@ -1754,6 +1902,8 @@ module.exports = async function handler(req, res) {
         case "support_settings": result = await getSupportSettings(); break;
         case "save_support_settings": result = await saveSupportSettings(body, session, req); break;
         case "support_messages": result = await getSupportMessages(body); break;
+        case "app_settings": result = await getAppSettings(); break;
+        case "save_app_settings": result = await saveAppSettings(body); break;
         case "broadcast": result = await broadcastMessage(body, session, req); break;
         case "deposit_approve":
         case "deposit_reject":
