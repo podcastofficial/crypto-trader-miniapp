@@ -285,7 +285,7 @@ async function ensureManagementTables() {
   await query(`ALTER TABLE public.bets ADD COLUMN IF NOT EXISTS result_number INT`);
 
   await query(`CREATE TABLE IF NOT EXISTS public.channel_settings (id INT PRIMARY KEY DEFAULT 1)`);
-  for (const c of ["channel_username TEXT DEFAULT '@crypto_trader_results'","bot_username TEXT DEFAULT 'YourBot'","predictions_enabled BOOLEAN DEFAULT TRUE","prediction_timing INT DEFAULT 150","prediction_message TEXT","result_message TEXT","result_image_url TEXT","inline_link_text TEXT DEFAULT 'Play'","batch_windows TEXT","created_at TIMESTAMPTZ DEFAULT NOW()"]) {
+  for (const c of ["channel_username TEXT DEFAULT '@crypto_trader_results'","bot_username TEXT DEFAULT 'YourBot'","predictions_enabled BOOLEAN DEFAULT TRUE","prediction_timing INT DEFAULT 150","prediction_message TEXT","result_message TEXT","result_image_url TEXT","inline_link_text TEXT DEFAULT 'Play'","batch_windows TEXT","inline_buttons TEXT","inline_button_enabled BOOLEAN DEFAULT TRUE","created_at TIMESTAMPTZ DEFAULT NOW()"]) {
     await query(`ALTER TABLE public.channel_settings ADD COLUMN IF NOT EXISTS ${c}`);
   }
   await query(`ALTER TABLE public.channel_settings ADD COLUMN IF NOT EXISTS channel_updates_enabled BOOLEAN DEFAULT TRUE`);
@@ -1213,8 +1213,29 @@ function tgLink(v) {
   return "https://t.me/" + v.replace(/^@/, "");
 }
 
+function normalizeButtonUrl(v) {
+  v = String(v || "").trim();
+  if (!v) return "";
+  if (/^@[A-Za-z]\w{3,31}$/.test(v)) return "https://t.me/" + v.slice(1);
+  if (/^(t\.me|telegram\.me)\//i.test(v)) v = "https://" + v;
+  if (!/^https:\/\/[^\s]+$/i.test(v)) return null;
+  return v.slice(0, 500);
+}
+
 async function saveChannelSettings(body, session, req) {
   await ensureManagementTables();
+  const rawButtons = Array.isArray(body.inline_buttons) ? body.inline_buttons.slice(0, 2) : [];
+  const cleanButtons = [];
+  for (const b of rawButtons) {
+    const text = String((b && b.text) || "").trim().slice(0, 60);
+    const urlRaw = String((b && b.url) || "").trim();
+    if (!text && !urlRaw) continue;
+    const url = normalizeButtonUrl(urlRaw);
+    if (!text || !url) throw new Error("Invalid inline button: add a text and a valid https:// link (example: https://t.me/YourBot?start=game).");
+    cleanButtons.push({ text, url });
+  }
+  const inlineButtons = JSON.stringify(cleanButtons);
+  const inlineEnabled = body.inline_button_enabled === undefined ? true : (body.inline_button_enabled === true || body.inline_button_enabled === "true");
   const batchWindows = String(body.batch_windows || "").replace(/\s+/g, "").slice(0, 300);
   if (batchWindows && !/^(([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d)(,([01]\d|2[0-3]):[0-5]\d-([01]\d|2[0-3]):[0-5]\d)*$/.test(batchWindows)) {
     throw new Error("Invalid batch time format. Use HH:MM-HH:MM, comma separated.");
@@ -1222,7 +1243,7 @@ async function saveChannelSettings(body, session, req) {
   await query(`UPDATE public.channel_settings SET
       channel_username=$1, bot_username=$2, predictions_enabled=$3, prediction_timing=$4,
       prediction_message=$5, result_message=$6, result_image_url=$7, inline_link_text=$8,
-      channel_updates_enabled=$9, batch_windows=$10, updated_at=NOW()
+      channel_updates_enabled=$9, batch_windows=$10, inline_buttons=$11, inline_button_enabled=$12, updated_at=NOW()
     WHERE id=1`,
     [
       String(body.channel_username || "").slice(0, 200),
@@ -1234,7 +1255,9 @@ async function saveChannelSettings(body, session, req) {
       body.result_image_url ? String(body.result_image_url).slice(0, 500) : null,
       String(body.inline_link_text || "Play").slice(0, 100),
       body.channel_updates_enabled === true || body.channel_updates_enabled === "true",
-      batchWindows
+      batchWindows,
+      inlineButtons,
+      inlineEnabled
     ]
   );
   if (body.withdrawal_channel_posts !== undefined) {
