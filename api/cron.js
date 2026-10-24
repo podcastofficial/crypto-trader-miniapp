@@ -121,27 +121,50 @@ async function getRatios(client) {
   }
 }
 
+function normalizeUrl(v) {
+  v = String(v || "").trim();
+  if (!v) return "";
+  if (/^@[A-Za-z]\w{3,31}$/.test(v)) return "https://t.me/" + v.slice(1);
+  if (/^(t\.me|telegram\.me)\//i.test(v)) v = "https://" + v;
+  if (!/^https:\/\/[^\s]+$/i.test(v)) return "";
+  return v.slice(0, 500);
+}
+
+function cleanBotName(v) {
+  const b = String(v || "").trim().replace(/^https?:\/\/(t|telegram)\.me\//i, "").replace(/^@/, "").split(/[?\/#\s]/)[0];
+  return /^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(b) && b.toLowerCase() !== "yourbot" ? b : "";
+}
+
+// Builds the inline buttons from admin settings. Invalid URLs are skipped so Telegram never rejects the post.
+function buildKeyboard(settings) {
+  if (settings.inline_button_enabled === false) return undefined;
+  const rows = [];
+  try {
+    const list = JSON.parse(settings.inline_buttons || "[]");
+    for (const b of (Array.isArray(list) ? list : []).slice(0, 2)) {
+      const url = normalizeUrl(b && b.url);
+      const text = String((b && b.text) || "").trim().slice(0, 60);
+      if (url && text) rows.push([{ text, url }]);
+    }
+  } catch (_) { /* ignore bad JSON */ }
+  if (!rows.length) {
+    const bot = cleanBotName(settings.bot_username) || cleanBotName(process.env.TELEGRAM_BOT_USERNAME);
+    if (bot) rows.push([{ text: String(settings.inline_link_text || "🚀 Play Now").slice(0, 60), url: `https://t.me/${bot}?start=game` }]);
+  }
+  return rows.length ? { inline_keyboard: rows } : undefined;
+}
+
 async function sendTelegramMessage(client, type, data) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return;
 
   try {
     const settings = await getChannelSettings(client);
-    const botName = settings.bot_username || "YourBot";
     if (settings.channel_updates_enabled === false) return;
     const slot = slotOfRound(data.round);
     if (!inBatchWindow(settings.batch_windows, slot * 180000)) return;
 
-    const inlineKeyboard = {
-      inline_keyboard: [
-        [
-          { 
-            text: settings.inline_link_text || "🚀 Play Now", 
-            url: `https://t.me/${botName}?start=game` 
-          }
-        ]
-      ]
-    };
+    const inlineKeyboard = buildKeyboard(settings);
 
     // Gather all active channels (Main + Extra)
     const channels = new Set();
