@@ -105,6 +105,11 @@ async function ensureAppSettings(client) {
       ['support_type', 'whatsapp'],
       ['signup_bonus_enabled', 'true'],
       ['signup_bonus_amount', '25'],
+      ['maintenance_mode', 'false'],
+      ['maintenance_message', ''],
+      ['withdrawals_paused', 'false'],
+      ['withdraw_daily_limit_usdt', '0'],
+      ['min_bet_to_withdraw', '1000'],
     ];
 
     for (const [key, value] of defaults) {
@@ -796,7 +801,7 @@ async function getReferralMembers(client, userId) {
       AND rr.referrer_user_id = $1
      WHERE u.referred_by = $1
      ORDER BY u.created_at DESC, u.id DESC
-     LIMIT 100`,
+     LIMIT 300`,
     [userId]
   );
 
@@ -994,6 +999,8 @@ module.exports = async function handler(req, res) {
         [user.id]
       );
 
+      const stakedRow = await client.query(`SELECT COALESCE(SUM(stake),0) AS s FROM public.bets WHERE user_id = $1`, [user.id]);
+
       await client.query("COMMIT");
       transactionStarted = false;
 
@@ -1001,6 +1008,7 @@ module.exports = async function handler(req, res) {
         success: true,
         balance: result.rows[0]?.balance ?? "0.00",
         wallet_address: result.rows[0]?.deposit_wallet || null,
+        total_staked: stakedRow.rows[0].s,
       });
     }
 
@@ -1023,11 +1031,14 @@ module.exports = async function handler(req, res) {
       await client.query(`ALTER TABLE public.gift_codes ADD COLUMN IF NOT EXISTS mode TEXT DEFAULT 'fixed'`);
       await client.query(`ALTER TABLE public.gift_codes ADD COLUMN IF NOT EXISTS total_points NUMERIC(20,2)`);
       await client.query(`ALTER TABLE public.gift_codes ADD COLUMN IF NOT EXISTS per_user_points NUMERIC(20,2)`);
+      await client.query(`ALTER TABLE public.gift_codes ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE`);
+      await client.query(`ALTER TABLE public.gift_codes ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ`);
       await client.query(`ALTER TABLE public.gift_code_redemptions ADD COLUMN IF NOT EXISTS points_earned NUMERIC(20,2)`);
 
       const gift = await client.query(
         `SELECT * FROM public.gift_codes
          WHERE UPPER(code)=$1 AND uses < max_uses AND (expires_at IS NULL OR expires_at > NOW())
+           AND COALESCE(is_active, TRUE) = TRUE AND deleted_at IS NULL
          FOR UPDATE`,
         [code]
       );
@@ -1276,6 +1287,43 @@ module.exports = async function handler(req, res) {
         return json(res, 400, { success: false, message: "Enter a valid wallet address." });
       }
 
+      if ((await getAppSetting(client, "withdrawals_paused", "false")) === "true") {
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 400, { success: false, message: "Withdrawals are temporarily paused. Please try again later." });
+      }
+
+      const minBetToWithdraw = Number(await getAppSetting(client, "min_bet_to_withdraw", "1000")) || 0;
+      if (minBetToWithdraw > 0) {
+        const placedRow = await client.query(`SELECT COALESCE(SUM(stake),0) AS s FROM public.bets WHERE user_id = $1`, [user.id]);
+        const placed = Number(placedRow.rows[0].s);
+        if (placed < minBetToWithdraw) {
+          await client.query("ROLLBACK"); transactionStarted = false;
+          return json(res, 400, {
+            success: false,
+            message: `Place at least ${minBetToWithdraw} points of bets before you withdraw. Placed so far: ${placed.toFixed(2)} points.`
+          });
+        }
+      }
+
+      await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS withdraw_blocked BOOLEAN NOT NULL DEFAULT FALSE`);
+      const wdState = await client.query(`SELECT withdraw_blocked FROM public.users WHERE id = $1`, [user.id]);
+      if (wdState.rows[0] && wdState.rows[0].withdraw_blocked) {
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 403, { success: false, message: "Withdrawals are disabled for your account. Please contact support." });
+      }
+
+      const dailyLimit = Number(await getAppSetting(client, "withdraw_daily_limit_usdt", "0")) || 0;
+      if (dailyLimit > 0) {
+        const used = await client.query(
+          `SELECT COALESCE(SUM(amount),0) AS total FROM public.transactions
+           WHERE user_id = $1 AND transaction_type = 'withdrawal' AND status <> 'rejected'
+             AND created_at > NOW() - INTERVAL '24 hours'`, [user.id]);
+        if (Number(used.rows[0].total) + amount / POINTS_PER_USDT > dailyLimit) {
+          await client.query("ROLLBACK"); transactionStarted = false;
+          return json(res, 400, { success: false, message: `Daily withdrawal limit is ${dailyLimit} USDT.` });
+        }
+      }
+
       const result = await client.query(
         `UPDATE public.wallet_balances
          SET balance = balance - $1::numeric, updated_at = NOW()
@@ -1449,6 +1497,28 @@ module.exports = async function handler(req, res) {
       return json(res, 200, data);
     }
 
+    if (action === "support_message") {
+      const msg = String(body.message || "").trim().slice(0, 1000);
+      if (msg.length < 5) {
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 400, { success: false, message: "Write at least 5 characters." });
+      }
+      await client.query(`CREATE TABLE IF NOT EXISTS public.support_messages (
+        id BIGSERIAL PRIMARY KEY, user_id BIGINT, username TEXT,
+        message TEXT NOT NULL, status TEXT DEFAULT 'open', created_at TIMESTAMPTZ DEFAULT NOW())`);
+      const recent = await client.query(
+        `SELECT COUNT(*)::int AS c FROM public.support_messages WHERE user_id = $1 AND created_at > NOW() - INTERVAL '1 hour'`, [user.id]);
+      if (recent.rows[0].c >= 5) {
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 429, { success: false, message: "Too many messages. Please try again later." });
+      }
+      await client.query(`INSERT INTO public.support_messages (user_id, username, message) VALUES ($1, $2, $3)`, [user.id, user.username || null, msg]);
+      await client.query("COMMIT"); transactionStarted = false;
+      const who = [user.first_name, user.last_name].filter(Boolean).join(" ") || "User";
+      await notifyTelegram(`🎧 New support message\n👤 ${who}${user.username ? " (@" + user.username + ")" : ""}\n🆔 Telegram ID: ${user.telegram_id}\n💬 ${msg}`);
+      return json(res, 200, { success: true, message: "Message sent. We will contact you soon." });
+    }
+
     if (action === "save_wallet") {
       const walletAddress = String(body.walletAddress || "").trim();
       if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
@@ -1534,6 +1604,11 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === "place_bet") {
+      if ((await getAppSetting(client, "maintenance_mode", "false")) === "true") {
+        const maintMsg = (await getAppSetting(client, "maintenance_message", "")) || "Betting is paused for maintenance. Please try again soon.";
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return json(res, 503, { success: false, message: maintMsg });
+      }
       const roundCode = String(body.round_code || "");
       const betType = String(body.bet_type || "");
       const requestId = String(body.request_id || "");
