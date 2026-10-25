@@ -300,6 +300,8 @@ async function ensureManagementTables() {
   await query(`ALTER TABLE public.gift_codes ADD COLUMN IF NOT EXISTS mode TEXT DEFAULT 'fixed'`);
   await query(`ALTER TABLE public.gift_codes ADD COLUMN IF NOT EXISTS total_points NUMERIC(20,2)`);
   await query(`ALTER TABLE public.gift_codes ADD COLUMN IF NOT EXISTS per_user_points NUMERIC(20,2)`);
+  await query(`ALTER TABLE public.gift_codes ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE`);
+  await query(`ALTER TABLE public.gift_codes ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ`);
   await query(`UPDATE public.gift_codes SET
     mode = COALESCE(mode, 'fixed'),
     per_user_points = COALESCE(per_user_points, points),
@@ -1167,14 +1169,31 @@ async function reviewWalletTransaction(action, body, session, req) {
   }
 }
 
+async function giftCodeAction(body, session, req) {
+  await ensureManagementTables();
+  const id = String(body.id || "");
+  const mode = String(body.mode || "");
+  if (!/^\d{1,15}$/.test(id)) throw new Error("Invalid gift code ID.");
+  if (!["stop", "resume", "delete"].includes(mode)) throw new Error("Invalid gift code action.");
+  let rows;
+  if (mode === "delete") {
+    rows = await query(`UPDATE public.gift_codes SET deleted_at=NOW(), is_active=FALSE WHERE id=$1 AND deleted_at IS NULL RETURNING id`, [id]);
+  } else {
+    rows = await query(`UPDATE public.gift_codes SET is_active=$1 WHERE id=$2 AND deleted_at IS NULL RETURNING id`, [mode === "resume", id]);
+  }
+  if (!rows.length) throw new Error("Invalid request: gift code not found.");
+  await audit(session.username, `gift_code_${mode}`, req, "success", "gift_code", id);
+  return { ok: true };
+}
+
 async function getGiftCodes(body) {
   await ensureManagementTables();
   const { page, size, offset } = pagination(body);
   const [rows, totals] = await Promise.all([
     query(`SELECT gc.*,
       (SELECT COUNT(*)::int FROM public.gift_code_redemptions r WHERE r.gift_code_id=gc.id) AS redeem_count
-      FROM public.gift_codes gc ORDER BY gc.id DESC LIMIT $1 OFFSET $2`, [size, offset]),
-    query(`SELECT COUNT(*)::int AS total FROM public.gift_codes`)
+      FROM public.gift_codes gc WHERE gc.deleted_at IS NULL ORDER BY gc.id DESC LIMIT $1 OFFSET $2`, [size, offset]),
+    query(`SELECT COUNT(*)::int AS total FROM public.gift_codes WHERE deleted_at IS NULL`)
   ]);
   const total = Number(totals[0]?.total || 0);
   return {
@@ -1596,7 +1615,7 @@ async function postPrediction(body, session, req) {
 
 const APP_SETTING_DEFAULTS = {
   maintenance_mode: "false", maintenance_message: "", withdrawals_paused: "false",
-  withdraw_daily_limit_usdt: "0", signup_bonus_enabled: "true", signup_bonus_amount: "25", dashboard_links: "[]"
+  withdraw_daily_limit_usdt: "0", signup_bonus_enabled: "true", signup_bonus_amount: "25", dashboard_links: "[]", min_bet_to_withdraw: "1000"
 };
 
 async function getAppSettings() {
@@ -1613,6 +1632,7 @@ async function getAppSettings() {
     withdraw_daily_limit_usdt: Number(out.withdraw_daily_limit_usdt) || 0,
     signup_bonus_enabled: isOn(out.signup_bonus_enabled),
     signup_bonus_amount: Number(out.signup_bonus_amount) || 0,
+    min_bet_to_withdraw: Number(out.min_bet_to_withdraw) || 0,
     dashboard_links: (() => { try { const l = JSON.parse(out.dashboard_links || "[]"); return Array.isArray(l) ? l : []; } catch { return []; } })()
   } };
 }
@@ -1629,6 +1649,9 @@ async function saveAppSettings(body) {
   await setAppSetting("withdraw_daily_limit_usdt", limit);
   await setAppSetting("signup_bonus_enabled", isOn(body.signup_bonus_enabled));
   await setAppSetting("signup_bonus_amount", bonus);
+  const minBet = Number(body.min_bet_to_withdraw || 0);
+  if (!Number.isFinite(minBet) || minBet < 0 || minBet > 100000000) throw new Error("Invalid minimum bet amount.");
+  await setAppSetting("min_bet_to_withdraw", minBet);
 
   const links = [];
   for (const item of (Array.isArray(body.dashboard_links) ? body.dashboard_links.slice(0, 4) : [])) {
@@ -1765,15 +1788,27 @@ async function broadcastMessage(body, session, req) {
   let failed = 0;
   const errors = [];
 
-  if (target === "channel" || target === "both") {
+  // Channels: new multi-select list (body.channels) or the old "target" option
+  const useNew = Array.isArray(body.channels) || body.send_users !== undefined;
+  let channelList = [];
+  if (useNew) {
+    channelList = (Array.isArray(body.channels) ? body.channels : []).map(c => String(c || "").trim().slice(0, 200)).filter(Boolean);
+  } else if (target === "channel" || target === "both") {
     const channel = await query(`SELECT channel_username FROM public.channel_settings WHERE id=1`);
-    if (channel.length && channel[0].channel_username) {
-      const res = await tgSendRich(channel[0].channel_username, { text: msg, photo, keyboard });
-      if (res.ok) sent++; else { failed++; errors.push(`Channel: ${res.error}`); }
-    } else { failed++; errors.push("Channel username is not set."); }
+    if (channel.length && channel[0].channel_username) channelList = [channel[0].channel_username];
+    else { failed++; errors.push("Channel username is not set."); }
+  }
+  channelList = Array.from(new Set(channelList)).slice(0, 20);
+  for (const ch of channelList) {
+    const res = await tgSendRich(ch, { text: msg, photo, keyboard });
+    if (res.ok) sent++; else { failed++; errors.push(`${ch}: ${res.error}`); }
   }
 
-  if (target === "users" || target === "both") {
+  const sendUsers = useNew ? (body.send_users === true || body.send_users === "true") : (target === "users" || target === "both");
+  if (!useNew && !channelList.length && !sendUsers && target === "channel") { /* nothing else to send */ }
+  if (useNew && !channelList.length && !sendUsers) throw new Error("Invalid request: choose at least one channel or Users.");
+
+  if (sendUsers) {
     const users = await query(`SELECT telegram_id FROM public.users WHERE is_blocked=FALSE`);
     const chatIds = users.map(u => u.telegram_id).filter(Boolean);
     for (let i = 0; i < chatIds.length; i += 25) {
@@ -1891,6 +1926,7 @@ module.exports = async function handler(req, res) {
         case "login_attempts": result = await getLoginAttempts(body); break;
         case "telegram": result = await telegramAdminAction(body, session, req); break;
         case "gift_codes": result = await getGiftCodes(body); break;
+        case "gift_code_action": result = await giftCodeAction(body, session, req); break;
         case "gift_redemptions": result = await getGiftRedemptions(body); break;
         case "channel_settings": result = await getChannelSettings(); break;
         case "save_channel_settings": result = await saveChannelSettings(body, session, req); break;
