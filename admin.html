@@ -905,18 +905,45 @@ const EXPLORERS = {
   "TON": "https://tonscan.org/tx/"
 };
 
+function explorerInfo(network, hash) {
+  if (!hash) return null;
+  const n = String(network || "").toUpperCase();
+  let base = EXPLORERS[n] || "";
+  let name = "";
+  if (!base) {
+    if (/TRC|TRON/.test(n)) base = EXPLORERS["TRC-20"];
+    else if (/ERC|ETH/.test(n)) base = EXPLORERS["ERC-20"];
+    else if (/POLYGON|MATIC/.test(n)) base = EXPLORERS["POLYGON"];
+    else if (/SOL/.test(n)) base = EXPLORERS["SOL"];
+    else if (/BTC|BITCOIN/.test(n)) base = EXPLORERS["BTC"];
+    else if (/TON|GRAM/.test(n)) base = EXPLORERS["TON"];
+    else if (/BEP|BSC|BNB/.test(n) || /^0x[a-fA-F0-9]{64}$/.test(hash)) base = EXPLORERS["BSC"];
+  }
+  if (!base) return null;
+  if (base.includes("bscscan")) name = "BscScan";
+  else if (base.includes("tronscan")) name = "TronScan";
+  else if (base.includes("etherscan")) name = "Etherscan";
+  else if (base.includes("polygonscan")) name = "PolygonScan";
+  else if (base.includes("solscan")) name = "Solscan";
+  else if (base.includes("mempool")) name = "Mempool";
+  else name = "Explorer";
+  return { url: base + hash, name };
+}
+
 function explorerUrl(network, hash) {
-  if (!hash) return "";
-  const base = EXPLORERS[String(network || "").toUpperCase()];
-  return base ? base + hash : "";
+  const info = explorerInfo(network, hash);
+  return info ? info.url : "";
 }
 
 function txHashCell(hash, network) {
   if (!hash) return "—";
-  const url = explorerUrl(network, hash);
+  const info = explorerInfo(network, hash);
   const short = hash.length > 18 ? hash.slice(0, 10) + "…" + hash.slice(-6) : hash;
-  if (!url) return `<span class="mono" title="${escapeHtml(hash)}">${escapeHtml(short)}</span>`;
-  return `<a class="tx-link mono" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(hash)}">${escapeHtml(short)} ↗</a>`;
+  const copyHash = `<button class="copy-btn" data-copy="${escapeHtml(hash)}" title="Copy transaction hash" type="button">📋</button>`;
+  if (!info) return `<span class="mono" title="${escapeHtml(hash)}">${escapeHtml(short)}</span> ${copyHash}`;
+  return `<a class="tx-link mono" href="${escapeHtml(info.url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(hash)}">${escapeHtml(short)} ↗</a> ${copyHash}
+    <button class="copy-btn" data-copy="${escapeHtml(info.url)}" title="Copy ${escapeHtml(info.name)} link" type="button">🔗</button>
+    <a class="tx-link small" href="${escapeHtml(info.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(info.name)}</a>`;
 }
 
 function addressCell(addr) {
@@ -1965,7 +1992,7 @@ async function renderGiftCodeHistory() {
     <div class="card">
       <div class="card-head"><h3>Gift Codes List</h3></div>
       ${table(
-        ["ID", "Code", "Mode", "Total Points", "Per User", "Max Uses", "Redeemed", "Expires", "Created By", "Created", "Actions"],
+        ["ID", "Code", "Mode", "Total Points", "Per User", "Max Uses", "Redeemed", "Expires", "Created By", "Created", "Status", "Actions"],
         (data.gift_codes || []).map(c => [
           escapeHtml(c.id),
           `<strong>${escapeHtml(c.code)}</strong>`,
@@ -1977,7 +2004,12 @@ async function renderGiftCodeHistory() {
           escapeHtml(c.expires_at ? formatDate(c.expires_at) : "Never"),
           escapeHtml(c.created_by || "—"),
           escapeHtml(formatDate(c.created_at)),
-          `<button class="btn copy-gift" data-code="${escapeHtml(c.code)}" type="button">Copy Link</button>`
+          c.is_active === false ? badge("stopped") : badge("active"),
+          `<div class="row-actions">
+            <button class="btn copy-gift" data-code="${escapeHtml(c.code)}" type="button">Copy Link</button>
+            <button class="btn gift-toggle" data-id="${escapeHtml(c.id)}" data-mode="${c.is_active === false ? "resume" : "stop"}" type="button">${c.is_active === false ? "Resume" : "Stop"}</button>
+            <button class="btn btn-danger gift-delete" data-id="${escapeHtml(c.id)}" data-code="${escapeHtml(c.code)}" type="button">Delete</button>
+          </div>`
         ]),
         "No gift codes yet."
       )}
@@ -1993,6 +2025,25 @@ async function renderGiftCodeHistory() {
 
   document.querySelectorAll(".copy-gift").forEach(btn => {
     btn.onclick = () => copyGiftLink(btn.dataset.code);
+  });
+
+  document.querySelectorAll(".gift-toggle").forEach(btn => btn.onclick = async () => {
+    const stopping = btn.dataset.mode === "stop";
+    if (!confirm(stopping ? "Stop this gift code? Users will not be able to redeem it." : "Resume this gift code?")) return;
+    try {
+      await api("gift_code_action", { id: btn.dataset.id, mode: btn.dataset.mode });
+      toast(stopping ? "Gift code stopped." : "Gift code resumed.");
+      await renderGiftCodeHistory();
+    } catch (err) { toast(err.message, true); }
+  });
+
+  document.querySelectorAll(".gift-delete").forEach(btn => btn.onclick = async () => {
+    if (!confirm(`Delete gift code ${btn.dataset.code}? It will be removed from this list and can no longer be redeemed. Past redemptions stay in the history.`)) return;
+    try {
+      await api("gift_code_action", { id: btn.dataset.id, mode: "delete" });
+      toast("Gift code deleted.");
+      await renderGiftCodeHistory();
+    } catch (err) { toast(err.message, true); }
   });
 
   $("createGiftForm").onsubmit = async e => {
@@ -2515,18 +2566,24 @@ function pickImageToDataUrl(file, maxSide = 1280, quality = 0.82) {
 }
 
 async function renderBroadcast() {
-  setPage("Broadcast Message", "Send a message to your users and/or channel. Supports a picture from your gallery and inline buttons.");
+  setPage("Broadcast Message", "Send a message to your users and/or channels. Supports a picture from your gallery and inline buttons.");
   let pickedImage = "";
+  let chData = {};
+  try { chData = await api("channel_settings"); } catch { chData = {}; }
+  const mainCh = (chData.settings && chData.settings.channel_username) || "";
+  const savedChannels = chData.prediction_channels || [];
   $("viewBody").innerHTML = `
     <div class="card">
       <form id="broadcastForm">
         <div class="field">
-          <label>Target</label>
-          <select name="target">
-            <option value="both">Both (Channel &amp; Users)</option>
-            <option value="channel">Only Channel</option>
-            <option value="users">Only Users (Bot)</option>
-          </select>
+          <label>Send to</label>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+            ${mainCh ? `<label style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" class="bc-channel" value="${escapeHtml(mainCh)}" checked style="width:auto"> Main channel: ${escapeHtml(mainCh)}</label>` : ""}
+            ${savedChannels.map(c => `<label style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" class="bc-channel" value="${escapeHtml(c.channel_id)}" ${c.is_active ? "checked" : ""} style="width:auto"> Saved channel: ${escapeHtml(c.channel_id)}${c.is_active ? "" : " (OFF)"}</label>`).join("")}
+            <label style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" name="send_users" checked style="width:auto"> All users (bot chat)</label>
+          </div>
+          <textarea name="extra_channels" placeholder="More channels (optional), one per line: @channel_name or -100123456" style="min-height:70px;margin-top:10px"></textarea>
+          <div class="small muted">Saved channels come from Channel Settings → Multi-Channel list. The bot must be admin in every channel.</div>
         </div>
 
         <div class="field">
@@ -2582,8 +2639,11 @@ async function renderBroadcast() {
     const btn = e.target.querySelector("button[type=submit]");
     btn.disabled = true;
     try {
+      const picked = Array.from(document.querySelectorAll(".bc-channel:checked")).map(x => x.value);
+      const extra = String(fd.get("extra_channels") || "").split(/[\n,]+/).map(x => x.trim()).filter(Boolean);
       const r = await api("broadcast", {
-        target: fd.get("target"),
+        channels: [...picked, ...extra],
+        send_users: fd.get("send_users") === "on",
         message: fd.get("message"),
         image_url: fd.get("image_url") || undefined,
         image_data: pickedImage || undefined,
@@ -2684,6 +2744,11 @@ async function renderAppSettings() {
           <label>Daily withdrawal limit per user (USDT, 0 = no limit)</label>
           <input type="number" name="withdraw_daily_limit_usdt" min="0" step="0.01" value="${escapeHtml(s.withdraw_daily_limit_usdt ?? 0)}">
         </div>
+        <div class="field">
+          <label>Minimum total bets before a user can withdraw (points, 0 = off)</label>
+          <input type="number" name="min_bet_to_withdraw" min="0" step="1" value="${escapeHtml(s.min_bet_to_withdraw ?? 1000)}">
+          <div class="small muted">Counts all bets the user has placed so far. Example: 1000 means the user must bet at least 1000 points in total.</div>
+        </div>
         <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
           <input type="checkbox" name="signup_bonus_enabled" ${s.signup_bonus_enabled ? "checked" : ""} style="width:auto">
           <label style="margin:0">Joining bonus for new users</label>
@@ -2721,6 +2786,7 @@ async function renderAppSettings() {
         withdraw_daily_limit_usdt: fd.get("withdraw_daily_limit_usdt"),
         signup_bonus_enabled: fd.get("signup_bonus_enabled") === "on",
         signup_bonus_amount: fd.get("signup_bonus_amount"),
+        min_bet_to_withdraw: fd.get("min_bet_to_withdraw"),
         dashboard_links: [0, 1, 2, 3].map(i => ({
           enabled: fd.get(`dl${i}_on`) === "on",
           label: fd.get(`dl${i}_label`),
