@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#fffaf3">
+<meta name="theme-color" content="#ffffff">
 <title>Crypto Trader Pro</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/languages.js" onerror="void 0"></script>
@@ -458,70 +458,13 @@ label { color:#1c1a17; }
 .faq-card p { color:#6f6a63; }
 .faq-card details { border-top:1px solid #f3e0c2; }
 
-/* ===== PREMIUM UPGRADE (on top of the cream + orange theme) =====
-   Remove ONLY this block to go back to the simpler cream theme. */
-html, body { background:#fffaf3; }
-body { background:radial-gradient(ellipse 90% 320px at 50% 0, #ffe9cc 0, rgba(255,233,204,0) 70%), #fffaf3; background-attachment:fixed; }
-
-/* frosted sticky header */
-header { position:sticky; top:0; z-index:30; background:rgba(255,250,243,.88); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); border-bottom:1px solid rgba(243,224,194,.9); }
-header > div:first-child::before { background-color:#ff8a00; background-image:linear-gradient(145deg,#ffb04a,#ff7a00), url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231c1a17' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='9' cy='9' r='5.5'/><path d='M8 7.5l1.2-.8v4.6'/><path d='M15.2 8.6A5.5 5.5 0 1 1 9 20'/></svg>"); background-size:auto, 26px; background-position:center, center; background-repeat:no-repeat; box-shadow:0 6px 14px rgba(255,138,0,.35); }
-.icon-btn { background:#ffffff; border:1px solid #f3e0c2; box-shadow:0 2px 8px rgba(160,100,0,.08); transition:transform .15s; }
-.icon-btn:active { transform:scale(.94); }
-
-/* section titles with orange accent */
-.section-title::before { content:""; width:4px; height:18px; border-radius:4px; background:linear-gradient(180deg,#ffb04a,#ff7a00); flex:none; }
-
-/* cards: white, soft warm shadow */
-.card, .timer-card { background:#ffffff; border:1px solid #f5e6cf; border-radius:22px; box-shadow:0 8px 24px rgba(255,138,0,.08), 0 1px 2px rgba(120,80,0,.05); }
-.stat, .profile-stats div, .member, .breakdown, .deposit-asset-card, .deposit-submit-card { background:#fff7ea; border:1px solid #f3e0c2; border-radius:18px; }
-.stat .v, .profile-stats strong { font-size:21px; letter-spacing:-.3px; }
-
-/* hero wallet card: orange gradient */
-#page-home .balance-card, .balance-card { background:linear-gradient(135deg,#ffab45 0%,#ff8a00 55%,#f26b00 100%); border:0; border-radius:26px; box-shadow:0 16px 34px rgba(255,120,0,.38); color:#ffffff; padding:22px; position:relative; overflow:hidden; }
-#page-home .balance-card::before { content:""; position:absolute; right:-46px; top:-52px; width:200px; height:200px; border-radius:50%; background:rgba(255,255,255,.16); pointer-events:none; z-index:0; }
-#page-home .balance-card::after { display:block; content:""; position:absolute; left:auto; right:46px; top:auto; bottom:-60px; width:130px; height:130px; border-radius:50%; background:rgba(255,255,255,.10); animation:none; pointer-events:none; z-index:0; transform:none; }
-#page-home .balance-card .wallet-art, .balance-card .wallet-art { display:none; }
-#page-home .balance-label, .balance-label { color:rgba(255,255,255,.88); }
-#page-home .balance-value, .balance-value { -webkit-text-fill-color:#ffffff; color:#ffffff; font-size:34px; letter-spacing:-.6px; text-shadow:0 2px 10px rgba(120,50,0,.25); }
-#page-home .balance-sub, .balance-sub { color:rgba(255,255,255,.92); }
-#page-home .balance-card .rules-corner-btn { background:rgba(255,255,255,.22); color:#ffffff; border:1px solid rgba(255,255,255,.4); }
-#page-home .action-btn.deposit-action { background:#ffffff; color:#c25e00; border:0; box-shadow:0 8px 18px rgba(120,50,0,.25); }
-#page-home .action-btn.withdraw-action { background:#1c1a17; color:#ffffff; border:0; box-shadow:0 8px 18px rgba(0,0,0,.25); }
-#page-home .refresh-corner-btn { background:rgba(255,255,255,.2); border:1px solid rgba(255,255,255,.4); color:#ffffff; }
-#page-home .refresh-corner-btn small, #page-home .refresh-corner-btn span { color:#ffffff; }
-
-/* buttons: gradient + glow + press effect */
-.action-btn, .primary-btn { background:linear-gradient(180deg,#ffa33a,#ff8a00); border:0; color:#1c1a17; box-shadow:0 8px 18px rgba(255,138,0,.35); transition:transform .12s, box-shadow .12s; }
-.action-btn:active, .primary-btn:active, .sec-btn:active, .nav-btn:active { transform:scale(.97); }
-.sec-btn { background:#ffffff; box-shadow:0 2px 8px rgba(160,100,0,.08); }
-input:focus, select:focus, textarea:focus { outline:none; border-color:#ff8a00; box-shadow:0 0 0 3px rgba(255,138,0,.2); }
-input, select { border-radius:14px; }
-
-/* timer: orange glow ring */
-.timer-card { background:linear-gradient(180deg,#ffffff,#fff7ea); }
-.ring-fg { stroke:#ff8a00; filter:drop-shadow(0 0 6px rgba(255,138,0,.5)); }
-.ring-fg.locked { filter:drop-shadow(0 0 6px rgba(239,68,68,.45)); }
-.timer-text, .timer-card .timer-text { font-weight:800; letter-spacing:-1px; }
-.status { box-shadow:0 2px 6px rgba(21,128,61,.12); }
-
-/* game buttons: glossy look, same colours */
-.number-btn, .option-btn, .big-small button { border-radius:16px; box-shadow:0 6px 14px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.35); transition:transform .12s; }
-.number-btn:active, .option-btn:active, .big-small button:active { transform:scale(.94); }
-
-/* floating bottom nav */
-.bottom-nav { background:rgba(255,255,255,.92); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); border:1px solid #f3e0c2; border-radius:24px; box-shadow:0 14px 34px rgba(120,70,0,.18); padding:8px; gap:6px; }
-.nav-btn { background:transparent; border:0; border-radius:16px; color:#8a8378; transition:transform .12s, background .2s; }
-.nav-btn.active { background:linear-gradient(180deg,#ffa33a,#ff8a00); color:#1c1a17; box-shadow:0 6px 14px rgba(255,138,0,.4); border:0; }
-
-/* sheets and popups */
-.modal { border-radius:26px; background:#ffffff; border:1px solid #f5e6cf; box-shadow:0 24px 70px rgba(60,40,0,.3); }
-.toast { background:#1c1a17; color:#ffffff; border-left:4px solid #ff8a00; box-shadow:0 12px 30px rgba(0,0,0,.28); }
-.banner { background:#ffffff; border:1px solid #ffb961; border-left:4px solid #ff8a00; }
-.tab.on { background:linear-gradient(180deg,#ffa33a,#ff8a00); color:#1c1a17; border-color:#ff8a00; }
-.pager button { background:#ffffff; box-shadow:0 2px 8px rgba(160,100,0,.1); }
-.tbl th { background:transparent; }
-@media (prefers-reduced-motion:reduce) { * { transition:none !important; } }
+/* ===== SMALL FIXES (after first screenshot) ===== */
+/* bell icon was a filled black blob: draw it as an orange outline */
+.icon-btn svg { fill:none; stroke:#ff8a00; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+/* square patch behind the timer ring: remove the pulsing halo, keep the ring glow */
+.timer-card .ring::before { display:none; }
+/* Refresh button full width under Deposit/Withdraw */
+#page-home .actions .refresh-corner-btn { grid-column:1 / -1; }
 </style>
 </head>
 <body>
@@ -1056,4 +999,20 @@ async function api(action,extra = {}){ if(!initData) throw new Error(t("openInTg
 async function getRounds(page){ const t0 = Date.now(); const response = await fetch("/api/game?page=" + page + "&page_size=" + PAGE,{ method:"GET", cache:"no-store" }); const t1 = Date.now(); const data = await parseResponse(response); data._mid = (t0 + t1) / 2; return data; }
 function setStatus(key){ statusKey = key; const el = $("betStatus"); el.textContent = t(key); el.classList.toggle("locked", key === "stLocked" || key === "stError" || key === "stTelegram" || key === "stAuth"); }
 function setNotice(key,vars){ notice = {key,vars:vars || null}; $("serverNotice").textContent = t(key,vars); }
-function renderProfile(){ $("profileName").textContent = txt(protxt(pro
+function renderProfile(){ $("profileName").textContent = txt(profName); $("profileStatus").textContent = txt(profStatus); const available = $("homePoints")?.textContent || "—"; $("profileAvailablePoints").textContent = available; $("profileJoined").textContent = (tg?.initDataUnsafe?.user?.id ? "Telegram" : "—"); const input = $("profileDisplayName"); if(input && document.activeElement !== input) input.value = profName && profName.raw ? profName.raw : ""; const retry = $("authRetry"); if (retry) retry.style.display = authBlock ? "" : "none"; }
+function openProfileModal(){ if(!authed){ toast(t("toastAuth")); return; } renderProfile(); $("profileModal").classList.add("open"); }
+function openWalletAddressModal(){ if(!authed){ toast(t("toastAuth")); return; } $("walletAddressInput").value = savedWalletAddress || ""; $("walletAddressModal").classList.add("open"); }
+async function saveProfile(){ const value = $("profileDisplayName").value.trim(); if(!value){ toast(t("displayName")); return; } const userId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id; if(!userId){ toast(t("openInTg")); return; } try { const response = await fetch("/api/profile",{ method:"POST", headers:{"Content-Type":"application/json","x-telegram-id":String(userId)}, body:JSON.stringify({displayName:value}) }); const data = await response.json().catch(() => null); if(!response.ok || !data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; } profName = {raw:data.displayName}; renderProfile(); toast(t("profileSaved")); $("profileModal").classList.remove("open"); } catch(_) { toast(t("refreshFailed")); } }
+async function saveWalletAddress(){ const value = $("walletAddressInput").value.trim(); if(value.length < 20){ toast(t("invalidWallet")); return; } if(!/^0x[a-fA-F0-9]{40}$/.test(value)){ toast("Only BEP-20 addresses (0x…) are supported."); return; } try { const data = await api("save_wallet", { walletAddress: value }); if(!data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; } savedWalletAddress = value; toast(t("walletSaved")); $("walletAddressModal").classList.remove("open"); populateWithdrawPage(); } catch(err) { toast(err.message || t("refreshFailed")); } }
+function updateBalance(value){ balance = Number(value); const usdt = (balance / 100).toFixed(2); $("homePoints").textContent = money(balance); $("walletPoints").textContent = money(balance); $("homeUsdt").textContent = usdt; $("walletUsdt").textContent = usdt + " USDT · 100 Points = 1 USDT"; if (activePage === "withdraw") populateWithdrawPage(); if($("betAvailableBalance")) $("betAvailableBalance").textContent = `Available: ${money(balance)} Points`; }
+function unlockAudio(){ try { const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; if(!audioContext) audioContext = new AC(); if(audioContext.state === "suspended") audioContext.resume(); audioUnlocked = true; } catch(_) {} }
+function playTone(freq=700,duration=.09,type="sine",volume=.045,delay=0){ if(!settings.sound || !audioUnlocked || !audioContext) return; try { const osc = audioContext.createOscillator(); const gain = audioContext.createGain(); const start = audioContext.currentTime + delay; osc.type = type; osc.frequency.setValueAtTime(freq,start); gain.gain.setValueAtTime(.0001,start); gain.gain.exponentialRampToValueAtTime(volume,start+.012); gain.gain.exponentialRampToValueAtTime(.0001,start+duration); osc.connect(gain); gain.connect(audioContext.destination); osc.start(start); osc.stop(start+duration+.02); } catch(_) {} }
+function playBetSound(){ playTone(880,.09,"sine",.06); playTone(1175,.12,"sine",.05,.09); }
+function playTickSound(){ playTone(950,.045,"square",.018); }
+function playLockSound(){ playTone(620,.13,"triangle",.06); playTone(420,.2,"triangle",.05,.13); }
+function playPing(){ playTone(1000,.08,"sine",.05); playTone(1300,.1,"sine",.04,.09); }
+function playResultSound(){ playTone(660,.12,"sine",.06); playTone(880,.12,"sine",.06,.13); playTone(1175,.2,"sine",.06,.26); }
+function pager(id,page,total){ if(!total) return ""; const from = (page - 1) * PAGE + 1; const to = Math.min(page * PAGE,total); return `<div class="pager"><span class="info">${esc(t("range",{from,to,total}))}</span><button type="button" data-pager="${id}" data-dir="-1" aria-label="Previous"${page <= 1 ? " disabled" : ""}>‹</button><button type="button" data-pager="${id}" data-dir="1" aria-label="Next"${page * PAGE >= total ? " disabled" : ""}>›</button></div>`; }
+function renderResults(){ const rows = (resultData.rounds || []).filter(revealed); let html; if(rows.length){ const body = rows.map(r => { const n = Number(r.result_number); return `<tr><td class="period">${esc(fmtPeriod(r.round_code))}</td><td class="${numTone(n)}">${esc(n)}</td><td class="${n >= 5 ? "bs-b" : "bs-s"}">${n >= 5 ? "B" : "S"}</td><td>${dotsHtml(n)}</td></tr>`; }).join(""); html = `<div class="wrap"><table class="tbl"><thead><tr><th>${esc(t("colPeriod"))}</th><th>${esc(t("colNum"))}</th><th>${esc(t("colBS"))}</th><th>${esc(t("colResult"))}</th></tr></thead><tbody>${body}</tbody></table></div>`; } else { html = `<div class="empty">${esc(t(roundsLoaded ? "noRounds" : "loading"))}</div>`; } $("resultTable").innerHTML = html + pager("results",resultPage,resultData.total); }
+async function loadResults(){ try { const d = await getRounds(resultPage); resultData = {rounds:d.rounds || [],total:Number(d.rounds_page && d.rounds_page.total || 0)}; renderResults(); } catch(error) { toast(error.message); } }
+function tradeView(b){ const ended = codeEnded(b.round_code); const status = ended ? String(bString(b
