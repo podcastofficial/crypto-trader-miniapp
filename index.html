@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b0b0c">
+<meta name="theme-color" content="#fffaf3">
 <title>Crypto Trader Pro</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/languages.js" onerror="void 0"></script>
@@ -320,6 +320,208 @@ header { background:linear-gradient(180deg,#0a0a0d,#0b0b0e); border-bottom:1px s
 .dash-links { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 13px; }
 .dash-link { flex:1 1 140px; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 10px; border-radius:12px; background:linear-gradient(180deg,#1a1710,#12110c); border:1px solid #6b5514; color:#facc15; font-weight:800; font-size:13px; box-shadow:0 4px 14px #0006; }
 .dash-link:active { transform:scale(.98); }
+
+/* ===== CREAM + ORANGE THEME (matches the "Crypto Maker" account dashboard) =====
+   Remove this whole block to go back to the old dark/yellow theme.
+   Game colours (Red/Green/Violet, Big/Small) are NOT changed on purpose. */
+:root { --bg:#ffffff; --card:#fff5e6; --text:#1c1a17; --muted:#6f6a63; --border:#f3e0c2; --primary:#ff8a00; }
+html, body { background:#ffffff; color:#1c1a17; color-scheme:light; font-family:Roboto,system-ui,-apple-system,"Segoe UI",Arial,sans-serif; }
+body { background:#ffffff; }
+.page { color:#1c1a17; }
+.muted, .period, .utc-time, .balance-sub, .balance-label { color:#6f6a63; }
+
+/* header with orange icon square */
+header { background:#ffffff; border-bottom:1px solid #f3e0c2; color:#1c1a17; justify-content:space-between; }
+header > div:first-child { display:grid; grid-template-columns:44px 1fr; column-gap:12px; align-items:center; }
+header > div:first-child::before { content:""; grid-row:1 / span 2; width:44px; height:44px; border-radius:14px; background:#ff8a00 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231c1a17' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='9' cy='9' r='5.5'/><path d='M8 7.5l1.2-.8v4.6'/><path d='M15.2 8.6A5.5 5.5 0 1 1 9 20'/></svg>") center / 26px no-repeat; }
+.brand { color:#1c1a17; font-weight:800; font-size:19px; letter-spacing:-.2px; line-height:1.2; }
+.brand span { color:inherit; }
+header .small.muted { color:#6f6a63; }
+.icon-btn { background:#fff5e6; border:1px solid #f3e0c2; box-shadow:none; color:#ff8a00; border-radius:14px; }
+.header-symbol { color:#ff8a00; filter:none; }
+#notificationCount { background:#ef4444; }
+
+/* cards */
+.section-title { color:#1c1a17; }
+.card, .timer-card { background:#fff5e6; border:1px solid #f3e0c2; border-radius:20px; box-shadow:none; color:#1c1a17; }
+.card h1, .card h2, .card h3 { color:#1c1a17; }
+
+/* home: hide dark banner, cream wallet card */
+.hero { display:none; }
+#page-home .balance-card, .balance-card { background:#fff5e6; border:1px solid #f3e0c2; box-shadow:none; animation:none; color:#1c1a17; margin:14px; border-radius:22px; }
+#page-home .balance-card::after { display:none; }
+#page-home .balance-label, .balance-label { color:#f08a24; font-weight:800; letter-spacing:.6px; text-transform:uppercase; font-size:12px; }
+#page-home .balance-value, .balance-value { background:none; -webkit-background-clip:border-box; background-clip:border-box; -webkit-text-fill-color:#1c1a17; color:#1c1a17; text-shadow:none; filter:none; font-weight:800; }
+.wallet-art svg { filter:drop-shadow(0 6px 12px rgba(180,100,0,.25)); }
+
+/* buttons */
+.action-btn, .primary-btn, #page-home .action-btn.deposit-action, #page-home .action-btn.withdraw-action, .deposit-action, .withdraw-action { background:#ff8a00; color:#1c1a17; border:1px solid #ff8a00; box-shadow:none; border-radius:16px; font-weight:800; }
+.action-btn.alt, .sec-btn { background:#ffffff; color:#b45f00; border:1px solid #f3e0c2; }
+#page-home .refresh-corner-btn, .refresh-corner-btn, .refresh-icon-btn { background:#ffffff; border:1px solid #f3e0c2; color:#ff8a00; }
+#page-home .refresh-corner-btn small, #page-home .refresh-corner-btn span, .refresh-corner-btn small, .refresh-icon-btn small { color:#1c1a17; }
+.rules-corner-btn { background:#fff0d6; color:#b45f00; border:1px solid #ffcf8f; }
+.payout-example { background:#fff0d6; border:1px solid #ffcf8f; color:#7a4b00; }
+.rules-modal p { color:#4b463e; }
+.dash-link { background:#fff5e6; border:1px solid #f3e0c2; color:#b45f00; }
+.back-btn { background:#fff5e6; color:#ff8a00; }
+.close-btn { background:#fff5e6; color:#1c1a17; }
+.usdt-value { color:#16a34a; }
+
+/* forms */
+input, select { background:#ffffff; border:1px solid #f3e0c2; color:#1c1a17; }
+label { color:#1c1a17; }
+[style*="background:#202023"] { background:#ffffff !important; color:#1c1a17 !important; border-color:#f3e0c2 !important; }
+[style*="color:#facc15"], [style*="color: #facc15"] { color:#ff8a00 !important; }
+[style*="solid #facc15"] { border-color:#ff8a00 !important; background:#fff5e6 !important; box-shadow:none !important; }
+
+/* timer card (keeps the animation, orange instead of yellow) */
+.timer-card { background:#fff5e6; border-color:#f3e0c2; }
+.timer-card::after { display:none; }
+.timer-card .row { color:#6f6a63; }
+.ring-bg { stroke:#f3e0c2; }
+.ring-fg { stroke:#ff8a00; filter:none; }
+.ring-fg.locked { stroke:#ef4444; filter:none; }
+.timer-text, .timer-card .timer-text { color:#1c1a17; text-shadow:none; }
+.timer-card.urgent .timer-text { color:#d97000; }
+.timer-card.locked-state .timer-text { text-shadow:none; }
+.timer-anim .candle { background:linear-gradient(180deg,rgba(255,138,0,.38),rgba(255,138,0,.12)); }
+.timer-anim .trend-base { stroke:rgba(255,138,0,.28); }
+.timer-anim .trend-glow { stroke:#ff8a00; filter:none; }
+.timer-anim .spark { background:#ff8a00; box-shadow:none; }
+.timer-card .ring::before { background:radial-gradient(circle,rgba(255,138,0,.16),transparent 68%); }
+.timer-card.locked-state .candle { background:linear-gradient(180deg,rgba(239,68,68,.35),rgba(239,68,68,.1)); }
+.timer-card.locked-state .trend-glow { filter:none; }
+.timer-card.locked-state .spark { box-shadow:none; }
+.status { background:#e7f7ee; color:#15803d; border:1px solid #bfe8cf; }
+.status.locked { background:#fde8e8; color:#b91c1c; border-color:#f5c2c2; }
+.notice { background:#fff0d6; color:#7a4b00; border:1px solid #f3d9a4; }
+
+/* game buttons: same colours, softer shadow */
+.number-btn, .option-btn, .big-small button { box-shadow:0 3px 10px rgba(0,0,0,.14); }
+
+/* tables / history */
+.tbl th { color:#6f6a63; border-bottom:1px solid #f3e0c2; }
+.tbl td { border-bottom:1px solid #f6e8d0; }
+.tbl td.period, .trade-period { color:#1c1a17; }
+.pager .info, .chev, .empty { color:#6f6a63; }
+.pager button { background:#fff5e6; color:#1c1a17; border:1px solid #f3e0c2; }
+.trade { border-bottom:1px solid #f3e0c2; }
+.success { color:#16a34a; } .fail { color:#dc2626; } .pending { color:#d97000; } .cancelled { color:#64748b; }
+.notification-item { border-bottom:1px solid #f3e0c2; }
+.notification-item small { color:#6f6a63; }
+.kv span:first-child { color:#6f6a63; }
+.kv.strong span:last-child { color:#b45f00; }
+
+/* stats like the 2x2 boxes in the design */
+.stat, .profile-stats div, .member, .breakdown { background:#fff5e6; border:1px solid #f3e0c2; border-radius:18px; }
+.stat .l, .profile-stats span { color:#6f6a63; }
+.stat .v, .profile-stats strong { color:#1c1a17; font-weight:800; }
+
+/* settings, tabs, pills */
+.setting-row { border-bottom:1px solid #f3e0c2; }
+.switch { background:#e5d8c3; }
+.switch.on { background:#22c55e; }
+.tab { background:#ffffff; color:#6f6a63; border:1px solid #f3e0c2; }
+.tab.on { background:#fff0d6; color:#b45f00; border-color:#ffb961; }
+.pill { background:#f3e8d6; color:#6f6a63; }
+.pill.ok { background:#e7f7ee; color:#15803d; }
+.pill.wait { background:#fff0d6; color:#b45f00; }
+.pill.off { background:#fde8e8; color:#b91c1c; }
+
+/* bottom nav */
+.bottom-nav { background:rgba(255,255,255,.97); border:1px solid #f3e0c2; box-shadow:0 -4px 18px rgba(120,80,0,.10); }
+.nav-btn { background:#fff5e6; color:#6f6a63; border:1px solid #f3e0c2; }
+.nav-btn.active { background:#ff8a00; color:#1c1a17; box-shadow:none; border-color:#ff8a00; }
+
+/* popups, toast, banner */
+.modal-backdrop { background:rgba(40,30,15,.45); }
+.modal { background:#fffaf2; color:#1c1a17; border:1px solid #f3e0c2; box-shadow:0 20px 60px rgba(60,40,0,.25); }
+.modal h2, .modal-title { color:#1c1a17; }
+.amount-presets button { background:#fff0d6; color:#b45f00; border:1px solid #ffcf8f; }
+.multiplier-btn { background:#ffffff; color:#b45f00; border:1px solid #f3e0c2; }
+.multiplier-btn.active { background:#ff8a00; color:#1c1a17; border-color:#ff8a00; }
+.amount-stepper button { background:#fff0d6; color:#b45f00; }
+.deposit-asset-card, .deposit-submit-card { background:#fff5e6; border:1px solid #f3e0c2; }
+.deposit-asset-card small { color:#6f6a63; }
+.lang-btn { background:#ffffff; color:#1c1a17; border:1px solid #f3e0c2; }
+.lang-btn.active { border-color:#ff8a00; color:#b45f00; background:#fff0d6; }
+.toast { background:#ff8a00; color:#1c1a17; box-shadow:0 8px 24px rgba(120,70,0,.25); }
+.banner { background:#fff5e6; border:1px solid #ff8a00; color:#1c1a17; box-shadow:0 10px 30px rgba(120,70,0,.18); }
+.result-modal-sub { color:#6f6a63; }
+.result-modal-badges span { background:#fff0d6; color:#b45f00; }
+.profile-menu-item { color:#1c1a17; border-bottom:1px solid #f3e0c2; }
+.profile-menu-item:active { background:#fff0d6; }
+.profile-menu-item .pm-text strong { color:#1c1a17; }
+.profile-menu-item .pm-text small { color:#6f6a63; }
+.profile-menu-item .chev { color:#b8afa2; }
+.profile-menu-item.danger .pm-text strong { color:#dc2626; }
+.faq-card p { color:#6f6a63; }
+.faq-card details { border-top:1px solid #f3e0c2; }
+
+/* ===== PREMIUM UPGRADE (on top of the cream + orange theme) =====
+   Remove ONLY this block to go back to the simpler cream theme. */
+html, body { background:#fffaf3; }
+body { background:radial-gradient(ellipse 90% 320px at 50% 0, #ffe9cc 0, rgba(255,233,204,0) 70%), #fffaf3; background-attachment:fixed; }
+
+/* frosted sticky header */
+header { position:sticky; top:0; z-index:30; background:rgba(255,250,243,.88); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); border-bottom:1px solid rgba(243,224,194,.9); }
+header > div:first-child::before { background-color:#ff8a00; background-image:linear-gradient(145deg,#ffb04a,#ff7a00), url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231c1a17' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='9' cy='9' r='5.5'/><path d='M8 7.5l1.2-.8v4.6'/><path d='M15.2 8.6A5.5 5.5 0 1 1 9 20'/></svg>"); background-size:auto, 26px; background-position:center, center; background-repeat:no-repeat; box-shadow:0 6px 14px rgba(255,138,0,.35); }
+.icon-btn { background:#ffffff; border:1px solid #f3e0c2; box-shadow:0 2px 8px rgba(160,100,0,.08); transition:transform .15s; }
+.icon-btn:active { transform:scale(.94); }
+
+/* section titles with orange accent */
+.section-title::before { content:""; width:4px; height:18px; border-radius:4px; background:linear-gradient(180deg,#ffb04a,#ff7a00); flex:none; }
+
+/* cards: white, soft warm shadow */
+.card, .timer-card { background:#ffffff; border:1px solid #f5e6cf; border-radius:22px; box-shadow:0 8px 24px rgba(255,138,0,.08), 0 1px 2px rgba(120,80,0,.05); }
+.stat, .profile-stats div, .member, .breakdown, .deposit-asset-card, .deposit-submit-card { background:#fff7ea; border:1px solid #f3e0c2; border-radius:18px; }
+.stat .v, .profile-stats strong { font-size:21px; letter-spacing:-.3px; }
+
+/* hero wallet card: orange gradient */
+#page-home .balance-card, .balance-card { background:linear-gradient(135deg,#ffab45 0%,#ff8a00 55%,#f26b00 100%); border:0; border-radius:26px; box-shadow:0 16px 34px rgba(255,120,0,.38); color:#ffffff; padding:22px; position:relative; overflow:hidden; }
+#page-home .balance-card::before { content:""; position:absolute; right:-46px; top:-52px; width:200px; height:200px; border-radius:50%; background:rgba(255,255,255,.16); pointer-events:none; z-index:0; }
+#page-home .balance-card::after { display:block; content:""; position:absolute; left:auto; right:46px; top:auto; bottom:-60px; width:130px; height:130px; border-radius:50%; background:rgba(255,255,255,.10); animation:none; pointer-events:none; z-index:0; transform:none; }
+#page-home .balance-card .wallet-art, .balance-card .wallet-art { display:none; }
+#page-home .balance-label, .balance-label { color:rgba(255,255,255,.88); }
+#page-home .balance-value, .balance-value { -webkit-text-fill-color:#ffffff; color:#ffffff; font-size:34px; letter-spacing:-.6px; text-shadow:0 2px 10px rgba(120,50,0,.25); }
+#page-home .balance-sub, .balance-sub { color:rgba(255,255,255,.92); }
+#page-home .balance-card .rules-corner-btn { background:rgba(255,255,255,.22); color:#ffffff; border:1px solid rgba(255,255,255,.4); }
+#page-home .action-btn.deposit-action { background:#ffffff; color:#c25e00; border:0; box-shadow:0 8px 18px rgba(120,50,0,.25); }
+#page-home .action-btn.withdraw-action { background:#1c1a17; color:#ffffff; border:0; box-shadow:0 8px 18px rgba(0,0,0,.25); }
+#page-home .refresh-corner-btn { background:rgba(255,255,255,.2); border:1px solid rgba(255,255,255,.4); color:#ffffff; }
+#page-home .refresh-corner-btn small, #page-home .refresh-corner-btn span { color:#ffffff; }
+
+/* buttons: gradient + glow + press effect */
+.action-btn, .primary-btn { background:linear-gradient(180deg,#ffa33a,#ff8a00); border:0; color:#1c1a17; box-shadow:0 8px 18px rgba(255,138,0,.35); transition:transform .12s, box-shadow .12s; }
+.action-btn:active, .primary-btn:active, .sec-btn:active, .nav-btn:active { transform:scale(.97); }
+.sec-btn { background:#ffffff; box-shadow:0 2px 8px rgba(160,100,0,.08); }
+input:focus, select:focus, textarea:focus { outline:none; border-color:#ff8a00; box-shadow:0 0 0 3px rgba(255,138,0,.2); }
+input, select { border-radius:14px; }
+
+/* timer: orange glow ring */
+.timer-card { background:linear-gradient(180deg,#ffffff,#fff7ea); }
+.ring-fg { stroke:#ff8a00; filter:drop-shadow(0 0 6px rgba(255,138,0,.5)); }
+.ring-fg.locked { filter:drop-shadow(0 0 6px rgba(239,68,68,.45)); }
+.timer-text, .timer-card .timer-text { font-weight:800; letter-spacing:-1px; }
+.status { box-shadow:0 2px 6px rgba(21,128,61,.12); }
+
+/* game buttons: glossy look, same colours */
+.number-btn, .option-btn, .big-small button { border-radius:16px; box-shadow:0 6px 14px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.35); transition:transform .12s; }
+.number-btn:active, .option-btn:active, .big-small button:active { transform:scale(.94); }
+
+/* floating bottom nav */
+.bottom-nav { background:rgba(255,255,255,.92); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); border:1px solid #f3e0c2; border-radius:24px; box-shadow:0 14px 34px rgba(120,70,0,.18); padding:8px; gap:6px; }
+.nav-btn { background:transparent; border:0; border-radius:16px; color:#8a8378; transition:transform .12s, background .2s; }
+.nav-btn.active { background:linear-gradient(180deg,#ffa33a,#ff8a00); color:#1c1a17; box-shadow:0 6px 14px rgba(255,138,0,.4); border:0; }
+
+/* sheets and popups */
+.modal { border-radius:26px; background:#ffffff; border:1px solid #f5e6cf; box-shadow:0 24px 70px rgba(60,40,0,.3); }
+.toast { background:#1c1a17; color:#ffffff; border-left:4px solid #ff8a00; box-shadow:0 12px 30px rgba(0,0,0,.28); }
+.banner { background:#ffffff; border:1px solid #ffb961; border-left:4px solid #ff8a00; }
+.tab.on { background:linear-gradient(180deg,#ffa33a,#ff8a00); color:#1c1a17; border-color:#ff8a00; }
+.pager button { background:#ffffff; box-shadow:0 2px 8px rgba(160,100,0,.1); }
+.tbl th { background:transparent; }
+@media (prefers-reduced-motion:reduce) { * { transition:none !important; } }
 </style>
 </head>
 <body>
@@ -327,7 +529,7 @@ header { background:linear-gradient(180deg,#0a0a0d,#0b0b0e); border-bottom:1px s
 <div class="app">
   <header>
     <div>
-      <div class="brand">CRYPTO <span>TRADER PRO</span></div>
+      <div class="brand">Crypto <span>Trader Pro</span></div>
       <div class="small muted" data-i18n="brandSub">Prediction Dashboard · UTC</div>
     </div>
     <div class="head-btns">
@@ -854,611 +1056,4 @@ async function api(action,extra = {}){ if(!initData) throw new Error(t("openInTg
 async function getRounds(page){ const t0 = Date.now(); const response = await fetch("/api/game?page=" + page + "&page_size=" + PAGE,{ method:"GET", cache:"no-store" }); const t1 = Date.now(); const data = await parseResponse(response); data._mid = (t0 + t1) / 2; return data; }
 function setStatus(key){ statusKey = key; const el = $("betStatus"); el.textContent = t(key); el.classList.toggle("locked", key === "stLocked" || key === "stError" || key === "stTelegram" || key === "stAuth"); }
 function setNotice(key,vars){ notice = {key,vars:vars || null}; $("serverNotice").textContent = t(key,vars); }
-function renderProfile(){ $("profileName").textContent = txt(profName); $("profileStatus").textContent = txt(profStatus); const available = $("homePoints")?.textContent || "—"; $("profileAvailablePoints").textContent = available; $("profileJoined").textContent = (tg?.initDataUnsafe?.user?.id ? "Telegram" : "—"); const input = $("profileDisplayName"); if(input && document.activeElement !== input) input.value = profName && profName.raw ? profName.raw : ""; const retry = $("authRetry"); if (retry) retry.style.display = authBlock ? "" : "none"; }
-function openProfileModal(){ if(!authed){ toast(t("toastAuth")); return; } renderProfile(); $("profileModal").classList.add("open"); }
-function openWalletAddressModal(){ if(!authed){ toast(t("toastAuth")); return; } $("walletAddressInput").value = savedWalletAddress || ""; $("walletAddressModal").classList.add("open"); }
-async function saveProfile(){ const value = $("profileDisplayName").value.trim(); if(!value){ toast(t("displayName")); return; } const userId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id; if(!userId){ toast(t("openInTg")); return; } try { const response = await fetch("/api/profile",{ method:"POST", headers:{"Content-Type":"application/json","x-telegram-id":String(userId)}, body:JSON.stringify({displayName:value}) }); const data = await response.json().catch(() => null); if(!response.ok || !data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; } profName = {raw:data.displayName}; renderProfile(); toast(t("profileSaved")); $("profileModal").classList.remove("open"); } catch(_) { toast(t("refreshFailed")); } }
-async function saveWalletAddress(){ const value = $("walletAddressInput").value.trim(); if(value.length < 20){ toast(t("invalidWallet")); return; } if(!/^0x[a-fA-F0-9]{40}$/.test(value)){ toast("Only BEP-20 addresses (0x…) are supported."); return; } try { const data = await api("save_wallet", { walletAddress: value }); if(!data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; } savedWalletAddress = value; toast(t("walletSaved")); $("walletAddressModal").classList.remove("open"); populateWithdrawPage(); } catch(err) { toast(err.message || t("refreshFailed")); } }
-function updateBalance(value){ balance = Number(value); const usdt = (balance / 100).toFixed(2); $("homePoints").textContent = money(balance); $("walletPoints").textContent = money(balance); $("homeUsdt").textContent = usdt; $("walletUsdt").textContent = usdt + " USDT · 100 Points = 1 USDT"; if (activePage === "withdraw") populateWithdrawPage(); if($("betAvailableBalance")) $("betAvailableBalance").textContent = `Available: ${money(balance)} Points`; }
-function unlockAudio(){ try { const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; if(!audioContext) audioContext = new AC(); if(audioContext.state === "suspended") audioContext.resume(); audioUnlocked = true; } catch(_) {} }
-function playTone(freq=700,duration=.09,type="sine",volume=.045,delay=0){ if(!settings.sound || !audioUnlocked || !audioContext) return; try { const osc = audioContext.createOscillator(); const gain = audioContext.createGain(); const start = audioContext.currentTime + delay; osc.type = type; osc.frequency.setValueAtTime(freq,start); gain.gain.setValueAtTime(.0001,start); gain.gain.exponentialRampToValueAtTime(volume,start+.012); gain.gain.exponentialRampToValueAtTime(.0001,start+duration); osc.connect(gain); gain.connect(audioContext.destination); osc.start(start); osc.stop(start+duration+.02); } catch(_) {} }
-function playBetSound(){ playTone(880,.09,"sine",.06); playTone(1175,.12,"sine",.05,.09); }
-function playTickSound(){ playTone(950,.045,"square",.018); }
-function playLockSound(){ playTone(620,.13,"triangle",.06); playTone(420,.2,"triangle",.05,.13); }
-function playPing(){ playTone(1000,.08,"sine",.05); playTone(1300,.1,"sine",.04,.09); }
-function playResultSound(){ playTone(660,.12,"sine",.06); playTone(880,.12,"sine",.06,.13); playTone(1175,.2,"sine",.06,.26); }
-function pager(id,page,total){ if(!total) return ""; const from = (page - 1) * PAGE + 1; const to = Math.min(page * PAGE,total); return `<div class="pager"><span class="info">${esc(t("range",{from,to,total}))}</span><button type="button" data-pager="${id}" data-dir="-1" aria-label="Previous"${page <= 1 ? " disabled" : ""}>‹</button><button type="button" data-pager="${id}" data-dir="1" aria-label="Next"${page * PAGE >= total ? " disabled" : ""}>›</button></div>`; }
-function renderResults(){ const rows = (resultData.rounds || []).filter(revealed); let html; if(rows.length){ const body = rows.map(r => { const n = Number(r.result_number); return `<tr><td class="period">${esc(fmtPeriod(r.round_code))}</td><td class="${numTone(n)}">${esc(n)}</td><td class="${n >= 5 ? "bs-b" : "bs-s"}">${n >= 5 ? "B" : "S"}</td><td>${dotsHtml(n)}</td></tr>`; }).join(""); html = `<div class="wrap"><table class="tbl"><thead><tr><th>${esc(t("colPeriod"))}</th><th>${esc(t("colNum"))}</th><th>${esc(t("colBS"))}</th><th>${esc(t("colResult"))}</th></tr></thead><tbody>${body}</tbody></table></div>`; } else { html = `<div class="empty">${esc(t(roundsLoaded ? "noRounds" : "loading"))}</div>`; } $("resultTable").innerHTML = html + pager("results",resultPage,resultData.total); }
-async function loadResults(){ try { const d = await getRounds(resultPage); resultData = {rounds:d.rounds || [],total:Number(d.rounds_page && d.rounds_page.total || 0)}; renderResults(); } catch(error) { toast(error.message); } }
-function tradeView(b){ const ended = codeEnded(b.round_code); const status = ended ? String(b.status || "pending").toLowerCase() : "pending"; const stakeC = cents(b.stake); const feeC = cents(b.fee); const actualC = stakeC - feeC; const profitC = ended ? cents(b.payout) : 0; const returnedC = profitC > 0 ? profitC : 0; const hasRes = ended && b.result_number !== null && b.result_number !== undefined; let cls = "pending", label = t("pending"), amt = null; if(status === "cancelled"){ cls = "cancelled"; label = t("cancelled"); } else if(status !== "pending"){ if(profitC > 0 && profitC < stakeC){ cls = "pending"; label = "Partial"; amt = returnedC; } else if(profitC > 0){ cls = "success"; label = t("success"); amt = returnedC; } else { cls = "fail"; label = t("fail"); amt = -actualC; } } return {cls,label,amt,stakeC,feeC,actualC,profitC,returnedC,hasRes}; }
-function resultDetails(value){ const n = Number(value); if(!Number.isInteger(n) || n < 0 || n > 9) return "—"; const colour = n === 0 || n === 5 ? (n === 0 ? "Red + Violet" : "Green + Violet") : (n % 2 === 0 ? "Red" : "Green"); return `${colour} · ${n} · ${n >= 5 ? "Big" : "Small"}`; }
-function renderTrades(){ const list = tradeData.bets || []; let html; if(list.length){ html = list.map(b => { const v = tradeView(b); const sel = b.bet_type === "Number" && b.selection !== null && b.selection !== undefined ? " · " + b.selection : ""; return `<div class="trade"><div class="trade-head" data-trade="1"><span class="trade-period">${esc(fmtPeriod(b.round_code))}</span><span class="trade-status ${v.cls}">${esc(v.label)}</span><span class="trade-amt ${v.cls}">${v.amt === null ? "" : esc(signedCents(v.amt))}</span><span class="chev">⌄</span></div><div class="trade-body"><div class="kv"><span>${esc(t("dBet"))}</span><span>${esc(tk("bt_",b.bet_type) + sel)}</span></div><div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(v.stakeC / 100))}</span></div><div class="kv"><span>${esc(t("dFee"))}</span><span>${esc(money(v.feeC / 100))}</span></div><div class="kv strong"><span>${esc(t("dActual"))}</span><span>${esc(money(v.actualC / 100))}</span></div><div class="kv"><span>${esc(t("dPayout"))}</span><span>${esc(money(v.returnedC / 100))}</span></div><div class="kv"><span>Profit</span><span>${esc(money(v.profitC / 100))}</span></div><div class="kv"><span>Result</span><span>${v.hasRes ? esc(resultDetails(b.result_number)) : esc(t("waiting"))}</span></div><div class="kv"><span>${esc(t("dTime"))}</span><span>${esc(dateUTC(b.created_at))}</span></div></div></div>`; }).join(""); } else { html = `<div class="empty">${esc(t(authed ? "noBets" : "needTg"))}</div>`; } $("tradeList").innerHTML = html + pager("trades",tradePage,tradeData.total); }
-async function loadTrades(silent){ if(!authed) return; try { const d = await api("my_bets",{page:tradePage,page_size:PAGE}); tradeData = {bets:d.bets || [],total:Number(d.pagination && d.pagination.total || 0)}; renderTrades(); } catch(error) { if(!silent) toast(error.message); } }
-function txStatusLabel(x){ if(x.transaction_type === "bet" && x.status === "completed") return t("txPlaced"); return tk("s_",x.status); }
-function transactionUsdt(x){ const type = String(x.transaction_type || "").toLowerCase(); const amount = Number(x.amount || 0); return (type === "deposit" || type === "withdrawal" ? amount : amount / 100).toFixed(2); }
-function renderWallet(){ 
-  const items = walletData.items || []; 
-  const filteredItems = items.filter(x => activeTxFilter === "all" || String(x.transaction_type || "").toLowerCase() === activeTxFilter); 
-  let html; 
-  if(filteredItems.length){ 
-    const body = filteredItems.map(x => { 
-      const type = String(x.transaction_type || "").toLowerCase(); 
-      const plus = type === "deposit" || type === "payout" || type === "refund" || type === "reward" || type === "commission" || type === "signup_bonus" || type === "gift"; 
-      if (type === "bet") { 
-        const bet = (tradeData.bets || []).find(c => { const stake = Number(c.stake || 0) + Number(c.fee || 0); return Math.abs(stake - Number(x.amount || 0)) < 0.01 && Math.abs(new Date(c.created_at) - new Date(x.created_at)) < 10000; }); 
-        if (bet) { 
-          const view = tradeView(bet); 
-          const selection = bet.bet_type === "Number" && bet.selection !== null && bet.selection !== undefined ? ` · ${bet.selection}` : ""; 
-          return `<div class="trade wallet-trade"><div class="trade-head" data-trade="1"><span class="trade-period">${esc(fmtPeriod(bet.round_code))}</span><span class="trade-status ${view.cls}">${esc(view.label)}</span><span class="trade-amt ${view.cls}">${esc(signedCents(view.amt))}</span><span class="chev">⌄</span></div><div class="trade-body"><div class="kv"><span>${esc(t("dBet"))}</span><span>${esc(tk("bt_", bet.bet_type) + selection)}</span></div><div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(view.stakeC / 100))}</span></div><div class="kv"><span>${esc(t("dFee"))}</span><span>${esc(money(view.feeC / 100))}</span></div><div class="kv strong"><span>${esc(t("dActual"))}</span><span>${esc(money(view.actualC / 100))}</span></div><div class="kv"><span>${esc(t("dPayout"))}</span><span>${esc(money(view.returnedC / 100))}</span></div><div class="kv"><span>Result</span><span>${view.hasRes ? esc(resultDetails(bet.result_number)) : esc(t("waiting"))}</span></div><div class="kv"><span>${esc(t("dTime"))}</span><span>${esc(dateUTC(bet.created_at))}</span></div></div></div>`; 
-        } 
-      } 
-      return `<div class="trade wallet-trade"><div class="trade-head" data-trade="1"><span class="trade-period">${esc(tk("tx_",type))}<small class="utc-time" style="display:block; margin-top:2px;">${esc(dateUTC(x.created_at))}</small></span><span class="trade-status ${plus ? "success" : "pending"}">${esc(txStatusLabel(x))}</span><span class="trade-amt ${plus ? "success" : "fail"}">${plus ? "+" : "−"}${esc(money(x.amount))}</span><span class="chev">⌄</span></div><div class="trade-body"><div class="kv"><span>Type</span><span>${esc(tk("tx_",type))}</span></div><div class="kv"><span>Amount</span><span>${esc(money(x.amount))} (${esc(transactionUsdt(x))} USDT)</span></div><div class="kv"><span>Status</span><span>${esc(txStatusLabel(x))}</span></div><div class="kv"><span>Date</span><span>${esc(dateUTC(x.created_at))}</span></div></div></div>`; 
-    }).join(""); 
-    html = `<div class="wallet-trades">${body}</div>`; 
-  } else { 
-    html = `<div class="empty">${esc(t(authed ? "noTx" : "needTg"))}</div>`; 
-  } 
-  $("walletList").innerHTML = html + pager("wallet",walletPage,walletData.total); 
-
-  const historyTable = (type) => { 
-    const filtered = items.filter(x => String(x.transaction_type || "").toLowerCase() === type); 
-    if (!filtered.length) return `<div class="empty">No ${type} history yet.</div>`; 
-    return `<div class="wrap"><table class="tbl"><thead><tr><th>Type</th><th>Amount</th><th>Status</th></tr></thead><tbody>${filtered.map(x => `<tr><td>${esc(tk("tx_", x.transaction_type))}<div class="utc-time">${esc(dateUTC(x.created_at))}</div></td><td>${esc(money(x.amount))} <small class="usdt-value">(${esc(transactionUsdt(x))} USDT)</small></td><td>${esc(txStatusLabel(x))}</td></tr>`).join("")}</tbody></table></div>`; 
-  }; 
-
-  $("depositHistoryList").innerHTML = historyTable("deposit"); 
-  $("withdrawHistoryList").innerHTML = historyTable("withdrawal"); 
-}
-async function loadWallet(silent){ if(!authed){ renderWallet(); return; } try { const d = await api("wallet_history",{page:walletPage,page_size:PAGE}); walletData = {items:d.transactions || [],total:Number(d.pagination && d.pagination.total || 0)}; renderWallet(); } catch(error) { if(!silent) toast(error.message); } }
-let selectedDepositCoinPage = "USDT";
-async function loadDepositPage() {
-  try {
-    const config = await api("wallet_config");
-    const options = Array.isArray(config.deposit_options) ? config.deposit_options : [];
-    const select = $("depositOptionPage");
-    select.innerHTML = options.map((item, i) => `<option value="${i}">${esc(item.coin)} · ${esc(item.network)}</option>`).join("");
-    const setOption = () => {
-      const item = options[Number(select.value)] || options[0];
-      if (!item) { $("depositAddressPage").value = "No deposit address configured"; return; }
-      selectedDepositCoinPage = String(item.coin || "USDT").toUpperCase();
-      const address = item?.address || "";
-      $("depositAddressPage").value = address || "Not configured";
-      const qr = $("depositQrImagePage");
-      if (qr && address) {
-        qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=440x440&data=${encodeURIComponent(address)}`;
-        qr.hidden = false;
-      } else if (qr) {
-        qr.removeAttribute("src");
-        qr.hidden = true;
-      }
-      const coinLabel = item?.coin || "USDT";
-      const networkLabel = item?.network || "network";
-      const logoKey = coinLabel.toLowerCase().replace(/[^a-z]/g, "");
-      const logoMap = { usdt:"usdt", tether:"usdt", bnb:"bnb", eth:"eth", ethereum:"eth", solana:"sol", sol:"sol", tron:"trx", trx:"trx", polygon:"matic", matic:"matic", btc:"btc", bitcoin:"btc" };
-      const logo = logoMap[logoKey] || "usdt";
-      const logoUrls = {
-        usdt: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/usdt.png",
-        bnb: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/bnb.png",
-        eth: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/eth.png",
-        sol: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/sol.png",
-        trx: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/trx.png"
-      };
-      $("depositAssetLogoPage").src = logoUrls[logo] || logoUrls.usdt;
-      $("depositAssetNamePage").textContent = coinLabel;
-      $("depositNetworkHintPage").textContent = `Send only ${coinLabel} on ${networkLabel}`;
-    };
-    select.onchange = setOption;
-    setOption();
-  } catch (e) {
-    toast(e.message);
-  }
-}
-function populateWithdrawPage() {
-  const addrInput = $("withdrawAddressPage");
-  if (addrInput) {
-    addrInput.value = savedWalletAddress || "";
-    addrInput.placeholder = savedWalletAddress ? "" : "Add wallet in Profile first";
-  }
-  const note = $("withdrawBetNote");
-  if (note) {
-    const need = Number(appConfig.min_bet_to_withdraw);
-    if (Number.isFinite(need) && need > 0) {
-      const left = Math.max(0, need - totalStaked);
-      note.style.display = "";
-      note.textContent = left > 0
-        ? `Bet requirement: place at least ${money(need)} points of bets before you can withdraw. Placed so far: ${money(totalStaked)} (${money(left)} more needed).`
-        : `Bet requirement completed (${money(totalStaked)} points placed).`;
-    } else { note.style.display = "none"; }
-  }
-  const balEl = $("withdrawPageBalance");
-  if (balEl) balEl.textContent = `${money(balance || 0)} Points · ${((Number(balance)||0)/100).toFixed(2)} USDT`;
-}
-async function downloadQrCode() {
-  const img = $("depositQrImagePage");
-  if (!img || !img.src || img.hidden) { toast("QR not available"); return; }
-  try {
-    const response = await fetch(img.src);
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `deposit-qr-${selectedDepositCoinPage}-${Date.now()}.png`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    toast("QR downloaded");
-  } catch(e) {
-    toast("Download failed. Long-press the QR to save.");
-  }
-}
-async function submitDepositPage() {
-  const amount = Number($("depositAmountPage").value);
-  const txHash = $("depositTxHashPage").value.trim();
-  const option = $("depositOptionPage").selectedOptions[0]?.textContent || "USDT";
-  if (!Number.isFinite(amount) || amount < 1) return toast("Enter at least 1 USDT.");
-  if (txHash.length < 20) return toast("Enter a valid transaction hash.");
-  const btn = $("submitDepositPage");
-  btn.disabled = true;
-  const origText = btn.textContent;
-  btn.textContent = "Submitting…";
-  try {
-    await api("submit_deposit", { amount_usdt: amount.toFixed(6), tx_hash: txHash, network: option });
-    $("depositSubmitStatusPage").textContent = "✅ Submitted for admin approval.";
-    toast("Deposit submitted for approval.");
-    $("depositAmountPage").value = "";
-    $("depositTxHashPage").value = "";
-    await syncUser();
-    await loadWallet(true);
-  } catch(e) {
-    toast(e.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = origText;
-  }
-}
-async function submitWithdrawalPage() {
-  const amount = Number($("withdrawAmountPage").value);
-  const address = $("withdrawAddressPage").value.trim();
-  if (!Number.isFinite(amount) || amount < 500) return toast("Minimum withdrawal is 500 points.");
-  if (!address || address.length < 20) return toast("No wallet saved. Add one in Profile first.");
-  const btn = $("submitWithdrawalPage");
-  btn.disabled = true;
-  const origText = btn.textContent;
-  btn.textContent = "Submitting…";
-  try {
-    await api("request_withdrawal", { amount: amount.toFixed(2), destination_address: address });
-    toast("Withdrawal request submitted.");
-    $("withdrawAmountPage").value = "";
-    await syncUser();
-    await loadWallet(true);
-  } catch(e) {
-    toast(e.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = origText;
-  }
-}
-function renderReferral(){ 
-  const box = $("referralBody"); 
-  if(!authed){ 
-    let errorMsg = "Open the Mini App inside Telegram to see this.";
-    if (initData) {
-      errorMsg = "Authentication failed: " + (profStatus && profStatus.raw ? profStatus.raw : "Unknown error. Check backend logs.");
-    } else if (profStatus && profStatus.raw) {
-      errorMsg = profStatus.raw;
-    }
-
-    box.innerHTML = `<div class="card">
-      <div class="empty" style="color:#ef4444; font-weight:bold; margin-bottom:10px;">⚠️ Authentication Failed</div>
-      <div class="empty" style="font-size:13px; margin-bottom:15px; line-height:1.5;">${esc(errorMsg)}</div>
-      <button class="primary-btn" id="refAuthRetry" type="button">Retry Authentication</button>
-    </div>`; 
-    const btn = $("refAuthRetry"); 
-    if (btn) btn.onclick = authenticate; 
-    return; 
-  } 
-  if(!referralData){ box.innerHTML = `<div class="card"><div class="empty">${esc(t("loading"))}</div></div>`; return; } 
-
-  const r = referralData; 
-  const link = r.referral_link; 
-  const linkCard = `<div class="card"><label>${esc(t("yourLink"))}</label>${link ? `<div class="copybox" style="margin-top:7px"><input type="text" readonly value="${esc(link)}"><button class="sec-btn" type="button" data-copy="link">${esc(t("copy"))}</button></div><button class="primary-btn" type="button" data-share="1" style="margin-top:12px">📤 ${esc(t("share"))}</button>` : `<div class="notice">${esc(t("noLink"))}</div>`}<label style="display:block;margin-top:14px">${esc(t("yourCode"))}</label><div class="copybox" style="margin-top:7px"><input type="text" readonly value="${esc(r.referral_code || "")}"><button class="sec-btn" type="button" data-copy="code">${esc(t("copy"))}</button></div><div class="notice" style="margin-top:12px">${esc(t("rewardPromo"))}</div></div>`; 
-
-  const reward = r.reward || {}; 
-  const activeRewards = Number(reward.active_pending_points || 0); 
-  const inactiveRewards = Number(reward.pending_points || 0); 
-  const creditedRewards = Number(reward.credited_points || 0); 
-
-  const claimRewardBtn = activeRewards > 0 ? `<button class="primary-btn" id="claimRewardBtn" type="button" style="background:#22c55e; color:#fff; margin-top:10px;">${esc(t("claimRewards"))} (${money(activeRewards)} pts)</button>` : `<div class="muted small" style="margin-top:10px;">No active rewards to claim.</div>`; 
-  const claimCommissionBtn = Number(r.total_commission || 0) > 0 ? `<button class="primary-btn" id="claimCommissionBtn" type="button" style="margin-top:10px;">Claim commission to wallet</button>` : `<div class="muted small" style="margin-top:10px;">No commission available to claim.</div>`; 
-  const teamRows = (r.team_levels || []).map(l => `<div class="kv"><span>Level ${esc(l.level)}</span><strong>${esc(l.count)} members</strong></div>`).join(""); 
-
-  const stats = `<div class="stats">
-    <div class="stat"><div class="l">${esc(t("directRef"))}</div><div class="v">${esc(r.total_direct_referrals || 0)}</div></div>
-    <div class="stat"><div class="l">${esc(t("availableComm"))}</div><div class="v">${esc(money(r.total_commission || 0))}</div></div>
-    <div class="stat"><div class="l">${esc(t("availableReward"))}</div><div class="v" style="color:#22c55e;">${esc(money(activeRewards))}</div></div>
-    <div class="stat"><div class="l">${esc(t("claimedRewards"))}</div><div class="v">${esc(money(creditedRewards))}</div></div>
-  </div>`; 
-
-  const levelRows = (r.commission_levels || []).map(l => `<tr><td>L${esc(l.level)}</td><td>${esc(l.rate_percent)}%</td><td>${esc(l.commission_count)}</td><td>${esc(money(l.total_commission))}</td></tr>`).join(""); 
-  const levelsCard = `<div class="card"><div class="section-title">${esc(t("levels"))}</div><div class="notice"><strong>Team · 3 levels</strong>${teamRows}<div style="margin-top:12px">${claimCommissionBtn}</div></div><div class="wrap"><table class="tbl"><thead><tr><th>${esc(t("lvl"))}</th><th>${esc(t("rate"))}</th><th>${esc(t("cnt"))}</th><th>${esc(t("total"))}</th></tr></thead><tbody>${levelRows}</tbody></table></div></div>`; 
-
-  const applyCard = r.referred_by ? `<div class="card"><div class="muted small">${esc(t("referredBy"))}</div></div>` : `<div class="card"><div class="section-title">${esc(t("haveCode"))}</div><input id="refCodeInput" type="text" maxlength="100" autocomplete="off" placeholder="${esc(t("enterCode"))}"><button class="primary-btn" type="button" data-apply-ref="1">${esc(t("apply"))}</button></div>`; 
-
-  const commRows = (commData.items || []).map(c => `<tr><td class="period">${esc(fmtPeriod(c.round_code) || "—")}<div class="utc-time">${esc(dateUTC(c.created_at))}</div></td><td>L${esc(c.referral_level)}</td><td class="n-green">+${esc(money(c.commission_amount))}</td></tr>`).join(""); 
-  const commCard = `<div class="card"><div class="section-title">${esc(t("commHistory"))}</div>${commRows ? `<div class="wrap"><table class="tbl"><thead><tr><th>${esc(t("colPeriod"))}</th><th>${esc(t("lvl"))}</th><th>${esc(t("comm"))}</th></tr></thead><tbody>${commRows}</tbody></table></div>` : `<div class="empty">${esc(t("noTx"))}</div>`}${pager("comm",commPage,commData.total)}</div>`; 
-
-  const rewardClaimCard = `<div class="card"><div class="section-title">${esc(t("availableReward"))}</div><div class="stats" style="margin-bottom:10px;"><div class="stat"><div class="l">${esc(t("availableReward"))}</div><div class="v" style="color:#22c55e;">${esc(money(activeRewards))}</div></div><div class="stat"><div class="l">${esc(t("mSumPending"))}</div><div class="v" style="color:#facc15;">${esc(money(inactiveRewards))}</div></div></div>${claimRewardBtn}</div>`; 
-
-  box.innerHTML = linkCard + stats + rewardClaimCard + membersCardHtml() + levelsCard + applyCard + commCard; 
-}
-async function loadReferral(silent){ if(!authed){ renderReferral(); return; } try { const d = await api("referral_data"); referralData = d.referral; const h = await api("referral_history",{page:commPage,page_size:PAGE}); commData = {items:h.commissions || [],total:Number(h.pagination && h.pagination.total || 0)}; renderReferral(); } catch(error) { if(!silent) toast(error.message); } }
-async function loadCommissions(){ try { const h = await api("referral_history",{page:commPage,page_size:PAGE}); commData = {items:h.commissions || [],total:Number(h.pagination && h.pagination.total || 0)}; renderReferral(); } catch(error) { toast(error.message); } }
-async function applyReferral(){ const input = $("refCodeInput"); const code = input ? input.value.trim() : ""; if(!code){ toast(t("enterCode")); return; } try { await api("apply_referral",{referral_code:code}); toast(t("refreshed")); await loadReferral(); } catch(error) { toast(error.message); } }
-async function applyReferralFromUrl(){ try { const params = new URLSearchParams(window.location.search); const sp = String((tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || "").trim(); const gc = (params.get("gift") || (/^gift_/i.test(sp) ? sp.slice(5) : "")).trim().toUpperCase(); if(/^[A-Z0-9-]{4,64}$/.test(gc)){ $("giftCodeInput").value = gc; $("giftModal").classList.add("open"); loadGiftHistory(); return; } if(/^gift_/i.test(sp)) return; let code = (params.get("ref") || "").trim(); if(!code && sp){ code = sp.startsWith("ref_") ? sp.slice(4) : sp; } if(!/^[A-Za-z0-9_-]{1,80}$/.test(code)) return; try { if(sessionStorage.getItem("ctp_ref_done") === code) return; } catch(_) {} try { await api("apply_referral",{referral_code:code}); referralData = null; try { sessionStorage.setItem("ctp_ref_done",code); } catch(_) {} } catch(error) { if(/already|invalid|own|relationship/i.test(error.message || "")){ try { sessionStorage.setItem("ctp_ref_done",code); } catch(_) {} } } } catch(_) {} }
-Object.assign(I18N.en,{ mTitle:"Your referrals", m_all:"All", m_active:"Active", m_inactive:"Inactive", mActive:"Active", mInactive:"Inactive", mPending:"Pending", mReceived:"Received", mJoined:"Joined", mLastPlayed:"Last played", mNever:"Never played", mNoName:"No username", mSumActive:"Active referrals", mSumInactive:"Inactive referrals", mSumPending:"Pending reward", mSumReceived:"Reward received", mActiveNote:"Active = placed a bet in the last 7 days.", mNoReward:"No reward record", mCreditedOn:"Received on" });
-Object.assign(I18N.hi,{ mTitle:"आपके रेफरल", m_all:"सभी", m_active:"एक्टिव", m_inactive:"इनएक्टिव", mActive:"एक्टिव", mInactive:"इनएक्टिव", mPending:"पेंडिंग", mReceived:"मिला", mJoined:"जुड़े", mLastPlayed:"आखिरी बार खेला", mNever:"कभी नहीं खेला", mNoName:"यूज़रनेम नहीं", mSumActive:"एक्टिव रेफरल", mSumInactive:"इनएक्टिव रेफरल", mSumPending:"पेंडिंग रिवॉर्ड", mSumReceived:"मिला हुआ रिवॉर्ड", mActiveNote:"एक्टिव = पिछले 7 दिन में कम से कम एक बेट लगाई।", mNoReward:"रिवॉर्ड रिकॉर्ड नहीं", mCreditedOn:"मिलने की तारीख" });
-Object.assign(I18N.bn,{ mTitle:"আপনার রেফারেল", m_all:"সব", m_active:"অ্যাকটিভ", m_inactive:"ইনঅ্যাকটিভ", mActive:"অ্যাকটিভ", mInactive:"ইনঅ্যাকটিভ", mPending:"পেন্ডিং", mReceived:"পাওয়া গেছে", mJoined:"যোগ দিয়েছে", mLastPlayed:"শেষ খেলেছে", mNever:"কখনও খেলেনি", mNoName:"ইউজারনেম নেই", mSumActive:"অ্যাকটিভ রেফারেল", mSumInactive:"ইনঅ্যাকটিভ রেফারেল", mSumPending:"পেন্ডিং রিওয়ার্ড", mSumReceived:"পাওয়া রিওয়ার্ড", mActiveNote:"অ্যাকটিভ = গত ৭ দিনে অন্তত একটি বেট দিয়েছে।", mNoReward:"রিওয়ার্ড রেকর্ড নেই", mCreditedOn:"পাওয়ার তারিখ" });
-let membersData = null; let membersFor = null; let membersLoading = false; let membersFilter = "all"; let membersPage = 1;
-async function loadMembers(){ membersLoading = true; try { membersData = await api("referral_members"); } catch(error) { membersData = {error:error.message}; } finally { membersLoading = false; renderReferral(); } }
-function membersCardHtml(){ if(membersFor !== referralData && !membersLoading){ membersFor = referralData; loadMembers(); } const title = `<div class="section-title">${esc(t("mTitle"))}</div>`; if(!membersData){ return `<div class="card">${title}<div class="empty">${esc(t("loading"))}</div></div>`; } if(membersData.error){ return `<div class="card">${title}<div class="empty">${esc(membersData.error)}</div></div>`; } const s = membersData.summary || {}; const all = membersData.members || []; const list = all.filter(m => membersFilter === "all" || (membersFilter === "active" ? m.is_active : !m.is_active)); const stats = `<div class="stats"><div class="stat"><div class="l">${esc(t("mSumActive"))}</div><div class="v">${esc(s.active || 0)}</div></div><div class="stat"><div class="l">${esc(t("mSumInactive"))}</div><div class="v">${esc((s.total || 0) - (s.active || 0))}</div></div><div class="stat"><div class="l">${esc(t("mSumPending"))}</div><div class="v">${esc(money(s.inactive_pending_points))}</div></div><div class="stat"><div class="l">${esc(t("mSumReceived"))}</div><div class="v">${esc(money(Number(s.credited_points || 0) + Number(s.active_pending_points || 0)))}</div></div></div>`; const tabs = ["all","active","inactive"].map(k => `<button type="button" class="tab${membersFilter === k ? " on" : ""}" data-mfilter="${k}">${esc(t("m_" + k))}</button>`).join(""); const maxPage = Math.max(1, Math.ceil(list.length / PAGE)); if (membersPage > maxPage) membersPage = maxPage; if (membersPage < 1) membersPage = 1; const pageList = list.slice((membersPage - 1) * PAGE, membersPage * PAGE); const rows = pageList.map(m => { const active = !!m.is_active; let reward = ""; if (active || m.reward_status === "credited") { reward = m.reward_status === "credited" ? `<span class="pill ok">${esc(t("mReceived"))} +${esc(money(m.reward_points))}</span><div class="utc-time">${esc(t("mCreditedOn"))}: ${esc(dateUTC(m.credited_at))}</div>` : m.reward_status === "pending" ? `<span class="pill wait">${esc(t("mPending"))} · ${esc(money(m.reward_points))}</span>` : `<span class="pill">${esc(t("mNoReward"))}</span>`; } else { reward = `<span class="pill off">Inactive - No Reward</span>`; } return `<div class="member"><div class="row"><strong>${esc([m.first_name, m.last_name].filter(Boolean).join(" ") || (m.username ? "@" + m.username : t("mNoName")))}</strong><span class="pill ${active ? "ok" : "off"}">${esc(t(active ? "mActive" : "mInactive"))}</span></div>${([m.first_name, m.last_name].some(Boolean) && m.username) ? `<div class="utc-time">@${esc(m.username)}</div>` : ""}<div class="utc-time">${esc(t("mJoined"))}: ${esc(dateUTC(m.created_at))}</div><div class="utc-time">${esc(t("mLastPlayed"))}: ${esc(m.last_bet_at ? dateUTC(m.last_bet_at) : t("mNever"))}</div><div style="margin-top:8px">${reward}</div></div>`; }).join(""); return `<div class="card">${title}${stats}<div class="notice" style="margin-top:0">${esc(t("mActiveNote"))}</div><div class="tabs">${tabs}</div>${rows || `<div class="empty">${esc(t("noRef"))}</div>`}${pager("members", membersPage, list.length)}</div>`; }
-document.addEventListener("click",event => { const b = event.target.closest("[data-mfilter]"); if(!b) return; membersFilter = b.dataset.mfilter; membersPage = 1; renderReferral(); });
-function queuePopup(round){ if(queuedResults.has(round.round_code)) return; queuedResults.add(round.round_code); resultPopupQueue.push(round); showNextResultPopup(); }
-function showNextResultPopup(){ if(resultPopupOpen || !resultPopupQueue.length) return; const round = resultPopupQueue.shift(); const n = Number(round.result_number); if(!Number.isInteger(n) || n < 0 || n > 9){ showNextResultPopup(); return; } resultPopupOpen = true; $("resultPopupPeriod").textContent = t("rPeriod") + " " + fmtPeriod(round.round_code); $("resultPopupNumber").textContent = String(n); $("resultPopupNumber").style.background = popupBg(n); $("resultPopupColor").textContent = "🎨 " + popupColourName(n); $("resultPopupSize").textContent = n >= 5 ? "📈 " + t("sBig") : "📉 " + t("sSmall"); $("resultModal").classList.add("open"); playResultSound(); haptic("success"); }
-function closeResultPopup(){ $("resultModal").classList.remove("open"); resultPopupOpen = false; if(resultPopupQueue.length) setTimeout(showNextResultPopup,250); }
-function showBanner(round){ const n = Number(round.result_number); if(!Number.isInteger(n) || n < 0 || n > 9) return; const text = t("bannerResult",{ period:fmtPeriod(round.round_code), n:n, colour:popupColourName(n), size:tk("bt_",n >= 5 ? "Big" : "Small") }); $("banner").innerHTML = `<span>${dotsHtml(n)}</span><span>${esc(text)}</span>`; $("banner").classList.add("show"); clearTimeout(bannerTimer); bannerTimer = setTimeout(() => $("banner").classList.remove("show"),4500); }
-function detectResults(){ if(!authed) return; const rev = latestRounds.filter(revealed); if(!rev.length) return; if(!firstResultShown){ firstResultShown = true; rev.forEach(r => seenResults.add(r.round_code)); queuePopup(rev[0]); return; } const fresh = rev.filter(r => !seenResults.has(r.round_code)).sort((a,b) => new Date(a.ends_at) - new Date(b.ends_at)); if(!fresh.length) return; fresh.forEach(r => seenResults.add(r.round_code)); const played = fresh.filter(r => playedRounds.has(r.round_code)); played.forEach(queuePopup); showBanner(fresh[fresh.length - 1]); if(!played.length){ playPing(); haptic("light"); } syncUser(true); }
-function getActiveRound(){ const r = currentRound; if(!r) return null; const now = nowMs(); const starts = new Date(r.starts_at).getTime(); const ends = new Date(r.ends_at).getTime(); return Number.isFinite(starts) && Number.isFinite(ends) && now >= starts && now < ends ? r : null; }
-function isBettingOpen(round){ if(!round || round.status !== "open") return false; const now = nowMs(); const starts = new Date(round.starts_at).getTime(); const closes = new Date(round.betting_closes_at).getTime(); const ends = new Date(round.ends_at).getTime(); return Number.isFinite(starts) && Number.isFinite(closes) && Number.isFinite(ends) && now >= starts && now < closes && now < ends; }
-async function syncRounds(){ if(roundsBusy) return roundsOk; roundsBusy = true; try { const d = await getRounds(1); const serverMs = new Date(d.server_time).getTime(); if(Number.isFinite(serverMs)) serverTimeOffset = serverMs - d._mid; currentRound = d.current_round || null; latestRounds = d.rounds || []; roundsLoaded = true; roundsFailed = false; roundsOk = true; if(resultPage === 1){ resultData = {rounds:latestRounds,total:Number(d.rounds_page && d.rounds_page.total || 0)}; renderResults(); } detectResults(); setNotice("nConnected"); } catch(error) { roundsFailed = true; roundsOk = false; setNotice("nUnavailable",{msg:error.message}); } finally { lastRoundsSync = Date.now(); roundsBusy = false; updateRoundDisplay(); } return roundsOk; }
-async function syncUser(){ if(!authed) return false; if(userBusy) return userOk; userBusy = true; try { const [balData,betData] = await Promise.all([ api("balance"), api("my_bets",{page:tradePage,page_size:PAGE}) ]); updateBalance(balData.balance); if (balData.total_staked !== undefined) totalStaked = Number(balData.total_staked) || 0; if (balData.wallet_address !== undefined) savedWalletAddress = balData.wallet_address || null; tradeData = {bets:betData.bets || [],total:Number(betData.pagination && betData.pagination.total || 0)}; renderTrades(); if(activePage === "wallet") await loadWallet(true); if (activePage === "withdraw") populateWithdrawPage(); userOk = true; } catch(error) { userOk = false; } finally { lastUserSync = Date.now(); userBusy = false; } return userOk; }
-function setRing(frac,locked){ const el = $("ringFg"); el.style.transition = frac > lastRingFrac + 0.01 ? "none" : ""; el.style.strokeDashoffset = String(RING_LENGTH * (1 - frac)); el.classList.toggle("locked",locked); lastRingFrac = frac; }
-function updateRoundDisplay(){ const server = getActiveRound(); let info = null; if(server){ info = { code:server.round_code, endsMs:new Date(server.ends_at).getTime(), open:isBettingOpen(server), virtual:false }; } else if(roundsLoaded){ const s = slotInfo(nowMs()); info = {code:s.code,endsMs:s.endsMs,open:false,virtual:true}; } if(!info){ $("periodId").textContent = t("loadingRound"); $("timer").textContent = "--:--"; setRing(0,true); setStatus(authBlock || (roundsFailed ? "stError" : "stConnecting")); updateBetButtons(false); previousBettingOpen = false; lastTickSecond = -1; return; } const left = Math.max(0,Math.ceil((info.endsMs - nowMs()) / 1000)); $("periodId").textContent = fmtPeriod(info.code); $("timer").textContent = String(Math.floor(left / 60)).padStart(2,"0") + ":" + String(left % 60).padStart(2,"0"); setRing(Math.min(1,left / ROUND_SECONDS),!info.open); setStatus(authBlock || (info.virtual ? "stSyncing" : info.open ? "stOpen" : "stLocked")); const tc = $("timerCard"); if(tc){ tc.classList.toggle("urgent", !!info.open && left <= 40); tc.classList.toggle("locked-state", !info.open); }
- updateBetButtons(info.open && authed); if(previousBettingOpen === true && !info.open){ playLockSound(); haptic("light"); } previousBettingOpen = info.open; if(left <= 10 && left > 0 && left !== lastTickSecond){ playTickSound(); lastTickSecond = left; } else if(left > 10 || left === 0){ lastTickSecond = -1; } if(lastDisplayedRoundCode !== info.code){ lastDisplayedRoundCode = info.code; lastTickSecond = -1; previousBettingOpen = info.open; } }
-function updateBetButtons(enabled){ document.querySelectorAll("[data-bet],.number-btn").forEach(button => { button.disabled = !enabled; }); }
-function poll(){ if(document.hidden) return; const now = Date.now(); if(!roundsBusy){ const r = currentRound; const ended = r && nowMs() >= new Date(r.ends_at).getTime(); const slot = slotInfo(nowMs()); const prevCode = slotInfo(slot.startMs - 1).code; const prevMissing = roundsLoaded && nowMs() - slot.startMs < 30000 && !latestRounds.some(x => x.round_code === prevCode && revealed(x)); const due = now - lastRoundsSync >= ROUND_POLL || ((ended || prevMissing) && now - lastRoundsSync >= 1000); if(due) syncRounds(); } if(authed && !userBusy && now - lastUserSync >= USER_POLL){ syncUser(); } }
-async function manualRefresh(button){ if(button) button.classList.add("busy"); try { if(!authed){ await authenticate(); } else { const okRounds = await syncRounds(); const okUser = await syncUser(); if(resultPage !== 1) await loadResults(); if(activePage === "wallet") await loadWallet(true); if(activePage === "referral") await loadReferral(true); toast(okRounds && okUser ? t("refreshed") : t("refreshFailed")); } } catch(error) { toast(error.message || t("refreshFailed")); } finally { if(button) button.classList.remove("busy"); } }
-async function authenticate(){ try { if(!tg){ authed = false; authBlock = "stTelegram"; profName = {k:"notTg"}; profStatus = {k:"openInTg"}; renderProfile(); renderTrades(); syncRounds(); return; } tg.ready(); tg.expand(); initData = tg.initData || ""; if(!initData){ authed = false; authBlock = "stAuth"; profName = {k:"tgMissing"}; profStatus = {k:"openOfficial"}; renderProfile(); renderTrades(); syncRounds(); return; } const response = await fetch("/api/auth",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({initData}) }); const data = await parseResponse(response); authed = true; authBlock = null; user = data.user; if (typeof loadNotifications === "function") await loadNotifications().catch(() => {}); if (typeof loadAppConfig === "function") await loadAppConfig(); profName = user.username ? {raw:"@" + user.username} : {k:"tgUser",v:{id:user.telegram_id}}; profStatus = {k:"verified"}; renderProfile(); try { await syncRounds(); await syncUser(); await applyReferralFromUrl(); } catch (error) { console.warn("[v0] post-auth sync failed", error.message); authBlock = "stConnecting"; renderProfile(); toast("Account authenticated; syncing game data…"); } } catch(error) { authed = false; authBlock = "stAuth"; profStatus = {raw:error.message}; renderProfile(); renderReferral(); toast(error.message); } }
-function renderBreakdown(){
-  const text = $("betAmount").value.trim();
-  const ok = /^\d{1,18}(\.\d{1,2})?$/.test(text);
-  const baseStakeC = ok ? cents(text) : 0;
-  const totalStakeC = baseStakeC * betMultiplier;
-  const feeC = Math.floor((totalStakeC * FEE_PERCENT + 50) / 100);
-  const actualC = totalStakeC - feeC;
-  let html = `<div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(baseStakeC / 100))}</span></div>`;
-  if (betMultiplier > 1) {
-    html += `<div class="kv"><span>Multiplier</span><span>×${betMultiplier}</span></div>`;
-    html += `<div class="kv"><span>Total Stake</span><span>${esc(money(totalStakeC / 100))}</span></div>`;
-  }
-  html += `<div class="kv"><span>${esc(t("bkFee",{pct:FEE_PERCENT}))}</span><span>−${esc(money(feeC / 100))}</span></div>`;
-  html += `<div class="kv strong"><span>${esc(t("dActual"))}</span><span>${esc(money(actualC / 100))}</span></div>`;
-  if (Number.isFinite(balance) && (totalStakeC / 100) > Number(balance)) {
-    html += `<div class="kv" style="color:#ef4444"><span>⚠ Insufficient balance</span><span>${esc(money(balance))}</span></div>`;
-  }
-  $("betBreakdown").innerHTML = html;
-}
-function openBet(type,selection = null){
-  if(!authed){ toast(t("toastAuth")); return; }
-  const round = getActiveRound();
-  if(!isBettingOpen(round)){ toast(t("toastLocked")); syncRounds(); return; }
-  haptic("light");
-  currentBet = {type,selection,roundCode:round.round_code};
-  pendingBetRequest = null;
-  betMultiplier = 1;
-  betStep = 100;
-  document.querySelectorAll("[data-mult]").forEach(b => b.classList.toggle("active", Number(b.dataset.mult) === 1));
-  $("betModalTitle").textContent = t("betOn") + " " + tk("bt_",type) + (selection === null ? "" : " " + selection);
-  $("betModalPeriod").textContent = t("serverRound") + " " + fmtPeriod(round.round_code);
-
-  const balEl = $("betAvailableBalance");
-  if (balEl) balEl.textContent = `Available: ${money(balance)} Points`;
-
-  $("betAmount").value = "100";
-  renderBreakdown();
-  $("confirmBet").disabled = false;
-  $("betModal").classList.add("open");
-}
-async function confirmBet(){
-  if(!currentBet || !authed) return;
-  const baseText = $("betAmount").value.trim();
-  const baseAmount = Number(baseText);
-  if(!/^\d{1,18}(\.\d{1,2})?$/.test(baseText) || !Number.isFinite(baseAmount) || baseAmount < 10){
-    toast(t("toastAmount"));
-    return;
-  }
-  const totalStake = baseAmount * betMultiplier;
-  if (Number.isFinite(balance) && totalStake > Number(balance)) {
-    toast("Insufficient wallet balance for this bet.");
-    return;
-  }
-  const totalStakeStr = totalStake.toFixed(2);
-  const btn = $("confirmBet");
-  btn.disabled = true;
-  try {
-    if(!pendingBetRequest){
-      pendingBetRequest = { requestId: makeRequestId(), roundCode: currentBet.roundCode, betType: currentBet.type, selection: currentBet.type === "Number" ? currentBet.selection : null, stake: totalStakeStr, multiplier: betMultiplier };
-    }
-    const r = pendingBetRequest;
-    if(r.roundCode !== currentBet.roundCode || r.betType !== currentBet.type || r.selection !== (currentBet.type === "Number" ? currentBet.selection : null) || r.stake !== totalStakeStr || r.multiplier !== betMultiplier){
-      pendingBetRequest = null;
-      toast(t("toastChanged"));
-      return;
-    }
-    await api("place_bet",{ round_code: r.roundCode, bet_type: r.betType, selection: r.selection, stake: r.stake, multiplier: r.multiplier, request_id: r.requestId });
-    playedRounds.add(r.roundCode);
-    pendingBetRequest = null;
-    $("betModal").classList.remove("open");
-    playBetSound();
-    haptic("success");
-    toast(t("toastBetOk"));
-    tradePage = 1;
-    await syncUser();
-  } catch(error) {
-    haptic("error");
-    toast(error.message || t("toastBetFail"));
-  } finally {
-    btn.disabled = false;
-  }
-}
-function showPage(name){
-  activePage = name;
-  document.querySelectorAll(".page").forEach(page => { page.classList.toggle("active", page.id === "page-" + name); });
-  document.querySelectorAll(".nav-btn").forEach(button => { button.classList.toggle("active", button.dataset.page === name); });
-  if(name === "wallet" || name === "deposit" || name === "withdraw") loadWallet();
-  if(name === "referral" || name === "profile") loadReferral();
-  if(name === "deposit") loadDepositPage();
-  if(name === "withdraw") populateWithdrawPage();
-  window.scrollTo(0,0);
-}
-function renderLangList(filter){ const q = String(filter || "").trim().toLowerCase(); const list = LANGS.filter(l => !q || String(l.name || "").toLowerCase().includes(q) || String(l.en || "").toLowerCase().includes(q) || l.code.toLowerCase().includes(q)); $("langListModal").innerHTML = list.length ? list.map(l => `<button class="lang-btn${l.code === lang ? " active" : ""}" type="button" data-lang="${esc(l.code)}">${esc(l.name)}${l.en && l.en !== l.name ? " · " + esc(l.en) : ""}</button>`).join("") : `<div class="empty">${esc(t("noLangs"))}</div>`; }
-function openLangModal(){ $("langSearch").value = ""; renderLangList(""); $("langModal").classList.add("open"); }
-function renderCurrentLang(){ const meta = LANGS.find(l => l.code === lang) || LANGS[0]; const currentLanguage = $("curLangName"); if(currentLanguage) currentLanguage.textContent = meta ? `${meta.name} (${meta.en})` : "English"; }
-function rerender(){ applyStatic(); renderCurrentLang(); renderSettings(); renderProfile(); setStatus(statusKey); setNotice(notice.key,notice.vars); renderResults(); renderTrades(); renderWallet(); renderReferral(); updateRoundDisplay(); }
-function setLanguage(code){ if(!dict(code)) return; lang = code; const meta = LANGS.find(l => l.code === code); document.documentElement.lang = code; document.documentElement.dir = meta && meta.dir === "rtl" ? "rtl" : "ltr"; try { localStorage.setItem("ctp_lang",code); } catch(_) {} $("langModal").classList.remove("open"); rerender(); }
-function renderNumbers(){ const box = $("numberGrid"); box.innerHTML = ""; for(let n = 0; n <= 9; n++){ const button = document.createElement("button"); button.type = "button"; button.className = "number-btn " + numClass(n); button.textContent = n; button.onclick = () => openBet("Number",n); box.appendChild(button); } }
-async function loadNotifications() { try { const data = await api("notifications"); const list = $("notificationList"); let rows = data.notifications || []; if (!rows.length && (tradeData.bets || []).length) { rows = tradeData.bets.slice(0, 5).map(b => ({ title: "Trade activity", message: `${b.bet_type} bet ${b.status || "pending"}`, created_at: b.created_at, is_read: false })); } $("notificationCount").textContent = 0; $("notificationCount").hidden = true; list.innerHTML = rows.length ? rows.map(item => `<div class="notification-item"><strong>${esc(item.title)}</strong><small>${esc(item.message)} · ${new Date(item.created_at).toLocaleString()}</small>${item.kind === "withdrawal" ? '<button type="button" class="sec-btn notification-action" data-notification-page="withdraw">Open withdraw</button>' : ""}</div>`).join("") : '<div class="empty">No activity yet.</div>'; list.querySelectorAll("[data-notification-page]").forEach(button => { button.onclick = () => { $("notificationModal").classList.remove("open"); showPage(button.dataset.notificationPage); }; }); } catch (error) { console.warn("[v0] notifications unavailable", error.message); } }
-async function loadGiftHistory() {
-  const box = $("giftHistoryList");
-  if (!box) return;
-  try {
-    const d = await api("wallet_history", { page: 1, page_size: 20 });
-    const gifts = (d.transactions || []).filter(x => String(x.transaction_type || "").toLowerCase() === "gift");
-    box.innerHTML = gifts.length ? `<div class="wrap"><table class="tbl"><thead><tr><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody>${gifts.map(g => `<tr><td>${esc(dateUTC(g.created_at))}</td><td class="n-green">+${esc(money(g.amount))}</td><td>${esc(txStatusLabel(g))}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">No gift codes redeemed yet.</div>`;
-  } catch (e) {
-    box.innerHTML = `<div class="empty">Unable to load gift history.</div>`;
-  }
-}
-function renderDashLinks() {
-  const box = $("dashLinks");
-  if (!box) return;
-  let list = [];
-  try { list = JSON.parse(appConfig.dashboard_links || "[]"); } catch (_) { list = []; }
-  list = (Array.isArray(list) ? list : []).filter(x => x && x.enabled && x.url && x.label).slice(0, 4);
-  box.style.display = list.length ? "" : "none";
-  box.innerHTML = list.map((x, i) => `<button class="dash-link" type="button" data-dash="${i}">${esc(x.label)}</button>`).join("");
-  box.querySelectorAll("[data-dash]").forEach(btn => { btn.onclick = () => openExternalLink(list[Number(btn.dataset.dash)].url); });
-}
-
-async function loadAppConfig() {
-  try {
-    const data = await api("app_config");
-    if (data && data.config) appConfig = { ...appConfig, ...data.config };
-  } catch (_) {}
-  renderDashLinks();
-  const mb = $("maintBanner");
-  if (mb) { const on = appConfig.maintenance_mode === true; mb.style.display = on ? "" : "none"; mb.textContent = on ? (appConfig.maintenance_message || "Betting is paused for maintenance. Please check back soon.") : ""; }
-  renderHeaderButtons();
-}
-function renderHeaderButtons() {
-  const ch = $("headerChannelBtn");
-  const sp = $("headerSupportBtn");
-  const sd = $("headerSoundBtn");
-  if (ch) ch.style.display = appConfig.channel_button_enabled ? "" : "none";
-  if (sp) sp.style.display = appConfig.support_button_enabled ? "" : "none";
-  if (sd) sd.style.display = appConfig.sound_button_enabled === false ? "none" : "";
-  const hc = $("helpChannelBtn");
-  const hs = $("helpSupportBtn");
-  if (hc) hc.style.display = appConfig.channel_url ? "" : "none";
-  if (hs) hs.style.display = appConfig.support_url ? "" : "none";
-}
-function openExternalLink(url) {
-  if (!url) { toast("Link not configured"); return; }
-  try {
-    if (tg && tg.openLink) { tg.openLink(url); return; }
-  } catch (_) {}
-  window.open(url, "_blank");
-}
-function handleProfileAction(action) {
-  if (action === "wallet") { showPage("wallet"); return; }
-  if (action === "tx") { showPage("wallet"); return; }
-  if (action === "referral") { showPage("referral"); return; }
-  if (action === "gift") { $("giftModal").classList.add("open"); loadGiftHistory(); return; }
-  if (action === "lang") { openLangModal(); return; }
-  if (action === "notif") { $("notifSettingsModal").classList.add("open"); return; }
-  if (action === "settings") { $("settingsModal").classList.add("open"); return; }
-  if (action === "help") { $("helpModal").classList.add("open"); renderHeaderButtons(); return; }
-  if (action === "logout") {
-    try {
-      if (confirm("Logout and close the app?")) {
-        try { localStorage.removeItem("ctp_lang"); localStorage.removeItem("ctp_settings"); } catch (_) {}
-        if (tg && tg.close) tg.close();
-      }
-    } catch (_) {}
-    return;
-  }
-}
-function init(){
-  loadSettings(); document.addEventListener("pointerdown",unlockAudio,{passive:true}); document.addEventListener("keydown",unlockAudio);
-  renderNumbers(); applyStatic(); renderCurrentLang(); renderSettings(); renderProfile(); setStatus("stConnecting"); setNotice("nConnecting"); renderHeaderButtons();
-  document.querySelectorAll("#txFilters .tab").forEach(tab => { tab.onclick = () => { document.querySelectorAll("#txFilters .tab").forEach(t => t.classList.remove("on")); tab.classList.add("on"); activeTxFilter = tab.dataset.txFilter; renderWallet(); }; });
-  document.querySelectorAll(".nav-btn").forEach(button => { button.onclick = () => showPage(button.dataset.page); });
-  document.querySelectorAll("[data-page-go]").forEach(button => { button.onclick = () => showPage(button.dataset.pageGo); });
-  document.querySelectorAll("[data-refresh]").forEach(button => { button.onclick = () => manualRefresh(button); });
-  $("notificationBell").onclick = async () => { $("notificationModal").classList.add("open"); await loadNotifications(); };
-  setInterval(() => { if (initData) loadNotifications(); }, 30000);
-  $("closeNotifications").onclick = () => $("notificationModal").classList.remove("open");
-  $("headerProfile").onclick = () => showPage("profile");
-  $("headerSoundBtn").onclick = () => { unlockAudio(); settings.sound = !settings.sound; saveSettings(); renderSettings(); if (settings.sound) playPing(); haptic("light"); };
-  $("headerChannelBtn").onclick = () => openExternalLink(appConfig.channel_url);
-  $("headerSupportBtn").onclick = () => openExternalLink(appConfig.support_url);
-  $("editProfileBtn").onclick = openProfileModal;
-  $("walletAddressBtn").onclick = openWalletAddressModal;
-  $("saveProfileBtn").onclick = saveProfile;
-  $("saveWalletAddressBtn").onclick = saveWalletAddress;
-  $("gameRulesBtn").onclick = () => $("gameRulesModal").classList.add("open");
-  $("authRetry").onclick = authenticate;
-  document.querySelectorAll("[data-profile-action]").forEach(button => { button.onclick = () => handleProfileAction(button.dataset.profileAction); });
-  $("settingsLangBtn").onclick = () => { $("settingsModal").classList.remove("open"); openLangModal(); };
-  $("settingsNotifBtn").onclick = () => { $("settingsModal").classList.remove("open"); $("notifSettingsModal").classList.add("open"); };
-  $("settingsResetBtn").onclick = () => { settings.sound = true; settings.vibrate = true; settings.updates = true; saveSettings(); renderSettings(); toast("Preferences reset to defaults"); };
-  $("helpChannelBtn").onclick = () => openExternalLink(appConfig.channel_url);
-  $("helpSupportBtn").onclick = () => openExternalLink(appConfig.support_url);
-  $("sendSupportMsgBtn").onclick = async () => {
-    const box = $("supportMsgInput");
-    const msg = box.value.trim();
-    if (msg.length < 5) return toast("Write at least 5 characters.");
-    if (!authed) return toast(t("toastAuth"));
-    const btn = $("sendSupportMsgBtn");
-    btn.disabled = true;
-    try {
-      const r = await api("support_message", { message: msg });
-      toast(r.message || "Message sent.");
-      box.value = "";
-    } catch (e) { toast(e.message); }
-    finally { btn.disabled = false; }
-  };
-  $("redeemGiftBtn").onclick = async () => {
-    const code = $("giftCodeInput").value.trim();
-    if (!code) return toast("Enter a gift code.");
-    const btn = $("redeemGiftBtn");
-    if (btn.disabled) return;
-    btn.disabled = true;
-    btn.textContent = "…";
-    try {
-      const result = await api("redeem_gift", { code });
-      const pts = Number(result && result.points) || 0;
-      toast(`✅ Gift redeemed: ${money(pts)} points added.`);
-      $("giftCodeInput").value = "";
-      await syncUser();
-      await loadWallet(true);
-      await loadGiftHistory();
-      await loadNotifications();
-    } catch (error) {
-      toast(error.message);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Redeem";
-    }
-  };
-  $("confirmBet").onclick = confirmBet;
-  $("resultPopupClose").onclick = closeResultPopup;
-  $("depositBtn").onclick = () => showPage("deposit");
-  $("homeDepositBtn").onclick = () => showPage("deposit");
-  $("withdrawBtn").onclick = () => showPage("withdraw");
-  $("homeWithdrawBtn").onclick = () => showPage("withdraw");
-  $("depositPageBack").onclick = () => showPage("wallet");
-  $("withdrawPageBack").onclick = () => showPage("wallet");
-  $("copyDepositAddressPage").onclick = async () => { const v = $("depositAddressPage").value; if (v && await copyText(v)) toast("Deposit address copied."); };
-  $("downloadQrBtn").onclick = downloadQrCode;
-  $("submitDepositPage").onclick = submitDepositPage;
-  $("submitWithdrawalPage").onclick = submitWithdrawalPage;
-  $("withdrawAmountPage").addEventListener("input", () => { const pts = Math.max(0, Number($("withdrawAmountPage").value) || 0); $("withdrawUsdtPreviewPage").textContent = `${(pts * 0.9 / 100).toFixed(2)} USDT after 10% fee`; });
-  document.querySelectorAll(".withdraw-preset-page").forEach(btn => {
-    btn.onclick = () => {
-      const avail = Math.max(0, Number(balance) || 0);
-      const pct = btn.dataset.percent === "max" ? 100 : Number(btn.dataset.percent);
-      const amt = Math.floor((avail * pct / 100) * 100) / 100;
-      $("withdrawAmountPage").value = amt >= 500 ? amt.toFixed(2) : "";
-      $("withdrawUsdtPreviewPage").textContent = amt >= 500 ? `${(amt * 0.9 / 100).toFixed(2)} USDT after 10% fee` : "Minimum 5.00 USDT";
-    };
-  });
-  document.addEventListener("click", async (event) => {
-    const btn = event.target.closest("#claimCommissionBtn") || event.target.closest("#claimRewardBtn");
-    if (!btn) return;
-    const isReward = btn.id === "claimRewardBtn";
-    if (btn.disabled) return;
-    btn.disabled = true;
-    const originalText = btn.textContent;
-    btn.textContent = "Claiming…";
-    try {
-      const endpoint = isReward ? "claim_rewards" : "claim_commission";
-      const result = await api(endpoint);
-      const claimed = Number(result && (result.claimed_points || result.amount)) || 0;
-      toast(`✅ Claimed ${money(claimed)} points (${(claimed / 100).toFixed(2)} USDT)`);
-      await loadReferral(true);
-      await syncUser();
-      await loadWallet(true);
-    } catch (error) {
-      btn.disabled = false;
-      btn.textContent = originalText;
-      toast(error.message);
-    }
-  });
-  $("sndSwitch").onclick = () => { unlockAudio(); settings.sound = !settings.sound; saveSettings(); renderSettings(); if (settings.sound) playPing(); haptic("light"); };
-  $("vibSwitch").onclick = () => { settings.vibrate = !settings.vibrate; saveSettings(); renderSettings(); if (settings.vibrate) haptic("success"); };
-  $("updatesSwitch").onclick = () => { settings.updates = !settings.updates; saveSettings(); renderSettings(); haptic("light"); };
-  $("resultModal").addEventListener("click", event => { if (event.target === $("resultModal")) closeResultPopup(); });
-  document.querySelectorAll("[data-bet]").forEach(button => { button.onclick = () => openBet(button.dataset.bet); });
-  document.querySelectorAll("[data-close]").forEach(button => { button.onclick = () => $(button.dataset.close).classList.remove("open"); });
-  document.querySelectorAll(".modal-backdrop").forEach(modal => { modal.addEventListener("click", event => { if (event.target === modal && modal.id !== "resultModal" && modal.id !== "termsModal") { modal.classList.remove("open"); } }); });
-  document.querySelectorAll("[data-amount]").forEach(button => {
-    button.onclick = () => {
-      const amt = button.dataset.amount;
-      if (amt === "max") {
-        $("betAmount").value = balance ? Number(balance).toFixed(2) : "100";
-      } else {
-        betStep = Number(amt);
-        $("betAmount").value = amt;
-      }
-      pendingBetRequest = null;
-      renderBreakdown();
-    };
-  });
-  $("minusAmount").onclick = () => {
-    const cur = Number($("betAmount").value) || betStep;
-    const floor = Math.min(betStep, cur);
-    const newVal = Math.max(floor, cur - betStep);
-    $("betAmount").value = newVal.toFixed(2);
-    pendingBetRequest = null;
-    renderBreakdown();
-  };
-  $("plusAmount").onclick = () => {
-    const cur = Number($("betAmount").value) || 0;
-    $("betAmount").value = (cur + betStep).toFixed(2);
-    pendingBetRequest = null;
-    renderBreakdown();
-  };
-  document.querySelectorAll("[data-mult]").forEach(button => {
-    button.onclick = () => {
-      betMultiplier = Number(button.dataset.mult) || 1;
-      document.querySelectorAll("[data-mult]").forEach(b => b.classList.toggle("active", Number(b.dataset.mult) === betMultiplier));
-      pendingBetRequest = null;
-      renderBreakdown();
-    };
-  });
-  $("betAmount").addEventListener("input", () => {
-    const val = Number($("betAmount").value);
-    const presets = [10, 20, 50, 100];
-    if (presets.includes(val)) betStep = val;
-    pendingBetRequest = null;
-    renderBreakdown();
-  });
-  document.addEventListener("click", async event => {
-    const pg = event.target.closest("[data-pager]"); if (pg && !pg.disabled) { const dir = Number(pg.dataset.dir); const id = pg.dataset.pager; if (id === "results") { resultPage = Math.max(1, resultPage + dir); loadResults(); } else if (id === "trades") { tradePage = Math.max(1, tradePage + dir); loadTrades(); } else if (id === "wallet") { walletPage = Math.max(1, walletPage + dir); loadWallet(); } else if (id === "comm") { commPage = Math.max(1, commPage + dir); loadCommissions(); } else if (id === "members") { membersPage = Math.max(1, membersPage + dir); renderReferral(); } return; }
-    const tr = event.target.closest("[data-trade]"); if (tr) { tr.parentElement.classList.toggle("open"); return; }
-    const lb = event.target.closest("[data-lang]"); if (lb) { setLanguage(lb.dataset.lang); return; }
-    const cp = event.target.closest("[data-copy]"); if (cp && referralData) { const value = cp.dataset.copy === "link" ? referralData.referral_link : referralData.referral_code; const ok = value ? await copyText(value) : false; toast(ok ? t("copied") : t("copyFail")); return; }
-    const sh = event.target.closest("[data-share]"); if (sh && referralData && referralData.referral_link) { const url = "https://t.me/share/url?url=" + encodeURIComponent(referralData.referral_link) + "&text=" + encodeURIComponent(t("shareText")); try { if (tg && tg.openTelegramLink) tg.openTelegramLink(url); else window.open(url, "_blank"); } catch (_) { window.open(url, "_blank"); } return; }
-    const ap = event.target.closest("[data-apply-ref]"); if (ap) { applyReferral(); }
-  });
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) { syncRounds(); syncUser(); } });
-  renderResults(); renderTrades(); renderWallet(); renderReferral();
-  authenticate(); if (!tg) syncRounds();
-  setInterval(updateRoundDisplay, 1000); setInterval(poll, 1000);
-}
-init();
-})();
-</script>
-</body>
-</html>
+function renderProfile(){ $("profileName").textContent = txt(protxt(pro
