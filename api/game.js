@@ -907,7 +907,7 @@ module.exports = async function handler(req, res) {
     if (cached) {
       const nowMs = Date.now();
       const roundOpen = cached.endsAtMs && nowMs < cached.endsAtMs;
-      const ttl = roundOpen ? 3000 : 1000;
+      const ttl = roundOpen ? 8000 : 1000;
       if (nowMs - cached.at < ttl) {
         return json(res, 200, {
           ...cached.body,

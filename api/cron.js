@@ -452,17 +452,25 @@ async function scanDeposits(client) {
   return credited;
 }
 
+// Neon compute saver: once the app is found idle, skip the DB check itself for IDLE_RECHECK_MINUTES.
+// (Every cron hit that touches the DB wakes Neon, which then stays awake ~5 min -> compute hours run out.)
+// Game rounds are still settled by /api/game when a player opens the app, so nothing is lost.
+const IDLE_RECHECK_MINUTES = Number(process.env.IDLE_RECHECK_MINUTES || 15);
+let idleSkipUntilMs = 0;
+
 // Returns true when nobody has used the app for IDLE_MINUTES. Fails open on errors.
 async function isIdle() {
   if (ALWAYS_ON) return false;
+  if (Date.now() < idleSkipUntilMs) return true;
   try {
     const r = await getPool().query(
       `SELECT (value::timestamptz > NOW() - ($1::int * INTERVAL '1 minute')) AS recent
        FROM public.app_settings WHERE key = 'last_activity_at'`,
       [IDLE_MINUTES]
     );
-    if (!r.rowCount) return true;
-    return r.rows[0].recent !== true;
+    const idle = !r.rowCount || r.rows[0].recent !== true;
+    if (idle) idleSkipUntilMs = Date.now() + IDLE_RECHECK_MINUTES * 60000;
+    return idle;
   } catch (_) {
     return false;
   }
