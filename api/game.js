@@ -9,6 +9,88 @@ const pool = new Pool({
   connectionTimeoutMillis: 10000,
 });
 
+// ============================================================================
+// CPU SAVING HELPERS
+// ============================================================================
+// (1) Schema/DDL runs ONCE per server instance instead of on every request.
+let _schemaPromise = null;
+async function initSchemaOnce(client) {
+  if (!_schemaPromise) {
+    _schemaPromise = (async () => {
+      await client.query("BEGIN");
+      try {
+        await ensureAppSettings(client);
+        await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS first_name TEXT`);
+        await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS last_name TEXT`);
+        await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS signup_bonus_given BOOLEAN NOT NULL DEFAULT FALSE`);
+        await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS deposit_wallet TEXT`);
+        await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT FALSE`);
+        await client.query(`ALTER TABLE public.referral_rewards ADD COLUMN IF NOT EXISTS credited_at TIMESTAMPTZ`);
+        await client.query(`ALTER TABLE public.referral_commissions ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ`);
+        await client.query(`ALTER TABLE public.transactions DROP CONSTRAINT IF EXISTS transactions_transaction_type_check`).catch(() => {});
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS public.user_notifications (
+            id BIGSERIAL PRIMARY KEY,
+            user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+            kind TEXT NOT NULL,
+            title TEXT NOT NULL,
+            message TEXT NOT NULL,
+            is_read BOOLEAN NOT NULL DEFAULT FALSE,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          )
+        `);
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS public.gift_codes (
+            id BIGSERIAL PRIMARY KEY,
+            code TEXT UNIQUE NOT NULL,
+            points NUMERIC(20,2) NOT NULL,
+            max_uses INTEGER NOT NULL DEFAULT 1,
+            uses INTEGER NOT NULL DEFAULT 0,
+            expires_at TIMESTAMPTZ,
+            created_by TEXT,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          )
+        `);
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS public.gift_code_redemptions (
+            gift_code_id BIGINT REFERENCES public.gift_codes(id) ON DELETE CASCADE,
+            user_id BIGINT REFERENCES public.users(id) ON DELETE CASCADE,
+            redeemed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            PRIMARY KEY(gift_code_id, user_id)
+          )
+        `);
+        await client.query("COMMIT");
+      } catch (err) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw err;
+      }
+    })().catch((err) => {
+      _schemaPromise = null; // retry on next request
+      throw err;
+    });
+  }
+  return _schemaPromise;
+}
+
+let _roundsSchemaReady = false;
+
+// (2) Activity heartbeat: cron reads this to know if anybody is using the app.
+let _lastTouchMs = 0;
+function touchActivity() {
+  const now = Date.now();
+  if (now - _lastTouchMs < 60000) return;
+  _lastTouchMs = now;
+  pool
+    .query(
+      `INSERT INTO public.app_settings (key, value) VALUES ('last_activity_at', NOW()::text)
+       ON CONFLICT (key) DO UPDATE SET value = NOW()::text, updated_at = NOW()`
+    )
+    .catch(() => {}); // table may not exist on very first call - harmless
+}
+
+// (3) Short in-memory cache for the public rounds list (same data for every user).
+const _roundsCache = new Map();
+
 const BET_TYPES = ["Number", "Red", "Green", "Violet", "Big", "Small"];
 const ALLOWED_MULTIPLIERS = [1, 3, 9, 27, 81];
 const POINTS_PER_USDT = 100;
@@ -220,24 +302,28 @@ async function verifyBEP20Deposit(txHash, expectedAmountUsdt) {
 // ============================================================================
 async function ensureRounds(client) {
   try {
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS public.game_rounds (
-        id BIGSERIAL PRIMARY KEY,
-        round_code TEXT UNIQUE NOT NULL,
-        status TEXT NOT NULL DEFAULT 'open',
-        starts_at TIMESTAMPTZ NOT NULL,
-        betting_closes_at TIMESTAMPTZ NOT NULL,
-        ends_at TIMESTAMPTZ NOT NULL,
-        result_number INTEGER,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        settled_at TIMESTAMPTZ
-      )
-    `);
+    if (!_roundsSchemaReady) {
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS public.game_rounds (
+          id BIGSERIAL PRIMARY KEY,
+          round_code TEXT UNIQUE NOT NULL,
+          status TEXT NOT NULL DEFAULT 'open',
+          starts_at TIMESTAMPTZ NOT NULL,
+          betting_closes_at TIMESTAMPTZ NOT NULL,
+          ends_at TIMESTAMPTZ NOT NULL,
+          result_number INTEGER,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          settled_at TIMESTAMPTZ
+        )
+      `);
 
-    await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS betting_closes_at TIMESTAMPTZ`);
-    await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS result_number INTEGER`);
-    await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
-    await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS settled_at TIMESTAMPTZ`);
+      await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS betting_closes_at TIMESTAMPTZ`);
+      await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS result_number INTEGER`);
+      await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
+      await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS settled_at TIMESTAMPTZ`);
+
+      _roundsSchemaReady = true;
+    }
 
     const check = await client.query(`
       SELECT
@@ -383,14 +469,7 @@ function verifyTelegramInitData(initData) {
 }
 
 async function getUser(client, telegramUser) {
-  await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS first_name TEXT`);
-  await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS last_name TEXT`);
-  await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS signup_bonus_given BOOLEAN NOT NULL DEFAULT FALSE`); 
-  await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS deposit_wallet TEXT`); 
-  await client.query(`ALTER TABLE public.referral_rewards ADD COLUMN IF NOT EXISTS credited_at TIMESTAMPTZ`);
-
-  await client.query(`ALTER TABLE public.transactions DROP CONSTRAINT IF EXISTS transactions_transaction_type_check`).catch(()=>{});
-
+  // Schema is created once in initSchemaOnce().
   const result = await client.query(
     `INSERT INTO public.users (telegram_id, username, first_name, last_name)
        VALUES ($1, $2, $3, $4)
@@ -401,42 +480,6 @@ async function getUser(client, telegramUser) {
   );
 
   const user = result.rows[0];
-
-  await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT FALSE`);
-  
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS public.user_notifications (
-      id BIGSERIAL PRIMARY KEY, 
-      user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-      kind TEXT NOT NULL, 
-      title TEXT NOT NULL, 
-      message TEXT NOT NULL, 
-      is_read BOOLEAN NOT NULL DEFAULT FALSE,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS public.gift_codes (
-      id BIGSERIAL PRIMARY KEY, 
-      code TEXT UNIQUE NOT NULL, 
-      points NUMERIC(20,2) NOT NULL,
-      max_uses INTEGER NOT NULL DEFAULT 1, 
-      uses INTEGER NOT NULL DEFAULT 0, 
-      expires_at TIMESTAMPTZ,
-      created_by TEXT, 
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `);
-
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS public.gift_code_redemptions (
-      gift_code_id BIGINT REFERENCES public.gift_codes(id) ON DELETE CASCADE,
-      user_id BIGINT REFERENCES public.users(id) ON DELETE CASCADE,
-      redeemed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      PRIMARY KEY(gift_code_id, user_id)
-    )
-  `);
 
   await client.query(
     `INSERT INTO public.wallet_balances (user_id, balance)
@@ -856,6 +899,23 @@ module.exports = async function handler(req, res) {
 
   if (req.method === "GET") {
     const { page, pageSize, offset } = pageParams(req.query || {});
+    touchActivity();
+
+    // Serve from memory when nothing can have changed (same data for every user).
+    const cacheKey = page + ":" + pageSize;
+    const cached = _roundsCache.get(cacheKey);
+    if (cached) {
+      const nowMs = Date.now();
+      const roundOpen = cached.endsAtMs && nowMs < cached.endsAtMs;
+      const ttl = roundOpen ? 3000 : 1000;
+      if (nowMs - cached.at < ttl) {
+        return json(res, 200, {
+          ...cached.body,
+          server_time: new Date(nowMs + cached.dbOffsetMs).toISOString(),
+        });
+      }
+    }
+
     let client;
 
     try {
@@ -900,10 +960,11 @@ module.exports = async function handler(req, res) {
       );
 
       const total = Number(countResult.rows[0].total);
+      const serverTime = timeResult.rows[0].server_time;
 
-      return json(res, 200, {
+      const body = {
         success: true,
-        server_time: timeResult.rows[0].server_time,
+        server_time: serverTime,
         current_round: currentResult.rows[0] || null,
         rounds: roundsResult.rows,
         rounds_page: {
@@ -914,7 +975,18 @@ module.exports = async function handler(req, res) {
           has_next: offset + pageSize < total,
           has_previous: page > 1,
         },
+      };
+
+      const cur = body.current_round;
+      _roundsCache.set(cacheKey, {
+        at: Date.now(),
+        dbOffsetMs: new Date(serverTime).getTime() - Date.now(),
+        endsAtMs: cur ? new Date(cur.ends_at).getTime() : 0,
+        body,
       });
+      if (_roundsCache.size > 20) _roundsCache.clear();
+
+      return json(res, 200, body);
     } catch (error) {
       console.error("GET /api/game:", error);
       return json(res, 500, {
@@ -952,12 +1024,13 @@ module.exports = async function handler(req, res) {
   try {
     client = await pool.connect();
 
+    await initSchemaOnce(client);
+    touchActivity();
+
     await client.query("BEGIN");
     transactionStarted = true;
 
-    await ensureAppSettings(client); 
     const user = await getUser(client, telegramUser);
-    await client.query(`ALTER TABLE public.referral_commissions ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ`);
 
     if (user.is_blocked) {
       await client.query("ROLLBACK");

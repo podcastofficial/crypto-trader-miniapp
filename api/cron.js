@@ -6,7 +6,16 @@ const FUTURE_ROUNDS = 5;
 const MAX_SETTLEMENT_ATTEMPTS = 20;
 const RESULTS_CHANNEL = "@crypto_trader_results";
 
+// Minutes without any player activity before cron goes to sleep (saves Vercel CPU).
+// Set ALWAYS_ON=true in Vercel env to disable idle mode (old behaviour).
+const IDLE_MINUTES = Number(process.env.IDLE_MINUTES || 10);
+const ALWAYS_ON = String(process.env.ALWAYS_ON || "").toLowerCase() === "true";
+const MAX_BACKFILL_SLOTS = 5;
+const MAX_SCAN_BLOCKS = 6000;
+const SCAN_CHUNK_BLOCKS = 2000;
+
 let pool;
+let cronSchemaReady = false;
 
 function getPool() {
   if (!pool) {
@@ -310,31 +319,40 @@ async function scanDeposits(client) {
   };
 
   const latest = parseInt(await call("eth_blockNumber", []), 16);
-  const blockRange = 100;
-  const fromBlock = Math.max(0, latest - blockRange);
-  const chunkSize = 5;
+  const requiredConfirmations = Math.max(
+    1,
+    Number(process.env.BSC_MIN_CONFIRMATIONS || 3)
+  );
   const paddedTo = `0x${depositAddress.slice(2).padStart(64, "0")}`;
 
-  let allLogs = [];
+  // Continue from the last scanned block (stored in DB) instead of re-scanning 100 blocks every run.
+  let lastScanned = null;
+  try {
+    const st = await client.query(
+      `SELECT value FROM public.app_settings WHERE key = 'deposit_scan_last_block'`
+    );
+    if (st.rowCount) lastScanned = Number(st.rows[0].value);
+  } catch (_) { /* first run */ }
 
-  for (let i = fromBlock; i <= latest; i += chunkSize) {
-    const toBlockChunk = Math.min(i + chunkSize - 1, latest);
-    try {
-      const chunkLogs = await call("eth_getLogs", [
-        {
-          address: token,
-          fromBlock: `0x${i.toString(16)}`,
-          toBlock: `0x${toBlockChunk.toString(16)}`,
-          topics: [USDT_TRANSFER_TOPIC, null, paddedTo]
-        }
-      ]);
-      if (chunkLogs && chunkLogs.length > 0) {
-        allLogs.push(...chunkLogs);
+  let fromBlock = Number.isFinite(lastScanned) && lastScanned > 0
+    ? lastScanned + 1
+    : Math.max(0, latest - 100);
+  fromBlock = Math.max(fromBlock, latest - MAX_SCAN_BLOCKS);
+  if (fromBlock > latest) return 0;
+
+  // Few large RPC calls (was ~21 small calls with 150ms sleeps between them).
+  const allLogs = [];
+  for (let i = fromBlock; i <= latest; i += SCAN_CHUNK_BLOCKS) {
+    const to = Math.min(i + SCAN_CHUNK_BLOCKS - 1, latest);
+    const chunk = await call("eth_getLogs", [
+      {
+        address: token,
+        fromBlock: `0x${i.toString(16)}`,
+        toBlock: `0x${to.toString(16)}`,
+        topics: [USDT_TRANSFER_TOPIC, null, paddedTo]
       }
-    } catch (err) {
-      console.error(`Deposit scan chunk error (${i}-${toBlockChunk}):`, err.message);
-    }
-    await new Promise(res => setTimeout(res, 150));
+    ]);
+    if (chunk && chunk.length) allLogs.push(...chunk);
   }
 
   let credited = 0;
@@ -346,11 +364,6 @@ async function scanDeposits(client) {
     const confirmations = Math.max(
       0, 
       latest - parseInt(String(log.blockNumber || "0"), 16) + 1
-    );
-
-    const requiredConfirmations = Math.max(
-      1, 
-      Number(process.env.BSC_MIN_CONFIRMATIONS || 3)
     );
 
     if (confirmations < requiredConfirmations) continue;
@@ -425,7 +438,34 @@ async function scanDeposits(client) {
     credited++;
   }
 
+  // Keep the last few blocks for the next run so logs that were still
+  // "unconfirmed" get re-checked (already credited txs are skipped by tx_hash).
+  const safeBlock = latest - requiredConfirmations;
+  if (safeBlock > 0 && (!Number.isFinite(lastScanned) || safeBlock > lastScanned)) {
+    await client.query(
+      `INSERT INTO public.app_settings (key, value) VALUES ('deposit_scan_last_block', $1)
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+      [String(safeBlock)]
+    );
+  }
+
   return credited;
+}
+
+// Returns true when nobody has used the app for IDLE_MINUTES. Fails open on errors.
+async function isIdle() {
+  if (ALWAYS_ON) return false;
+  try {
+    const r = await getPool().query(
+      `SELECT (value::timestamptz > NOW() - ($1::int * INTERVAL '1 minute')) AS recent
+       FROM public.app_settings WHERE key = 'last_activity_at'`,
+      [IDLE_MINUTES]
+    );
+    if (!r.rowCount) return true;
+    return r.rows[0].recent !== true;
+  } catch (_) {
+    return false;
+  }
 }
 
 function authorized(req) {
@@ -455,6 +495,10 @@ module.exports = async function handler(req, res) {
     });
   }
 
+  if (await isIdle()) {
+    return sendJson(res, 200, { success: true, idle: true });
+  }
+
   let client;
 
   try {
@@ -466,35 +510,36 @@ module.exports = async function handler(req, res) {
       [739184205]
     );
 
-    // Database tables safety check
-    try { 
-      await client.query(`SELECT 1 FROM public.channel_settings LIMIT 1`); 
-    } catch (e) {
+    // Database tables safety check (runs once per server instance)
+    if (!cronSchemaReady) {
+      await client.query(`CREATE TABLE IF NOT EXISTS public.app_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`);
       await client.query(`CREATE TABLE IF NOT EXISTS public.channel_settings (
-        id INT PRIMARY KEY DEFAULT 1, 
-        channel_username TEXT DEFAULT '@crypto_trader_results', 
-        bot_username TEXT DEFAULT 'YourBot', 
-        predictions_enabled BOOLEAN DEFAULT TRUE, 
-        prediction_timing INT DEFAULT 150, 
-        prediction_message TEXT, 
-        result_message TEXT, 
-        result_image_url TEXT, 
+        id INT PRIMARY KEY DEFAULT 1,
+        channel_username TEXT DEFAULT '@crypto_trader_results',
+        bot_username TEXT DEFAULT 'YourBot',
+        predictions_enabled BOOLEAN DEFAULT TRUE,
+        prediction_timing INT DEFAULT 150,
+        prediction_message TEXT,
+        result_message TEXT,
+        result_image_url TEXT,
         inline_link_text TEXT DEFAULT 'Play'
       )`);
       await client.query(`INSERT INTO public.channel_settings (id) VALUES (1) ON CONFLICT DO NOTHING`);
+      await client.query(`ALTER TABLE public.prediction_history ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ`);
+      await client.query(`CREATE TABLE IF NOT EXISTS public.prediction_channels (
+        id BIGSERIAL PRIMARY KEY,
+        channel_id TEXT NOT NULL UNIQUE,
+        is_active BOOLEAN DEFAULT TRUE,
+        schedule_mins INT DEFAULT 3,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )`);
+      await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS predicted_result INT`);
+      cronSchemaReady = true;
     }
-
-    // Add sent_at to prediction history for tracking prediction message sent status
-    await client.query(`ALTER TABLE public.prediction_history ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ`);
-
-    // Create extra channels table for multi-channel support
-    await client.query(`CREATE TABLE IF NOT EXISTS public.prediction_channels (
-      id BIGSERIAL PRIMARY KEY, 
-      channel_id TEXT NOT NULL UNIQUE,
-      is_active BOOLEAN DEFAULT TRUE, 
-      schedule_mins INT DEFAULT 3, 
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    )`);
 
     const timeResult = await client.query(
       `
@@ -539,6 +584,8 @@ module.exports = async function handler(req, res) {
     }
 
     firstSlot = Math.min(firstSlot, currentSlot);
+    // Never back-fill long idle gaps (would insert hundreds of empty rounds).
+    firstSlot = Math.max(firstSlot, currentSlot - MAX_BACKFILL_SLOTS * ROUND_SECONDS);
 
     let roundsCreated = 0;
 
@@ -623,8 +670,6 @@ module.exports = async function handler(req, res) {
     // ==========================================
     // PREDICTION SENDING LOGIC BASED ON TIMING
     // ==========================================
-    await client.query(`ALTER TABLE public.game_rounds ADD COLUMN IF NOT EXISTS predicted_result INT`);
-
     // Make sure every upcoming/current round has an auto prediction (rounds can also be created by api/game.js)
     const missing = await client.query(`
       SELECT r.round_code FROM public.game_rounds r

@@ -1,0 +1,3099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Crypto Trader Pro | Admin Panel</title>
+
+<style>
+/* =========================================================
+   ORIGINAL CSS + NEW FEATURE STYLES
+   ========================================================= */
+:root {
+  --bg: #090909;
+  --panel: #121212;
+  --panel2: #181818;
+  --border: #292929;
+  --yellow: #ffd400;
+  --yellow2: #e5bd00;
+  --text: #f4f4f4;
+  --muted: #999;
+  --green: #20d49a;
+  --red: #ff5268;
+  --violet: #a78bfa;
+  --blue: #65a9ff;
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+}
+
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+
+.hidden { display: none !important; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.green { color: var(--green); }
+.red { color: var(--red); }
+.yellow { color: var(--yellow); }
+.violet { color: var(--violet); }
+
+#loginView {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: radial-gradient(circle at 50% 0%, #292200 0, transparent 45%), var(--bg);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 390px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 20px 80px #0008;
+}
+
+.brand { display: flex; align-items: center; gap: 12px; }
+
+.brand-icon {
+  display: grid;
+  place-items: center;
+  width: 45px;
+  height: 45px;
+  border-radius: 13px;
+  background: var(--yellow);
+  color: #111;
+  font-size: 23px;
+  font-weight: 900;
+}
+
+.brand h1 { margin: 0; font-size: 18px; }
+.brand p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+.login-card h2 { margin: 28px 0 6px; font-size: 24px; }
+.login-card > p { margin: 0 0 24px; color: var(--muted); }
+
+.field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; }
+.field label { color: #ccc; font-size: 12px; }
+
+input, select, textarea {
+  min-width: 0;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #0d0d0d;
+  color: var(--text);
+  outline: none;
+}
+
+input:focus, select:focus, textarea:focus { border-color: var(--yellow); }
+textarea { resize: vertical; min-height: 120px; }
+
+.btn {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text);
+  background: var(--panel2);
+  font-weight: 700;
+}
+
+.btn:hover { border-color: #666; }
+
+.btn-primary {
+  background: var(--yellow);
+  color: #111;
+  border-color: var(--yellow);
+}
+
+.btn-primary:hover { background: var(--yellow2); }
+
+.btn-danger {
+  color: var(--red);
+  border-color: #61242d;
+  background: #2a1216;
+}
+
+.btn-danger:hover { background: #3a181d; }
+
+.btn-block { width: 100%; }
+
+.error { color: var(--red); font-size: 12px; margin-top: 12px; line-height: 1.5; }
+
+#appView { min-height: 100vh; }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 12px 22px;
+  background: #101010ee;
+  backdrop-filter: blur(15px);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar .brand-icon { width: 38px; height: 38px; font-size: 19px; }
+.topbar .brand h1 { font-size: 15px; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+
+.admin-badge {
+  color: var(--yellow);
+  border: 1px solid #665500;
+  background: #282100;
+  border-radius: 20px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.notif-wrap { position: relative; }
+
+.notif-btn {
+  position: relative;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: var(--text);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.notif-btn:hover { background: rgba(255, 255, 255, 0.1); }
+
+.notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: var(--red);
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  border-radius: 50%;
+  padding: 2px 6px;
+  border: 2px solid #101010;
+}
+
+.notif-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 320px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+.notif-header {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border);
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notif-item { padding: 12px 15px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.notif-item:last-child { border-bottom: none; }
+.notif-item strong { display: block; margin-bottom: 4px; }
+.notif-item small { color: var(--muted); display: block; font-size: 11px; margin-top: 4px; }
+
+.layout { display: grid; grid-template-columns: 225px minmax(0, 1fr); min-height: calc(100vh - 68px); }
+
+.sidebar { padding: 18px 12px; background: #0c0c0c; border-right: 1px solid var(--border); }
+
+.nav-label {
+  margin: 14px 10px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #707070;
+  letter-spacing: 1.2px;
+}
+
+.nav-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  padding: 11px 12px;
+  margin: 3px 0;
+  background: transparent;
+  color: #aaa;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-size: 13px;
+}
+
+.nav-btn:hover { background: #181818; color: #fff; }
+
+.nav-btn.active {
+  background: #292300;
+  color: var(--yellow);
+  border-color: #514500;
+  font-weight: 800;
+}
+
+.nav-icon { width: 20px; text-align: center; font-size: 16px; }
+.main { min-width: 0; padding: 24px; }
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.page-header h2 { margin: 0; font-size: 25px; letter-spacing: -.5px; }
+.page-header p { margin: 7px 0 0; color: var(--muted); line-height: 1.5; }
+.header-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.grid { display: grid; gap: 14px; }
+.stats-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 20px; }
+
+.stat-card, .card {
+  min-width: 0;
+  padding: 17px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.stat-label { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+.stat-value { font-size: clamp(20px, 2vw, 28px); font-weight: 850; overflow-wrap: anywhere; }
+.stat-note { margin-top: 9px; font-size: 11px; color: var(--muted); }
+.card { margin-bottom: 18px; }
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+
+.card-head h3 { margin: 0; font-size: 15px; }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 16px; }
+.toolbar > * { flex: 1 1 150px; }
+
+.table-wrap { width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 12px; }
+th, td { padding: 12px; border-bottom: 1px solid #242424; text-align: left; vertical-align: top; white-space: nowrap; }
+
+th {
+  background: #1a1a1a;
+  color: #bbb;
+  font-weight: 800;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+td { color: #e0e0e0; }
+tbody tr:hover { background: #191919; }
+tbody tr:last-child td { border-bottom: 0; }
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  background: #252525;
+  color: #ccc;
+  text-transform: uppercase;
+}
+
+.badge.success { background: #10382c; color: var(--green); }
+.badge.danger { background: #401a21; color: var(--red); }
+.badge.warning { background: #3a3008; color: var(--yellow); }
+.badge.info { background: #1a2b45; color: var(--blue); }
+.badge.violet { background: #302044; color: var(--violet); }
+
+.status-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+
+.status-item {
+  padding: 13px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #0e0e0e;
+}
+
+.status-item span { display: block; color: var(--muted); font-size: 11px; margin-bottom: 8px; }
+.status-item strong { font-size: 17px; overflow-wrap: anywhere; }
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.pagination-actions { display: flex; gap: 7px; }
+
+.notice {
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border-radius: 9px;
+  background: #171717;
+  border: 1px solid var(--border);
+  color: #bbb;
+  line-height: 1.6;
+}
+
+.notice.warning { background: #211c08; border-color: #5a4b0b; color: #f0dc86; }
+.notice.danger { background: #291217; border-color: #5c2730; color: #ffb3bd; }
+.empty { padding: 35px 15px; text-align: center; color: var(--muted); }
+.loading { padding: 22px; text-align: center; color: var(--muted); }
+
+.toast {
+  position: fixed;
+  z-index: 100;
+  right: 18px;
+  bottom: 18px;
+  max-width: calc(100vw - 36px);
+  padding: 13px 16px;
+  background: #202020;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 10px;
+  box-shadow: 0 10px 40px #0008;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: .3s;
+}
+
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.error-toast { border-color: #7b2935; }
+
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  min-height: 170px;
+  overflow-x: auto;
+  padding: 15px 5px 0;
+}
+
+.chart-col { flex: 1; min-width: 25px; text-align: center; }
+
+.chart-bar {
+  min-height: 3px;
+  border-radius: 5px 5px 0 0;
+  background: var(--yellow);
+  width: 100%;
+}
+
+.chart-label { margin-top: 7px; color: var(--muted); font-size: 10px; }
+.chart-number { font-size: 10px; margin-bottom: 5px; }
+.detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+
+.detail-item {
+  border: 1px solid var(--border);
+  background: #0e0e0e;
+  border-radius: 9px;
+  padding: 12px;
+  min-width: 0;
+}
+
+.detail-item span { display: block; color: var(--muted); font-size: 11px; margin-bottom: 7px; }
+.detail-item strong { overflow-wrap: anywhere; }
+
+pre {
+  max-width: 100%;
+  overflow: auto;
+  color: #ddd;
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 13px;
+  font-size: 12px;
+}
+
+/* Theme overrides */
+:root {
+  --bg: #07090d;
+  --panel: #10141b;
+  --panel2: #171c24;
+  --border: #26303d;
+  --yellow: #f5c84b;
+  --yellow2: #dfad2e;
+  --text: #f7f8fa;
+  --muted: #8d98a8;
+  --green: #35d39a;
+  --red: #ff6b7c;
+  --blue: #70a9ff;
+  --radius: 16px;
+}
+
+body {
+  background: radial-gradient(circle at 72% -15%, #1b2638 0, transparent 36%), var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+#loginView { background: radial-gradient(circle at 50% 0%, #3a3014 0, transparent 42%), var(--bg); }
+.login-card { background: rgba(16, 20, 27, .94); border-color: #354050; box-shadow: 0 28px 90px #000b; }
+.brand-icon { border-radius: 14px; background: linear-gradient(135deg, #f8d66a, #d79f21); box-shadow: 0 8px 22px #c9972630; }
+.topbar { min-height: 76px; padding: 14px 28px; background: rgba(7, 9, 13, .84); border-bottom-color: #222c39; }
+.topbar .brand h1 { letter-spacing: .6px; }
+.topbar .brand p { color: #748195; }
+.admin-badge { background: #2b2411; border-color: #6a5318; color: #f5d36d; }
+.layout { grid-template-columns: 248px minmax(0, 1fr); }
+.sidebar { padding: 22px 15px; background: rgba(10, 13, 18, .82); border-right-color: #222c39; }
+.nav-label { color: #647085; letter-spacing: 1.5px; }
+.nav-btn { padding: 12px 13px; border-radius: 11px; color: #9da8b7; }
+.nav-btn:hover { background: #171e28; color: #fff; }
+.nav-btn.active {
+  background: linear-gradient(90deg, #302710, #211e15);
+  border-color: #6a5318;
+  color: #f8d873;
+  box-shadow: inset 3px 0 0 #f5c84b;
+}
+
+.main { padding: 30px; max-width: 1680px; }
+.page-header { margin-bottom: 26px; }
+.page-header h2 { font-size: 30px; letter-spacing: -.8px; }
+.page-header p { color: #8d98a8; }
+
+.stat-card, .card {
+  background: linear-gradient(145deg, rgba(20, 26, 35, .98), rgba(13, 17, 23, .98));
+  border-color: #273241;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px #0002;
+}
+
+.stat-card { padding: 19px; }
+.stat-label { color: #8d98a8; letter-spacing: .2px; }
+.stat-value { letter-spacing: -.5px; }
+.card { padding: 20px; }
+.card-head h3 { font-size: 16px; }
+
+input, select, textarea { background: #0b0f15; border-color: #2a3544; border-radius: 10px; padding: 12px 13px; }
+input:focus, select:focus, textarea:focus { border-color: #e4b83d; box-shadow: 0 0 0 3px #e4b83d1c; }
+.btn { border-radius: 10px; background: #19202a; border-color: #2c3746; }
+.btn:hover { border-color: #657387; background: #222b37; }
+.btn-primary {
+  background: linear-gradient(135deg, #f5cd58, #dfa92d);
+  border-color: #f5cd58;
+  box-shadow: 0 7px 18px #d6a52e24;
+  color: #111;
+}
+.btn-primary:hover { background: linear-gradient(135deg, #ffdc73, #eaba3b); }
+.btn-danger { background: #291820; border-color: #5e2935; }
+.row-actions { display: flex; gap: 6px; flex-wrap: wrap; min-width: 170px; }
+.row-actions .btn { padding: 7px 9px; font-size: 12px; }
+.table-wrap { border-color: #293544; border-radius: 12px; }
+th { background: #18202b; color: #aeb8c6; }
+th, td { border-bottom-color: #25303d; }
+tbody tr:hover { background: #19212b; }
+.status-item, .detail-item { background: #0b1016; border-color: #293544; }
+.notice { background: #161d27; border-color: #2c3746; }
+.notice.warning { background: #29230f; border-color: #6a5318; }
+.toast { background: #1b222c; border-color: #4b596b; }
+
+/* New Helper Styles */
+.copy-btn {
+  background: transparent;
+  border: none;
+  color: var(--yellow);
+  cursor: pointer;
+  margin-left: 5px;
+  font-size: 14px;
+  padding: 0;
+}
+
+.copy-btn:hover { color: #fff; }
+a.tx-link { color: var(--blue); text-decoration: none; }
+a.tx-link:hover { text-decoration: underline; }
+
+.switch {
+  width: 48px;
+  height: 26px;
+  border-radius: 30px;
+  background: #333;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.switch i {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+}
+
+.switch.on { background: var(--green); }
+.switch.on i { transform: translateX(22px); }
+.grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+.inline-form { display: flex; flex-wrap: wrap; gap: 9px; align-items: flex-end; }
+.inline-form .field { margin: 0; flex: 1 1 180px; }
+.winloss-bar { display: flex; height: 10px; border-radius: 6px; overflow: hidden; background: #222; margin-top: 8px; }
+.winloss-bar .w { background: var(--green); }
+.winloss-bar .l { background: var(--red); }
+.pred-next { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.result-big { font-size: 26px; font-weight: 900; color: var(--yellow); }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+.timer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: rgba(245, 200, 75, 0.12);
+  border: 1px solid rgba(245, 200, 75, 0.35);
+  color: var(--yellow);
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.timer-badge.urgent {
+  background: rgba(255, 107, 124, 0.15);
+  border-color: rgba(255, 107, 124, 0.5);
+  color: var(--red);
+  animation: pulseUrgent 1s ease-in-out infinite;
+}
+.timer-badge.expired {
+  background: rgba(141, 152, 168, 0.15);
+  border-color: rgba(141, 152, 168, 0.4);
+  color: var(--muted);
+}
+@keyframes pulseUrgent {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@media (max-width: 1100px) {
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .layout { grid-template-columns: 190px minmax(0, 1fr); }
+  .main { padding: 18px; }
+}
+
+@media (max-width: 720px) {
+  .topbar { padding: 10px 13px; }
+  .topbar .brand p { display: none; }
+  .layout { display: block; }
+  .sidebar {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 9px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-label { display: none; }
+  .nav-btn {
+    flex: 0 0 auto;
+    width: auto;
+    white-space: nowrap;
+    margin: 0;
+    padding: 10px;
+  }
+  .main { padding: 15px; }
+  .page-header h2 { font-size: 22px; }
+  .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .notif-dropdown { width: 290px; right: 0; }
+  .card { padding: 15px; }
+  .grid-4 { grid-template-columns: 1fr; }
+  .pred-next { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 420px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 9px; }
+  .stat-card { padding: 12px; }
+  .stat-value { font-size: 19px; }
+  .stat-label { font-size: 11px; }
+  .topbar-right .admin-badge { display: none; }
+  .status-grid, .detail-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+
+<body>
+
+<section id="loginView">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-icon">₿</div>
+      <div>
+        <h1>CRYPTO TRADER PRO</h1>
+        <p>Secure Administration</p>
+      </div>
+    </div>
+
+    <h2>Admin Login</h2>
+    <p>Sign in to manage and monitor your platform.</p>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="loginUsername">Username</label>
+        <input id="loginUsername" name="username" autocomplete="username" required maxlength="200">
+      </div>
+
+      <div class="field">
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" name="password" type="password" autocomplete="current-password" required maxlength="500">
+      </div>
+
+      <button class="btn btn-primary btn-block" id="loginButton" type="submit">Sign In Securely</button>
+
+      <div id="loginError" class="error"></div>
+    </form>
+
+    <p class="small muted" style="margin-top:22px">Authorized administrators only.</p>
+  </div>
+</section>
+
+<section id="appView" class="hidden">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">₿</div>
+      <div>
+        <h1>CRYPTO TRADER PRO</h1>
+        <p>Administration Dashboard</p>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <span class="admin-badge">ADMIN</span>
+      <span id="adminUsername" class="small muted"></span>
+
+      <div class="notif-wrap">
+        <button class="notif-btn" id="notifBell" type="button">
+          🔔
+          <span id="notifBadge" class="notif-badge hidden">0</span>
+        </button>
+        <div id="notifDropdown" class="notif-dropdown hidden">
+          <div class="notif-header">
+            <span>Pending Requests</span>
+            <button class="btn small" id="closeNotif" style="padding:4px 8px;">✕</button>
+          </div>
+          <div id="notifList">
+            <div class="empty">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-danger" id="logoutButton">Logout</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <div id="pageContent">
+        <div class="loading">Loading dashboard...</div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<div id="toast" class="toast" role="status"></div>
+
+<script>
+"use strict";
+
+const API_URL = "/api/admin";
+
+const VIEWS = [
+  { group: "OVERVIEW", items: [
+    ["dashboard", "▦", "Dashboard"],
+    ["analytics", "◫", "Analytics"],
+    ["reconcile", "⇄", "Reconciliation"]
+  ]},
+  { group: "PLATFORM", items: [
+    ["users", "♙", "Users"],
+    ["wallets", "◈", "Wallets"],
+    ["transactions", "⇄", "Transactions"],
+    ["deposit_addresses", "⌁", "Deposit Addresses"],
+    ["deposits", "↓", "Deposits"],
+    ["withdrawals", "↑", "Withdrawals"],
+    ["gift_codes", "🎁", "Gift Codes"],
+    ["gift_history", "🎟️", "Gift Redemptions"],
+    ["rounds", "◷", "Game Rounds"],
+    ["bets", "♠", "Bets"],
+    ["referrals", "♧", "Referrals"]
+  ]},
+  { group: "CONTROL & BOT", items: [
+    ["channel_settings", "⚙️", "Channel Settings"],
+    ["broadcast", "📢", "Broadcast"],
+    ["telegram", "✈", "Telegram Logs"],
+    ["telegram_support", "🎧", "Telegram Support"],
+    ["app_settings", "🛠️", "Settings"]
+  ]},
+  { group: "SECURITY", items: [
+    ["audit", "▤", "Audit Logs"],
+    ["login_attempts", "⌁", "Login Attempts"],
+    ["security", "🛡️", "Security Summary"],
+    ["search", "⌕", "Global Search"]
+  ]}
+];
+
+const state = {
+  username: "",
+  currentView: "dashboard",
+  pages: {},
+  filters: {},
+  userDetailId: null,
+  busy: false,
+  notifInterval: null,
+  botUsername: null
+};
+
+const $ = id => document.getElementById(id);
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[c]);
+}
+
+function getColour(n) {
+  if (n === null || n === undefined || n === "") return "—";
+  const num = Number(n);
+  if (num === 0 || num === 5) return "Violet";
+  if ([1, 3, 7, 9].includes(num)) return "Green";
+  if ([2, 4, 6, 8].includes(num)) return "Red";
+  return "—";
+}
+
+function getBigSmall(n) {
+  if (n === null || n === undefined || n === "") return "—";
+  return Number(n) >= 5 ? "Big" : "Small";
+}
+
+function formatNumber(value, decimals = 2) {
+  if (value === null || value === undefined || value === "") return "—";
+  const n = Number(value);
+  if (!Number.isFinite(n)) return String(value);
+  return n.toLocaleString("en-US", { maximumFractionDigits: decimals });
+}
+
+function formatDate(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", hour12: true });
+}
+
+function money(v) { return formatNumber(v, 4); }
+function statValue(v, d = 2) { return formatNumber(v ?? 0, d); }
+
+function badge(value) {
+  const text = String(value ?? "unknown");
+  const low = text.toLowerCase();
+  let cls = "";
+  if (["completed", "confirmed", "settled", "won", "success"].includes(low)) cls = "success";
+  else if (["failed", "rejected", "lost", "cancelled", "error"].includes(low)) cls = "danger";
+  else if (["pending", "open", "locked"].includes(low)) cls = "warning";
+  else if (["active", "info"].includes(low)) cls = "info";
+  return `<span class="badge ${cls}">${escapeHtml(text)}</span>`;
+}
+
+function toast(message, isError = false) {
+  const el = $("toast");
+  el.textContent = message;
+  el.className = "toast show" + (isError ? " error-toast" : "");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => el.classList.remove("show"), 3500);
+}
+
+/* ===== Period countdown timers ===== */
+let periodTimerInterval = null;
+
+function stopPeriodTimers() {
+  if (periodTimerInterval) {
+    clearInterval(periodTimerInterval);
+    periodTimerInterval = null;
+  }
+}
+
+function startPeriodTimers() {
+  stopPeriodTimers();
+  const update = () => {
+    document.querySelectorAll("[data-countdown-to]").forEach(el => {
+      const endsAt = el.dataset.countdownTo;
+      const target = new Date(endsAt).getTime();
+      if (!endsAt || isNaN(target)) {
+        el.textContent = "⏱ —";
+        el.className = "timer-badge expired";
+        return;
+      }
+      const diff = target - Date.now();
+      if (diff <= 0) {
+        el.innerHTML = "⏱ 00:00 · Ended";
+        el.className = "timer-badge expired";
+        if (!el.dataset.refreshed && el.dataset.refreshFn) {
+          el.dataset.refreshed = "1";
+          const fn = el.dataset.refreshFn;
+          setTimeout(() => {
+            if (typeof window[fn] === "function" && state.currentView) {
+              try { window[fn](); } catch { /* ignore */ }
+            }
+          }, 3000);
+        }
+        return;
+      }
+      const totalSec = Math.floor(diff / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      const pad = n => String(n).padStart(2, "0");
+      const display = h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+      el.innerHTML = `⏱ ${display}`;
+      el.className = "timer-badge" + (totalSec <= 30 ? " urgent" : "");
+    });
+  };
+  update();
+  periodTimerInterval = setInterval(update, 1000);
+}
+
+/* ===== Blockchain explorers + copy helpers ===== */
+const EXPLORERS = {
+  "BEP-20": "https://bscscan.com/tx/",
+  "BSC": "https://bscscan.com/tx/",
+  "TRC-20": "https://tronscan.org/#/transaction/",
+  "TRON": "https://tronscan.org/#/transaction/",
+  "ERC-20": "https://etherscan.io/tx/",
+  "ETHEREUM": "https://etherscan.io/tx/",
+  "ETH": "https://etherscan.io/tx/",
+  "POLYGON": "https://polygonscan.com/tx/",
+  "SOL": "https://solscan.io/tx/",
+  "SOLANA": "https://solscan.io/tx/",
+  "BTC": "https://mempool.space/tx/",
+  "GRAM": "https://tonscan.org/tx/",
+  "TON": "https://tonscan.org/tx/"
+};
+
+function explorerInfo(network, hash) {
+  if (!hash) return null;
+  const n = String(network || "").toUpperCase();
+  let base = EXPLORERS[n] || "";
+  let name = "";
+  if (!base) {
+    if (/TRC|TRON/.test(n)) base = EXPLORERS["TRC-20"];
+    else if (/ERC|ETH/.test(n)) base = EXPLORERS["ERC-20"];
+    else if (/POLYGON|MATIC/.test(n)) base = EXPLORERS["POLYGON"];
+    else if (/SOL/.test(n)) base = EXPLORERS["SOL"];
+    else if (/BTC|BITCOIN/.test(n)) base = EXPLORERS["BTC"];
+    else if (/TON|GRAM/.test(n)) base = EXPLORERS["TON"];
+    else if (/BEP|BSC|BNB/.test(n) || /^0x[a-fA-F0-9]{64}$/.test(hash)) base = EXPLORERS["BSC"];
+  }
+  if (!base) return null;
+  if (base.includes("bscscan")) name = "BscScan";
+  else if (base.includes("tronscan")) name = "TronScan";
+  else if (base.includes("etherscan")) name = "Etherscan";
+  else if (base.includes("polygonscan")) name = "PolygonScan";
+  else if (base.includes("solscan")) name = "Solscan";
+  else if (base.includes("mempool")) name = "Mempool";
+  else name = "Explorer";
+  return { url: base + hash, name };
+}
+
+function explorerUrl(network, hash) {
+  const info = explorerInfo(network, hash);
+  return info ? info.url : "";
+}
+
+function txHashCell(hash, network) {
+  if (!hash) return "—";
+  const info = explorerInfo(network, hash);
+  const short = hash.length > 18 ? hash.slice(0, 10) + "…" + hash.slice(-6) : hash;
+  const copyHash = `<button class="copy-btn" data-copy="${escapeHtml(hash)}" title="Copy transaction hash" type="button">📋</button>`;
+  if (!info) return `<span class="mono" title="${escapeHtml(hash)}">${escapeHtml(short)}</span> ${copyHash}`;
+  return `<a class="tx-link mono" href="${escapeHtml(info.url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(hash)}">${escapeHtml(short)} ↗</a> ${copyHash}
+    <button class="copy-btn" data-copy="${escapeHtml(info.url)}" title="Copy ${escapeHtml(info.name)} link" type="button">🔗</button>
+    <a class="tx-link small" href="${escapeHtml(info.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(info.name)}</a>`;
+}
+
+function addressCell(addr) {
+  if (!addr) return "—";
+  const short = addr.length > 18 ? addr.slice(0, 10) + "…" + addr.slice(-6) : addr;
+  return `<span class="mono" title="${escapeHtml(addr)}">${escapeHtml(short)}</span>
+    <button class="copy-btn" data-copy="${escapeHtml(addr)}" title="Copy address" type="button">📋</button>`;
+}
+
+function copyText(text) {
+  if (!text) return;
+  const done = () => toast("Copied");
+  const fallback = () => {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      document.execCommand("copy"); ta.remove(); done();
+    } catch { toast("Copy failed", true); }
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(done).catch(fallback);
+  } else fallback();
+}
+
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-copy]");
+  if (btn) { e.preventDefault(); copyText(btn.dataset.copy); }
+});
+
+async function api(action, data = {}) {
+  const response = await fetch(API_URL, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json", "X-Admin-Request": "1" },
+    body: JSON.stringify({ action, ...data })
+  });
+  
+  let result;
+  try {
+    result = await response.json();
+  } catch {
+    const text = await response.text().catch(() => "");
+    console.error("Server returned non-JSON response:", text);
+    throw new Error("Server returned an invalid response. Check Vercel logs.");
+  }
+  
+  if (response.status === 401 && action !== "login") {
+    showLogin("Your session expired. Please sign in again.");
+  }
+  if (!response.ok || result.ok === false) {
+    throw new Error(result.error || result.message || "Request failed.");
+  }
+  return result;
+}
+
+function showLogin(message = "") {
+  stopPeriodTimers();
+  if (state.notifInterval) {
+    clearInterval(state.notifInterval);
+    state.notifInterval = null;
+  }
+  $("appView").classList.add("hidden");
+  $("loginView").classList.remove("hidden");
+  $("loginError").textContent = message;
+  $("loginPassword").value = "";
+  state.username = "";
+  state.botUsername = null;
+}
+
+async function showApp(username) {
+  state.username = username || "Admin";
+  $("adminUsername").textContent = state.username;
+  $("loginView").classList.add("hidden");
+  $("appView").classList.remove("hidden");
+  renderNavigation();
+  navigate("dashboard");
+  fetchNotifications();
+  if (state.notifInterval) clearInterval(state.notifInterval);
+  state.notifInterval = setInterval(fetchNotifications, 30000);
+  loadBotUsername();
+}
+
+async function loadBotUsername() {
+  try {
+    const data = await api("channel_settings");
+    state.botUsername = (data.settings && data.settings.bot_username) || null;
+    if (state.botUsername) localStorage.setItem("bot_username", state.botUsername);
+  } catch { /* ignore */ }
+}
+
+function renderNavigation() {
+  const sidebar = $("sidebar");
+  sidebar.innerHTML = VIEWS.map(group => `
+    <div class="nav-label">${escapeHtml(group.group)}</div>
+    ${group.items.map(item => `
+      <button class="nav-btn ${state.currentView === item[0] ? "active" : ""}" data-view="${escapeHtml(item[0])}">
+        <span class="nav-icon">${item[1]}</span>
+        <span>${escapeHtml(item[2])}</span>
+      </button>
+    `).join("")}
+  `).join("");
+  sidebar.querySelectorAll("[data-view]").forEach(btn => {
+    btn.addEventListener("click", () => navigate(btn.dataset.view));
+  });
+}
+
+function setPage(title, description, actions = "") {
+  $("pageContent").innerHTML = `
+    <div class="page-header">
+      <div><h2>${escapeHtml(title)}</h2><p>${escapeHtml(description)}</p></div>
+      <div class="header-actions">${actions}</div>
+    </div>
+    <div id="viewBody"><div class="loading">Loading data...</div></div>
+  `;
+}
+
+function metricCard(label, value, note = "", color = "") {
+  return `
+    <div class="stat-card">
+      <div class="stat-label">${escapeHtml(label)}</div>
+      <div class="stat-value ${color}">${escapeHtml(value)}</div>
+      <div class="stat-note">${escapeHtml(note)}</div>
+    </div>`;
+}
+
+function table(headers, rows, emptyText = "No records found.") {
+  if (!rows || !rows.length) return `<div class="empty">${escapeHtml(emptyText)}</div>`;
+  return `
+    <div class="table-wrap"><table>
+      <thead><tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
+      <tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c ?? "—"}</td>`).join("")}</tr>`).join("")}</tbody>
+    </table></div>`;
+}
+
+function detailItem(label, value) {
+  return `<div class="detail-item"><span>${escapeHtml(label)}</span><strong>${value ?? "—"}</strong></div>`;
+}
+
+function viewLabel(view) {
+  for (const g of VIEWS) for (const i of g.items) if (i[0] === view) return i[2];
+  return view;
+}
+
+async function navigate(view) {
+  stopPeriodTimers();
+  state.currentView = view;
+  state.pages[view] = state.pages[view] || 1;
+  renderNavigation();
+  try {
+    switch (view) {
+      case "dashboard": await renderDashboard(); break;
+      case "analytics": await renderAnalytics(); break;
+      case "reconcile": await renderReconcile(); break;
+      case "users": await renderUsers(); break;
+      case "wallets": await renderWallets(); break;
+      case "transactions": await renderTransactions("transactions"); break;
+      case "deposit_addresses": await renderDepositAddresses(); break;
+      case "deposits": await renderTransactions("deposits"); break;
+      case "withdrawals": await renderTransactions("withdrawals"); break;
+      case "gift_codes": await renderGiftCodeHistory(); break;
+      case "gift_history": await renderGiftHistory(); break;
+      case "rounds": await renderRounds(); break;
+      case "bets": await renderBets(); break;
+      case "referrals": await renderReferrals(); break;
+      case "channel_settings": await renderChannelSettings(); break;
+      case "broadcast": await renderBroadcast(); break;
+      case "telegram": await renderTelegram(); break;
+      case "telegram_support": await renderTelegramSupport(); break;
+      case "app_settings": await renderAppSettings(); break;
+      case "audit": await renderAudit(); break;
+      case "login_attempts": await renderLoginAttempts(); break;
+      case "security": await renderSecurity(); break;
+      case "search": renderSearch(); break;
+      default:
+        setPage("Not Found", "Unknown dashboard section.");
+        $("viewBody").innerHTML = '<div class="empty">This section is unavailable.</div>';
+    }
+  } catch (error) {
+    if (view === state.currentView) {
+      $("pageContent").innerHTML = `
+        <div class="page-header"><div><h2>${escapeHtml(viewLabel(view))}</h2><p>Unable to load this section.</p></div>
+          <button class="btn" id="retryButton">Retry</button></div>
+        <div class="notice danger">${escapeHtml(error.message)}</div>`;
+      $("retryButton").addEventListener("click", () => navigate(view));
+    }
+  }
+}
+
+/* ===== Next result preview (with timer) ===== */
+async function loadNextResultPreview(bodyId, btnId) {
+  const body = $(bodyId);
+  if (!body) return;
+  body.innerHTML = '<div class="loading">Loading...</div>';
+  try {
+    const d = await api("next_round");
+    const n = d.next || d.round || {};
+    const period = n.period_number ?? n.round_code ?? "—";
+    const pred = n.predicted_result ?? d.predicted_result ?? null;
+    const predSource = n.prediction_source === "manual" ? "manual" : "auto";
+    const startsAt = n.starts_at || d.starts_at || null;
+    const endsAt = n.ends_at || d.ends_at || null;
+    body.innerHTML = `
+      <div class="pred-next">
+        <div class="detail-item">
+          <span>Next Period (Game)</span>
+          <strong>${escapeHtml(period)}</strong>
+        </div>
+        <div class="detail-item">
+          <span>Time Left</span>
+          ${endsAt
+            ? `<span class="timer-badge" data-countdown-to="${escapeHtml(endsAt)}" data-refresh-fn="${escapeHtml("__refresh_" + bodyId)}">⏱ —</span>`
+            : `<span class="timer-badge expired">⏱ No end time</span>`}
+        </div>
+        <div class="detail-item">
+          <span>Predicted Result (${predSource})</span>
+          <strong class="yellow result-big">${pred === null || pred === undefined ? "—" : escapeHtml(pred)}</strong>
+        </div>
+      </div>
+      <p class="small muted" style="margin-top:10px">
+        Starts: ${escapeHtml(formatDate(startsAt))} · Ends: ${escapeHtml(formatDate(endsAt))}<br>
+        Admin preview only. Live game result remains authoritative.
+      </p>`;
+    window["__refresh_" + bodyId] = () => loadNextResultPreview(bodyId, btnId);
+    startPeriodTimers();
+  } catch (e) {
+    body.innerHTML = `<div class="notice">Preview not available (${escapeHtml(e.message)}).</div>`;
+  }
+  const btn = $(btnId);
+  if (btn) btn.onclick = async () => {
+    const code = prompt("Next period / round code:");
+    if (!code) return;
+    const val = prompt("Predicted result (0-9):");
+    if (val === null) return;
+    const res = Number(val);
+    if (!Number.isInteger(res) || res < 0 || res > 9) return toast("Result must be 0-9.", true);
+    try {
+      await api("set_next_result", { round_code: code.trim(), result_number: res });
+      toast("Next result set.");
+      loadNextResultPreview(bodyId, btnId);
+    } catch (err) { toast(err.message, true); }
+  };
+}
+
+/* ============ DASHBOARD ============ */
+async function renderDashboard() {
+  setPage("Dashboard", "Live overview of users, balances, transactions and game activity.",
+    '<button class="btn" id="refreshDashboard">↻ Refresh</button>');
+  $("refreshDashboard").addEventListener("click", renderDashboard);
+
+  const data = await api("dashboard");
+  const t = data.totals || {};
+  const m = data.user_metrics || {};
+  const h = data.health || {};
+  const sec = data.security || {};
+
+  const netToday = Number(t.stake_today || 0) - Number(t.payout_today || 0);
+  const net24h = Number(t.stake_24h || 0) - Number(t.payout_24h || 0);
+  const allTimePL = Number(t.total_stake || 0) - Number(t.total_payouts || 0);
+
+  const netClass = v => Number(v) >= 0 ? "green" : "red";
+  const netDisplay = v => {
+    const n = Number(v) || 0;
+    return (n >= 0 ? "+" : "") + money(n);
+  };
+
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head">
+        <h3>🔮 Next Upcoming Result (Admin Preview)</h3>
+        <button class="btn small" id="setNextResultBtn" type="button">Set / Change</button>
+      </div>
+      <div id="nextResultBody"><div class="loading">Loading...</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>📅 Today's Summary</h3>
+        <span class="small muted">Calendar day — from 00:00 today</span>
+      </div>
+      <div class="grid stats-grid">
+        ${metricCard("Bets Today", statValue(t.bets_today, 0), "Bets placed today")}
+        ${metricCard("Stake Today", money(t.stake_today), "Total staked today", "yellow")}
+        ${metricCard("Payout Today", money(t.payout_today), "Paid out today", "green")}
+        ${metricCard("Net Today", netDisplay(netToday), netToday >= 0 ? "Platform profit today" : "Platform loss today", netClass(netToday))}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>⏱️ Last 24 Hours</h3>
+        <span class="small muted">Rolling — past 24 hours</span>
+      </div>
+      <div class="grid stats-grid">
+        ${metricCard("Bets (24h)", statValue(t.bets_24h, 0), "Bets in last 24h")}
+        ${metricCard("Stake (24h)", money(t.stake_24h), "Total staked", "yellow")}
+        ${metricCard("Payout (24h)", money(t.payout_24h), "Paid out", "green")}
+        ${metricCard("Net (24h)", netDisplay(net24h), net24h >= 0 ? "Platform profit (24h)" : "Platform loss (24h)", netClass(net24h))}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>💰 All-Time Profit &amp; Loss</h3>
+        <span class="small muted">Since beginning</span>
+      </div>
+      <div class="grid stats-grid">
+        ${metricCard("Total Stake", money(t.total_stake), "All-time staked", "yellow")}
+        ${metricCard("Total Payout", money(t.total_payouts), "All-time paid out", "green")}
+        ${metricCard("Total Fees", money(t.total_fees), "Platform fees collected")}
+        ${metricCard("Platform P/L", netDisplay(allTimePL), allTimePL >= 0 ? "Net platform profit" : "Net platform loss", netClass(allTimePL))}
+      </div>
+      <p class="small muted" style="margin-top:12px;line-height:1.6;">
+        <strong>Formula:</strong> Platform P/L = Total Stake − Total Payout.<br>
+        Positive = platform profit (players lost overall). Negative = platform loss (players won overall).<br>
+        Total Fees is shown separately as reference revenue.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>📊 General Stats</h3></div>
+      <div class="grid stats-grid">
+        ${metricCard("Total Users", statValue(t.users, 0), `${statValue(t.blocked_users, 0)} blocked`)}
+        ${metricCard("Total Bets", statValue(t.bets, 0), "All recorded bets")}
+        ${metricCard("Wallet Balance", money(t.total_wallet_balance), "Sum of wallet balances")}
+        ${metricCard("Referral Commissions", money(t.total_commissions), `${statValue(t.total_referrals, 0)} referrals`, "violet")}
+        ${metricCard("Confirmed Deposits", money(t.total_deposits), `${statValue(t.deposit_count, 0)} transactions`, "green")}
+        ${metricCard("Deposits Today", money(t.deposits_today), `${statValue(t.pending_deposits, 0)} pending`, "green")}
+        ${metricCard("Confirmed Withdrawals", money(t.total_withdrawals), `${statValue(t.withdrawal_count, 0)} transactions`, "red")}
+        ${metricCard("Withdrawals Today", money(t.withdrawals_today), `${statValue(t.pending_withdrawals, 0)} pending`, "red")}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>👥 User Activity</h3></div>
+      <div class="status-grid">
+        <div class="status-item"><span>New Today</span><strong>${statValue(m.new_today, 0)}</strong></div>
+        <div class="status-item"><span>New in 7 Days</span><strong>${statValue(m.new_7d, 0)}</strong></div>
+        <div class="status-item"><span>Active in 24 Hours</span><strong>${statValue(m.active_24h, 0)}</strong></div>
+        <div class="status-item"><span>Active in 7 Days</span><strong>${statValue(m.active_7d, 0)}</strong></div>
+        <div class="status-item"><span>Inactive 30 Days</span><strong>${statValue(m.inactive_30d, 0)}</strong></div>
+        <div class="status-item"><span>Failed Logins (24h)</span><strong class="red">${statValue(sec.failed_logins_24h, 0)}</strong></div>
+      </div>
+      <p class="small muted">Activity is based on recorded bets.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>🩺 System Health</h3></div>
+      <div class="status-grid">
+        <div class="status-item"><span>Database Query</span><strong class="green">Responding</strong></div>
+        <div class="status-item"><span>Round / Pending Check</span><strong class="${h.cron_ok ? "green" : "red"}">${h.cron_ok ? "No Detected Issues" : "Needs Review"}</strong></div>
+        <div class="status-item"><span>Overdue Rounds</span><strong class="${Number(h.overdue_rounds || 0) ? "red" : "green"}">${statValue(h.overdue_rounds, 0)}</strong></div>
+        <div class="status-item"><span>Old Pending Bets</span><strong class="${Number(h.old_pending_bets || 0) ? "red" : "green"}">${statValue(h.old_pending_bets, 0)}</strong></div>
+        <div class="status-item"><span>Latest Round Start</span><strong style="font-size:12px">${escapeHtml(formatDate(h.latest_round_start))}</strong></div>
+        <div class="status-item"><span>Last Settled Round</span><strong style="font-size:12px">${escapeHtml(formatDate(h.last_settled_at))}</strong></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>🎯 Round Statuses</h3></div>
+      ${table(["Status", "Count"], (data.round_statuses || []).map(r => [badge(r.status), escapeHtml(statValue(r.count, 0))]))}
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>🕹️ Recent Game Rounds</h3>
+        <button class="btn" id="openRounds">View All</button>
+      </div>
+      ${roundTable(data.recent_rounds || [])}
+    </div>
+  `;
+  $("openRounds").addEventListener("click", () => navigate("rounds"));
+  await loadNextResultPreview("nextResultBody", "setNextResultBtn");
+  startPeriodTimers();
+}
+
+function roundTable(rows) {
+  return table(
+    ["Period (Game)", "Round Code", "Status", "Time Left", "Start", "Result", "Colour", "Size", "Bets", "Stake", "Payout", "Pending", "Settlement"],
+    rows.map(r => {
+      const endsAt = r.ends_at;
+      const isActive = endsAt && (r.result_number === null || r.result_number === undefined);
+      const timeCell = isActive
+        ? `<span class="timer-badge" data-countdown-to="${escapeHtml(endsAt)}">⏱ —</span>`
+        : `<span class="muted small">—</span>`;
+      return [
+        `<strong>${escapeHtml(r.period_number ?? r.round_code ?? "—")}</strong>`,
+        escapeHtml(r.round_code ?? "—"),
+        badge(r.status),
+        timeCell,
+        escapeHtml(formatDate(r.starts_at)),
+        escapeHtml(r.result_number ?? "—"),
+        escapeHtml(getColour(r.result_number)),
+        escapeHtml(getBigSmall(r.result_number)),
+        escapeHtml(statValue(r.bet_count, 0)),
+        escapeHtml(money(r.total_stake)),
+        escapeHtml(money(r.total_payout)),
+        escapeHtml(statValue(r.pending_bets, 0)),
+        r.payout_complete ? badge("complete") : badge("review")
+      ];
+    })
+  );
+}
+
+/* ============ ANALYTICS ============ */
+async function renderAnalytics() {
+  setPage("Analytics", "Historical betting activity, user rankings and result distribution.",
+    '<button class="btn" id="refreshAnalytics">↻ Refresh</button>');
+  $("refreshAnalytics").addEventListener("click", renderAnalytics);
+
+  const data = await api("analytics");
+  const daily = data.daily || [];
+  const fairness = data.fairness || {};
+  const counts = fairness.counts || Array(10).fill(0);
+  const maxBets = Math.max(1, ...daily.map(d => Number(d.bets || 0)));
+
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head"><h3>Daily Bet Volume — 14 Days</h3></div>
+      <div class="chart-bars">
+        ${daily.map(d => {
+          const c = Number(d.bets || 0);
+          const height = Math.max(3, c / maxBets * 125);
+          return `<div class="chart-col">
+            <div class="chart-number">${c}</div>
+            <div class="chart-bar" style="height:${height}px"></div>
+            <div class="chart-label">${escapeHtml(String(d.day || "").slice(5, 10))}</div>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Daily Performance</h3></div>
+      ${table(
+        ["Date", "Bets", "Stake", "Payout", "Net", "Active Users", "New Users"],
+        daily.map(d => [
+          escapeHtml(String(d.day || "—").slice(0, 10)),
+          escapeHtml(statValue(d.bets, 0)),
+          escapeHtml(money(d.stake)), escapeHtml(money(d.payout)),
+          `<span class="${Number(d.net) >= 0 ? "green" : "red"}">${escapeHtml(money(d.net))}</span>`,
+          escapeHtml(statValue(d.active_users, 0)),
+          escapeHtml(statValue(d.new_users, 0))
+        ])
+      )}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Settled Result Distribution</h3></div>
+      <div class="notice warning">${escapeHtml(fairness.verdict || "Distribution info only.")}</div>
+      ${table(["Result Number", "Count"], counts.map((c, n) => [escapeHtml(n), escapeHtml(statValue(c, 0))]))}
+      <p class="small muted">Observed frequencies alone do not prove fairness.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Top Users by Total Stake</h3></div>
+      ${table(
+        ["User ID", "Username", "Bets", "Stake", "Payout", "Net", "Win %"],
+        (data.top_users || []).map(u => {
+          const w = Number(u.wins || 0), l = Number(u.losses || 0), tot = w + l;
+          return [
+            escapeHtml(u.id), escapeHtml(u.username || "—"),
+            escapeHtml(statValue(u.bets, 0)), escapeHtml(money(u.stake)),
+            escapeHtml(money(u.payout)), escapeHtml(money(u.user_net)),
+            escapeHtml(tot ? ((w / tot) * 100).toFixed(0) + "%" : "—")
+          ];
+        })
+      )}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Largest Stakes</h3></div>
+      ${table(
+        ["Bet ID", "User ID", "Period (Game)", "Type", "Stake", "Created"],
+        (data.large_stakes || []).map(b => [
+          escapeHtml(b.id), escapeHtml(b.user_id),
+          escapeHtml(b.period_number ?? b.round_code ?? "—"),
+          escapeHtml(b.bet_type), escapeHtml(money(b.stake)), escapeHtml(formatDate(b.created_at))
+        ])
+      )}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Highest Payout-to-Stake Ratios</h3></div>
+      ${table(
+        ["User ID", "Bets", "Stake", "Payout", "Return %"],
+        (data.high_return_users || []).map(u => [
+          escapeHtml(u.user_id), escapeHtml(statValue(u.bets, 0)),
+          escapeHtml(money(u.stake)), escapeHtml(money(u.payout)),
+          escapeHtml(u.return_percent == null ? "—" : `${u.return_percent}%`)
+        ])
+      )}
+      <p class="small muted">High historical return is not proof of fraud.</p>
+    </div>
+  `;
+}
+
+/* ============ RECONCILE ============ */
+async function renderReconcile() {
+  setPage("Financial Reconciliation", "Read-only totals and consistency indicators.",
+    '<button class="btn" id="refreshReconcile">↻ Refresh</button>');
+  $("refreshReconcile").addEventListener("click", renderReconcile);
+
+  const data = await api("reconcile");
+  const t = data.totals || {};
+
+  $("viewBody").innerHTML = `
+    <div class="notice warning">
+      This report is incomplete until every wallet balance change is mapped to an auditable ledger entry.
+    </div>
+    <div class="grid stats-grid">
+      ${metricCard("Wallet Total", money(t.wallet_total))}
+      ${metricCard("Recorded Commissions", money(t.commissions))}
+      ${metricCard("Bet Stakes", money(t.bets_stake))}
+      ${metricCard("Won Bet Payouts", money(t.bets_payout))}
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Consistency Checks</h3></div>
+      ${table(
+        ["Check", "Value", "Interpretation"],
+        [
+          ["Bet count", escapeHtml(statValue(t.bet_count_diff, 0)), "Difference from recorded bet transactions"],
+          ["Stake transaction count", escapeHtml(statValue(t.bet_tx, 0)), "Recorded transaction count"],
+          ["Stake difference", escapeHtml(t.stake_diff), "Full ledger mapping required"],
+          ["Payout transaction count", escapeHtml(statValue(t.payout_tx, 0)), "Recorded transaction count"],
+          ["Payout difference", escapeHtml(t.payout_diff), "Full ledger mapping required"],
+          ["Unrecorded balance changes", escapeHtml(t.unrecorded), "Cannot be verified by current query"]
+        ]
+      )}
+    </div>
+    <div class="notice danger">
+      A complete reconciliation requires the actual transaction and wallet-update rules.
+    </div>
+  `;
+}
+
+/* ============ FILTER HELPERS ============ */
+function filterToolbar(options = {}) {
+  return `
+    <div class="toolbar">
+      ${options.search ? `<input id="filterQ" placeholder="${escapeHtml(options.search)}" value="${escapeHtml(options.q || "")}">` : ""}
+      ${options.segment ? `
+        <select id="filterSegment">
+          <option value="all">All Users</option>
+          <option value="new_today">New Today</option>
+          <option value="new_7d">New in 7 Days</option>
+          <option value="active_24h">Active 24 Hours</option>
+          <option value="active_7d">Active 7 Days</option>
+          <option value="inactive_30d">Inactive 30 Days</option>
+        </select>` : ""}
+      ${options.type ? `
+        <select id="filterType">
+          <option value="">All Types</option>
+          <option value="deposit">Deposit</option>
+          <option value="withdrawal">Withdrawal</option>
+        </select>` : ""}
+      ${options.status ? `
+        <select id="filterStatus">
+          <option value="">All Statuses</option>
+          ${["pending","confirmed","rejected","completed","failed","open","locked","settled","won","lost","cancelled"]
+            .map(s => `<option value="${s}">${s}</option>`).join("")}
+        </select>` : ""}
+      ${options.userId ? `<input id="filterUserId" inputmode="numeric" placeholder="User ID">` : ""}
+      <button class="btn btn-primary" id="applyFilters">Apply Filters</button>
+      <button class="btn" id="clearFilters">Clear</button>
+    </div>`;
+}
+
+function getFilters(view) {
+  const saved = state.filters[view] || {};
+  return {
+    q: $("filterQ") ? $("filterQ").value.trim() : (saved.q || ""),
+    segment: $("filterSegment") ? $("filterSegment").value : (saved.segment || "all"),
+    type: $("filterType") ? $("filterType").value : (saved.type || ""),
+    status: $("filterStatus") ? $("filterStatus").value : (saved.status || ""),
+    user_id: $("filterUserId") ? $("filterUserId").value.trim() : (saved.user_id || "")
+  };
+}
+
+function attachFilterActions(view, renderFn) {
+  const f = state.filters[view] || {};
+  if ($("filterQ")) $("filterQ").value = f.q || "";
+  if ($("filterSegment")) $("filterSegment").value = f.segment || "all";
+  if ($("filterType")) $("filterType").value = f.type || "";
+  if ($("filterStatus")) $("filterStatus").value = f.status || "";
+  if ($("filterUserId")) $("filterUserId").value = f.user_id || "";
+
+  if ($("applyFilters")) $("applyFilters").addEventListener("click", () => {
+    state.filters[view] = getFilters(view);
+    state.pages[view] = 1;
+    renderFn();
+  });
+  if ($("clearFilters")) $("clearFilters").addEventListener("click", () => {
+    state.filters[view] = {};
+    state.pages[view] = 1;
+    renderFn();
+  });
+  if ($("filterQ")) $("filterQ").addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      state.filters[view] = getFilters(view);
+      state.pages[view] = 1;
+      renderFn();
+    }
+  });
+}
+
+function paginationHtml(info) {
+  if (!info) return "";
+  return `
+    <div class="pagination">
+      <span class="small muted">Page ${escapeHtml(info.page)} of ${escapeHtml(info.total_pages)} · ${escapeHtml(info.total)} records</span>
+      <div class="pagination-actions">
+        <button class="btn" id="previousPage" ${info.has_previous ? "" : "disabled"}>← Previous</button>
+        <button class="btn" id="nextPage" ${info.has_next ? "" : "disabled"}>Next →</button>
+      </div>
+    </div>`;
+}
+
+function attachPagination(view, info, renderFn) {
+  if (!info) return;
+  if ($("previousPage")) $("previousPage").addEventListener("click", () => {
+    state.pages[view] = Math.max(1, (state.pages[view] || 1) - 1);
+    renderFn();
+  });
+  if ($("nextPage")) $("nextPage").addEventListener("click", () => {
+    state.pages[view] = (state.pages[view] || 1) + 1;
+    renderFn();
+  });
+}
+
+async function downloadCsv(dataset, filters = {}) {
+  const data = await api("export", { dataset, ...filters });
+  if (!data.csv) return toast("No rows available to export.");
+  const blob = new Blob(["\uFEFF", data.csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `crypto-trader-${dataset}-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  toast(`Exported ${data.row_count} rows` + (data.truncated ? ". Export limit reached." : "."));
+}
+
+/* ============ USERS ============ */
+async function renderUsers() {
+  setPage("User Management", "Browse registered users and filter by activity segment.",
+    '<button class="btn" id="exportUsers">Export CSV</button>');
+  $("exportUsers").addEventListener("click", async () => {
+    try { await downloadCsv("users", state.filters.users || {}); }
+    catch (e) { toast(e.message, true); }
+  });
+
+  const f = state.filters.users || {};
+  const data = await api("users", {
+    page: state.pages.users || 1, page_size: 20,
+    q: f.q || "", segment: f.segment || "all"
+  });
+
+  $("viewBody").innerHTML = `
+    ${filterToolbar({ search: "Search username, user ID or Telegram ID", segment: true })}
+    ${table(
+      ["User ID", "Name", "Telegram ID", "Username", "Balance", "Referred By", "Referral Code", "Referrals", "Win %", "Joined", "Details"],
+      (data.users || []).map(u => {
+        const fn = [u.first_name, u.last_name].filter(Boolean).join(" ");
+        const w = Number(u.wins || 0), l = Number(u.losses || 0), tot = w + l;
+        const winPct = tot ? ((w / tot) * 100).toFixed(0) + "%" : "—";
+        return [
+          escapeHtml(u.id), escapeHtml(fn || "—"), escapeHtml(u.telegram_id),
+          escapeHtml(u.username || "—"), escapeHtml(money(u.balance)),
+          escapeHtml(u.referred_by ?? "—"), escapeHtml(u.referral_code || "—"),
+          escapeHtml(statValue(u.referral_count, 0)), escapeHtml(winPct),
+          escapeHtml(formatDate(u.created_at)),
+          `<button class="btn" data-user-detail="${escapeHtml(u.id)}">View</button>`
+        ];
+      })
+    )}
+    ${paginationHtml(data.pagination)}
+    <div id="userDetail"></div>
+  `;
+  attachFilterActions("users", renderUsers);
+  attachPagination("users", data.pagination, renderUsers);
+  document.querySelectorAll("[data-user-detail]").forEach(btn => {
+    btn.addEventListener("click", () => renderUserDetail(btn.dataset.userDetail));
+  });
+}
+
+async function renderUserDetail(userId) {
+  const container = $("userDetail");
+  container.innerHTML = '<div class="loading">Loading user details...</div>';
+  try {
+    const data = await api("user_detail", { user_id: userId });
+    const p = data.profile || {}, s = data.stats || {};
+    const fn = [p.first_name, p.last_name].filter(Boolean).join(" ");
+    const w = Number(s.wins || 0), l = Number(s.losses || 0), tot = w + l;
+    const winPct = tot ? (w / tot) * 100 : 0;
+    const lossPct = tot ? (l / tot) * 100 : 0;
+
+    container.innerHTML = `
+      <div class="card" style="margin-top:18px">
+        <div class="card-head">
+          <h3>User Details — #${escapeHtml(p.id)} ${fn ? `(${escapeHtml(fn)})` : ""}</h3>
+          <button class="btn" id="closeUserDetail">Close</button>
+        </div>
+        <div class="detail-grid">
+          ${detailItem("Telegram ID", escapeHtml(p.telegram_id))}
+          ${detailItem("Name", escapeHtml(fn || "—"))}
+          ${detailItem("Username", escapeHtml(p.username || "—"))}
+          ${detailItem("Balance", escapeHtml(money(p.balance)))}
+          ${detailItem("Account", p.is_blocked ? '<span class="red">Blocked</span>' : '<span class="green">Active</span>')}
+          ${detailItem("Withdrawals", p.withdraw_blocked ? '<span class="red">Frozen</span>' : '<span class="green">Allowed</span>')}
+          ${detailItem("Referral Code", escapeHtml(p.referral_code || "—"))}
+          ${detailItem("Referred By", escapeHtml(p.referred_by ?? "—"))}
+          ${detailItem("Joined", escapeHtml(formatDate(p.created_at)))}
+          ${detailItem("Total Bets", escapeHtml(statValue(s.bets, 0)))}
+          ${detailItem("Total Stake", escapeHtml(money(s.stake)))}
+          ${detailItem("Total Payout", escapeHtml(money(s.payout)))}
+          ${detailItem("Wins", `<span class="green">${escapeHtml(statValue(w, 0))}</span>`)}
+          ${detailItem("Losses", `<span class="red">${escapeHtml(statValue(l, 0))}</span>`)}
+          ${detailItem("Win Rate", `<span class="green">${tot ? winPct.toFixed(1) + "%" : "—"}</span>`)}
+          ${detailItem("Loss Rate", `<span class="red">${tot ? lossPct.toFixed(1) + "%" : "—"}</span>`)}
+          ${detailItem("Commissions Generated", escapeHtml(money(data.commissions_generated)))}
+        </div>
+        <div class="winloss-bar" title="Win vs Loss">
+          <div class="w" style="width:${winPct}%"></div>
+          <div class="l" style="width:${lossPct}%"></div>
+        </div>
+        <p class="small muted" style="margin-top:6px">Win ${winPct.toFixed(1)}% · Loss ${lossPct.toFixed(1)}% (of settled bets)</p>
+
+        <div class="card" style="margin-top:16px">
+          <h3>Admin Actions</h3>
+          <div class="row-actions" style="margin-top:10px">
+            <button class="btn user-action" data-action="block" data-user-id="${escapeHtml(p.id)}">Block</button>
+            <button class="btn user-action" data-action="unblock" data-user-id="${escapeHtml(p.id)}">Unblock</button>
+            <button class="btn user-action" data-action="freeze_withdraw" data-user-id="${escapeHtml(p.id)}">Freeze withdraw</button>
+            <button class="btn user-action" data-action="unfreeze_withdraw" data-user-id="${escapeHtml(p.id)}">Unfreeze withdraw</button>
+            <button class="btn user-action" data-action="add_fund" data-user-id="${escapeHtml(p.id)}">Add fund</button>
+            <button class="btn user-action" data-action="remove_fund" data-user-id="${escapeHtml(p.id)}">Remove fund</button>
+            <button class="btn user-action" data-action="transfer_points" data-user-id="${escapeHtml(p.id)}">Transfer points</button>
+          </div>
+        </div>
+
+        <div class="card-head" style="margin-top:22px"><h3>Referral Tree</h3></div>
+        ${table(
+          ["User ID", "Username", "Referred By", "Level", "Joined"],
+          (data.referral_tree || []).map(r => [
+            escapeHtml(r.id), escapeHtml(r.username || "—"),
+            escapeHtml(r.referred_by), escapeHtml(r.level), escapeHtml(formatDate(r.created_at))
+          ])
+        )}
+
+        <div class="card-head" style="margin-top:22px"><h3>Commissions Earned by Level</h3></div>
+        ${table(
+          ["Level", "Count", "Total"],
+          (data.commissions_earned || []).map(c => [
+            escapeHtml(c.referral_level), escapeHtml(statValue(c.count, 0)), escapeHtml(money(c.total))
+          ])
+        )}
+
+        <div class="card-head" style="margin-top:22px"><h3>Recent Bets</h3></div>
+        ${table(
+          ["Bet ID", "Period (Game)", "Type", "Selection", "Stake", "Fee", "Status", "Result", "Payout", "Created"],
+          (data.recent_bets || []).map(b => [
+            escapeHtml(b.id),
+            escapeHtml(b.period_number ?? b.round_code ?? "—"),
+            escapeHtml(b.bet_type), escapeHtml(b.selection), escapeHtml(money(b.stake)),
+            escapeHtml(money(b.fee)), badge(b.status), escapeHtml(b.result_number ?? "—"),
+            escapeHtml(money(b.payout)), escapeHtml(formatDate(b.created_at))
+          ])
+        )}
+
+        <div class="card-head" style="margin-top:22px"><h3>Recent Transactions</h3></div>
+        ${table(
+          ["ID", "Type", "Amount", "Status", "Network", "TX Hash", "Created"],
+          (data.recent_transactions || []).map(t => [
+            escapeHtml(t.id), escapeHtml(t.transaction_type), escapeHtml(money(t.amount)),
+            badge(t.status), escapeHtml(t.network || "—"),
+            txHashCell(t.tx_hash, t.network),
+            escapeHtml(formatDate(t.created_at))
+          ])
+        )}
+      </div>
+    `;
+    $("closeUserDetail").addEventListener("click", () => container.innerHTML = "");
+    container.querySelectorAll(".user-action").forEach(btn => btn.addEventListener("click", async () => {
+      const action = btn.dataset.action;
+      const needPoints = ["add_fund", "remove_fund", "transfer_points"].includes(action);
+      const points = needPoints ? prompt("Points amount") : null;
+      if (needPoints && (!points || Number(points) <= 0)) return;
+      const payload = { management_action: action, user_id: btn.dataset.userId };
+      if (points) payload.points = points;
+      if (action === "transfer_points") {
+        payload.to_user_id = prompt("Target user ID") || "";
+        if (!payload.to_user_id) return;
+      }
+      try {
+        await api("user_management", payload);
+        toast("User action completed.");
+        await renderUserDetail(btn.dataset.userId);
+      } catch (e) { toast(e.message, true); }
+    }));
+  } catch (e) {
+    container.innerHTML = `<div class="notice danger">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+/* ============ WALLETS ============ */
+async function renderWallets() {
+  setPage("Wallets", "Read-only view of wallet balances.",
+    '<button class="btn" id="exportWallets">Export CSV</button>');
+  $("exportWallets").addEventListener("click", async () => {
+    try { await downloadCsv("wallets", state.filters.wallets || {}); }
+    catch (e) { toast(e.message, true); }
+  });
+
+  const f = state.filters.wallets || {};
+  const data = await api("wallets", {
+    page: state.pages.wallets || 1, page_size: 20, q: f.q || ""
+  });
+  $("viewBody").innerHTML = `
+    ${filterToolbar({ search: "Search user ID or username" })}
+    ${table(
+      ["User ID", "Telegram ID", "Username", "Balance", "Updated"],
+      (data.wallets || []).map(w => [
+        escapeHtml(w.user_id), escapeHtml(w.telegram_id),
+        escapeHtml(w.username || "—"), escapeHtml(money(w.balance)),
+        escapeHtml(formatDate(w.updated_at))
+      ])
+    )}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachFilterActions("wallets", renderWallets);
+  attachPagination("wallets", data.pagination, renderWallets);
+}
+
+/* ============ TRANSACTIONS ============ */
+async function renderTransactions(view) {
+  const title = view === "deposits" ? "Deposits" : view === "withdrawals" ? "Withdrawals" : "Transactions";
+  setPage(title, "Review and approve pending deposits and withdrawals.",
+    '<button class="btn" id="exportTransactions">Export CSV</button>');
+  $("exportTransactions").addEventListener("click", async () => {
+    const f = state.filters[view] || {};
+    let type = f.type || "";
+    if (view === "deposits") type = "deposit";
+    if (view === "withdrawals") type = "withdrawal";
+    try { await downloadCsv("transactions", { ...f, type }); }
+    catch (e) { toast(e.message, true); }
+  });
+
+  const f = state.filters[view] || {};
+  let type = f.type || "";
+  if (view === "deposits") type = "deposit";
+  if (view === "withdrawals") type = "withdrawal";
+
+  const data = await api("transactions", {
+    page: state.pages[view] || 1, page_size: 20,
+    type, status: f.status || "", user_id: f.user_id || ""
+  });
+
+  $("viewBody").innerHTML = `
+    ${filterToolbar({ type: view === "transactions", status: true, userId: true })}
+    <div class="notice warning">
+      Approve means manual payout/credit. Reject/Refund returns reserved funds. Deposit approval credits 100 points per USDT.
+      Withdrawal wallet address ke saath copy button diya gaya hai.
+    </div>
+    ${table(
+      ["ID", "User ID", "Type", "Amount", "Status", "Network", "Wallet / To Address", "TX Hash", "Payout TX", "Created", "Updated", "Actions"],
+      (data.transactions || []).map(t => {
+        const addr = t.destination_address || t.to_address || t.wallet_address || t.to_wallet || t.address || t.deposit_address || "";
+        let actionButtons = "—";
+        if (t.status === "pending") {
+          if (t.transaction_type === "deposit") {
+            actionButtons = `<div class="row-actions">
+              <button class="btn btn-primary review-tx" data-action="deposit_approve" data-id="${escapeHtml(t.id)}" data-addr="${escapeHtml(addr)}">Approve</button>
+              <button class="btn btn-danger review-tx" data-action="deposit_reject" data-id="${escapeHtml(t.id)}" data-addr="${escapeHtml(addr)}">Reject</button>
+            </div>`;
+          } else if (t.transaction_type === "withdrawal") {
+            actionButtons = `<div class="row-actions">
+              <button class="btn btn-primary review-tx" data-action="withdrawal_approve" data-id="${escapeHtml(t.id)}" data-addr="${escapeHtml(addr)}">Approve</button>
+              <button class="btn btn-danger review-tx" data-action="withdrawal_reject" data-id="${escapeHtml(t.id)}" data-addr="${escapeHtml(addr)}">Reject</button>
+            </div>`;
+          }
+        }
+        return [
+          escapeHtml(t.id), escapeHtml(t.user_id), badge(t.transaction_type),
+          escapeHtml(money(t.amount)), badge(t.status), escapeHtml(t.network || "—"),
+          addressCell(addr),
+          txHashCell(t.tx_hash, t.network),
+          txHashCell(t.payout_tx_hash, t.network),
+          escapeHtml(formatDate(t.created_at)), escapeHtml(formatDate(t.updated_at)),
+          actionButtons
+        ];
+      })
+    )}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachFilterActions(view, () => renderTransactions(view));
+  attachPagination(view, data.pagination, () => renderTransactions(view));
+
+  document.querySelectorAll(".review-tx").forEach(btn => btn.addEventListener("click", async () => {
+    const action = btn.dataset.action;
+    const addr = btn.dataset.addr || "";
+    let message = "Are you sure?";
+    if (action === "withdrawal_approve") message = `Approve this withdrawal for manual payout?\n\nTo address: ${addr || "(missing)"}`;
+    if (action === "withdrawal_reject") message = "Reject and refund this withdrawal?";
+    if (action === "deposit_approve") message = "Approve this deposit? Points will be credited.";
+    if (action === "deposit_reject") message = "Reject this deposit?";
+
+    const payoutTxHash = action === "withdrawal_approve" ? prompt("Enter the payout transaction hash:") : "";
+    if (action === "withdrawal_approve" && !payoutTxHash?.trim()) return;
+    if (!window.confirm(message)) return;
+    try {
+      await api(action, { transaction_id: btn.dataset.id, payout_tx_hash: payoutTxHash?.trim() || "" });
+      toast("Action successful.");
+      fetchNotifications();
+      await renderTransactions(view);
+    } catch (e) { toast(e.message, true); }
+  }));
+}
+
+/* ============ DEPOSIT ADDRESSES ============ */
+async function renderDepositAddresses() {
+  setPage("Deposit Addresses", "Manage up to 10 active coin and network deposit addresses.",
+    '<button class="btn btn-primary" id="addDepositAddress">Add address</button>');
+
+  const data = await api("deposit_addresses");
+  const rows = data.deposit_addresses || [];
+
+  const coinOptions = ["USDT", "TRON", "BNB", "ETHEREUM", "GRAM", "POLYGON", "BTC", "SOL"];
+  const networkOptions = ["BEP-20", "TRC-20", "ERC-20", "BSC", "Mainnet", "Polygon", "Solana"];
+
+  const isActiveOf = item => {
+    if (item.is_active === undefined || item.is_active === null) return true;
+    return item.is_active === true || item.is_active === "1" || Number(item.is_active) === 1;
+  };
+
+  const editor = (item = {}) => `
+    <form class="card deposit-address-form" data-id="${escapeHtml(item.id || "")}">
+      <div class="grid-4">
+        <select name="coin" required>
+          <option value="">Select Coin</option>
+          ${coinOptions.map(c => `<option value="${c}" ${item.coin === c ? "selected" : ""}>${c}</option>`).join("")}
+        </select>
+        <select name="network" required>
+          <option value="">Select Network</option>
+          ${networkOptions.map(n => `<option value="${n}" ${item.network === n ? "selected" : ""}>${n}</option>`).join("")}
+        </select>
+      </div>
+      <input name="address" placeholder="Wallet address" value="${escapeHtml(item.address || "")}" required maxlength="150" style="margin-top:10px;width:100%">
+      <input name="qr_payload" placeholder="QR payload (optional)" value="${escapeHtml(item.qr_payload || "")}" maxlength="300" style="margin-top:10px;width:100%">
+      <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
+        <label><input type="checkbox" name="is_active" ${isActiveOf(item) ? "checked" : ""}> Active</label>
+        <input name="sort_order" type="number" min="0" max="100" value="${Number(item.sort_order || 0)}" aria-label="Sort" style="width:80px">
+      </div>
+      <button class="btn btn-primary" type="submit" style="margin-top:10px">Save</button>
+      ${item.id ? '<button class="btn btn-danger delete-deposit" type="button" style="margin-top:10px">Delete</button>' : ""}
+    </form>
+  `;
+
+  $("viewBody").innerHTML = `
+    ${rows.map(editor).join("") || '<div class="notice">No addresses configured.</div>'}
+    <div id="newDepositAddress"></div>
+  `;
+
+  $("addDepositAddress").onclick = () => {
+    if (rows.length >= 10) return toast("Maximum 10 allowed.", true);
+    $("newDepositAddress").innerHTML = editor();
+    bindDepositForms();
+  };
+  bindDepositForms();
+
+  function bindDepositForms() {
+    document.querySelectorAll(".deposit-address-form").forEach(form => form.onsubmit = async e => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      try {
+        await api("deposit_addresses", {
+          mode: "save", id: form.dataset.id,
+          coin: fd.get("coin"), network: fd.get("network"),
+          address: fd.get("address"), qr_payload: fd.get("qr_payload"),
+          is_active: fd.get("is_active") === "on", sort_order: fd.get("sort_order")
+        });
+        await renderDepositAddresses();
+      } catch (e) { toast(e.message, true); }
+    });
+    document.querySelectorAll(".delete-deposit").forEach(btn => btn.onclick = async () => {
+      const form = btn.closest("form");
+      try {
+        await api("deposit_addresses", { mode: "delete", id: form.dataset.id });
+        await renderDepositAddresses();
+      } catch (e) { toast(e.message, true); }
+    });
+  }
+}
+
+/* ============ GIFT CODES ============ */
+async function renderGiftCodeHistory() {
+  setPage("Gift Codes", "Create and manage gift codes. Two modes: Fixed or Distribution.",
+    '<button class="btn btn-primary" id="toggleCreateGift">+ Create Gift Code</button>');
+  $("toggleCreateGift").addEventListener("click", () => {
+    $("createGiftWrap").classList.toggle("hidden");
+  });
+
+  const data = await api("gift_codes", {
+    page: state.pages.gift_codes || 1, page_size: 20
+  });
+
+  $("viewBody").innerHTML = `
+    <div id="createGiftWrap" class="card hidden">
+      <div class="card-head"><h3>Create New Gift Code</h3></div>
+      <form id="createGiftForm">
+        <div class="field">
+          <label>Mode</label>
+          <select name="mode" id="giftMode">
+            <option value="fixed">Fixed — Equal points per user</option>
+            <option value="distribution">Distribution — Early birds get more</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Total Points (Pool)</label>
+          <input name="total_points" type="number" min="1" step="0.01" required placeholder="e.g. 1000">
+        </div>
+        <div class="field" id="perUserField">
+          <label>Points Per User</label>
+          <input name="per_user_points" type="number" min="0.01" step="0.01" placeholder="e.g. 10">
+          <div class="small muted">Max users = floor(Total / Per-user). e.g. 1000 / 10 = 100 users.</div>
+        </div>
+        <div class="field hidden" id="maxUsersField">
+          <label>Max Users (Distribution Mode)</label>
+          <input name="max_users" type="number" min="1" step="1" placeholder="e.g. 100">
+          <div class="small muted">First redeemer gets most, last gets least. Total always equals pool.</div>
+        </div>
+        <div class="field">
+          <label>Custom Code (optional)</label>
+          <input name="code" placeholder="Leave blank to auto-generate" maxlength="50">
+        </div>
+        <div class="field">
+          <label>Expires At (optional)</label>
+          <input name="expires_at" type="datetime-local">
+        </div>
+        <button class="btn btn-primary" type="submit">Create Gift Code</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Gift Codes List</h3></div>
+      ${table(
+        ["ID", "Code", "Mode", "Total Points", "Per User", "Max Uses", "Redeemed", "Expires", "Created By", "Created", "Status", "Actions"],
+        (data.gift_codes || []).map(c => [
+          escapeHtml(c.id),
+          `<strong>${escapeHtml(c.code)}</strong>`,
+          badge(c.mode || "fixed"),
+          escapeHtml(money(c.total_points ?? c.points)),
+          escapeHtml(c.per_user_points ? money(c.per_user_points) : "Varies"),
+          escapeHtml(c.max_uses ?? 1),
+          escapeHtml(statValue(c.redeem_count, 0)),
+          escapeHtml(c.expires_at ? formatDate(c.expires_at) : "Never"),
+          escapeHtml(c.created_by || "—"),
+          escapeHtml(formatDate(c.created_at)),
+          c.is_active === false ? badge("stopped") : badge("active"),
+          `<div class="row-actions">
+            <button class="btn copy-gift" data-code="${escapeHtml(c.code)}" type="button">Copy Link</button>
+            <button class="btn gift-toggle" data-id="${escapeHtml(c.id)}" data-mode="${c.is_active === false ? "resume" : "stop"}" type="button">${c.is_active === false ? "Resume" : "Stop"}</button>
+            <button class="btn btn-danger gift-delete" data-id="${escapeHtml(c.id)}" data-code="${escapeHtml(c.code)}" type="button">Delete</button>
+          </div>`
+        ]),
+        "No gift codes yet."
+      )}
+      ${paginationHtml(data.pagination)}
+    </div>
+  `;
+
+  $("giftMode").addEventListener("change", e => {
+    const isFixed = e.target.value === "fixed";
+    $("perUserField").classList.toggle("hidden", !isFixed);
+    $("maxUsersField").classList.toggle("hidden", isFixed);
+  });
+
+  document.querySelectorAll(".copy-gift").forEach(btn => {
+    btn.onclick = () => copyGiftLink(btn.dataset.code);
+  });
+
+  document.querySelectorAll(".gift-toggle").forEach(btn => btn.onclick = async () => {
+    const stopping = btn.dataset.mode === "stop";
+    if (!confirm(stopping ? "Stop this gift code? Users will not be able to redeem it." : "Resume this gift code?")) return;
+    try {
+      await api("gift_code_action", { id: btn.dataset.id, mode: btn.dataset.mode });
+      toast(stopping ? "Gift code stopped." : "Gift code resumed.");
+      await renderGiftCodeHistory();
+    } catch (err) { toast(err.message, true); }
+  });
+
+  document.querySelectorAll(".gift-delete").forEach(btn => btn.onclick = async () => {
+    if (!confirm(`Delete gift code ${btn.dataset.code}? It will be removed from this list and can no longer be redeemed. Past redemptions stay in the history.`)) return;
+    try {
+      await api("gift_code_action", { id: btn.dataset.id, mode: "delete" });
+      toast("Gift code deleted.");
+      await renderGiftCodeHistory();
+    } catch (err) { toast(err.message, true); }
+  });
+
+  $("createGiftForm").onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const mode = fd.get("mode");
+    const payload = {
+      management_action: "create_gift",
+      mode,
+      total_points: fd.get("total_points"),
+      expires_at: fd.get("expires_at") ? new Date(fd.get("expires_at")).toISOString() : null,
+      code: fd.get("code") || undefined
+    };
+    if (mode === "fixed") payload.per_user_points = fd.get("per_user_points");
+    else payload.max_users = fd.get("max_users");
+    try {
+      const r = await api("user_management", payload);
+      toast(`Gift code created: ${r.gift_code.code}`);
+      await renderGiftCodeHistory();
+      $("createGiftWrap").classList.add("hidden");
+    } catch (err) { toast(err.message, true); }
+  };
+
+  attachPagination("gift_codes", data.pagination, renderGiftCodeHistory);
+}
+
+function copyGiftLink(code) {
+  const botName = String(state.botUsername || localStorage.getItem("bot_username") || "").replace(/^@/, "");
+  if (!botName || botName === "YourBot") {
+    toast("Save the correct Bot Username in Channel Settings first.", true);
+    return;
+  }
+  copyText(`https://t.me/${botName}?startapp=gift_${code}`);
+}
+
+/* ============ GIFT REDEMPTIONS ============ */
+async function renderGiftHistory() {
+  setPage("Gift Redemptions", "Track who redeemed which gift code and how much they earned.");
+  const data = await api("gift_redemptions", {
+    page: state.pages.gift_history || 1, page_size: 20
+  });
+  $("viewBody").innerHTML = `
+    ${table(
+      ["Date", "User ID", "Name", "Username", "Gift Code", "Mode", "Points Earned"],
+      (data.redemptions || []).map(r => {
+        const fn = [r.first_name, r.last_name].filter(Boolean).join(" ");
+        const earned = r.points_earned ?? r.per_user_points ?? r.legacy_points ?? 0;
+        return [
+          escapeHtml(formatDate(r.redeemed_at)),
+          escapeHtml(r.user_id),
+          escapeHtml(fn || "—"),
+          escapeHtml(r.username || "—"),
+          `<strong>${escapeHtml(r.code)}</strong>`,
+          badge(r.mode || "fixed"),
+          `<span class="green">+${money(earned)}</span>`
+        ];
+      })
+    )}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachPagination("gift_history", data.pagination, renderGiftHistory);
+}
+
+/* ============ ROUNDS ============ */
+async function renderRounds() {
+  setPage("Game Rounds", "Round status, game period, result and settlement.",
+    '<button class="btn" id="refreshRounds">↻ Refresh</button>');
+  $("refreshRounds").addEventListener("click", renderRounds);
+
+  const f = state.filters.rounds || {};
+  const data = await api("rounds", {
+    page: state.pages.rounds || 1, page_size: 20,
+    q: f.q || "", status: f.status || ""
+  });
+
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head">
+        <h3>🔮 Next Upcoming Result (Admin Preview)</h3>
+        <button class="btn small" id="setNextResultBtnR" type="button">Set / Change</button>
+      </div>
+      <div id="nextResultBodyR"><div class="loading">Loading...</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>🛠️ Manual Result Update</h3>
+        <span class="small muted">Result 0–9. Sirf auto result missing/galat hone par use karein.</span>
+      </div>
+      <form id="manualResultForm" class="inline-form">
+        <div class="field"><label>Period / Round Code</label>
+          <input name="round_code" placeholder="e.g. 202610230123 (game period)" required></div>
+        <div class="field" style="max-width:120px"><label>Result (0-9)</label>
+          <input name="result_number" type="number" min="0" max="9" required oninput="updateManualResultPreview(this.value)"></div>
+        
+        <div class="field" style="min-width:220px">
+          <label>Derived Outcome</label>
+          <div style="padding: 12px 13px; background: #0b0f15; border: 1px solid #2a3544; border-radius: 10px; font-weight:bold; font-size: 13px;">
+            <span id="previewNumber" class="yellow">-</span> | 
+            <span id="previewColour" style="color:var(--violet);">Colour: -</span> | 
+            <span id="previewSize" style="color:var(--blue);">Size: -</span>
+          </div>
+        </div>
+        <button class="btn btn-primary" type="submit">Update Result &amp; Settle</button>
+        <button class="btn" id="randomResultBtn" type="button">🎲 Random Result</button>
+      </form>
+      <div class="notice warning" style="margin-top:12px">Result update us period ke pending bets (Number, Colour, Big/Small) settle karega. Ye undo nahi hoga.</div>
+    </div>
+
+    ${filterToolbar({ search: "Search period / round code", status: true })}
+
+    <div class="card">
+      <div class="card-head"><h3>All Rounds</h3></div>
+      ${table(
+        ["Period (Game)", "Round Code", "Status", "Time Left", "Start", "Result", "Colour", "Size", "Bets", "Stake", "Payout", "Pending", "Settlement", "Action"],
+        (data.rounds || []).map(r => {
+          const endsAt = r.ends_at;
+          const isActive = endsAt && (r.result_number === null || r.result_number === undefined);
+          const timeCell = isActive
+            ? `<span class="timer-badge" data-countdown-to="${escapeHtml(endsAt)}">⏱ —</span>`
+            : `<span class="muted small">—</span>`;
+          return [
+            `<strong>${escapeHtml(r.period_number ?? r.round_code ?? "—")}</strong>`,
+            escapeHtml(r.round_code ?? "—"),
+            badge(r.status),
+            timeCell,
+            escapeHtml(formatDate(r.starts_at)),
+            escapeHtml(r.result_number ?? "—"),
+            escapeHtml(getColour(r.result_number)),
+            escapeHtml(getBigSmall(r.result_number)),
+            escapeHtml(statValue(r.bet_count, 0)),
+            escapeHtml(money(r.total_stake)),
+            escapeHtml(money(r.total_payout)),
+            escapeHtml(statValue(r.pending_bets, 0)),
+            r.payout_complete ? badge("complete") : badge("review"),
+            `<div class="row-actions"><button class="btn small set-result" data-code="${escapeHtml(r.round_code ?? "")}" type="button">Set Result</button><button class="btn small random-result" data-code="${escapeHtml(r.round_code ?? "")}" type="button">🎲 Random</button></div>`
+          ];
+        })
+      )}
+      ${paginationHtml(data.pagination)}
+    </div>
+  `;
+  attachFilterActions("rounds", renderRounds);
+  attachPagination("rounds", data.pagination, renderRounds);
+  await loadNextResultPreview("nextResultBodyR", "setNextResultBtnR");
+  startPeriodTimers();
+
+  window.updateManualResultPreview = function(val) {
+    const nEl = $("previewNumber");
+    const cEl = $("previewColour");
+    const sEl = $("previewSize");
+    if (!nEl || !cEl || !sEl) return;
+    
+    if (val === "" || isNaN(val)) {
+      nEl.textContent = "-";
+      cEl.textContent = "Colour: -";
+      sEl.textContent = "Size: -";
+      return;
+    }
+    const n = Number(val);
+    nEl.textContent = n;
+    
+    let colour = "";
+    let cColor = "var(--text)";
+    if (n === 0 || n === 5) { colour = "Violet/Mix"; cColor = "var(--violet)"; }
+    else if ([1,3,7,9].includes(n)) { colour = "Green"; cColor = "var(--green)"; }
+    else if ([2,4,6,8].includes(n)) { colour = "Red"; cColor = "var(--red)"; }
+    
+    const size = n >= 5 ? "Big" : "Small";
+    
+    cEl.innerHTML = `Colour: <span style="color:${cColor};">${colour}</span>`;
+    sEl.innerHTML = `Size: <span style="color:var(--blue);">${size}</span>`;
+  };
+
+  async function submitManualResult(code, res) {
+    if (!code || !Number.isInteger(res) || res < 0 || res > 9) return toast("Valid period aur result 0-9 daalein.", true);
+    if (!confirm(`Set result ${res} for ${code} and settle bets?`)) return;
+    try {
+      await api("set_result", { round_code: code, result_number: res });
+      toast("Result updated.");
+      await renderRounds();
+    } catch (err) { toast(err.message, true); }
+  }
+
+  async function submitRandomResult(code) {
+    if (!code) return toast("Enter the period first.", true);
+    if (!confirm(`Generate a random result for ${code} and settle its pending bets?`)) return;
+    try {
+      const r = await api("set_result", { round_code: code, random: true });
+      toast(`Random result: ${r.result_number}`);
+      await renderRounds();
+    } catch (err) { toast(err.message, true); }
+  }
+
+  $("randomResultBtn").onclick = () => submitRandomResult(String($("manualResultForm").elements["round_code"].value || "").trim());
+  document.querySelectorAll(".random-result").forEach(btn => btn.addEventListener("click", () => submitRandomResult(btn.dataset.code)));
+
+  $("manualResultForm").onsubmit = e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    submitManualResult(String(fd.get("round_code")).trim(), Number(fd.get("result_number")));
+  };
+
+  document.querySelectorAll(".set-result").forEach(btn => btn.addEventListener("click", () => {
+    const val = prompt(`Enter result (0-9) for period ${btn.dataset.code}:`);
+    if (val === null) return;
+    submitManualResult(btn.dataset.code, Number(val));
+  }));
+}
+
+/* ============ BETS ============ */
+async function renderBets() {
+  setPage("Bets", "Review bet records, stakes, status and payout information.",
+    '<button class="btn" id="exportBets">Export CSV</button>');
+  $("exportBets").addEventListener("click", async () => {
+    try { await downloadCsv("bets", state.filters.bets || {}); }
+    catch (e) { toast(e.message, true); }
+  });
+
+  const f = state.filters.bets || {};
+  const data = await api("bets", {
+    page: state.pages.bets || 1, page_size: 20,
+    user_id: f.user_id || "", status: f.status || ""
+  });
+  $("viewBody").innerHTML = `
+    ${filterToolbar({ status: true, userId: true })}
+    ${table(
+      ["Bet ID", "User ID", "Period (Game)", "Round Code", "Type", "Selection", "Stake", "Fee", "Status", "Result", "Payout", "Created", "Settled"],
+      (data.bets || []).map(b => [
+        escapeHtml(b.id), escapeHtml(b.user_id),
+        escapeHtml(b.period_number ?? b.round_code ?? "—"),
+        escapeHtml(b.round_code ?? "—"),
+        escapeHtml(b.bet_type), escapeHtml(b.selection),
+        escapeHtml(money(b.stake)), escapeHtml(money(b.fee)), badge(b.status),
+        escapeHtml(b.result_number ?? "—"), escapeHtml(money(b.payout)),
+        escapeHtml(formatDate(b.created_at)), escapeHtml(formatDate(b.settled_at))
+      ])
+    )}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachFilterActions("bets", renderBets);
+  attachPagination("bets", data.pagination, renderBets);
+}
+
+/* ============ REFERRALS ============ */
+async function renderReferrals() {
+  setPage("Referrals", "Referral commissions and referral rewards overview.");
+  $("viewBody").innerHTML = '<div class="loading">Loading...</div>';
+  const [usersData, auditData] = await Promise.all([
+    api("users", { page: 1, page_size: 20, segment: "all" }),
+    api("audit", { page: 1, page_size: 10 })
+  ]);
+  $("viewBody").innerHTML = `
+    <div class="notice">Referral tree and commission details are available via Users → View.</div>
+    <div class="card">
+      <div class="card-head"><h3>Users with Referral Codes</h3></div>
+      ${table(
+        ["User ID", "Name", "Username", "Referral Code", "Referred By", "Referral Count", "Joined"],
+        (usersData.users || []).filter(u => u.referral_code || Number(u.referral_count) > 0).map(u => [
+          escapeHtml(u.id), escapeHtml([u.first_name, u.last_name].filter(Boolean).join(" ") || "—"), escapeHtml(u.username || "—"), escapeHtml(u.referral_code || "—"),
+          escapeHtml(u.referred_by ?? "—"), escapeHtml(statValue(u.referral_count, 0)),
+          escapeHtml(formatDate(u.created_at))
+        ])
+      )}
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Recent Administrative Actions</h3></div>
+      ${table(
+        ["Time", "Admin", "Action", "Outcome"],
+        (auditData.entries || []).map(a => [
+          escapeHtml(formatDate(a.created_at)), escapeHtml(a.admin_username),
+          escapeHtml(a.action), badge(a.outcome)
+        ])
+      )}
+    </div>
+  `;
+}
+
+/* ============ CHANNEL SETTINGS (INCLUDING MULTI-CHANNEL) ============ */
+async function renderChannelSettings() {
+  setPage("Channel & Schedule Settings", "Manage bot channel, prediction timing, master on/off and multi-channel posting.");
+
+  const data = await api("channel_settings");
+  const s = data.settings || {};
+  const channels = data.prediction_channels || [];
+
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head"><h3>Main Channel Settings</h3></div>
+      <form id="channelSettingsForm">
+        <div class="grid" style="grid-template-columns: 1fr 1fr;">
+          <div class="field">
+            <label>Channel Username</label>
+            <input name="channel_username" value="${escapeHtml(s.channel_username || "")}" placeholder="@your_channel" required>
+            <div class="small muted">Result messages and predictions go here.</div>
+          </div>
+          <div class="field">
+            <label>Bot Username</label>
+            <input name="bot_username" value="${escapeHtml(s.bot_username || "")}" placeholder="YourBot" required>
+            <div class="small muted">Gift links use this: t.me/BotName?startapp=gift_CODE</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Prediction Timing (Seconds before round ends)</label>
+          <input type="number" name="prediction_timing" value="${s.prediction_timing ?? 150}" min="1" max="3600" required>
+          <div class="small muted">Default 150 (bets close at 150s).</div>
+        </div>
+
+        <div class="field">
+          <label>Posting Time Batches (IST, optional)</label>
+          <input name="batch_windows" value="${escapeHtml(s.batch_windows || "")}" placeholder="10:00-12:00,18:00-22:00" maxlength="300">
+          <div class="small muted">Posts go only inside these windows (India time). Leave empty = all day. Each extra channel also has its own schedule in minutes (3, 6, 9...).</div>
+        </div>
+
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" name="channel_updates_enabled" ${s.channel_updates_enabled ? "checked" : ""} style="width:auto">
+          <label style="margin:0">Channel Updates (Result + Prediction Posts) ON/OFF</label>
+        </div>
+
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" name="predictions_enabled" ${s.predictions_enabled ? "checked" : ""} style="width:auto">
+          <label style="margin:0">Enable Predictions in Main Channel</label>
+        </div>
+
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" name="withdrawal_channel_posts" ${s.withdrawal_channel_posts !== false ? "checked" : ""} style="width:auto">
+          <label style="margin:0">Post "Withdrawal approved" messages in channel (wallet address is never shown)</label>
+        </div>
+
+        <div class="card" style="margin:0 0 14px;padding:14px">
+          <div class="card-head" style="margin-bottom:10px"><h3>Inline Buttons (under posts)</h3></div>
+          <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+            <input type="checkbox" name="inline_button_enabled" ${s.inline_button_enabled !== false ? "checked" : ""} style="width:auto">
+            <label style="margin:0">Show buttons under prediction &amp; result posts</label>
+          </div>
+          ${(() => {
+            let list = [];
+            try { list = JSON.parse(s.inline_buttons || "[]"); } catch { list = []; }
+            if (!Array.isArray(list)) list = [];
+            const b1 = list[0] || { text: s.inline_link_text || "🚀 Play Now", url: "" };
+            const b2 = list[1] || { text: "", url: "" };
+            return `
+          <div class="grid" style="grid-template-columns:1fr 2fr;">
+            <div class="field"><label>Button 1 text</label><input name="btn1_text" value="${escapeHtml(b1.text)}" maxlength="60" placeholder="🚀 Play Now"></div>
+            <div class="field"><label>Button 1 link</label><input name="btn1_url" value="${escapeHtml(b1.url)}" maxlength="500" placeholder="https://t.me/YourBot?start=game"></div>
+          </div>
+          <div class="grid" style="grid-template-columns:1fr 2fr;">
+            <div class="field"><label>Button 2 text (optional)</label><input name="btn2_text" value="${escapeHtml(b2.text)}" maxlength="60" placeholder="📢 Join Channel"></div>
+            <div class="field"><label>Button 2 link (optional)</label><input name="btn2_url" value="${escapeHtml(b2.url)}" maxlength="500" placeholder="https://t.me/your_channel"></div>
+          </div>`;
+          })()}
+          <div class="small muted">Links must start with https:// (or t.me/..., @username). Leave Button 1 link empty to use the default: https://t.me/&lt;Bot Username&gt;?start=game</div>
+        </div>
+
+        <div class="field">
+          <label>Result Image URL (optional)</label>
+          <input name="result_image_url" value="${escapeHtml(s.result_image_url || "")}" placeholder="https://..." maxlength="500">
+        </div>
+
+        <div class="field">
+          <label>Prediction Message Template</label>
+          <textarea name="prediction_message" maxlength="4000" placeholder="Placeholders: {round}, {prediction}, {colour}">${escapeHtml(s.prediction_message || "")}</textarea>
+        </div>
+
+        <div class="field">
+          <label>Result Message Template</label>
+          <textarea name="result_message" maxlength="4000" placeholder="Placeholders: {round}, {result}, {colour}">${escapeHtml(s.result_message || "")}</textarea>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Save Main Settings</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Multi-Channel Prediction (Auto Send)</h3>
+        <div class="header-actions">
+          <button class="btn btn-primary" id="postPredNowAll" type="button">📤 Post Prediction to All Now</button>
+          <button class="btn btn-primary" id="addPredChannelBtn" type="button">+ Add Channel</button>
+        </div>
+      </div>
+      <div class="notice">Agar post fail ho raha hai to ensure karein bot channel ka admin hai aur Channel ID/@username sahi hai.</div>
+
+      <div id="addChannelFormWrap" class="hidden" style="margin-bottom:15px; padding:15px; background:#0b1016; border-radius:8px; border: 1px solid #2a3544;">
+         <form id="addPredChannelForm" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+            <div class="field" style="margin:0; flex:2 1 220px;">
+              <label>Channel ID or @username</label>
+              <input name="channel_id" placeholder="@channel_name or -100123456" required>
+            </div>
+            <div class="field" style="margin:0; flex:1 1 140px;">
+              <label>Schedule (Mins)</label>
+              <input type="number" name="schedule_mins" value="3" required>
+            </div>
+            <button class="btn btn-primary" type="submit">Add</button>
+         </form>
+      </div>
+
+      ${table(
+        ["ID", "Channel ID", "Schedule", "Status", "Action"],
+        channels.map(c => [
+          escapeHtml(c.id),
+          escapeHtml(c.channel_id),
+          `${c.schedule_mins} Mins`,
+          badge(c.is_active ? "active" : "inactive"),
+          `<div class="row-actions">
+             <button class="btn btn-primary post-channel" data-id="${escapeHtml(c.id)}" type="button">Post Now</button>
+             <button class="btn ${c.is_active ? 'btn-danger' : 'btn-primary'} toggle-channel" data-id="${escapeHtml(c.id)}" data-active="${c.is_active}" type="button">${c.is_active ? 'Turn OFF' : 'Turn ON'}</button>
+             <button class="btn btn-danger delete-channel" data-id="${escapeHtml(c.id)}" type="button">Delete</button>
+           </div>`
+        ])
+      )}
+    </div>
+  `;
+
+  $("channelSettingsForm").onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    try {
+      await api("save_channel_settings", {
+        channel_username: fd.get("channel_username"),
+        bot_username: fd.get("bot_username"),
+        prediction_timing: fd.get("prediction_timing"),
+        batch_windows: fd.get("batch_windows"),
+        channel_updates_enabled: fd.get("channel_updates_enabled") === "on",
+        predictions_enabled: fd.get("predictions_enabled") === "on",
+        withdrawal_channel_posts: fd.get("withdrawal_channel_posts") === "on",
+        prediction_message: fd.get("prediction_message"),
+        result_message: fd.get("result_message"),
+        result_image_url: fd.get("result_image_url"),
+        inline_link_text: fd.get("btn1_text") || "Play",
+        inline_button_enabled: fd.get("inline_button_enabled") === "on",
+        inline_buttons: [
+          { text: fd.get("btn1_text"), url: fd.get("btn1_url") },
+          { text: fd.get("btn2_text"), url: fd.get("btn2_url") }
+        ]
+      });
+      toast("Main settings saved!");
+      state.botUsername = fd.get("bot_username");
+      localStorage.setItem("bot_username", state.botUsername);
+    } catch (err) { toast(err.message, true); }
+  };
+
+  $("addPredChannelBtn").onclick = () => $("addChannelFormWrap").classList.toggle("hidden");
+
+  $("addPredChannelForm").onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    try {
+      await api("save_prediction_channel", {
+        action_type: "add",
+        channel_id: fd.get("channel_id"),
+        schedule_mins: fd.get("schedule_mins")
+      });
+      toast("Channel added!");
+      renderChannelSettings();
+    } catch (err) { toast(err.message, true); }
+  };
+
+  $("postPredNowAll").onclick = async () => {
+    if (!confirm("Post prediction to all active channels now?")) return;
+    try {
+      const r = await api("post_prediction", { all: true });
+      toast(r.message || "Posted to all channels.");
+    } catch (err) { toast(err.message, true); }
+  };
+
+  document.querySelectorAll(".post-channel").forEach(btn => btn.onclick = async () => {
+    btn.disabled = true;
+    try {
+      const r = await api("post_prediction", { id: btn.dataset.id });
+      toast(r.message || "Posted.");
+    } catch (err) { toast(err.message, true); }
+    finally { btn.disabled = false; }
+  });
+
+  document.querySelectorAll(".toggle-channel").forEach(btn => btn.onclick = async () => {
+    try {
+      await api("save_prediction_channel", {
+        action_type: "toggle",
+        id: btn.dataset.id,
+        is_active: btn.dataset.active === "false"
+      });
+      renderChannelSettings();
+    } catch (err) { toast(err.message, true); }
+  });
+
+  document.querySelectorAll(".delete-channel").forEach(btn => btn.onclick = async () => {
+    if (!confirm("Delete this channel?")) return;
+    try {
+      await api("save_prediction_channel", { action_type: "delete", id: btn.dataset.id });
+      renderChannelSettings();
+    } catch (err) { toast(err.message, true); }
+  });
+}
+
+/* ============ BROADCAST ============ */
+function pickImageToDataUrl(file, maxSide = 1280, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Could not read the picture."));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("This file is not a valid picture."));
+      img.onload = () => {
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(img.width * scale));
+        c.height = Math.max(1, Math.round(img.height * scale));
+        const ctx = c.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL("image/jpeg", quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function renderBroadcast() {
+  setPage("Broadcast Message", "Send a message to your users and/or channels. Supports a picture from your gallery and inline buttons.");
+  let pickedImage = "";
+  let chData = {};
+  try { chData = await api("channel_settings"); } catch { chData = {}; }
+  const mainCh = (chData.settings && chData.settings.channel_username) || "";
+  const savedChannels = chData.prediction_channels || [];
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <form id="broadcastForm">
+        <div class="field">
+          <label>Send to</label>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+            ${mainCh ? `<label style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" class="bc-channel" value="${escapeHtml(mainCh)}" checked style="width:auto"> Main channel: ${escapeHtml(mainCh)}</label>` : ""}
+            ${savedChannels.map(c => `<label style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" class="bc-channel" value="${escapeHtml(c.channel_id)}" ${c.is_active ? "checked" : ""} style="width:auto"> Saved channel: ${escapeHtml(c.channel_id)}${c.is_active ? "" : " (OFF)"}</label>`).join("")}
+            <label style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" name="send_users" checked style="width:auto"> All users (bot chat)</label>
+          </div>
+          <textarea name="extra_channels" placeholder="More channels (optional), one per line: @channel_name or -100123456" style="min-height:70px;margin-top:10px"></textarea>
+          <div class="small muted">Saved channels come from Channel Settings → Multi-Channel list. The bot must be admin in every channel.</div>
+        </div>
+
+        <div class="field">
+          <label>Picture (optional)</label>
+          <input type="file" id="broadcastImageFile" accept="image/*">
+          <div id="broadcastImagePreview" style="margin-top:8px"></div>
+          <div class="small muted">Pick a photo from your gallery. It is resized automatically. A copy goes to your admin chat once as the upload.</div>
+        </div>
+
+        <div class="field">
+          <label>or Image URL (optional)</label>
+          <input name="image_url" placeholder="https://... (ignored if you picked a picture)" maxlength="500">
+        </div>
+
+        <div class="field">
+          <label>Message</label>
+          <textarea name="message" required placeholder="Enter message here..." maxlength="4000"></textarea>
+        </div>
+
+        <div class="card" style="margin:0 0 14px;padding:14px">
+          <div class="card-head" style="margin-bottom:10px"><h3>Inline Buttons (optional)</h3></div>
+          <div class="grid" style="grid-template-columns:1fr 2fr;">
+            <div class="field"><label>Button 1 text</label><input name="b1_text" maxlength="60" placeholder="🚀 Play Now"></div>
+            <div class="field"><label>Button 1 link</label><input name="b1_url" maxlength="500" placeholder="https://t.me/YourBot?start=game"></div>
+          </div>
+          <div class="grid" style="grid-template-columns:1fr 2fr;">
+            <div class="field"><label>Button 2 text</label><input name="b2_text" maxlength="60" placeholder="📢 Join Channel"></div>
+            <div class="field"><label>Button 2 link</label><input name="b2_url" maxlength="500" placeholder="https://t.me/your_channel"></div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Send Broadcast</button>
+      </form>
+      <div id="broadcastResult" style="margin-top:12px"></div>
+    </div>
+  `;
+
+  $("broadcastImageFile").onchange = async e => {
+    const file = e.target.files && e.target.files[0];
+    pickedImage = "";
+    $("broadcastImagePreview").innerHTML = "";
+    if (!file) return;
+    try {
+      pickedImage = await pickImageToDataUrl(file);
+      $("broadcastImagePreview").innerHTML = `<img src="${pickedImage}" alt="Preview" style="max-width:220px;max-height:220px;border-radius:10px;border:1px solid var(--border)"><div class="small muted" style="margin-top:4px">Picture ready (${Math.round(pickedImage.length * 0.75 / 1024)} KB)</div>`;
+    } catch (err) { toast(err.message, true); e.target.value = ""; }
+  };
+
+  $("broadcastForm").onsubmit = async e => {
+    e.preventDefault();
+    if (!confirm("Are you sure you want to send this broadcast?")) return;
+    const fd = new FormData(e.target);
+    const btn = e.target.querySelector("button[type=submit]");
+    btn.disabled = true;
+    try {
+      const picked = Array.from(document.querySelectorAll(".bc-channel:checked")).map(x => x.value);
+      const extra = String(fd.get("extra_channels") || "").split(/[\n,]+/).map(x => x.trim()).filter(Boolean);
+      const r = await api("broadcast", {
+        channels: [...picked, ...extra],
+        send_users: fd.get("send_users") === "on",
+        message: fd.get("message"),
+        image_url: fd.get("image_url") || undefined,
+        image_data: pickedImage || undefined,
+        buttons: [
+          { text: fd.get("b1_text"), url: fd.get("b1_url") },
+          { text: fd.get("b2_text"), url: fd.get("b2_url") }
+        ]
+      });
+      toast(r.message || "Broadcast sent.");
+      $("broadcastResult").innerHTML = `<div class="notice">${escapeHtml(r.message)}</div>`;
+      e.target.reset();
+      pickedImage = "";
+      $("broadcastImagePreview").innerHTML = "";
+    } catch (err) { toast(err.message, true); }
+    finally { btn.disabled = false; }
+  };
+}
+
+/* ============ TELEGRAM LOGS ============ */
+async function renderTelegram() {
+  setPage("Telegram Logs", "Send test messages, retry failed deliveries, and review history.");
+  const data = await api("telegram", {
+    mode: "history", page: state.pages.telegram || 1, page_size: 25
+  });
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head"><h3>Send Test Message</h3><span class="muted small">Bot token stays server-side.</span></div>
+      <form id="telegramForm" class="toolbar">
+        <input id="telegramChannel" placeholder="Channel or chat ID" maxlength="200" required>
+        <input id="telegramImage" placeholder="Image URL (optional)" maxlength="500">
+        <input id="telegramMessage" placeholder="Message" maxlength="4000" required>
+        <button class="btn btn-primary" type="submit">Send</button>
+      </form>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <h3>Notification History</h3>
+        <button class="btn small" id="refreshTelegram">Refresh</button>
+      </div>
+      ${table(
+        ["ID", "Event", "Channel", "Status", "Attempts", "Sent", "Error", "Action"],
+        (data.notifications || []).map(item => [
+          escapeHtml(item.id), escapeHtml(item.event_type), escapeHtml(item.channel),
+          badge(item.status), escapeHtml(item.attempt_count),
+          escapeHtml(formatDate(item.sent_at)), escapeHtml(item.error_message || "—"),
+          item.status === "sent" ? "—" : `<button class="btn small telegram-retry" data-id="${escapeHtml(item.id)}">Retry</button>`
+        ])
+      )}
+    </div>
+  `;
+  $("telegramForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    try {
+      await api("telegram", {
+        mode: "send", event_type: "test",
+        channel: $("telegramChannel").value,
+        message: $("telegramMessage").value,
+        image_url: $("telegramImage").value || undefined
+      });
+      toast("Telegram message sent.");
+      await renderTelegram();
+    } catch (err) { toast(err.message, true); }
+  });
+  $("refreshTelegram").addEventListener("click", renderTelegram);
+  document.querySelectorAll(".telegram-retry").forEach(btn => btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    try {
+      await api("telegram", { mode: "retry", id: btn.dataset.id });
+      toast("Retried.");
+      await renderTelegram();
+    } catch (err) { btn.disabled = false; toast(err.message, true); }
+  }));
+}
+
+/* ============ TELEGRAM SUPPORT (NEW) ============ */
+async function renderAppSettings() {
+  setPage("Settings", "Game controls and platform settings. Changes apply immediately.");
+  const d = await api("app_settings");
+  const s = d.settings || {};
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head"><h3>Game &amp; Wallet Controls</h3></div>
+      <form id="appSettingsForm">
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" name="maintenance_mode" ${s.maintenance_mode ? "checked" : ""} style="width:auto">
+          <label style="margin:0">Maintenance mode (pause NEW bets)</label>
+        </div>
+        <div class="field">
+          <label>Maintenance message (shown to users)</label>
+          <input name="maintenance_message" value="${escapeHtml(s.maintenance_message || "")}" maxlength="200" placeholder="Betting is paused for maintenance. Back soon!">
+          <div class="small muted">Running rounds still settle normally. Only new bets are blocked.</div>
+        </div>
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" name="withdrawals_paused" ${s.withdrawals_paused ? "checked" : ""} style="width:auto">
+          <label style="margin:0">Pause all withdrawal requests</label>
+        </div>
+        <div class="field">
+          <label>Daily withdrawal limit per user (USDT, 0 = no limit)</label>
+          <input type="number" name="withdraw_daily_limit_usdt" min="0" step="0.01" value="${escapeHtml(s.withdraw_daily_limit_usdt ?? 0)}">
+        </div>
+        <div class="field">
+          <label>Minimum total bets before a user can withdraw (points, 0 = off)</label>
+          <input type="number" name="min_bet_to_withdraw" min="0" step="1" value="${escapeHtml(s.min_bet_to_withdraw ?? 1000)}">
+          <div class="small muted">Counts all bets the user has placed so far. Example: 1000 means the user must bet at least 1000 points in total.</div>
+        </div>
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" name="signup_bonus_enabled" ${s.signup_bonus_enabled ? "checked" : ""} style="width:auto">
+          <label style="margin:0">Joining bonus for new users</label>
+        </div>
+        <div class="field">
+          <label>Joining bonus amount (points)</label>
+          <input type="number" name="signup_bonus_amount" min="0" step="1" value="${escapeHtml(s.signup_bonus_amount ?? 25)}">
+        </div>
+
+        <div class="card" style="margin:6px 0 14px;padding:14px">
+          <div class="card-head" style="margin-bottom:10px"><h3>Dashboard Links (shown on the app home)</h3></div>
+          ${[0, 1, 2, 3].map(i => {
+            const defaults = [{ label: "📢 Channel", url: "", enabled: false }, { label: "💬 Group", url: "", enabled: false }];
+            const l = (s.dashboard_links && s.dashboard_links[i]) || defaults[i] || { label: "", url: "", enabled: false };
+            return `
+          <div class="grid" style="grid-template-columns:auto 1fr 2fr;align-items:end;gap:10px;margin-bottom:8px">
+            <div class="field" style="margin:0"><label>ON</label><input type="checkbox" name="dl${i}_on" ${l.enabled ? "checked" : ""} style="width:auto"></div>
+            <div class="field" style="margin:0"><label>Label</label><input name="dl${i}_label" value="${escapeHtml(l.label || "")}" maxlength="30" placeholder="📢 Channel"></div>
+            <div class="field" style="margin:0"><label>Link</label><input name="dl${i}_url" value="${escapeHtml(l.url || "")}" maxlength="500" placeholder="https://t.me/your_channel"></div>
+          </div>`;
+          }).join("")}
+          <div class="small muted">Turn a link ON to show it as a button on the app home. Empty rows are ignored.</div>
+        </div>
+        <button class="btn btn-primary" type="submit">Save Settings</button>
+      </form>
+    </div>`;
+  $("appSettingsForm").onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    try {
+      await api("save_app_settings", {
+        maintenance_mode: fd.get("maintenance_mode") === "on",
+        maintenance_message: fd.get("maintenance_message"),
+        withdrawals_paused: fd.get("withdrawals_paused") === "on",
+        withdraw_daily_limit_usdt: fd.get("withdraw_daily_limit_usdt"),
+        signup_bonus_enabled: fd.get("signup_bonus_enabled") === "on",
+        signup_bonus_amount: fd.get("signup_bonus_amount"),
+        min_bet_to_withdraw: fd.get("min_bet_to_withdraw"),
+        dashboard_links: [0, 1, 2, 3].map(i => ({
+          enabled: fd.get(`dl${i}_on`) === "on",
+          label: fd.get(`dl${i}_label`),
+          url: fd.get(`dl${i}_url`)
+        }))
+      });
+      toast("Settings saved.");
+    } catch (err) { toast(err.message, true); }
+  };
+}
+
+async function renderTelegramSupport() {
+  setPage("Telegram Support", "Configure support contact and view recent support messages.");
+  let data = {};
+  try { data = await api("support_settings"); } catch (e) { /* optional endpoint */ }
+  const s = data.settings || data || {};
+
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head"><h3>Support Settings</h3></div>
+      <form id="supportForm">
+        <div class="grid" style="grid-template-columns:1fr 1fr;">
+          <div class="field"><label>Support Username</label>
+            <input name="support_username" value="${escapeHtml(s.support_username || "")}" placeholder="@YourSupport" maxlength="100">
+            <div class="small muted">Shown to users for help.</div></div>
+          <div class="field"><label>Support Channel / Group</label>
+            <input name="support_channel" value="${escapeHtml(s.support_channel || "")}" placeholder="@YourSupportGroup" maxlength="100"></div>
+        </div>
+        <div class="field"><label>Support Message</label>
+          <textarea name="support_message" maxlength="2000" placeholder="Need help? Contact support...">${escapeHtml(s.support_message || "")}</textarea></div>
+        <div class="field" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" name="support_enabled" ${s.support_enabled ? "checked" : ""} style="width:auto">
+          <label style="margin:0">Enable Support Button</label>
+        </div>
+        <button class="btn btn-primary" type="submit">Save Support Settings</button>
+      </form>
+      <div id="supportPreview" style="margin-top:14px"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Recent Support Messages</h3><button class="btn small" id="refreshSupport">Refresh</button></div>
+      <div id="supportMessages"><div class="loading">Loading...</div></div>
+    </div>
+  `;
+
+  function updateSupportPreview() {
+    const form = $("supportForm");
+    const u = (form.support_username.value || "").trim().replace(/^@/, "");
+    const c = (form.support_channel.value || "").trim().replace(/^@/, "");
+    $("supportPreview").innerHTML = `<div class="notice">
+      User support link: ${u ? `<a class="tx-link" target="_blank" rel="noopener" href="https://t.me/${escapeHtml(u)}">@${escapeHtml(u)}</a>` : "—"}
+      · Group: ${c ? `<a class="tx-link" target="_blank" rel="noopener" href="https://t.me/${escapeHtml(c)}">@${escapeHtml(c)}</a>` : "—"}
+    </div>`;
+  }
+
+  $("supportForm").onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    try {
+      await api("save_support_settings", {
+        support_username: fd.get("support_username"),
+        support_channel: fd.get("support_channel"),
+        support_message: fd.get("support_message"),
+        support_enabled: fd.get("support_enabled") === "on"
+      });
+      toast("Support settings saved.");
+      updateSupportPreview();
+    } catch (err) { toast(err.message, true); }
+  };
+
+  updateSupportPreview();
+
+  async function loadMsgs() {
+    try {
+      const d = await api("support_messages", { page: 1, page_size: 30 });
+      const rows = d.messages || d.entries || [];
+      $("supportMessages").innerHTML = table(
+        ["Time", "User ID", "Username", "Message", "Status"],
+        rows.map(m => [
+          escapeHtml(formatDate(m.created_at)),
+          escapeHtml(m.user_id ?? "—"),
+          escapeHtml(m.username || "—"),
+          escapeHtml(m.message || m.text || "—"),
+          badge(m.status || "open")
+        ]),
+        "No support messages."
+      );
+    } catch (e) {
+      $("supportMessages").innerHTML = `<div class="notice">Support messages endpoint not available (${escapeHtml(e.message)}).</div>`;
+    }
+  }
+  loadMsgs();
+  $("refreshSupport").onclick = loadMsgs;
+}
+
+/* ============ AUDIT ============ */
+async function renderAudit() {
+  setPage("Audit Logs", "Review recorded administrative actions.",
+    '<button class="btn" id="refreshAudit">↻ Refresh</button>');
+  $("refreshAudit").addEventListener("click", renderAudit);
+
+  const f = state.filters.audit || {};
+  const data = await api("audit", {
+    page: state.pages.audit || 1, page_size: 20, q: f.q || ""
+  });
+  $("viewBody").innerHTML = `
+    ${filterToolbar({ search: "Search admin username or action" })}
+    ${table(
+      ["ID", "Time", "Admin", "Action", "Target Type", "Target ID", "Outcome", "IP"],
+      (data.entries || []).map(a => [
+        escapeHtml(a.id), escapeHtml(formatDate(a.created_at)), escapeHtml(a.admin_username),
+        escapeHtml(a.action), escapeHtml(a.target_type || "—"), escapeHtml(a.target_id || "—"),
+        badge(a.outcome), escapeHtml(a.ip || "—")
+      ])
+    )}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachFilterActions("audit", renderAudit);
+  attachPagination("audit", data.pagination, renderAudit);
+}
+
+/* ============ LOGIN ATTEMPTS ============ */
+async function renderLoginAttempts() {
+  setPage("Login Attempts", "Monitor successful and failed admin login attempts.");
+  const data = await api("login_attempts", {
+    page: state.pages.login_attempts || 1, page_size: 20
+  });
+  $("viewBody").innerHTML = `
+    <div class="notice warning">IP addresses are sensitive. Restrict access to trusted admins.</div>
+    ${table(
+      ["ID", "IP Address", "Result", "Attempted At"],
+      (data.entries || []).map(a => [
+        escapeHtml(a.id), escapeHtml(a.ip || "—"),
+        a.success ? badge("success") : badge("failed"),
+        escapeHtml(formatDate(a.attempted_at))
+      ])
+    )}
+    ${paginationHtml(data.pagination)}
+  `;
+  attachPagination("login_attempts", data.pagination, renderLoginAttempts);
+}
+
+/* ============ SECURITY SUMMARY ============ */
+async function renderSecurity() {
+  setPage("Security Summary", "Recent login attempts and audit entries.");
+  const data = await api("security");
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <div class="card-head"><h3>Recent Login Attempts</h3></div>
+      ${table(
+        ["Time", "IP", "Result"],
+        (data.attempts || []).map(a => [
+          escapeHtml(formatDate(a.attempted_at)), escapeHtml(a.ip || "—"),
+          a.success ? badge("success") : badge("failed")
+        ])
+      )}
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Recent Audit Entries</h3></div>
+      ${table(
+        ["Time", "Admin", "Action", "Outcome", "IP"],
+        (data.entries || []).map(a => [
+          escapeHtml(formatDate(a.created_at)), escapeHtml(a.admin_username),
+          escapeHtml(a.action), badge(a.outcome), escapeHtml(a.ip || "—")
+        ])
+      )}
+    </div>
+  `;
+}
+
+/* ============ SEARCH ============ */
+function renderSearch() {
+  setPage("Global Search", "Search users, game rounds and bets.");
+  $("viewBody").innerHTML = `
+    <div class="card">
+      <form id="globalSearchForm">
+        <div class="toolbar">
+          <input id="globalSearchInput" placeholder="Username, user ID, Telegram ID or period/round code" required>
+          <button class="btn btn-primary" type="submit">Search</button>
+        </div>
+      </form>
+      <div id="searchResults"></div>
+    </div>
+  `;
+  $("globalSearchForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const q = $("globalSearchInput").value.trim();
+    if (!q) return;
+    $("searchResults").innerHTML = '<div class="loading">Searching...</div>';
+    try {
+      const data = await api("search", { q });
+      $("searchResults").innerHTML = `
+        <div class="card-head"><h3>Users</h3></div>
+        ${table(
+          ["ID", "Telegram ID", "Username", "Balance", "Joined"],
+          (data.users || []).map(u => [
+            escapeHtml(u.id), escapeHtml(u.telegram_id),
+            escapeHtml(u.username || "—"), escapeHtml(money(u.balance)),
+            escapeHtml(formatDate(u.created_at))
+          ])
+        )}
+        <div class="card-head" style="margin-top:22px"><h3>Rounds</h3></div>
+        ${table(
+          ["ID", "Period (Game)", "Round Code", "Status", "Start", "End", "Result"],
+          (data.rounds || []).map(r => [
+            escapeHtml(r.id),
+            escapeHtml(r.period_number ?? r.round_code ?? "—"),
+            escapeHtml(r.round_code ?? "—"),
+            badge(r.status),
+            escapeHtml(formatDate(r.starts_at)), escapeHtml(formatDate(r.ends_at)),
+            escapeHtml(r.result_number ?? "—")
+          ])
+        )}
+        <div class="card-head" style="margin-top:22px"><h3>Bets</h3></div>
+        ${table(
+          ["ID", "User ID", "Period (Game)", "Type", "Stake", "Status", "Payout", "Created"],
+          (data.bets || []).map(b => [
+            escapeHtml(b.id), escapeHtml(b.user_id),
+            escapeHtml(b.period_number ?? b.round_code ?? "—"),
+            escapeHtml(b.bet_type), escapeHtml(money(b.stake)), badge(b.status),
+            escapeHtml(money(b.payout)), escapeHtml(formatDate(b.created_at))
+          ])
+        )}
+      `;
+    } catch (err) {
+      $("searchResults").innerHTML = `<div class="notice danger">${escapeHtml(err.message)}</div>`;
+    }
+  });
+}
+
+/* ============ NOTIFICATIONS ============ */
+async function fetchNotifications() {
+  try {
+    const data = await api("transactions", { status: "pending", page_size: 50 });
+    const pending = (data.transactions || []).filter(t =>
+      ["deposit", "withdrawal"].includes(t.transaction_type)
+    );
+    const badgeEl = $("notifBadge");
+    if (pending.length > 0) {
+      badgeEl.textContent = pending.length > 9 ? "9+" : pending.length;
+      badgeEl.classList.remove("hidden");
+    } else badgeEl.classList.add("hidden");
+
+    $("notifList").innerHTML = pending.length === 0
+      ? '<div class="empty">No pending requests.</div>'
+      : pending.map(t => `
+        <div class="notif-item">
+          <strong class="${t.transaction_type === "deposit" ? "green" : "red"}">
+            ${t.transaction_type.toUpperCase()} #${escapeHtml(t.id)}
+          </strong>
+          <div>User ${escapeHtml(t.user_id)} | ${money(t.amount)}</div>
+          <small>${formatDate(t.created_at)}</small>
+        </div>
+      `).join("");
+  } catch (e) { console.error("Notification failed", e); }
+}
+
+$("notifBell").addEventListener("click", e => {
+  e.stopPropagation();
+  $("notifDropdown").classList.toggle("hidden");
+});
+$("closeNotif").addEventListener("click", () => $("notifDropdown").classList.add("hidden"));
+document.addEventListener("click", e => {
+  const dd = $("notifDropdown");
+  if (!dd.classList.contains("hidden") && !dd.contains(e.target) && !$("notifBell").contains(e.target)) {
+    dd.classList.add("hidden");
+  }
+});
+
+/* ============ LOGIN / LOGOUT / INIT ============ */
+$("loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (state.busy) return;
+  state.busy = true;
+  $("loginButton").disabled = true;
+  $("loginButton").textContent = "Signing In...";
+  $("loginError").textContent = "";
+  try {
+    const r = await api("login", {
+      username: $("loginUsername").value.trim(),
+      password: $("loginPassword").value
+    });
+    $("loginPassword").value = "";
+    showApp(r.username || $("loginUsername").value);
+  } catch (err) {
+    $("loginError").textContent = err.message;
+  } finally {
+    state.busy = false;
+    $("loginButton").disabled = false;
+    $("loginButton").textContent = "Sign In Securely";
+  }
+});
+
+$("logoutButton").addEventListener("click", async () => {
+  if (!confirm("Are you sure you want to log out?")) return;
+  try { await api("logout"); } catch { /* ignore */ }
+  showLogin("You have been logged out.");
+});
+
+(async function init() {
+  try {
+    const r = await api("me");
+    if (r.username) showApp(r.username);
+    else showLogin();
+  } catch { showLogin(); }
+})();
+</script>
+
+</body>
+</html>

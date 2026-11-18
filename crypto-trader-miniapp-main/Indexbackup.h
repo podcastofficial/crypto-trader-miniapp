@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0c">
+<title>Crypto Trader Pro</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="/languages.js" onerror="void 0"></script>
+<style>
+:root {
+  --bg:#0b0b0c; --card:#151516; --text:#f5f5f5; --muted:#a1a1aa;
+  --border:#29292c; --primary:#facc15; --green:#22c55e; --red:#ef3038; --violet:#a855f7;
+}
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { margin:0; min-height:100%; background:#0b0b0c; color:var(--text); color-scheme:dark; font:14px Arial,Helvetica,sans-serif; }
+body { background:radial-gradient(ellipse at top,#19171b 0,#0b0b0c 46%); }
+button,input,select { font:inherit; }
+button { border:0; cursor:pointer; }
+button:disabled { opacity:.45; cursor:not-allowed; }
+button.busy { opacity:.6; pointer-events:none; }
+.app { max-width:600px; margin:auto; min-height:100vh; padding-bottom:calc(100px + env(safe-area-inset-bottom)); }
+header { background:#141415; border-bottom:1px solid #29292c; color:#f5f5f5; padding:15px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.brand { font-size:18px; font-weight:900; letter-spacing:-.3px; }
+.brand span { color:#facc15; }
+.head-btns { display:flex; gap:6px; }
+.header-symbol { display:inline-block; color:#facc15; filter:saturate(1.25); }
+.icon-btn { border:1px solid #3f3f46; background:linear-gradient(145deg,#292929,#202023); box-shadow:0 4px 12px #0005; color:#facc15; border-radius:11px; padding:8px; }
+.head-btns .icon-btn svg { width:18px; height:18px; }
+.head-btns .icon-btn { font-size:16px; line-height:1; min-width:34px; min-height:34px; display:grid; place-items:center; }
+.page { display:none; color:#f5f5f5; }
+.page.active { display:block; }
+.section { padding:0 14px; margin-bottom:15px; }
+.section-title { font-size:17px; font-weight:900; margin:7px 0 13px; color:#fafafa; display:flex; align-items:center; gap:8px; }
+.card, .timer-card { background:#151516; border:1px solid #303034; border-radius:16px; padding:16px; margin-bottom:13px; box-shadow:0 8px 24px #0005; color:#f5f5f5; overflow-wrap:anywhere; }
+.muted, .period, .utc-time { color:#a1a1aa; }
+.small { font-size:12px; }
+.row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.balance-card { margin:15px; padding:21px; border-radius:19px; background:linear-gradient(135deg,#191919,#242018); border:1px solid #4a3e18; box-shadow:0 8px 28px #0006; color:#fff; }
+.balance-label { color:#d4d4d8; font-size:12px; }
+.balance-value { color:#facc15; font-size:27px; font-weight:900; margin:9px 0; overflow-wrap:anywhere; }
+.balance-sub { color:#bdbdc3; font-size:12px; }
+.actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:16px; }
+.refresh-corner-btn { border:1px solid #806b16; border-radius:12px; background:#292929; color:#facc15; padding:7px 9px; font-weight:800; line-height:1; }
+.refresh-corner-btn small { display:block; font-size:9px; margin-top:3px; color:#f4f4f5; }
+.rules-corner-btn { border:1px solid #806b16; border-radius:999px; background:#2b2614; color:#facc15; padding:5px 10px; font-size:11px; font-weight:800; }
+.rules-modal p { color:#d4d4d8; line-height:1.55; font-size:14px; }
+.payout-example { background:#211f16; border:1px solid #665519; border-radius:12px; padding:13px; line-height:1.85; color:#facc15; }
+.wallet-actions { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) 48px; gap:10px; margin-top:16px; align-items:stretch; }
+.deposit-action { background:#16a34a; border-color:#15803d; color:#fff; }
+.withdraw-action { background:#dc2626; border-color:#b91c1c; color:#fff; }
+.refresh-icon-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; border:1px solid #555; border-radius:11px; background:#292929; color:#facc15; font-size:22px; font-weight:900; cursor:pointer; }
+.refresh-icon-btn small { font-size:8px; line-height:1; color:#d4d4d8; font-weight:700; }
+.usdt-value { color:#22c55e; font-weight:900; }
+.profile-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px; }
+.profile-stats div { border:1px solid #333; border-radius:12px; padding:10px 8px; background:#1d1d1f; }
+.profile-stats span { display:block; color:#a1a1aa; font-size:10px; }
+.profile-stats strong { display:block; color:#facc15; font-size:13px; margin-top:4px; }
+.faq-card { margin-top:14px; }
+.faq-card p { color:#bdbdc3; font-size:13px; line-height:1.5; margin:8px 0; }
+.faq-card details { border-top:1px solid #3a3a3a; padding:10px 0; }
+.faq-card summary { cursor:pointer; font-weight:800; }
+.faq-card details:first-of-type { border-top:0; }
+.quick-amounts { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:9px 0 7px; }
+.quick-amounts .sec-btn { padding:9px 6px; font-size:12px; }
+.action-btn { padding:13px 8px; background:#facc15; color:#171717; border:1px solid #eab308; border-radius:11px; font-weight:800; }
+.action-btn.alt { background:#292929; color:#facc15; border-color:#444; }
+.timer-card { text-align:center; padding:18px 16px; }
+.timer-card .row { color:#d4d4d8; }
+.period { font-size:14px; overflow-wrap:anywhere; margin-top:8px; font-variant-numeric:tabular-nums; }
+.ring { position:relative; width:124px; height:124px; margin:14px auto; }
+.ring svg { width:100%; height:100%; transform:rotate(-90deg); }
+.ring-bg { fill:none; stroke:#333338; stroke-width:8; }
+.ring-fg { fill:none; stroke:#facc15; stroke-width:8; stroke-linecap:round; transition:stroke-dashoffset 1s linear,stroke .3s; }
+.ring-fg.locked { stroke:#ef4444; }
+.timer-text { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:29px; color:#fff; font-variant-numeric:tabular-nums; }
+.status { display:inline-block; padding:7px 12px; border-radius:20px; background:#173b27; color:#4ade80; border:1px solid #245b39; font-weight:800; font-size:11px; }
+.status.locked { background:#351b1d; color:#fca5a5; border-color:#6d292d; }
+.notice { background:#201d14; color:#e9d7a0; border:1px solid #51421a; padding:12px; border-radius:11px; font-size:12px; line-height:1.7; margin-top:12px; overflow-wrap:anywhere; }
+.number-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:9px; margin:15px 0; }
+.number-btn { min-width:0; min-height:48px; border-radius:12px; border:0; color:#fff; font-size:19px; font-weight:900; box-shadow:0 3px 12px #0005; }
+.number-btn.red { background:#e32932; }
+.number-btn.green { background:#20b85a; color:#071b0e; }
+.number-btn.num-zero { background:linear-gradient(135deg,#a855f7 0 50%,#e32932 50%); }
+.number-btn.num-five { background:linear-gradient(135deg,#a855f7 0 50%,#20b85a 50%); }
+.option-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin:13px 0; }
+.option-btn { min-height:48px; padding:8px 4px; border-radius:11px; color:#fff; font-weight:900; box-shadow:0 3px 12px #0005; }
+.option-btn.red { background:#e32932; }
+.option-btn.green { background:#20b85a; color:#071b0e; }
+.option-btn.violet { background:#a34df2; }
+.big-small { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.big-small button { border:0; min-height:48px; border-radius:11px; font-weight:900; color:#fff; box-shadow:0 3px 12px #0005; }
+.big-small .orange { background:#f97316; }
+.big-small .blue { background:#14b8a6; }
+.primary-btn { width:100%; padding:14px; border-radius:11px; background:#facc15; color:#171717; font-weight:900; min-height:46px; box-shadow:0 5px 16px #facc151c; }
+.sec-btn { padding:11px 14px; border-radius:10px; background:#29292c; color:#facc15; border:1px solid #3a3a40; font-weight:800; }
+input, select { display:block; width:100%; min-width:0; padding:13px; margin:7px 0 13px; border:1px solid #3a3a40; border-radius:10px; background:#202023; color:#fff; }
+label { font-weight:800; font-size:12px; }
+.utc-time { font-size:11px; margin-top:4px; line-height:1.5; }
+.wrap { overflow-x:auto; }
+.tbl { width:100%; border-collapse:collapse; }
+.tbl th { color:#a1a1aa; font-weight:700; font-size:11px; padding:8px 4px; text-align:center; border-bottom:1px solid #303034; white-space:nowrap; }
+.tbl td { padding:11px 4px; text-align:center; border-bottom:1px solid #222225; font-size:13px; font-variant-numeric:tabular-nums; }
+.tbl th:first-child, .tbl td.period { text-align:left; }
+.tbl td.period { font-size:12px; color:#f5f5f5; }
+.dot { display:inline-block; width:14px; height:14px; border-radius:50%; margin:0 2px; vertical-align:middle; }
+.dot.red { background:#e32932; }
+.dot.green { background:#20b85a; }
+.dot.violet { background:#a855f7; }
+.n-red { color:#ef4444; font-weight:900; }
+.n-green { color:#22c55e; font-weight:900; }
+.bs-b { color:#f97316; font-weight:900; }
+.bs-s { color:#14b8a6; font-weight:900; }
+.pager { display:flex; align-items:center; justify-content:flex-end; gap:10px; padding-top:12px; }
+.pager .info { color:#a1a1aa; font-size:12px; margin-right:auto; }
+.pager button { width:38px; height:38px; border-radius:50%; background:#29292c; color:#f5f5f5; font-size:20px; line-height:1; }
+.trade { border-bottom:1px solid #222225; }
+.trade-head { display:grid; grid-template-columns:minmax(0,1.5fr) auto minmax(0,1fr) 18px; align-items:center; gap:8px; padding:12px 2px; cursor:pointer; }
+.trade-period { font-size:12px; font-variant-numeric:tabular-nums; }
+.trade-status { font-weight:800; font-size:13px; }
+.trade-amt { font-weight:800; font-size:13px; text-align:right; font-variant-numeric:tabular-nums; }
+.notification-btn { position:relative; }
+#notificationCount { position:absolute; top:-3px; right:-3px; min-width:16px; height:16px; border-radius:999px; background:#ef4444; color:#fff; font-size:10px; line-height:16px; font-weight:800; text-align:center; }
+.notification-item { padding:11px 0; border-bottom:1px solid #2b2b31; }
+.notification-item strong, .notification-item small { display:block; }
+.notification-item small { color:#a1a1aa; margin-top:4px; }
+.success { color:#22c55e; }
+.fail { color:#ef4444; }
+.pending { color:#facc15; }
+.cancelled { color:#94a3b8; }
+.chev { color:#a1a1aa; transition:transform .2s; text-align:right; }
+.trade.open .chev { transform:rotate(180deg); }
+.trade-body { display:none; padding:0 2px 12px; }
+.trade.open .trade-body { display:block; }
+.kv { display:flex; justify-content:space-between; gap:10px; padding:4px 0; font-size:12px; }
+.kv span:first-child { color:#a1a1aa; }
+.kv.strong span:last-child { color:#facc15; font-weight:800; }
+.empty { text-align:center; padding:20px 7px; color:#a1a1aa; line-height:1.7; }
+.copybox { display:flex; gap:8px; align-items:center; }
+.copybox input { margin:0; font-size:12px; }
+.copybox button { flex:none; }
+.stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-bottom:13px; }
+.stat { background:#19191b; border:1px solid #303034; border-radius:12px; padding:12px; }
+.stat .l { color:#a1a1aa; font-size:11px; }
+.stat .v { color:#facc15; font-size:20px; font-weight:900; margin-top:4px; }
+.setting-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 0; border-bottom:1px solid #222225; font-weight:800; }
+.setting-row:last-child { border-bottom:0; }
+.switch { width:52px; height:30px; border-radius:30px; background:#3a3a40; position:relative; flex:none; transition:background .2s; }
+.switch i { position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; transition:transform .2s; }
+.switch.on { background:#22c55e; }
+.switch.on i { transform:translateX(22px); }
+.tabs { display:flex; gap:6px; margin:12px 0; overflow-x:auto; padding-bottom:5px; }
+.tab { flex:0 0 auto; padding:9px 14px; border-radius:10px; background:#202023; color:#b4b4bc; border:1px solid #2d2d31; font-weight:800; font-size:12px; }
+.tab.on { background:#302911; color:#facc15; border-color:#51421a; }
+.member { padding:12px; margin-bottom:9px; background:#19191b; border:1px solid #303034; border-radius:12px; }
+.pill { display:inline-block; padding:4px 9px; border-radius:999px; font-size:11px; font-weight:800; background:#2d2d31; color:#b4b4bc; }
+.pill.ok { background:#143d27; color:#4ade80; }
+.pill.wait { background:#44330e; color:#facc15; }
+.pill.off { background:#351b1d; color:#fca5a5; }
+.bottom-nav { position:fixed; bottom:calc(8px + env(safe-area-inset-bottom)); left:50%; isolation:isolate; transform:translateX(-50%); width:calc(100% - 12px); max-width:588px; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0; background:rgba(20,20,21,.97); border:1px solid #303034; border-radius:15px; padding:7px 6px; z-index:20; box-shadow:0 8px 28px #000a; backdrop-filter:blur(16px); }
+.nav-btn { min-width:0; min-height:53px; padding:5px 2px; border-radius:11px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; background:#202023; color:#b4b4bc; border:1px solid #2d2d31; font-size:11px; font-weight:900; }
+.nav-icon { display:block; font-size:20px; line-height:1.2; }
+.nav-btn.active { background:#302911; color:#facc15; box-shadow:inset 0 -3px 0 #facc15; border-color:#51421a; }
+.modal-backdrop { display:none; position:fixed; inset:0; z-index:50; background:#000b; backdrop-filter:blur(5px); align-items:center; justify-content:center; padding:15px; }
+.modal-backdrop.open { display:flex; }
+.modal { background:#171719; color:#f5f5f5; border:1px solid #38383d; box-shadow:0 20px 70px #000b; width:100%; max-width:430px; max-height:90%; overflow:auto; padding:19px; border-radius:17px; }
+.modal-title { font-size:18px; font-weight:900; }
+.close-btn { padding:9px 12px; border-radius:9px; background:#29292c; color:#f5f5f5; }
+.amount-presets { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; margin:12px 0; }
+.amount-presets button { background:#302911; color:#facc15; border:1px solid #51421a; padding:11px 2px; border-radius:9px; font-weight:900; font-size:13px; }
+.multiplier-row { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; margin:4px 0 12px; }
+.multiplier-btn { padding:11px 2px; border-radius:9px; background:#29292c; color:#facc15; border:1px solid #3a3a40; font-weight:900; font-size:13px; cursor:pointer; }
+.multiplier-btn.active { background:#facc15; color:#171717; border-color:#facc15; }
+.multiplier-label { margin-bottom:6px; }
+.deposit-asset-card { display:flex; align-items:center; gap:11px; margin:10px 0; padding:10px 12px; border:1px solid #4a4a4f; border-radius:12px; background:#242429; }
+.checkout-coin-logo { width:42px; height:42px; object-fit:contain; }
+.deposit-asset-card strong, .deposit-asset-card small { display:block; }
+.deposit-asset-card small { margin-top:2px; color:#a6a6ad; font-size:12px; }
+.deposit-selector-field { margin:14px 0 16px; }
+.deposit-selector-field label { display:block; margin-bottom:7px; font-weight:700; }
+.deposit-address-panel { margin:12px 0 4px; }
+.deposit-address-panel .copybox { margin-top:7px; }
+.deposit-address-panel input { min-width:0; font-size:12px; }
+.deposit-qr-image { display:block; width:220px; height:220px; margin:12px auto; padding:8px; background:#fff; border:1px solid #d9d9de; border-radius:14px; }
+.deposit-qr-image[hidden] { display:none; }
+.deposit-submit-card { margin:14px 0; padding:12px; border:1px solid #4a4a4f; border-radius:12px; background:#242429; }
+.deposit-submit-card input { margin-bottom:8px; }
+.amount-stepper { display:grid; grid-template-columns:45px minmax(0,1fr) 45px; gap:8px; }
+.amount-stepper button { border-radius:9px; background:#29292c; color:#facc15; font-size:21px; }
+.amount-stepper input { margin:0; text-align:center; }
+.breakdown { margin-top:12px; padding:10px 12px; background:#19191b; border:1px solid #303034; border-radius:11px; }
+.lang-list { display:grid; gap:8px; margin-top:12px; max-height:50vh; overflow:auto; }
+.lang-btn { padding:13px; border-radius:11px; background:#202023; color:#f5f5f5; border:1px solid #38383d; font-weight:800; text-align:left; }
+.lang-btn.active { border-color:#facc15; color:#facc15; background:#302911; }
+.toast { display:none; position:fixed; left:50%; transform:translateX(-50%); bottom:100px; width:max-content; max-width:calc(100% - 32px); z-index:90; padding:13px 16px; border-radius:11px; background:#facc15; color:#171717; font-weight:800; box-shadow:0 8px 25px #0008; bottom:88px; text-align:center; line-height:1.5; }
+.toast.show { display:block; }
+.banner { position:fixed; left:50%; top:12px; transform:translate(-50%,-140%); width:calc(100% - 24px); max-width:560px; z-index:95; padding:12px 14px; border-radius:13px; background:#1d1b15; border:1px solid #facc15; color:#f5f5f5; font-weight:800; box-shadow:0 10px 30px #000a; transition:transform .3s; display:flex; align-items:center; gap:10px; pointer-events:none; }
+.banner.show { transform:translate(-50%,0); }
+.result-modal-number { width:100px; height:100px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:48px; font-weight:900; margin:20px auto; box-shadow:0 8px 24px #0008; border:5px solid #ffffff; }
+.result-modal-title { text-align:center; font-size:23px; font-weight:900; }
+.result-modal-sub { text-align:center; color:#a1a1aa; font-size:12px; line-height:1.7; overflow-wrap:anywhere; }
+.result-modal-badges { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin:14px 0; }
+.result-modal-badges span { padding:8px 13px; border-radius:999px; background:#302911; color:#facc15; font-size:11px; font-weight:900; }
+.result-modal .primary-btn { margin-top:8px; }
+.profile-menu-list { display:flex; flex-direction:column; gap:0; }
+.profile-menu-item { display:flex; align-items:center; gap:12px; padding:13px 6px; background:transparent; border-bottom:1px solid #222225; color:#f5f5f5; text-align:left; width:100%; cursor:pointer; }
+.profile-menu-item:last-child { border-bottom:0; }
+.profile-menu-item:active { background:#1d1d1f; }
+.profile-menu-item .pm-icon { font-size:20px; min-width:28px; text-align:center; }
+.profile-menu-item .pm-text { flex:1; display:flex; flex-direction:column; gap:2px; }
+.profile-menu-item .pm-text strong { font-size:14px; font-weight:800; color:#f5f5f5; }
+.profile-menu-item .pm-text small { font-size:11px; color:#a1a1aa; font-weight:500; }
+.profile-menu-item .chev { color:#6b6b72; font-size:20px; }
+.profile-menu-item.danger .pm-text strong { color:#fca5a5; }
+.back-btn { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; background:#29292c; color:#facc15; font-size:20px; font-weight:900; margin-right:8px; }
+@media(max-width:380px) {
+  .nav-btn { font-size:10px; }
+  .section { padding:0 10px; }
+  .balance-card { margin:10px; }
+  .card { padding:13px; }
+  .ring { width:110px; height:110px; }
+  .option-grid, .number-grid { gap:7px; }
+  .option-btn { font-size:12px; }
+  .number-btn { min-height:45px; }
+  .head-btns { gap:4px; }
+  .head-btns .icon-btn { padding:6px; min-width:30px; min-height:30px; }
+  .head-btns .icon-btn svg { width:15px; height:15px; }
+  .brand { font-size:15px; }
+  .amount-presets { grid-template-columns:repeat(5,minmax(0,1fr)); gap:4px; }
+  .amount-presets button { padding:9px 1px; font-size:11px; }
+  .multiplier-row { gap:4px; }
+  .multiplier-btn { padding:9px 1px; font-size:11px; }
+  .deposit-qr-image { width:180px; height:180px; }
+}
+
+/* ===== Dashboard visual upgrade ===== */
+body { background:#05060a; }
+.hero { position:relative; margin:0; line-height:0; overflow:hidden; -webkit-mask-image:linear-gradient(#000 78%,transparent 100%); mask-image:linear-gradient(#000 78%,transparent 100%); }
+.hero img { width:100%; height:auto; display:block; max-height:300px; object-fit:cover; object-position:center top; }
+#page-home .balance-card { margin:-6px 14px 15px; background:linear-gradient(135deg,#14110a 0%,#1d170a 60%,#0e0c07 100%); border:1px solid #6b5514; box-shadow:0 10px 30px #000a, inset 0 0 30px #facc1510; }
+#page-home .balance-label { letter-spacing:.6px; font-weight:700; }
+#page-home .balance-value { font-size:30px; text-shadow:0 0 18px #facc1540; }
+#page-home .actions { grid-template-columns:repeat(2,minmax(0,1fr)); }
+#page-home .action-btn.deposit-action, #page-home .action-btn.withdraw-action { display:flex; align-items:center; justify-content:center; gap:8px; background:linear-gradient(180deg,#ffd633,#f5b800); color:#1a1405; border:1px solid #ffdf5a; font-size:15px; font-weight:900; padding:14px 8px; box-shadow:0 6px 16px #facc1526; }
+#page-home .action-btn svg, #page-home .refresh-corner-btn svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+#page-home .refresh-corner-btn { display:flex; align-items:center; justify-content:center; gap:7px; padding:11px 8px; border-radius:12px; background:#15151a; border:1px solid #6b5514; color:#facc15; font-weight:800; font-size:13px; }
+#page-home .refresh-corner-btn small, #page-home .refresh-corner-btn span { display:inline; margin:0; font-size:13px; color:#f5f5f5; }
+.timer-card { background:
+  linear-gradient(180deg,#0a0b0f ,#0c0d12),
+  radial-gradient(circle at 50% 0,#2a2108,transparent 60%);
+  border-color:#4a3e18; position:relative; overflow:hidden; }
+.timer-card::before { content:""; position:absolute; left:0; right:0; top:84px; bottom:62px; pointer-events:none; opacity:.55; z-index:0;
+  background:
+   url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='160' viewBox='0 0 600 160' preserveAspectRatio='none'><g stroke='%23b8860b' stroke-width='2' fill='%23b8860b'><path d='M20 90v40M20 100h0'/><rect x='14' y='96' width='12' height='26'/><path d='M50 70v60'/><rect x='44' y='82' width='12' height='30'/><path d='M80 80v50'/><rect x='74' y='92' width='12' height='24'/><path d='M110 50v60'/><rect x='104' y='62' width='12' height='34'/><path d='M140 60v55'/><rect x='134' y='72' width='12' height='28'/><path d='M455 60v70'/><rect x='449' y='74' width='12' height='38'/><path d='M485 40v60'/><rect x='479' y='52' width='12' height='34'/><path d='M515 55v55'/><rect x='509' y='66' width='12' height='28'/><path d='M545 25v65'/><rect x='539' y='38' width='12' height='38'/><path d='M575 15v55'/><rect x='569' y='28' width='12' height='30'/></g><path d='M0 150C120 140 200 120 300 130S480 90 600 40' stroke='%23facc15' stroke-width='3' fill='none' opacity='.7'/></svg>") center/100% 100% no-repeat; }
+.timer-card > * { position:relative; z-index:1; }
+.ring-fg { stroke:#facc15; filter:drop-shadow(0 0 4px #facc1580); }
+.ring-fg.locked { stroke:#ef4444; filter:drop-shadow(0 0 4px #ef444480); }
+.status.locked { background:#2a1013; border-color:#7a2a30; }
+.icon-btn { background:#17181d; border:1px solid #2e2f36; border-radius:14px; box-shadow:none; }
+header { background:linear-gradient(180deg,#0a0a0d,#0b0b0e); border-bottom:1px solid #1e1f25; }
+.card { background:linear-gradient(180deg,#14151a,#0f1014); border-color:#2a2b32; }
+.bottom-nav { background:rgba(10,10,13,.97); border-color:#2a2b32; }
+
+/* ===== Animated timer theme ===== */
+.timer-card::before { display:none; }
+.timer-card > .timer-anim { position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+.timer-anim .candle { position:absolute; bottom:64px; left:var(--l); width:11px; height:var(--h); border-radius:2px; transform-origin:50% 100%;
+  background:linear-gradient(180deg,rgba(250,204,21,.6),rgba(184,134,11,.3)); animation:candlePulse 2.6s ease-in-out var(--d) infinite alternate; will-change:transform; }
+.timer-anim .candle::before { content:""; position:absolute; left:50%; top:-10px; bottom:-8px; width:2px; margin-left:-1px; background:inherit; opacity:.75; }
+.timer-anim .trend { position:absolute; left:0; right:0; bottom:58px; width:100%; height:120px; }
+.timer-anim .trend path { fill:none; stroke-linecap:round; vector-effect:non-scaling-stroke; }
+.timer-anim .trend-base { stroke:rgba(250,204,21,.22); stroke-width:2; }
+.timer-anim .trend-glow { stroke:#facc15; stroke-width:3; stroke-dasharray:.16 1; filter:drop-shadow(0 0 5px #facc15); animation:trendRun 4.8s linear infinite; }
+.timer-anim .spark { position:absolute; bottom:-6px; left:var(--l); width:4px; height:4px; border-radius:50%; background:#facc15; opacity:0; box-shadow:0 0 8px #facc15; animation:sparkRise 5.5s linear var(--d) infinite; }
+.timer-card::after { content:""; position:absolute; top:0; bottom:0; left:-70%; width:60%; pointer-events:none; z-index:0;
+  background:linear-gradient(100deg,transparent,rgba(250,204,21,.09),transparent); animation:cardSweep 7s ease-in-out infinite; }
+.timer-card .ring::before { content:""; position:absolute; inset:-8px; border-radius:50%; z-index:-1;
+  background:radial-gradient(circle,rgba(250,204,21,.26),transparent 68%); animation:haloPulse 2.4s ease-in-out infinite; }
+.timer-card .timer-text { text-shadow:0 0 14px rgba(250,204,21,.35); }
+.timer-card.urgent .timer-text { animation:tickPulse 1s ease-in-out infinite; color:#ffe08a; }
+.timer-card.urgent .candle { animation-duration:.9s; }
+.timer-card.urgent .ring::before { animation-duration:1s; }
+.timer-card.locked-state .candle { background:linear-gradient(180deg,rgba(239,68,68,.55),rgba(127,29,29,.3)); }
+.timer-card.locked-state .trend-base { stroke:rgba(239,68,68,.22); }
+.timer-card.locked-state .trend-glow { stroke:#ef4444; filter:drop-shadow(0 0 5px #ef4444); }
+.timer-card.locked-state .spark { background:#ef4444; box-shadow:0 0 8px #ef4444; }
+.timer-card.locked-state .ring::before { background:radial-gradient(circle,rgba(239,68,68,.24),transparent 68%); }
+.timer-card.locked-state .timer-text { text-shadow:0 0 14px rgba(239,68,68,.4); }
+@keyframes candlePulse { from { transform:scaleY(.55); } to { transform:scaleY(1.12); } }
+@keyframes trendRun { from { stroke-dashoffset:.16; } to { stroke-dashoffset:-1; } }
+@keyframes sparkRise { 0% { transform:translateY(0); opacity:0; } 15% { opacity:.9; } 100% { transform:translateY(-230px); opacity:0; } }
+@keyframes cardSweep { 0%,55% { transform:translateX(0); } 100% { transform:translateX(330%); } }
+@keyframes haloPulse { 0%,100% { transform:scale(.94); opacity:.7; } 50% { transform:scale(1.08); opacity:1; } }
+@keyframes tickPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.09); } }
+@media (prefers-reduced-motion:reduce) { .timer-card *, .timer-card::after { animation:none !important; } }
+
+/* ===== Wallet card themed like the logo ===== */
+#page-home .balance-card { position:relative; overflow:hidden;
+  background:
+    linear-gradient(90deg, rgba(10,8,3,.97) 0%, rgba(10,8,3,.86) 48%, rgba(10,8,3,.45) 100%),
+    url("/hero-banner.jpg") right center / auto 170% no-repeat,
+    linear-gradient(135deg,#14110a,#1d170a);
+  border:1px solid #8a6d12; box-shadow:0 10px 32px #000b, 0 0 22px #facc1522, inset 0 0 36px #facc1512; animation:walletGlow 4s ease-in-out infinite; }
+#page-home .balance-card > * { position:relative; z-index:1; }
+#page-home .balance-card > .wallet-art { position:absolute; z-index:0; top:44px; right:6px; width:170px; height:140px; pointer-events:none; }
+#page-home .balance-card::after { content:""; position:absolute; top:0; bottom:0; left:-60%; width:50%; z-index:0; pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(255,236,150,.12),transparent); animation:walletShine 6.5s ease-in-out infinite; }
+.wallet-art svg { display:block; filter:drop-shadow(0 6px 14px rgba(0,0,0,.6)); }
+.wallet-art .coin-a { animation:coinFloat 5s ease-in-out infinite; transform-box:fill-box; transform-origin:center; }
+.wallet-art .coin-b { animation:coinFloat 5s ease-in-out -2.2s infinite; transform-box:fill-box; transform-origin:center; }
+.wallet-art .star { transform-box:fill-box; transform-origin:center; animation:starTwinkle 2.6s ease-in-out infinite; }
+.wallet-art .s2 { animation-delay:-.9s; } .wallet-art .s3 { animation-delay:-1.7s; }
+#page-home .balance-value { background:linear-gradient(180deg,#fff0a0,#facc15 55%,#d99a00); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-shadow:none; filter:drop-shadow(0 0 10px rgba(250,204,21,.28)); }
+@keyframes coinFloat { 0%,100% { transform:translateY(0) rotate(-2deg); } 50% { transform:translateY(-7px) rotate(2deg); } }
+@keyframes starTwinkle { 0%,100% { transform:scale(.4); opacity:.3; } 50% { transform:scale(1.15); opacity:1; } }
+@keyframes walletShine { 0%,50% { transform:translateX(0); } 100% { transform:translateX(420%); } }
+@keyframes walletGlow { 0%,100% { box-shadow:0 10px 32px #000b, 0 0 14px #facc1518, inset 0 0 30px #facc1510; } 50% { box-shadow:0 10px 32px #000b, 0 0 26px #facc1535, inset 0 0 40px #facc1520; } }
+@media (max-width:380px) { #page-home .balance-card > .wallet-art { width:140px; height:115px; right:0; } }
+@media (prefers-reduced-motion:reduce) { #page-home .balance-card, #page-home .balance-card::after, .wallet-art * { animation:none !important; } }
+.dash-links { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 13px; }
+.dash-link { flex:1 1 140px; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 10px; border-radius:12px; background:linear-gradient(180deg,#1a1710,#12110c); border:1px solid #6b5514; color:#facc15; font-weight:800; font-size:13px; box-shadow:0 4px 14px #0006; }
+.dash-link:active { transform:scale(.98); }
+</style>
+</head>
+<body>
+<div class="banner" id="banner" role="status" aria-live="polite"></div>
+<div class="app">
+  <header>
+    <div>
+      <div class="brand">CRYPTO <span>TRADER PRO</span></div>
+      <div class="small muted" data-i18n="brandSub">Prediction Dashboard · UTC</div>
+    </div>
+    <div class="head-btns">
+      <button class="icon-btn" id="headerSoundBtn" type="button" aria-label="Toggle sound" title="Sound"><span id="headerSoundIcon">🔊</span></button>
+      <button class="icon-btn" id="headerChannelBtn" type="button" aria-label="Channel" title="Channel" style="display:none">📺</button>
+      <button class="icon-btn" id="headerSupportBtn" type="button" aria-label="Support" title="Support" style="display:none">🎧</button>
+      <button class="icon-btn notification-btn" id="notificationBell" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span id="notificationCount" hidden>0</span></button>
+      <button class="icon-btn" id="headerProfile" type="button" aria-label="Profile"><span class="header-symbol">👤</span></button>
+    </div>
+  </header>
+
+  <div class="modal-backdrop" id="notificationModal" role="dialog" aria-modal="true" aria-labelledby="notificationTitle">
+    <div class="modal"><div class="row"><h2 id="notificationTitle">Activity notifications</h2><button class="icon-btn" id="closeNotifications" type="button" aria-label="Close">×</button></div><div id="notificationList" class="notification-list"><div class="empty">Loading…</div></div></div>
+  </div>
+
+  <!-- HOME -->
+  <section class="page active" id="page-home">
+    <div class="hero"><img src="/hero-banner.jpg" alt="" loading="eager" onerror="this.parentNode.style.display='none'"></div>
+    <div class="balance-card"><div class="wallet-art" aria-hidden="true"><svg viewBox="0 0 170 140" width="170" height="140">
+<defs>
+<radialGradient id="gGold" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#fff2a8"/><stop offset=".45" stop-color="#f5c400"/><stop offset="1" stop-color="#9a6a00"/></radialGradient>
+<radialGradient id="gTeal" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#7ff0c8"/><stop offset=".5" stop-color="#1fae80"/><stop offset="1" stop-color="#0b5a42"/></radialGradient>
+</defs>
+<g class="coin-b"><circle cx="112" cy="84" r="34" fill="url(#gTeal)" stroke="#b9ffe6" stroke-opacity=".5" stroke-width="2"/><circle cx="112" cy="84" r="27" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="2"/><text x="112" y="96" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="34" fill="#fff">T</text></g>
+<g class="coin-a"><circle cx="62" cy="62" r="42" fill="url(#gGold)" stroke="#fff3b0" stroke-opacity=".7" stroke-width="2.5"/><circle cx="62" cy="62" r="33" fill="none" stroke="#8a5d00" stroke-opacity=".55" stroke-width="2.5"/><text x="62" y="76" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="44" fill="#7a4e00">B</text><path d="M56 32v8M68 32v8M56 84v8M68 84v8" stroke="#7a4e00" stroke-width="3" stroke-linecap="round"/></g>
+<path class="star s1" d="M150 18l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#fff3b0"/>
+<path class="star s2" d="M20 112l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" fill="#facc15"/>
+<path class="star s3" d="M158 112l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff3b0"/>
+</svg></div>
+      <div class="row"><div class="balance-label" data-i18n="walletBalance">WALLET BALANCE</div><button class="rules-corner-btn" id="gameRulesBtn" type="button">Rules</button></div>
+      <div class="balance-value"><span id="homePoints">—</span> <span data-i18n="points">Points</span></div>
+      <div class="balance-sub"><span id="homeUsdt">—</span> USDT · 100 Points = 1 USDT</div>
+      <div class="actions">
+        <button class="action-btn deposit-action" data-page-go="deposit" type="button" id="homeDepositBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3h16v-3"/></svg><span>Deposit</span></button>
+        <button class="action-btn withdraw-action" data-page-go="withdraw" type="button" id="homeWithdrawBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3m0 0L8 7m4-4l4 4M4 17v3h16v-3"/></svg><span>Withdraw</span></button>
+        <button class="refresh-corner-btn" data-refresh="1" type="button" aria-label="Refresh balance" title="Refresh balance"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5"/></svg><span>Refresh</span></button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="dash-links" id="dashLinks" style="display:none"></div>
+      <div class="notice" id="maintBanner" style="display:none;margin:0 0 12px"></div>
+      <div class="timer-card" id="timerCard"><div class="timer-anim" aria-hidden="true"><i class="candle" style="--l:3%;--h:38px;--d:0.0s"></i><i class="candle" style="--l:8%;--h:56px;--d:0.4s"></i><i class="candle" style="--l:13%;--h:30px;--d:0.9s"></i><i class="candle" style="--l:18%;--h:66px;--d:0.2s"></i><i class="candle" style="--l:23%;--h:44px;--d:1.1s"></i><i class="candle" style="--l:28%;--h:58px;--d:0.6s"></i><i class="candle" style="--l:68%;--h:40px;--d:0.3s"></i><i class="candle" style="--l:73%;--h:62px;--d:1.0s"></i><i class="candle" style="--l:78%;--h:34px;--d:0.7s"></i><i class="candle" style="--l:83%;--h:68px;--d:0.1s"></i><i class="candle" style="--l:88%;--h:48px;--d:0.8s"></i><i class="candle" style="--l:93%;--h:60px;--d:1.3s"></i><svg class="trend" viewBox="0 0 600 120" preserveAspectRatio="none"><path class="trend-base" d="M0 100C100 95 160 70 260 80S440 55 600 15" pathLength="1"/><path class="trend-glow" d="M0 100C100 95 160 70 260 80S440 55 600 15" pathLength="1"/></svg><b class="spark" style="--l:10%;--d:0s"></b><b class="spark" style="--l:30%;--d:1.6s"></b><b class="spark" style="--l:52%;--d:3.1s"></b><b class="spark" style="--l:74%;--d:0.8s"></b><b class="spark" style="--l:90%;--d:2.4s"></b></div>
+        <div class="row">
+          <span class="muted small" data-i18n="currentPeriod">Current Period</span>
+          <span class="muted small" data-i18n="roundLen">3-minute round</span>
+        </div>
+        <div class="period" id="periodId">—</div>
+        <div class="ring">
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+            <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="52" stroke-dasharray="326.73" stroke-dashoffset="0"></circle>
+          </svg>
+          <div class="timer-text" id="timer">--:--</div>
+        </div>
+        <span class="status" id="betStatus">…</span>
+        <div class="notice" id="serverNotice">…</div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">🔢 <span data-i18n="chooseNumber">Choose a Number</span></div>
+        <div class="muted small" data-i18n="chooseNumberHint">Select a number to open the betting window.</div>
+        <div class="number-grid" id="numberGrid"></div>
+        <div class="section-title">🎨 <span data-i18n="chooseColour">Choose a Colour</span></div>
+        <div class="option-grid">
+          <button class="option-btn red" data-bet="Red" type="button">🔴 <span data-i18n="red">Red</span></button>
+          <button class="option-btn green" data-bet="Green" type="button">🟢 <span data-i18n="green">Green</span></button>
+          <button class="option-btn violet" data-bet="Violet" type="button">🟣 <span data-i18n="violet">Violet</span></button>
+        </div>
+        <div class="section-title">📊 <span data-i18n="bigSmall">Big / Small</span></div>
+        <div class="big-small">
+          <button class="orange" data-bet="Big" type="button">🟠 <span data-i18n="big">Big (5–9)</span></button>
+          <button class="blue" data-bet="Small" type="button">🔵 <span data-i18n="small">Small (0–4)</span></button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">🎯 <span data-i18n="resultHistory">Result History</span></div>
+        <div id="resultTable"><div class="empty" data-i18n="loading">Loading…</div></div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">📋 <span data-i18n="tradeHistory">My Trade History</span></div>
+        <div id="tradeList"><div class="empty" data-i18n="loading">Loading…</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WALLET -->
+  <section class="page" id="page-wallet">
+    <div class="section">
+      <div class="section-title">💰 <span data-i18n="wallet">Wallet</span></div>
+      <div class="card">
+        <div class="muted small" data-i18n="testBalance">Live wallet balance</div>
+        <div style="font-size:27px;font-weight:900;margin:9px 0;color:#facc15">
+          <span id="walletPoints">—</span> <span data-i18n="points">Points</span><div class="balance-sub usdt-value" id="walletUsdt">— USDT · 100 Points = 1 USDT</div>
+        </div>
+        <div class="wallet-actions">
+          <button class="action-btn deposit-action" data-page="deposit" type="button" id="depositBtn">⬇ <span data-i18n="deposit">Deposit</span></button>
+          <button class="action-btn withdraw-action" data-page="withdraw" type="button" id="withdrawBtn">⬆ <span data-i18n="withdraw">Withdraw</span></button>
+          <button class="refresh-icon-btn" data-refresh="1" type="button" aria-label="Refresh wallet" title="Refresh wallet">↻<small>Refresh</small></button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title" data-i18n="txTitle">Transactions</div>
+        <div class="tabs" id="txFilters">
+          <button class="tab on" data-tx-filter="all">All</button>
+          <button class="tab" data-tx-filter="deposit">Deposit</button>
+          <button class="tab" data-tx-filter="withdrawal">Withdraw</button>
+          <button class="tab" data-tx-filter="bet">Bet</button>
+          <button class="tab" data-tx-filter="reward">Reward</button>
+          <button class="tab" data-tx-filter="gift">Gift</button>
+        </div>
+        <div id="walletList"><div class="empty" data-i18n="loading">Loading…</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEPOSIT PAGE (INLINE) -->
+  <section class="page" id="page-deposit">
+    <div class="section">
+      <div class="section-title">
+        <button class="back-btn" id="depositPageBack" type="button">←</button>
+        <span>⬇ <span data-i18n="deposit">Deposit</span></span>
+      </div>
+      <div class="card">
+        <div class="deposit-asset-card">
+          <img id="depositAssetLogoPage" class="checkout-coin-logo" src="https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/usdt.png" alt="">
+          <div>
+            <strong id="depositAssetNamePage">USDT</strong>
+            <small id="depositNetworkHintPage">Select coin and network</small>
+          </div>
+        </div>
+        <div class="deposit-selector-field">
+          <label for="depositOptionPage">Coin and network</label>
+          <select id="depositOptionPage"></select>
+        </div>
+        <div class="deposit-address-panel">
+          <img id="depositQrImagePage" class="deposit-qr-image" alt="Deposit QR" hidden>
+          <button class="sec-btn" id="downloadQrBtn" type="button" style="width:100%;margin:10px 0">⬇ Download QR Code</button>
+          <div class="copybox">
+            <input id="depositAddressPage" readonly placeholder="Loading address...">
+            <button class="sec-btn" id="copyDepositAddressPage" type="button">Copy</button>
+          </div>
+        </div>
+        <div class="notice" style="margin-top:14px">
+          Only send the exact amount on the selected blockchain. Balance is credited after admin verification.
+        </div>
+        <div class="deposit-submit-card" style="margin-top:14px">
+          <label for="depositAmountPage">Amount sent (USDT)</label>
+          <input id="depositAmountPage" type="number" min="1" step="0.000001" placeholder="10.00" inputmode="decimal">
+          <label for="depositTxHashPage">Transaction hash</label>
+          <input id="depositTxHashPage" type="text" maxlength="100" placeholder="Tx Hash (0x... or TRON)" autocomplete="off" spellcheck="false">
+          <button class="primary-btn" id="submitDepositPage" type="button" style="margin-top:10px">Submit payment</button>
+          <div class="muted small" id="depositSubmitStatusPage" role="status" style="margin-top:8px"></div>
+        </div>
+        <p class="muted small">Minimum deposit: 1 USDT. Credit rate: 100 points per USDT.</p>
+      </div>
+      <div class="card"><div class="section-title">Deposit History</div><div id="depositHistoryList"><div class="empty">Loading…</div></div></div>
+    </div>
+  </section>
+
+  <!-- WITHDRAW PAGE (INLINE) -->
+  <section class="page" id="page-withdraw">
+    <div class="section">
+      <div class="section-title">
+        <button class="back-btn" id="withdrawPageBack" type="button">←</button>
+        <span>⬆ <span data-i18n="withdraw">Withdraw</span></span>
+      </div>
+      <div class="card">
+        <div class="notice">Withdrawals are reviewed by admin. Minimum: 500 points (5 USDT). A 10% fee applies.</div>
+        <div class="notice" id="withdrawBetNote" style="display:none"></div>
+        <div class="muted small" style="margin-top:12px">Available balance</div>
+        <strong id="withdrawPageBalance" style="font-size:20px;display:block;margin:6px 0 14px">—</strong>
+        <label for="withdrawAmountPage">Amount (points)</label>
+        <input id="withdrawAmountPage" type="number" min="500" step="0.01" placeholder="500">
+        <div class="quick-amounts" role="group">
+          <button class="sec-btn withdraw-preset-page" data-percent="25" type="button">25%</button>
+          <button class="sec-btn withdraw-preset-page" data-percent="50" type="button">50%</button>
+          <button class="sec-btn withdraw-preset-page" data-percent="100" type="button">100%</button>
+          <button class="sec-btn withdraw-preset-page" data-percent="max" type="button">Max</button>
+        </div>
+        <div class="muted small" id="withdrawUsdtPreviewPage">5.00 USDT</div>
+        <label for="withdrawAddressPage" style="margin-top:14px">Wallet Address (locked from profile)</label>
+        <input id="withdrawAddressPage" type="text" readonly placeholder="Add wallet in Profile first">
+        <div class="muted small" style="margin-top:6px;margin-bottom:14px">To change address, update it in Profile → Add / Edit Wallet.</div>
+        <button class="primary-btn" id="submitWithdrawalPage" type="button">Request withdrawal</button>
+      </div>
+      <div class="card"><div class="section-title">Withdraw History</div><div id="withdrawHistoryList"><div class="empty">Loading…</div></div></div>
+    </div>
+  </section>
+
+  <!-- REFERRAL -->
+  <section class="page" id="page-referral">
+    <div class="section">
+      <div class="section-title">👥 <span data-i18n="refTitle">Referral Program</span></div>
+      <div id="referralBody"><div class="empty" data-i18n="loading">Loading…</div></div>
+    </div>
+  </section>
+
+  <!-- PROFILE -->
+  <section class="page" id="page-profile">
+    <div class="section">
+      <div class="section-title">👤 <span data-i18n="profile">Profile</span></div>
+      <div class="card">
+        <div style="text-align: center; margin-bottom: 12px;">
+          <img src="https://raw.githubusercontent.com/podcastofficial/crypto-trader-miniapp/main/1792659429580.png" alt="Profile Avatar" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #facc15; background: #1a1a1a; box-shadow: 0 4px 15px rgba(250, 204, 21, 0.2);">
+        </div>
+
+        <div class="muted small" data-i18n="tgAccount" style="text-align: center;">Telegram account</div>
+        <strong id="profileName" style="display: block; text-align: center; font-size: 18px; margin-top: 4px;">…</strong>
+        <p class="muted small" id="profileStatus" style="text-align: center;">…</p>
+        <div class="profile-stats">
+          <div><span>Joined</span><strong id="profileJoined">—</strong></div>
+          <div><span>Available points</span><strong id="profileAvailablePoints">—</strong></div>
+        </div>
+        <div class="actions" style="margin-top:12px">
+          <button class="action-btn" id="editProfileBtn" type="button" data-i18n="editProfile">Edit Profile</button>
+          <button class="action-btn alt" id="walletAddressBtn" type="button" data-i18n="manageWallet">Add / Edit Wallet</button>
+        </div>
+        <button class="primary-btn" id="authRetry" type="button" data-i18n="retryAuth" style="margin-top:10px; display:none">Retry Authentication</button>
+      </div>
+
+      <div class="card">
+        <div class="profile-menu-list">
+          <button class="profile-menu-item" data-profile-action="wallet" type="button">
+            <span class="pm-icon">💰</span>
+            <span class="pm-text"><strong>Wallet</strong><small>Deposit, Withdraw, History</small></span>
+            <span class="chev">›</span>
+          </button>
+          <button class="profile-menu-item" data-profile-action="gift" type="button">
+            <span class="pm-icon">🎁</span>
+            <span class="pm-text"><strong>Gift Code</strong><small>Redeem and History</small></span>
+            <span class="chev">›</span>
+          </button>
+          <button class="profile-menu-item" data-profile-action="tx" type="button">
+            <span class="pm-icon">📋</span>
+            <span class="pm-text"><strong>Transaction History</strong><small>All Deposit, Withdraw, Game</small></span>
+            <span class="chev">›</span>
+          </button>
+          <button class="profile-menu-item" data-profile-action="referral" type="button">
+            <span class="pm-icon">👥</span>
+            <span class="pm-text"><strong>My Referral</strong><small>Invite &amp; Earn Commission</small></span>
+            <span class="chev">›</span>
+          </button>
+          <button class="profile-menu-item" data-profile-action="lang" type="button">
+            <span class="pm-icon">🌐</span>
+            <span class="pm-text"><strong>Language</strong><small>English, Indonesian, Russian, Chinese, Hindi, Urdu</small></span>
+            <span class="chev">›</span>
+          </button>
+          <button class="profile-menu-item" data-profile-action="notif" type="button">
+            <span class="pm-icon">🔔</span>
+            <span class="pm-text"><strong>Notification</strong><small>Sound, Vibration, Updates</small></span>
+            <span class="chev">›</span>
+          </button>
+          <button class="profile-menu-item" data-profile-action="settings" type="button">
+            <span class="pm-icon">⚙️</span>
+            <span class="pm-text"><strong>Settings</strong><small>App preferences</small></span>
+            <span class="chev">›</span>
+          </button>
+          <button class="profile-menu-item" data-profile-action="help" type="button">
+            <span class="pm-icon">🆘</span>
+            <span class="pm-text"><strong>Help &amp; Support</strong><small>Get help</small></span>
+            <span class="chev">›</span>
+          </button>
+          <button class="profile-menu-item danger" data-profile-action="logout" type="button">
+            <span class="pm-icon">🚪</span>
+            <span class="pm-text"><strong>Logout</strong><small>Sign out from app</small></span>
+            <span class="chev">›</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <button class="nav-btn active" data-page="home" type="button"><span class="nav-icon">🏠</span><span data-i18n="home">Home</span></button>
+    <button class="nav-btn" data-page="wallet" type="button"><span class="nav-icon">💰</span><span data-i18n="wallet">Wallet</span></button>
+    <button class="nav-btn" data-page="referral" type="button"><span class="nav-icon">🎁</span><span data-i18n="referral">Referral</span></button>
+    <button class="nav-btn" data-page="profile" type="button"><span class="nav-icon">👤</span><span data-i18n="profile">Profile</span></button>
+  </nav>
+</div>
+
+<!-- BET MODAL -->
+<div class="modal-backdrop" id="betModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title" id="betModalTitle">…</div><button class="close-btn" data-close="betModal" type="button">✕</button></div>
+    <p class="muted small" id="betModalPeriod"></p>
+    <div class="muted small" id="betAvailableBalance" style="margin-bottom: 10px; color: #facc15; font-weight: bold;">Available: ... Points</div>
+    <label for="betAmount" data-i18n="betAmount">Bet Amount (Points)</label>
+    
+    <div class="amount-presets">
+      <button data-amount="10" type="button">10</button>
+      <button data-amount="20" type="button">20</button>
+      <button data-amount="50" type="button">50</button>
+      <button data-amount="100" type="button">100</button>
+      <button data-amount="max" type="button">Max</button>
+    </div>
+    
+    <div class="amount-stepper">
+      <button id="minusAmount" type="button">−</button>
+      <input id="betAmount" type="number" min="10" step="0.01" value="100" inputmode="decimal">
+      <button id="plusAmount" type="button">+</button>
+    </div>
+    <div class="multiplier-label muted small">Multiplier</div>
+    <div class="multiplier-row">
+      <button class="multiplier-btn active" data-mult="1" type="button">1×</button>
+      <button class="multiplier-btn" data-mult="3" type="button">3×</button>
+      <button class="multiplier-btn" data-mult="9" type="button">9×</button>
+      <button class="multiplier-btn" data-mult="27" type="button">27×</button>
+      <button class="multiplier-btn" data-mult="81" type="button">81×</button>
+    </div>
+    <div class="breakdown" id="betBreakdown"></div>
+    <div class="notice" data-i18n="betNote">A bet deducts points from your available balance.</div>
+    <button class="primary-btn" id="confirmBet" type="button" style="margin-top:14px" data-i18n="placeBet">Place Bet</button>
+  </div>
+</div>
+
+<!-- GIFT CODE MODAL -->
+<div class="modal-backdrop" id="giftModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title">🎁 Gift Code</div><button class="close-btn" data-close="giftModal" type="button">✕</button></div>
+    <label for="giftCodeInput">Enter gift code</label>
+    <div class="copybox" style="margin-top:6px">
+      <input id="giftCodeInput" placeholder="Enter gift code">
+      <button class="sec-btn" id="redeemGiftBtn" type="button">Redeem</button>
+    </div>
+    <div class="notice">Redeem a valid gift code to add points to your wallet. Each code can typically be used once per user.</div>
+    <div class="section-title" style="margin-top:14px">Gift History</div>
+    <div id="giftHistoryList"><div class="empty">Loading…</div></div>
+  </div>
+</div>
+
+<!-- NOTIFICATION SETTINGS MODAL -->
+<div class="modal-backdrop" id="notifSettingsModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title">🔔 Notification Settings</div><button class="close-btn" data-close="notifSettingsModal" type="button">✕</button></div>
+    <div class="setting-row"><span>🔊 <span data-i18n="sound">Sound</span></span><button class="switch on" id="sndSwitch" type="button" role="switch" aria-checked="true"><i></i></button></div>
+    <div class="setting-row"><span>📳 <span data-i18n="vibration">Vibration</span></span><button class="switch on" id="vibSwitch" type="button" role="switch" aria-checked="true"><i></i></button></div>
+    <div class="setting-row"><span>📨 Updates</span><button class="switch on" id="updatesSwitch" type="button" role="switch" aria-checked="true"><i></i></button></div>
+    <p class="muted small" style="margin-top:12px">Toggle sound, vibration, and update notifications. Changes are saved automatically.</p>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-backdrop" id="settingsModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title">⚙️ App Settings</div><button class="close-btn" data-close="settingsModal" type="button">✕</button></div>
+    <div class="setting-row"><span>🌐 <span data-i18n="language">Language</span></span><button class="sec-btn" id="settingsLangBtn" type="button">Change</button></div>
+    <div class="setting-row"><span>🔔 Notifications</span><button class="sec-btn" id="settingsNotifBtn" type="button">Open</button></div>
+    <div class="setting-row"><span>🔄 Reset Preferences</span><button class="sec-btn" id="settingsResetBtn" type="button">Reset</button></div>
+    <div class="notice" style="margin-top:14px">
+      <strong>Crypto Trader Pro</strong><br>
+      <small class="muted">Server-controlled prediction game. Play responsibly.</small>
+    </div>
+  </div>
+</div>
+
+<!-- HELP & SUPPORT MODAL -->
+<div class="modal-backdrop" id="helpModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title">🆘 Help &amp; Support</div><button class="close-btn" data-close="helpModal" type="button">✕</button></div>
+    <div class="setting-row"><span>📺 Official Channel</span><button class="sec-btn" id="helpChannelBtn" type="button">Open</button></div>
+    <div class="setting-row"><span>🎧 Support</span><button class="sec-btn" id="helpSupportBtn" type="button">Contact</button></div>
+    <div class="section-title" style="margin-top:16px">Send a message to support</div>
+    <textarea id="supportMsgInput" maxlength="1000" placeholder="Describe your problem..." style="display:block;width:100%;min-height:90px;padding:13px;margin:7px 0 6px;border:1px solid #3a3a40;border-radius:10px;background:#202023;color:#fff;font:inherit"></textarea>
+    <button class="primary-btn" id="sendSupportMsgBtn" type="button">Send to Support</button>
+    <div class="section-title" style="margin-top:16px">FAQ</div>
+    <div class="faq-card">
+      <details><summary>How do I play?</summary><p>Pick a number, colour, or Big/Small option before betting closes, then confirm your points stake.</p></details>
+      <details><summary>When do I win?</summary><p>Winning bets settle automatically after the server publishes the result.</p></details>
+      <details><summary>How are payouts calculated?</summary><p>100 points on Red/Green can return 200 points, a number can return 900 points, and Violet can return 450 points if the result matches. A Red bet pays 0.5x when the result is 0, and a Green bet pays 0.5x when the result is 5.</p></details>
+      <details><summary>Can I cancel a bet?</summary><p>Bets cannot be cancelled after confirmation.</p></details>
+      <details><summary>Minimum withdrawal?</summary><p>500 points (5 USDT). A 10% fee applies.</p></details>
+    </div>
+  </div>
+</div>
+
+<!-- GAME RULES MODAL -->
+<div class="modal-backdrop" id="gameRulesModal" role="dialog" aria-modal="true" aria-labelledby="gameRulesTitle"><div class="modal rules-modal"><div class="row"><div class="modal-title" id="gameRulesTitle">Game Rules & Payouts</div><button class="close-btn" data-close="gameRulesModal" type="button" aria-label="Close">✕</button></div><p>1. Select a number, colour, or Big/Small before betting closes.<br>2. Enter your stake and confirm the bet.<br>3. The server publishes the round result after the timer ends.<br>4. Winning bets are credited automatically; predictions are not guaranteed.</p><div class="payout-example"><strong>100 points examples</strong><br>🔴/🟢 Red or Green: 100 × 2 = <b>200 points</b><br>🔢 Number 0–9: 100 × 9 = <b>900 points</b><br>🟣 Violet: 100 × 4.5 = <b>450 points</b><br>📊 Big/Small: 100 × 2 = <b>200 points</b><br>🔴 Red when the result is 0 / 🟢 Green when the result is 5: 100 × 0.5 = <b>50 points</b></div><p class="muted small">Potential payout is shown before confirmation. A prediction is only an informational estimate, never a guaranteed result.</p></div></div>
+
+<!-- PROFILE EDIT MODAL -->
+<div class="modal-backdrop" id="profileModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title" data-i18n="editProfile">Edit Profile</div><button class="close-btn" data-close="profileModal" type="button">✕</button></div>
+    <div style="text-align:center; margin-bottom: 15px;">
+      <img src="https://raw.githubusercontent.com/podcastofficial/crypto-trader-miniapp/main/1792659429580.png" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #facc15; background: #1a1a1a; margin: 0 auto; display: block; box-shadow: 0 4px 15px rgba(250, 204, 21, 0.2);">
+    </div>
+    <label for="profileDisplayName" data-i18n="displayName">Display name</label>
+    <input id="profileDisplayName" type="text" maxlength="64" autocomplete="name">
+    <div class="notice" data-i18n="profileTelegramNote">Your Telegram username is managed by Telegram.</div>
+    <button class="primary-btn" id="saveProfileBtn" type="button" style="margin-top:14px" data-i18n="saveChanges">Save Changes</button>
+  </div>
+</div>
+
+<!-- WALLET ADDRESS MODAL -->
+<div class="modal-backdrop" id="walletAddressModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title" data-i18n="manageWallet">Add / Edit Wallet</div><button class="close-btn" data-close="walletAddressModal" type="button">✕</button></div>
+    <label for="walletAddressInput" data-i18n="walletAddress">Wallet Address (BEP-20)</label>
+    <input id="walletAddressInput" type="text" maxlength="100" inputmode="text" autocomplete="off" placeholder="0x…">
+    <div class="notice" data-i18n="walletAddressNote">Use only your own valid wallet address. This will be locked for withdrawals.</div>
+    <button class="primary-btn" id="saveWalletAddressBtn" type="button" style="margin-top:14px" data-i18n="saveChanges">Save Changes</button>
+  </div>
+</div>
+
+<!-- RESULT POPUP -->
+<div class="modal-backdrop" id="resultModal" role="dialog" aria-modal="true" aria-labelledby="resultPopupTitle">
+  <div class="modal result-modal">
+    <div class="result-modal-title" id="resultPopupTitle">🎉 <span data-i18n="rTitle">ROUND RESULT</span></div>
+    <div class="result-modal-sub" id="resultPopupPeriod">—</div>
+    <div class="result-modal-number" id="resultPopupNumber">—</div>
+    <div class="result-modal-badges"><span id="resultPopupColor">—</span><span id="resultPopupSize">—</span></div>
+    <div class="result-modal-sub" data-i18n="rNote">The result was received from the game server.</div>
+    <button class="primary-btn" id="resultPopupClose" type="button" data-i18n="rContinue">CONTINUE</button>
+  </div>
+</div>
+
+<!-- LANGUAGE MODAL -->
+<div class="modal-backdrop" id="langModal">
+  <div class="modal">
+    <div class="row"><div class="modal-title">🌐 <span data-i18n="language">Language</span></div><button class="close-btn" data-close="langModal" type="button">✕</button></div>
+    <input id="langSearch" type="search" autocomplete="off" style="margin:12px 0 0" data-i18n-ph="searchLang" placeholder="Search language">
+    <div class="lang-list" id="langListModal"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const tg = window.Telegram && window.Telegram.WebApp;
+const PAGE = 10, ROUND_POLL = 3000, USER_POLL = 6000, ROUND_SECONDS = 180, BETTING_SECONDS = 150, FEE_PERCENT = 2, RING_LENGTH = 326.73;
+const I18N = {
+en:{brandSub:"Prediction Dashboard · UTC", home:"Home", wallet:"Wallet", referral:"Referral", profile:"Profile", walletBalance:"WALLET BALANCE", points:"Points", serverNote:"Live server wallet · Points balance", refresh:"Refresh", refreshed:"Updated.", refreshFailed:"Could not refresh. Try again.", currentPeriod:"Current Period", roundLen:"3-minute round", chooseNumber:"Choose a Number", chooseNumberHint:"Select a number to open the betting window.", chooseColour:"Choose a Colour", red:"Red", green:"Green", violet:"Violet", bigSmall:"Big / Small", big:"Big (5–9)", small:"Small (0–4)", resultHistory:"Result History", tradeHistory:"My Trade History", colPeriod:"Period", colNum:"Num", colBS:"B/S", colResult:"Result", colType:"Type", colAmount:"Amount", colStatus:"Status", range:"{from}-{to} of {total}", loading:"Loading…", noRounds:"No results yet.", noBets:"No bets recorded yet.", noTx:"No transactions yet.", noRef:"No referrals yet.", noLangs:"No language found.", success:"Success", fail:"Fail", pending:"Pending", cancelled:"Cancelled", dBet:"Bet", dStake:"Bet amount", dFee:"Fee", dActual:"Trade amount", dPayout:"Payout", dResult:"Result", dTime:"Time", waiting:"waiting", bkFee:"Fee ({pct}%)", bt_Number:"Number", bt_Red:"Red", bt_Green:"Green", bt_Violet:"Violet", bt_Big:"Big", bt_Small:"Small", stConnecting:"CONNECTING", stSyncing:"SYNCING", stOpen:"BETTING OPEN", stLocked:"BETTING LOCKED", stError:"BACKEND ERROR", stTelegram:"TELEGRAM REQUIRED", stAuth:"AUTH REQUIRED", nConnecting:"Connecting to backend…", nConnected:"Connected to backend. Betting closes 30 seconds before each round ends.", nUnavailable:"Backend unavailable: {msg}", loadingRound:"Loading server round...", toastAuth:"Authenticate through Telegram first.", toastLocked:"Betting is locked. Wait for the next round.", toastAmount:"Enter at least 10 points (max 2 decimals).", toastChanged:"Bet details changed. Please submit again.", toastBetFail:"Unable to place bet. Retry without changing the details.", toastBetOk:"Bet accepted.", copied:"Copied.", copyFail:"Copy failed.", betOn:"Bet on", serverRound:"Server round:", betAmount:"Bet Amount (Points)", betNote:"A bet deducts points from your available balance.", placeBet:"Place Bet", rTitle:"ROUND RESULT", rPeriod:"Period", rNote:"The result was received from the game server.", rContinue:"CONTINUE", cRedV:"RED + VIOLET", cGreenV:"GREEN + VIOLET", cRed:"RED", cGreen:"GREEN", sBig:"BIG (5–9)", sSmall:"SMALL (0–4)", bannerResult:"Result {period}: {n} · {colour} · {size}", testBalance:"Live points balance", deposit:"Deposit", withdraw:"Withdraw", txTitle:"Transactions", tx_deposit:"Deposit", tx_withdrawal:"Withdrawal", tx_bet:"Bet", tx_payout:"Payout", tx_refund:"Refund", tx_reward:"Reward", tx_gift:"Gift", s_completed:"Completed", s_confirmed:"Confirmed", s_pending:"Pending", s_rejected:"Rejected", s_failed:"Failed", txPlaced:"Placed", cashNotice:"Deposits stay pending until an admin verifies and approves the transaction.", close:"Close", refTitle:"Referral Program", yourLink:"Your referral link", yourCode:"Your referral code", copy:"Copy", share:"Share", noLink:"Referral link is not available yet. You can still share your code.", shareText:"Join me on Crypto Trader Pro!", directRef:"Direct referrals", totalComm:"Total commission", levels:"Commission levels", lvl:"Level", rate:"Rate", cnt:"Count", total:"Total", comm:"Commission", haveCode:"Have a referral code?", enterCode:"Enter referral code", apply:"Apply", referredBy:"You were referred by a user. Code already applied.", commHistory:"Commission history", direct:"Your direct referrals", availableComm:"Available commission", claimedComm:"Claimed commission", totalRewards:"Total rewards received", rewardPromo:"Earn 100 points per referral. Your referral receives credit after completing a qualifying recharge.", rewardNote:"Earn 100 points for each direct referral after their qualifying recharge of 100 points is confirmed.", needTg:"Open the Mini App inside Telegram to see this.", tgAccount:"Telegram account", checkingTg:"Checking Telegram…", authenticating:"Authenticating with Telegram", retryAuth:"Retry Authentication", notTg:"Not opened in Telegram", openInTg:"Open the Mini App inside Telegram to authenticate.", tgMissing:"Telegram initData missing", openOfficial:"Open the official Telegram Mini App.", verified:"Telegram identity verified by server.", tgUser:"Telegram user {id}", settings:"Settings", sound:"Sound", vibration:"Vibration", change:"Change", searchLang:"Search language", language:"Language", about:"About", aboutText:"Crypto Trader is a server-controlled prediction game where you can place points-based bets on numbers, colours, and Big or Small outcomes.", gameNotice:"Each 100 points equals 1 USDT. Play responsibly.", testingOnly:"Testing only.", editProfile:"Edit Profile", manageWallet:"Add / Edit Wallet", displayName:"Display name", profileTelegramNote:"Your Telegram username is managed by Telegram.", saveChanges:"Save Changes", walletAddress:"Wallet Address (BEP-20 / TRC-20 etc.)", walletAddressNote:"Use only your own valid wallet address.", profileSaved:"Telegram controls this profile name.", walletSaved:"Wallet address saved.", invalidWallet:"Enter a valid wallet address.", availableReward:"Available Reward", claimRewards:"Claim Rewards", claimedRewards:"Claimed Rewards"},
+hi:{brandSub:"प्रिडिक्शन डैशबोर्ड · UTC", home:"होम", wallet:"वॉलेट", referral:"रेफरल", profile:"प्रोफ़ाइल", walletBalance:"वॉलेट बैलेंस", points:"पॉइंट्स", serverNote:"लाइव सर्वर वॉलेट · पॉइंट्स बैलेंस", refresh:"रिफ्रेश", refreshed:"अपडेट हो गया।", refreshFailed:"रिफ्रेश नहीं हो सका। फिर कोशिश करें।", currentPeriod:"मौजूदा पीरियड", roundLen:"3 मिनट का राउंड", chooseNumber:"नंबर चुनें", chooseNumberHint:"टेस्ट-बेट विंडो खोलने के लिए नंबर चुनें।", chooseColour:"रंग चुनें", red:"लाल", green:"हरा", violet:"बैंगनी", bigSmall:"बड़ा / छोटा", big:"बड़ा (5–9)", small:"छोटा (0–4)", resultHistory:"रिज़ल्ट हिस्ट्री", tradeHistory:"मेरी ट्रेड हिस्ट्री", colPeriod:"पीरियड", colNum:"नंबर", colBS:"B/S", colResult:"रिज़ल्ट", colType:"प्रकार", colAmount:"अमाउंट", colStatus:"स्टेटस", range:"{from}-{to} / {total}", loading:"लोड हो रहा है…", noRounds:"अभी कोई रिज़ल्ट नहीं।", noBets:"अभी कोई बेट नहीं।", noTx:"अभी कोई ट्रांज़ैक्शन नहीं।", noRef:"अभी कोई रेफरल नहीं।", noLangs:"कोई भाषा नहीं मिली।", success:"सफल", fail:"असफल", pending:"पेंडिंग", cancelled:"रद्द", dBet:"बेट", dStake:"बेट अमाउंट", dFee:"फीस", dActual:"ट्रेड अमाउंट", dPayout:"पेआउट", dResult:"रिज़ल्ट", dTime:"समय", waiting:"इंतज़ार", bkFee:"फीस ({pct}%)", bt_Number:"नंबर", bt_Red:"लाल", bt_Green:"हरा", bt_Violet:"बैंगनी", bt_Big:"बड़ा", bt_Small:"छोटा", stConnecting:"कनेक्ट हो रहा है", stSyncing:"सिंक हो रहा है", stOpen:"बेटिंग खुली है", stLocked:"बेटिंग बंद है", stError:"बैकएंड एरर", stTelegram:"टेलीग्राम ज़रूरी", stAuth:"ऑथ ज़रूरी", nConnecting:"बैकएंड से कनेक्ट हो रहा है…", nConnected:"बैकएंड से जुड़ गया।", nUnavailable:"बैकएंड उपलब्ध नहीं: {msg}", loadingRound:"सर्वर राउंड लोड हो रहा है…", toastAuth:"पहले टेलीग्राम से ऑथेंटिकेट करें।", toastLocked:"बेटिंग बंद है।", toastAmount:"कम से कम 10 पॉइंट डालें।", toastChanged:"बेट की डिटेल बदल गई।", toastBetFail:"बेट नहीं लग सकी।", toastBetOk:"बेट स्वीकार हुई।", copied:"कॉपी हो गया।", copyFail:"कॉपी नहीं हो सका।", betOn:"बेट", serverRound:"सर्वर राउंड:", betAmount:"बेट अमाउंट (पॉइंट)", betNote:"आपके पॉइंट्स से राशि कटेगी।", placeBet:"बेट लगाएँ", rTitle:"राउंड रिज़ल्ट", rPeriod:"पीरियड", rNote:"रिज़ल्ट सर्वर से मिला है।", rContinue:"जारी रखें", cRedV:"लाल + बैंगनी", cGreenV:"हरा + बैंगनी", cRed:"लाल", cGreen:"हरा", sBig:"बड़ा (5–9)", sSmall:"छोटा (0–4)", bannerResult:"रिज़ल्ट {period}: {n} · {colour} · {size}", testBalance:"लाइव वॉलेट बैलेंस", deposit:"डिपॉज़िट", withdraw:"विदड्रॉ", txTitle:"ट्रांज़ैक्शन", tx_deposit:"डिपॉज़िट", tx_withdrawal:"विदड्रॉ", tx_bet:"बेट", tx_payout:"पेआउट", tx_refund:"रिफंड", tx_reward:"रिवॉर्ड", tx_gift:"गिफ्ट", s_completed:"पूरा", s_confirmed:"कन्फर्म", s_pending:"पेंडिंग", s_rejected:"रिजेक्ट", s_failed:"फेल", txPlaced:"लगाई गई", cashNotice:"डिपॉज़िट अभी पेंडिंग रहेगा।", close:"बंद करें", refTitle:"रेफरल प्रोग्राम", yourLink:"आपका रेफरल लिंक", yourCode:"आपका रेफरल कोड", copy:"कॉपी", share:"शेयर", noLink:"लिंक उपलब्ध नहीं है।", shareText:"Crypto Trader Pro पर जुड़ें!", directRef:"डायरेक्ट रेफरल", totalComm:"कुल कमीशन", levels:"कमीशन लेवल", lvl:"लेवल", rate:"रेट", cnt:"गिनती", total:"कुल", comm:"कमीशन", haveCode:"रेफरल कोड है?", enterCode:"कोड डालें", apply:"लागू करें", referredBy:"कोड पहले से लागू है।", commHistory:"कमीशन हिस्ट्री", direct:"डायरेक्ट रेफरल", availableComm:"उपलब्ध कमीशन", claimedComm:"क्लेम किया गया", totalRewards:"कुल रिवॉर्ड", rewardPromo:"हर रेफरल पर 100 पॉइंट कमाएं।", rewardNote:"रिचार्ज कन्फर्म होने पर रिवॉर्ड मिलेगा।", needTg:"टेलीग्राम में खोलें।", tgAccount:"टेलीग्राम अकाउंट", checkingTg:"जाँच रहा है…", authenticating:"ऑथेंटिकेट हो रहा है", retryAuth:"फिर से कोशिश करें", notTg:"टेलीग्राम में नहीं खुला", openInTg:"मिनी ऐप टेलीग्राम में खोलें।", tgMissing:"initData नहीं मिला", openOfficial:"ऑफिशियल मिनी ऐप खोलें।", verified:"पहचान सत्यापित।", tgUser:"यूज़र {id}", settings:"सेटिंग्स", sound:"साउंड", vibration:"वाइब्रेशन", change:"बदलें", searchLang:"भाषा खोजें", language:"भाषा", about:"जानकारी", aboutText:"सर्वर-नियंत्रित गेम।", gameNotice:"100 पॉइंट = 1 USDT।", testingOnly:"लाइव गेम।", editProfile:"प्रोफ़ाइल बदलें", manageWallet:"वॉलेट बदलें", displayName:"नाम", profileTelegramNote:"नाम टेलीग्राम से जुड़ा है।", saveChanges:"सेव करें", walletAddress:"वॉलेट एड्रेस", walletAddressNote:"सही एड्रेस डालें।", profileSaved:"सेव हो गया।", walletSaved:"वॉलेट सेव हो गया।", invalidWallet:"गलत एड्रेस।", availableReward:"उपलब्ध रिवॉर्ड", claimRewards:"रिवॉर्ड क्लेम करें", claimedRewards:"क्लेम किया गया"},
+bn:{brandSub:"প্রেডিকশন ড্যাশবোর্ড · UTC", home:"হোম", wallet:"ওয়ালেট", referral:"রেফারেল", profile:"প্রোফাইল", walletBalance:"ওয়ালেট ব্যালেন্স", points:"পয়েন্টস", serverNote:"লাইভ পয়েন্টস", refresh:"রিফ্রেশ", refreshed:"আপডেট হয়েছে।", refreshFailed:"রিফ্রেশ হয়নি।", currentPeriod:"বর্তমান পিরিয়ড", roundLen:"৩ মিনিটের রাউন্ড", chooseNumber:"নম্বর বেছে নিন", chooseNumberHint:"নম্বর বেছে নিন।", chooseColour:"রং বেছে নিন", red:"লাল", green:"সবুজ", violet:"বেগুনি", bigSmall:"বড় / ছোট", big:"বড় (5–9)", small:"ছোট (0–4)", resultHistory:"রেজাল্ট হিস্ট্রি", tradeHistory:"আমার ট্রেড হিস্ট্রি", colPeriod:"পিরিয়ড", colNum:"নম্বর", colBS:"B/S", colResult:"রেজাল্ট", colType:"ধরন", colAmount:"অ্যামাউন্ট", colStatus:"স্ট্যাটাস", range:"{from}-{to} / {total}", loading:"লোড হচ্ছে…", noRounds:"কোনো রেজাল্ট নেই।", noBets:"কোনো বেট নেই", noTx:"কোনো লেনদেন নেই।", noRef:"কোনো রেফারেল নেই", noLangs:"কোনো ভাষা নেই।", success:"সফল", fail:"ব্যর্থ", pending:"পেন্ডিং", cancelled:"বাতিল", dBet:"বেট", dStake:"বেট অ্যামাউন্ট", dFee:"ফি", dActual:"ট্রেড অ্যামাউন্ট", dPayout:"পেআউট", dResult:"রেজাল্ট", dTime:"সময়", waiting:"অপেক্ষায়", bkFee:"ফি ({pct}%)", bt_Number:"নম্বর", bt_Red:"লাল", bt_Green:"সবুজ", bt_Violet:"বেগুনি", bt_Big:"বড়", bt_Small:"ছোট", stConnecting:"সংযোগ হচ্ছে", stSyncing:"সিঙ্ক হচ্ছে", stOpen:"বেটিং চালু", stLocked:"বেটিং বন্ধ", stError:"ব্যাকএন্ড ত্রুটি", stTelegram:"টেলিগ্রাম প্রয়োজন", stAuth:"অথ প্রয়োজন", nConnecting:"সংযোগ হচ্ছে…", nConnected:"সংযুক্ত হয়েছে।", nUnavailable:"পাওয়া যাচ্ছে না: {msg}", loadingRound:"লোড হচ্ছে…", toastAuth:"আগে অথেন্টিকেট করুন।", toastLocked:"বেটিং বন্ধ।", toastAmount:"সর্বনিম্ন ১০ পয়েন্ট দিন।", toastChanged:"তথ্য বদলেছে।", toastBetFail:"বেট দেওয়া যায়নি।", toastBetOk:"বেট গৃহীত হয়েছে।", copied:"কপি হয়েছে।", copyFail:"কপি হয়নি।", betOn:"বেট", serverRound:"সার্ভার রাউন্ড:", betAmount:"বেট অ্যামাউন্ট", betNote:"পয়েন্ট কাটা হবে।", placeBet:"বেট দিন", rTitle:"রাউন্ড রেজাল্ট", rPeriod:"পিরিয়ড", rNote:"সার্ভার থেকে পাওয়া গেছে।", rContinue:"চালিয়ে যান", cRedV:"লাল + বেগুনি", cGreenV:"সবুজ + বেগুনি", cRed:"লাল", cGreen:"সবুজ", sBig:"বড় (5–9)", sSmall:"ছোট (0–4)", bannerResult:"রেজাল্ট {period}: {n} · {colour} · {size}", testBalance:"লাইভ ব্যালেন্স", deposit:"ডিপোজিট", withdraw:"উইথড্র", txTitle:"লেনদেন", tx_deposit:"ডিপোজিট", tx_withdrawal:"উইথড্র", tx_bet:"বেট", tx_payout:"পেআউট", tx_refund:"রিফান্ড", tx_reward:"রিওয়ার্ড", tx_gift:"গিফট", s_completed:"সম্পন্ন", s_confirmed:"নিশ্চিত", s_pending:"পেন্ডিং", s_rejected:"প্রত্যাখ্যাত", s_failed:"ব্যর্থ", txPlaced:"দেওয়া হয়েছে", cashNotice:"পেমেন্ট পেন্ডিং থাকবে।", close:"বন্ধ করুন", refTitle:"রেফারেল প্রোগ্রাম", yourLink:"আপনার লিংক", yourCode:"আপনার কোড", copy:"কপি", share:"শেয়ার", noLink:"লিংক নেই।", shareText:"Crypto Trader Pro-তে যোগ দিন!", directRef:"সরাসরি রেফারেল", totalComm:"মোট কমিশন", levels:"কমিশন লেভেল", lvl:"লেভেল", rate:"রেট", cnt:"সংখ্যা", total:"মোট", comm:"কমিশন", haveCode:"কোড আছে?", enterCode:"কোড দিন", apply:"প্রয়োগ করুন", referredBy:"কোড প্রয়োগ হয়েছে।", commHistory:"কমিশন হিস্ট্রি", direct:"সরাসরি রেফারেল", availableComm:"উপলব্ধ কমিশন", claimedComm:"ক্লেইম করা", totalRewards:"মোট রিওয়ার্ড", rewardPromo:"প্রতি রেফারেলে ১০০ পয়েন্ট।", rewardNote:"রিচার্জ নিশ্চিত হলে রিওয়ার্ড পাবেন।", needTg:"টেলিগ্রামে খুলুন।", tgAccount:"টেলিগ্রাম অ্যাকাউন্ট", checkingTg:"যাচাই হচ্ছে…", authenticating:"অথেন্টিকেট হচ্ছে", retryAuth:"আবার চেষ্টা করুন", notTg:"টেলিগ্রামে খোলা হয়নি", openInTg:"মিনি অ্যাপ খুলুন।", tgMissing:"initData নেই", openOfficial:"অফিসিয়াল অ্যাপ খুলুন।", verified:"যাচাই হয়েছে।", tgUser:"ইউজার {id}", settings:"সেটিংস", sound:"সাউন্ড", vibration:"ভাইব্রেশন", change:"পরিবর্তন", searchLang:"ভাষা খুঁজুন", language:"ভাষা", about:"সম্পর্কে", aboutText:"সার্ভার-নিয়ন্ত্রিত গেম।", gameNotice:"১০০ পয়েন্ট = ১ USDT।", testingOnly:"লাইভ গেম।", editProfile:"প্রোফাইল এডিট", manageWallet:"ওয়ালেট এডিট", displayName:"নাম", profileTelegramNote:"নাম টেলিগ্রাম থেকে আসে।", saveChanges:"সেভ করুন", walletAddress:"ওয়ালেট অ্যাড্রেস", walletAddressNote:"সঠিক অ্যাড্রেস দিন।", profileSaved:"সেভ হয়েছে।", walletSaved:"ওয়ালেট সেভ হয়েছে।", invalidWallet:"ভুল অ্যাড্রেস।", availableReward:"উপলব্ধ রিওয়ার্ড", claimRewards:"রিওয়ার্ড ক্লেইম করুন", claimedRewards:"ক্লেইম করা হয়েছে"}};
+const EXTRA = (window.CTP_LANGS_EXTRA && typeof window.CTP_LANGS_EXTRA === "object") ? window.CTP_LANGS_EXTRA : {};
+const LANGS = [{code:"en",name:"English",en:"English"},{code:"hi",name:"हिन्दी",en:"Hindi"},{code:"bn",name:"বাংলা",en:"Bengali"}].concat(Object.keys(EXTRA).filter(c => !I18N[c] && EXTRA[c] && EXTRA[c].s).map(c => ({ code:c, name:EXTRA[c].name || c, en:EXTRA[c].en || "", dir:EXTRA[c].dir || "ltr" })));
+function dict(code){ return I18N[code] || (EXTRA[code] && EXTRA[code].s) || null; }
+function pickLang(){ try { const saved = localStorage.getItem("ctp_lang"); if(saved && dict(saved)) return saved; } catch(_) {} try { const c = String(tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code || "").slice(0,2); if(dict(c)) return c; } catch(_) {} return "en"; }
+let lang = pickLang(); const initialLangMeta = LANGS.find(l => l.code === lang);
+document.documentElement.lang = lang; document.documentElement.dir = initialLangMeta && initialLangMeta.dir === "rtl" ? "rtl" : "ltr";
+function t(key,vars){ const d = dict(lang); let s = d && d[key]; if (s == null || s === key) s = I18N.en[key] || key; if(vars){ for(const k in vars){ s = s.split("{" + k + "}").join(String(vars[k])); } } return s; }
+function tk(prefix,value){ const k = prefix + value; return I18N.en[k] !== undefined ? t(k) : String(value ?? ""); }
+function applyStatic(){ const meta = LANGS.find(l => l.code === lang); document.documentElement.lang = lang; document.documentElement.dir = (meta && meta.dir) || "ltr"; document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); }); document.querySelectorAll("[data-i18n-ph]").forEach(el => { el.placeholder = t(el.dataset.i18nPh); }); }
+const settings = {sound:true,vibrate:true,updates:true};
+function loadSettings(){ try { const raw = localStorage.getItem("ctp_settings"); if(raw){ const o = JSON.parse(raw); settings.sound = o.sound !== false; settings.vibrate = o.vibrate !== false; settings.updates = o.updates !== false; } } catch(_) {} }
+function saveSettings(){ try { localStorage.setItem("ctp_settings",JSON.stringify(settings)); } catch(_) {} }
+function renderHeaderSound(){ const icon = $("headerSoundIcon"); if (icon) icon.textContent = settings.sound ? "🔊" : "🔇"; }
+function renderSettings(){
+  [["sndSwitch","sound"],["vibSwitch","vibrate"],["updatesSwitch","updates"]].forEach(([id,key]) => {
+    const el = $(id); if (!el) return;
+    el.classList.toggle("on", settings[key]);
+    el.setAttribute("aria-checked", settings[key] ? "true" : "false");
+  });
+  renderHeaderSound();
+}
+function haptic(kind){
+  if(!settings.vibrate) return;
+  try { if(tg && tg.HapticFeedback){ if(kind === "success" || kind === "warning" || kind === "error"){ tg.HapticFeedback.notificationOccurred(kind); } else { tg.HapticFeedback.impactOccurred(kind === "heavy" ? "heavy" : "light"); } return; } } catch(_) {}
+  try { if(navigator.vibrate) { if (kind === "success") navigator.vibrate([30, 40, 30]); else if (kind === "heavy") navigator.vibrate(80); else navigator.vibrate(50); } } catch(_) {}
+}
+document.addEventListener("click", event => { const target = event.target.closest("button, a, [role=button], [data-page]"); if(!target || target.disabled || target.closest("#sndSwitch, #vibSwitch, #updatesSwitch")) return; haptic("light"); if(settings.sound) playTickSound(); }, { passive: true });
+let initData = "", authed = false, authBlock = null, user = null, balance = null, currentRound = null, latestRounds = [];
+let resultPage = 1, resultData = {rounds:[],total:0}, tradePage = 1, tradeData = {bets:[],total:0}, walletPage = 1, walletData = {items:[],total:0}, referralData = null, commPage = 1, commData = {items:[],total:0}, activePage = "home", currentBet = null, pendingBetRequest = null, toastTimer = null, bannerTimer = null, serverTimeOffset = 0, roundsLoaded = false, roundsFailed = false, roundsBusy = false, userBusy = false, roundsOk = false, userOk = false, lastRoundsSync = 0, lastUserSync = 0, lastRingFrac = 1, activeTxFilter = "all";
+let betStep = 100, betMultiplier = 1;
+let savedWalletAddress = null;
+let totalStaked = 0;
+let appConfig = { sound_button_enabled:true, channel_button_enabled:false, channel_url:"", support_button_enabled:false, support_url:"", support_type:"whatsapp", min_bet_to_withdraw:1000 };
+let firstResultShown = false; const seenResults = new Set(), queuedResults = new Set(), playedRounds = new Set(); let resultPopupQueue = [], resultPopupOpen = false;
+let audioContext = null, audioUnlocked = false, lastTickSecond = -1, previousBettingOpen = null, lastDisplayedRoundCode = "";
+let statusKey = "stConnecting", notice = {key:"nConnecting",vars:null}, profName = {k:"checkingTg"}, profStatus = {k:"authenticating"};
+function toast(message){ $("toast").textContent = message; $("toast").classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => $("toast").classList.remove("show"),3500); }
+function esc(value){ return String(value ?? "").replace(/[&<>"']/g,c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+function money(value){ const n = Number(value); return Number.isFinite(n) ? n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) : "—"; }
+function cents(value){ return Math.round(Number(value || 0) * 100); }
+function signedCents(c){ const sign = c > 0 ? "+" : c < 0 ? "−" : ""; return sign + money(Math.abs(c) / 100); }
+function dateUTC(value){ const d = new Date(value); if(Number.isNaN(d.getTime())) return ""; return d.toLocaleString("en-GB",{ timeZone:"UTC", day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit", second:"2-digit", hourCycle:"h23" }) + " UTC"; }
+function nowMs(){ return Date.now() + serverTimeOffset; }
+
+// 🚨 FIX: Serial Number (12-digit) format ke liye
+function fmtPeriod(code){ 
+  const raw = String(code || ""); 
+  if (!/^\d{14}$/.test(raw)) return raw.slice(0,12); 
+  const day = raw.slice(0,8); 
+  const hour = Number(raw.slice(8,10)); 
+  const minute = Number(raw.slice(10,12)); 
+  const serial = Math.floor((hour * 60 + minute) / 3) + 1; 
+  return `${day}${String(serial).padStart(4, "0")}`; 
+}
+
+function p2(n){ return String(n).padStart(2,"0"); }
+
+// API ko 14-digit bhejne ke liye
+function slotInfo(ms){ 
+  const size = ROUND_SECONDS * 1000; 
+  const startMs = Math.floor(ms / size) * size; 
+  const d = new Date(startMs); 
+  const code = d.getUTCFullYear() + p2(d.getUTCMonth() + 1) + p2(d.getUTCDate()) + p2(d.getUTCHours()) + p2(d.getUTCMinutes()) + p2(d.getUTCSeconds()); 
+  return {code,startMs,closesMs:startMs + BETTING_SECONDS * 1000,endsMs:startMs + size}; 
+}
+
+function codeEnded(code){ 
+  const m = String(code || "").match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/); 
+  if(!m) return true; 
+  const start = Date.UTC(+m[1],+m[2] - 1,+m[3],+m[4],+m[5],+m[6]); 
+  return nowMs() >= start + ROUND_SECONDS * 1000; 
+}
+
+function revealed(r){ return r && r.result_number !== null && r.result_number !== undefined && new Date(r.ends_at).getTime() <= nowMs(); }
+function numClass(n){ return n === 0 ? "num-zero" : n === 5 ? "num-five" : n % 2 === 0 ? "red" : "green"; }
+function numTone(n){ return n % 2 === 0 ? "n-red" : "n-green"; }
+function dotsHtml(n){ const c = n === 0 ? ["red","violet"] : n === 5 ? ["green","violet"] : n % 2 === 0 ? ["red"] : ["green"]; return c.map(x => `<span class="dot ${x}"></span>`).join(""); }
+function popupColourName(n){ return n === 0 ? t("cRedV") : n === 5 ? t("cGreenV") : n % 2 === 0 ? t("cRed") : t("cGreen"); }
+function popupBg(n){ return n === 0 ? "linear-gradient(135deg,#dc2626 50%,#a855f7 50%)" : n === 5 ? "linear-gradient(135deg,#16a34a 50%,#a855f7 50%)" : n % 2 === 0 ? "#dc2626" : "#16a34a"; }
+function txt(o){ return o.raw !== undefined ? o.raw : t(o.k,o.v); }
+function makeRequestId(){ if(window.crypto && typeof window.crypto.randomUUID === "function"){ return window.crypto.randomUUID(); } if(window.crypto && window.crypto.getRandomValues){ const bytes = new Uint8Array(16); window.crypto.getRandomValues(bytes); bytes[6] = (bytes[6] & 15) | 64; bytes[8] = (bytes[8] & 63) | 128; const h = Array.from(bytes,b => b.toString(16).padStart(2,"0")).join(""); return h.slice(0,8) + "-" + h.slice(8,12) + "-" + h.slice(12,16) + "-" + h.slice(16,20) + "-" + h.slice(20); } throw new Error("Secure request IDs are not supported"); }
+async function copyText(text){ try { await navigator.clipboard.writeText(text); return true; } catch(_) { try { const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); const ok = document.execCommand("copy"); ta.remove(); return ok; } catch(_) { return false; } } }
+async function parseResponse(response){ const contentType = response.headers.get("content-type") || ""; let data = null; if(contentType.includes("application/json")){ try { data = await response.json(); } catch(_) {} } else { const body = await response.text().catch(() => ""); if(body.trim()) console.error("[v0] API returned non-JSON:", response.status, body.slice(0,200)); } if(!response.ok || !data || !data.success){ const message = data && data.message ? data.message : data && data.detail ? `${data.message || "Backend request failed"}: ${data.detail}` : `Backend request failed (HTTP ${response.status}).`; throw new Error(message); } return data; }
+async function api(action,extra = {}){ if(!initData) throw new Error(t("openInTg")); const response = await fetch("/api/game",{ method:"POST", headers:{"Content-Type":"application/json"}, cache:"no-store", body:JSON.stringify({initData,action,...extra}) }); return parseResponse(response); }
+async function getRounds(page){ const t0 = Date.now(); const response = await fetch("/api/game?page=" + page + "&page_size=" + PAGE,{ method:"GET", cache:"no-store" }); const t1 = Date.now(); const data = await parseResponse(response); data._mid = (t0 + t1) / 2; return data; }
+function setStatus(key){ statusKey = key; const el = $("betStatus"); el.textContent = t(key); el.classList.toggle("locked", key === "stLocked" || key === "stError" || key === "stTelegram" || key === "stAuth"); }
+function setNotice(key,vars){ notice = {key,vars:vars || null}; $("serverNotice").textContent = t(key,vars); }
+function renderProfile(){ $("profileName").textContent = txt(profName); $("profileStatus").textContent = txt(profStatus); const available = $("homePoints")?.textContent || "—"; $("profileAvailablePoints").textContent = available; $("profileJoined").textContent = (tg?.initDataUnsafe?.user?.id ? "Telegram" : "—"); const input = $("profileDisplayName"); if(input && document.activeElement !== input) input.value = profName && profName.raw ? profName.raw : ""; const retry = $("authRetry"); if (retry) retry.style.display = authBlock ? "" : "none"; }
+function openProfileModal(){ if(!authed){ toast(t("toastAuth")); return; } renderProfile(); $("profileModal").classList.add("open"); }
+function openWalletAddressModal(){ if(!authed){ toast(t("toastAuth")); return; } $("walletAddressInput").value = savedWalletAddress || ""; $("walletAddressModal").classList.add("open"); }
+async function saveProfile(){ const value = $("profileDisplayName").value.trim(); if(!value){ toast(t("displayName")); return; } const userId = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id; if(!userId){ toast(t("openInTg")); return; } try { const response = await fetch("/api/profile",{ method:"POST", headers:{"Content-Type":"application/json","x-telegram-id":String(userId)}, body:JSON.stringify({displayName:value}) }); const data = await response.json().catch(() => null); if(!response.ok || !data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; } profName = {raw:data.displayName}; renderProfile(); toast(t("profileSaved")); $("profileModal").classList.remove("open"); } catch(_) { toast(t("refreshFailed")); } }
+async function saveWalletAddress(){ const value = $("walletAddressInput").value.trim(); if(value.length < 20){ toast(t("invalidWallet")); return; } if(!/^0x[a-fA-F0-9]{40}$/.test(value)){ toast("Only BEP-20 addresses (0x…) are supported."); return; } try { const data = await api("save_wallet", { walletAddress: value }); if(!data || !data.success){ toast(data && data.message ? data.message : t("refreshFailed")); return; } savedWalletAddress = value; toast(t("walletSaved")); $("walletAddressModal").classList.remove("open"); populateWithdrawPage(); } catch(err) { toast(err.message || t("refreshFailed")); } }
+function updateBalance(value){ balance = Number(value); const usdt = (balance / 100).toFixed(2); $("homePoints").textContent = money(balance); $("walletPoints").textContent = money(balance); $("homeUsdt").textContent = usdt; $("walletUsdt").textContent = usdt + " USDT · 100 Points = 1 USDT"; if (activePage === "withdraw") populateWithdrawPage(); if($("betAvailableBalance")) $("betAvailableBalance").textContent = `Available: ${money(balance)} Points`; }
+function unlockAudio(){ try { const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return; if(!audioContext) audioContext = new AC(); if(audioContext.state === "suspended") audioContext.resume(); audioUnlocked = true; } catch(_) {} }
+function playTone(freq=700,duration=.09,type="sine",volume=.045,delay=0){ if(!settings.sound || !audioUnlocked || !audioContext) return; try { const osc = audioContext.createOscillator(); const gain = audioContext.createGain(); const start = audioContext.currentTime + delay; osc.type = type; osc.frequency.setValueAtTime(freq,start); gain.gain.setValueAtTime(.0001,start); gain.gain.exponentialRampToValueAtTime(volume,start+.012); gain.gain.exponentialRampToValueAtTime(.0001,start+duration); osc.connect(gain); gain.connect(audioContext.destination); osc.start(start); osc.stop(start+duration+.02); } catch(_) {} }
+function playBetSound(){ playTone(880,.09,"sine",.06); playTone(1175,.12,"sine",.05,.09); }
+function playTickSound(){ playTone(950,.045,"square",.018); }
+function playLockSound(){ playTone(620,.13,"triangle",.06); playTone(420,.2,"triangle",.05,.13); }
+function playPing(){ playTone(1000,.08,"sine",.05); playTone(1300,.1,"sine",.04,.09); }
+function playResultSound(){ playTone(660,.12,"sine",.06); playTone(880,.12,"sine",.06,.13); playTone(1175,.2,"sine",.06,.26); }
+function pager(id,page,total){ if(!total) return ""; const from = (page - 1) * PAGE + 1; const to = Math.min(page * PAGE,total); return `<div class="pager"><span class="info">${esc(t("range",{from,to,total}))}</span><button type="button" data-pager="${id}" data-dir="-1" aria-label="Previous"${page <= 1 ? " disabled" : ""}>‹</button><button type="button" data-pager="${id}" data-dir="1" aria-label="Next"${page * PAGE >= total ? " disabled" : ""}>›</button></div>`; }
+function renderResults(){ const rows = (resultData.rounds || []).filter(revealed); let html; if(rows.length){ const body = rows.map(r => { const n = Number(r.result_number); return `<tr><td class="period">${esc(fmtPeriod(r.round_code))}</td><td class="${numTone(n)}">${esc(n)}</td><td class="${n >= 5 ? "bs-b" : "bs-s"}">${n >= 5 ? "B" : "S"}</td><td>${dotsHtml(n)}</td></tr>`; }).join(""); html = `<div class="wrap"><table class="tbl"><thead><tr><th>${esc(t("colPeriod"))}</th><th>${esc(t("colNum"))}</th><th>${esc(t("colBS"))}</th><th>${esc(t("colResult"))}</th></tr></thead><tbody>${body}</tbody></table></div>`; } else { html = `<div class="empty">${esc(t(roundsLoaded ? "noRounds" : "loading"))}</div>`; } $("resultTable").innerHTML = html + pager("results",resultPage,resultData.total); }
+async function loadResults(){ try { const d = await getRounds(resultPage); resultData = {rounds:d.rounds || [],total:Number(d.rounds_page && d.rounds_page.total || 0)}; renderResults(); } catch(error) { toast(error.message); } }
+function tradeView(b){ const ended = codeEnded(b.round_code); const status = ended ? String(b.status || "pending").toLowerCase() : "pending"; const stakeC = cents(b.stake); const feeC = cents(b.fee); const actualC = stakeC - feeC; const profitC = ended ? cents(b.payout) : 0; const returnedC = profitC > 0 ? profitC : 0; const hasRes = ended && b.result_number !== null && b.result_number !== undefined; let cls = "pending", label = t("pending"), amt = null; if(status === "cancelled"){ cls = "cancelled"; label = t("cancelled"); } else if(status !== "pending"){ if(profitC > 0 && profitC < stakeC){ cls = "pending"; label = "Partial"; amt = returnedC; } else if(profitC > 0){ cls = "success"; label = t("success"); amt = returnedC; } else { cls = "fail"; label = t("fail"); amt = -actualC; } } return {cls,label,amt,stakeC,feeC,actualC,profitC,returnedC,hasRes}; }
+function resultDetails(value){ const n = Number(value); if(!Number.isInteger(n) || n < 0 || n > 9) return "—"; const colour = n === 0 || n === 5 ? (n === 0 ? "Red + Violet" : "Green + Violet") : (n % 2 === 0 ? "Red" : "Green"); return `${colour} · ${n} · ${n >= 5 ? "Big" : "Small"}`; }
+function renderTrades(){ const list = tradeData.bets || []; let html; if(list.length){ html = list.map(b => { const v = tradeView(b); const sel = b.bet_type === "Number" && b.selection !== null && b.selection !== undefined ? " · " + b.selection : ""; return `<div class="trade"><div class="trade-head" data-trade="1"><span class="trade-period">${esc(fmtPeriod(b.round_code))}</span><span class="trade-status ${v.cls}">${esc(v.label)}</span><span class="trade-amt ${v.cls}">${v.amt === null ? "" : esc(signedCents(v.amt))}</span><span class="chev">⌄</span></div><div class="trade-body"><div class="kv"><span>${esc(t("dBet"))}</span><span>${esc(tk("bt_",b.bet_type) + sel)}</span></div><div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(v.stakeC / 100))}</span></div><div class="kv"><span>${esc(t("dFee"))}</span><span>${esc(money(v.feeC / 100))}</span></div><div class="kv strong"><span>${esc(t("dActual"))}</span><span>${esc(money(v.actualC / 100))}</span></div><div class="kv"><span>${esc(t("dPayout"))}</span><span>${esc(money(v.returnedC / 100))}</span></div><div class="kv"><span>Profit</span><span>${esc(money(v.profitC / 100))}</span></div><div class="kv"><span>Result</span><span>${v.hasRes ? esc(resultDetails(b.result_number)) : esc(t("waiting"))}</span></div><div class="kv"><span>${esc(t("dTime"))}</span><span>${esc(dateUTC(b.created_at))}</span></div></div></div>`; }).join(""); } else { html = `<div class="empty">${esc(t(authed ? "noBets" : "needTg"))}</div>`; } $("tradeList").innerHTML = html + pager("trades",tradePage,tradeData.total); }
+async function loadTrades(silent){ if(!authed) return; try { const d = await api("my_bets",{page:tradePage,page_size:PAGE}); tradeData = {bets:d.bets || [],total:Number(d.pagination && d.pagination.total || 0)}; renderTrades(); } catch(error) { if(!silent) toast(error.message); } }
+function txStatusLabel(x){ if(x.transaction_type === "bet" && x.status === "completed") return t("txPlaced"); return tk("s_",x.status); }
+function transactionUsdt(x){ const type = String(x.transaction_type || "").toLowerCase(); const amount = Number(x.amount || 0); return (type === "deposit" || type === "withdrawal" ? amount : amount / 100).toFixed(2); }
+function renderWallet(){ 
+  const items = walletData.items || []; 
+  const filteredItems = items.filter(x => activeTxFilter === "all" || String(x.transaction_type || "").toLowerCase() === activeTxFilter); 
+  let html; 
+  if(filteredItems.length){ 
+    const body = filteredItems.map(x => { 
+      const type = String(x.transaction_type || "").toLowerCase(); 
+      const plus = type === "deposit" || type === "payout" || type === "refund" || type === "reward" || type === "commission" || type === "signup_bonus" || type === "gift"; 
+      if (type === "bet") { 
+        const bet = (tradeData.bets || []).find(c => { const stake = Number(c.stake || 0) + Number(c.fee || 0); return Math.abs(stake - Number(x.amount || 0)) < 0.01 && Math.abs(new Date(c.created_at) - new Date(x.created_at)) < 10000; }); 
+        if (bet) { 
+          const view = tradeView(bet); 
+          const selection = bet.bet_type === "Number" && bet.selection !== null && bet.selection !== undefined ? ` · ${bet.selection}` : ""; 
+          return `<div class="trade wallet-trade"><div class="trade-head" data-trade="1"><span class="trade-period">${esc(fmtPeriod(bet.round_code))}</span><span class="trade-status ${view.cls}">${esc(view.label)}</span><span class="trade-amt ${view.cls}">${esc(signedCents(view.amt))}</span><span class="chev">⌄</span></div><div class="trade-body"><div class="kv"><span>${esc(t("dBet"))}</span><span>${esc(tk("bt_", bet.bet_type) + selection)}</span></div><div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(view.stakeC / 100))}</span></div><div class="kv"><span>${esc(t("dFee"))}</span><span>${esc(money(view.feeC / 100))}</span></div><div class="kv strong"><span>${esc(t("dActual"))}</span><span>${esc(money(view.actualC / 100))}</span></div><div class="kv"><span>${esc(t("dPayout"))}</span><span>${esc(money(view.returnedC / 100))}</span></div><div class="kv"><span>Result</span><span>${view.hasRes ? esc(resultDetails(bet.result_number)) : esc(t("waiting"))}</span></div><div class="kv"><span>${esc(t("dTime"))}</span><span>${esc(dateUTC(bet.created_at))}</span></div></div></div>`; 
+        } 
+      } 
+      return `<div class="trade wallet-trade"><div class="trade-head" data-trade="1"><span class="trade-period">${esc(tk("tx_",type))}<small class="utc-time" style="display:block; margin-top:2px;">${esc(dateUTC(x.created_at))}</small></span><span class="trade-status ${plus ? "success" : "pending"}">${esc(txStatusLabel(x))}</span><span class="trade-amt ${plus ? "success" : "fail"}">${plus ? "+" : "−"}${esc(money(x.amount))}</span><span class="chev">⌄</span></div><div class="trade-body"><div class="kv"><span>Type</span><span>${esc(tk("tx_",type))}</span></div><div class="kv"><span>Amount</span><span>${esc(money(x.amount))} (${esc(transactionUsdt(x))} USDT)</span></div><div class="kv"><span>Status</span><span>${esc(txStatusLabel(x))}</span></div><div class="kv"><span>Date</span><span>${esc(dateUTC(x.created_at))}</span></div></div></div>`; 
+    }).join(""); 
+    html = `<div class="wallet-trades">${body}</div>`; 
+  } else { 
+    html = `<div class="empty">${esc(t(authed ? "noTx" : "needTg"))}</div>`; 
+  } 
+  $("walletList").innerHTML = html + pager("wallet",walletPage,walletData.total); 
+
+  const historyTable = (type) => { 
+    const filtered = items.filter(x => String(x.transaction_type || "").toLowerCase() === type); 
+    if (!filtered.length) return `<div class="empty">No ${type} history yet.</div>`; 
+    return `<div class="wrap"><table class="tbl"><thead><tr><th>Type</th><th>Amount</th><th>Status</th></tr></thead><tbody>${filtered.map(x => `<tr><td>${esc(tk("tx_", x.transaction_type))}<div class="utc-time">${esc(dateUTC(x.created_at))}</div></td><td>${esc(money(x.amount))} <small class="usdt-value">(${esc(transactionUsdt(x))} USDT)</small></td><td>${esc(txStatusLabel(x))}</td></tr>`).join("")}</tbody></table></div>`; 
+  }; 
+
+  $("depositHistoryList").innerHTML = historyTable("deposit"); 
+  $("withdrawHistoryList").innerHTML = historyTable("withdrawal"); 
+}
+async function loadWallet(silent){ if(!authed){ renderWallet(); return; } try { const d = await api("wallet_history",{page:walletPage,page_size:PAGE}); walletData = {items:d.transactions || [],total:Number(d.pagination && d.pagination.total || 0)}; renderWallet(); } catch(error) { if(!silent) toast(error.message); } }
+let selectedDepositCoinPage = "USDT";
+async function loadDepositPage() {
+  try {
+    const config = await api("wallet_config");
+    const options = Array.isArray(config.deposit_options) ? config.deposit_options : [];
+    const select = $("depositOptionPage");
+    select.innerHTML = options.map((item, i) => `<option value="${i}">${esc(item.coin)} · ${esc(item.network)}</option>`).join("");
+    const setOption = () => {
+      const item = options[Number(select.value)] || options[0];
+      if (!item) { $("depositAddressPage").value = "No deposit address configured"; return; }
+      selectedDepositCoinPage = String(item.coin || "USDT").toUpperCase();
+      const address = item?.address || "";
+      $("depositAddressPage").value = address || "Not configured";
+      const qr = $("depositQrImagePage");
+      if (qr && address) {
+        qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=440x440&data=${encodeURIComponent(address)}`;
+        qr.hidden = false;
+      } else if (qr) {
+        qr.removeAttribute("src");
+        qr.hidden = true;
+      }
+      const coinLabel = item?.coin || "USDT";
+      const networkLabel = item?.network || "network";
+      const logoKey = coinLabel.toLowerCase().replace(/[^a-z]/g, "");
+      const logoMap = { usdt:"usdt", tether:"usdt", bnb:"bnb", eth:"eth", ethereum:"eth", solana:"sol", sol:"sol", tron:"trx", trx:"trx", polygon:"matic", matic:"matic", btc:"btc", bitcoin:"btc" };
+      const logo = logoMap[logoKey] || "usdt";
+      const logoUrls = {
+        usdt: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/usdt.png",
+        bnb: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/bnb.png",
+        eth: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/eth.png",
+        sol: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/sol.png",
+        trx: "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/128/color/trx.png"
+      };
+      $("depositAssetLogoPage").src = logoUrls[logo] || logoUrls.usdt;
+      $("depositAssetNamePage").textContent = coinLabel;
+      $("depositNetworkHintPage").textContent = `Send only ${coinLabel} on ${networkLabel}`;
+    };
+    select.onchange = setOption;
+    setOption();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+function populateWithdrawPage() {
+  const addrInput = $("withdrawAddressPage");
+  if (addrInput) {
+    addrInput.value = savedWalletAddress || "";
+    addrInput.placeholder = savedWalletAddress ? "" : "Add wallet in Profile first";
+  }
+  const note = $("withdrawBetNote");
+  if (note) {
+    const need = Number(appConfig.min_bet_to_withdraw);
+    if (Number.isFinite(need) && need > 0) {
+      const left = Math.max(0, need - totalStaked);
+      note.style.display = "";
+      note.textContent = left > 0
+        ? `Bet requirement: place at least ${money(need)} points of bets before you can withdraw. Placed so far: ${money(totalStaked)} (${money(left)} more needed).`
+        : `Bet requirement completed (${money(totalStaked)} points placed).`;
+    } else { note.style.display = "none"; }
+  }
+  const balEl = $("withdrawPageBalance");
+  if (balEl) balEl.textContent = `${money(balance || 0)} Points · ${((Number(balance)||0)/100).toFixed(2)} USDT`;
+}
+async function downloadQrCode() {
+  const img = $("depositQrImagePage");
+  if (!img || !img.src || img.hidden) { toast("QR not available"); return; }
+  try {
+    const response = await fetch(img.src);
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `deposit-qr-${selectedDepositCoinPage}-${Date.now()}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast("QR downloaded");
+  } catch(e) {
+    toast("Download failed. Long-press the QR to save.");
+  }
+}
+async function submitDepositPage() {
+  const amount = Number($("depositAmountPage").value);
+  const txHash = $("depositTxHashPage").value.trim();
+  const option = $("depositOptionPage").selectedOptions[0]?.textContent || "USDT";
+  if (!Number.isFinite(amount) || amount < 1) return toast("Enter at least 1 USDT.");
+  if (txHash.length < 20) return toast("Enter a valid transaction hash.");
+  const btn = $("submitDepositPage");
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = "Submitting…";
+  try {
+    await api("submit_deposit", { amount_usdt: amount.toFixed(6), tx_hash: txHash, network: option });
+    $("depositSubmitStatusPage").textContent = "✅ Submitted for admin approval.";
+    toast("Deposit submitted for approval.");
+    $("depositAmountPage").value = "";
+    $("depositTxHashPage").value = "";
+    await syncUser();
+    await loadWallet(true);
+  } catch(e) {
+    toast(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+}
+async function submitWithdrawalPage() {
+  const amount = Number($("withdrawAmountPage").value);
+  const address = $("withdrawAddressPage").value.trim();
+  if (!Number.isFinite(amount) || amount < 500) return toast("Minimum withdrawal is 500 points.");
+  if (!address || address.length < 20) return toast("No wallet saved. Add one in Profile first.");
+  const btn = $("submitWithdrawalPage");
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = "Submitting…";
+  try {
+    await api("request_withdrawal", { amount: amount.toFixed(2), destination_address: address });
+    toast("Withdrawal request submitted.");
+    $("withdrawAmountPage").value = "";
+    await syncUser();
+    await loadWallet(true);
+  } catch(e) {
+    toast(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+}
+function renderReferral(){ 
+  const box = $("referralBody"); 
+  if(!authed){ 
+    let errorMsg = "Open the Mini App inside Telegram to see this.";
+    if (initData) {
+      errorMsg = "Authentication failed: " + (profStatus && profStatus.raw ? profStatus.raw : "Unknown error. Check backend logs.");
+    } else if (profStatus && profStatus.raw) {
+      errorMsg = profStatus.raw;
+    }
+
+    box.innerHTML = `<div class="card">
+      <div class="empty" style="color:#ef4444; font-weight:bold; margin-bottom:10px;">⚠️ Authentication Failed</div>
+      <div class="empty" style="font-size:13px; margin-bottom:15px; line-height:1.5;">${esc(errorMsg)}</div>
+      <button class="primary-btn" id="refAuthRetry" type="button">Retry Authentication</button>
+    </div>`; 
+    const btn = $("refAuthRetry"); 
+    if (btn) btn.onclick = authenticate; 
+    return; 
+  } 
+  if(!referralData){ box.innerHTML = `<div class="card"><div class="empty">${esc(t("loading"))}</div></div>`; return; } 
+
+  const r = referralData; 
+  const link = r.referral_link; 
+  const linkCard = `<div class="card"><label>${esc(t("yourLink"))}</label>${link ? `<div class="copybox" style="margin-top:7px"><input type="text" readonly value="${esc(link)}"><button class="sec-btn" type="button" data-copy="link">${esc(t("copy"))}</button></div><button class="primary-btn" type="button" data-share="1" style="margin-top:12px">📤 ${esc(t("share"))}</button>` : `<div class="notice">${esc(t("noLink"))}</div>`}<label style="display:block;margin-top:14px">${esc(t("yourCode"))}</label><div class="copybox" style="margin-top:7px"><input type="text" readonly value="${esc(r.referral_code || "")}"><button class="sec-btn" type="button" data-copy="code">${esc(t("copy"))}</button></div><div class="notice" style="margin-top:12px">${esc(t("rewardPromo"))}</div></div>`; 
+
+  const reward = r.reward || {}; 
+  const activeRewards = Number(reward.active_pending_points || 0); 
+  const inactiveRewards = Number(reward.pending_points || 0); 
+  const creditedRewards = Number(reward.credited_points || 0); 
+
+  const claimRewardBtn = activeRewards > 0 ? `<button class="primary-btn" id="claimRewardBtn" type="button" style="background:#22c55e; color:#fff; margin-top:10px;">${esc(t("claimRewards"))} (${money(activeRewards)} pts)</button>` : `<div class="muted small" style="margin-top:10px;">No active rewards to claim.</div>`; 
+  const claimCommissionBtn = Number(r.total_commission || 0) > 0 ? `<button class="primary-btn" id="claimCommissionBtn" type="button" style="margin-top:10px;">Claim commission to wallet</button>` : `<div class="muted small" style="margin-top:10px;">No commission available to claim.</div>`; 
+  const teamRows = (r.team_levels || []).map(l => `<div class="kv"><span>Level ${esc(l.level)}</span><strong>${esc(l.count)} members</strong></div>`).join(""); 
+
+  const stats = `<div class="stats">
+    <div class="stat"><div class="l">${esc(t("directRef"))}</div><div class="v">${esc(r.total_direct_referrals || 0)}</div></div>
+    <div class="stat"><div class="l">${esc(t("availableComm"))}</div><div class="v">${esc(money(r.total_commission || 0))}</div></div>
+    <div class="stat"><div class="l">${esc(t("availableReward"))}</div><div class="v" style="color:#22c55e;">${esc(money(activeRewards))}</div></div>
+    <div class="stat"><div class="l">${esc(t("claimedRewards"))}</div><div class="v">${esc(money(creditedRewards))}</div></div>
+  </div>`; 
+
+  const levelRows = (r.commission_levels || []).map(l => `<tr><td>L${esc(l.level)}</td><td>${esc(l.rate_percent)}%</td><td>${esc(l.commission_count)}</td><td>${esc(money(l.total_commission))}</td></tr>`).join(""); 
+  const levelsCard = `<div class="card"><div class="section-title">${esc(t("levels"))}</div><div class="notice"><strong>Team · 3 levels</strong>${teamRows}<div style="margin-top:12px">${claimCommissionBtn}</div></div><div class="wrap"><table class="tbl"><thead><tr><th>${esc(t("lvl"))}</th><th>${esc(t("rate"))}</th><th>${esc(t("cnt"))}</th><th>${esc(t("total"))}</th></tr></thead><tbody>${levelRows}</tbody></table></div></div>`; 
+
+  const applyCard = r.referred_by ? `<div class="card"><div class="muted small">${esc(t("referredBy"))}</div></div>` : `<div class="card"><div class="section-title">${esc(t("haveCode"))}</div><input id="refCodeInput" type="text" maxlength="100" autocomplete="off" placeholder="${esc(t("enterCode"))}"><button class="primary-btn" type="button" data-apply-ref="1">${esc(t("apply"))}</button></div>`; 
+
+  const commRows = (commData.items || []).map(c => `<tr><td class="period">${esc(fmtPeriod(c.round_code) || "—")}<div class="utc-time">${esc(dateUTC(c.created_at))}</div></td><td>L${esc(c.referral_level)}</td><td class="n-green">+${esc(money(c.commission_amount))}</td></tr>`).join(""); 
+  const commCard = `<div class="card"><div class="section-title">${esc(t("commHistory"))}</div>${commRows ? `<div class="wrap"><table class="tbl"><thead><tr><th>${esc(t("colPeriod"))}</th><th>${esc(t("lvl"))}</th><th>${esc(t("comm"))}</th></tr></thead><tbody>${commRows}</tbody></table></div>` : `<div class="empty">${esc(t("noTx"))}</div>`}${pager("comm",commPage,commData.total)}</div>`; 
+
+  const rewardClaimCard = `<div class="card"><div class="section-title">${esc(t("availableReward"))}</div><div class="stats" style="margin-bottom:10px;"><div class="stat"><div class="l">${esc(t("availableReward"))}</div><div class="v" style="color:#22c55e;">${esc(money(activeRewards))}</div></div><div class="stat"><div class="l">${esc(t("mSumPending"))}</div><div class="v" style="color:#facc15;">${esc(money(inactiveRewards))}</div></div></div>${claimRewardBtn}</div>`; 
+
+  box.innerHTML = linkCard + stats + rewardClaimCard + membersCardHtml() + levelsCard + applyCard + commCard; 
+}
+async function loadReferral(silent){ if(!authed){ renderReferral(); return; } try { const d = await api("referral_data"); referralData = d.referral; const h = await api("referral_history",{page:commPage,page_size:PAGE}); commData = {items:h.commissions || [],total:Number(h.pagination && h.pagination.total || 0)}; renderReferral(); } catch(error) { if(!silent) toast(error.message); } }
+async function loadCommissions(){ try { const h = await api("referral_history",{page:commPage,page_size:PAGE}); commData = {items:h.commissions || [],total:Number(h.pagination && h.pagination.total || 0)}; renderReferral(); } catch(error) { toast(error.message); } }
+async function applyReferral(){ const input = $("refCodeInput"); const code = input ? input.value.trim() : ""; if(!code){ toast(t("enterCode")); return; } try { await api("apply_referral",{referral_code:code}); toast(t("refreshed")); await loadReferral(); } catch(error) { toast(error.message); } }
+async function applyReferralFromUrl(){ try { const params = new URLSearchParams(window.location.search); const sp = String((tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || "").trim(); const gc = (params.get("gift") || (/^gift_/i.test(sp) ? sp.slice(5) : "")).trim().toUpperCase(); if(/^[A-Z0-9-]{4,64}$/.test(gc)){ $("giftCodeInput").value = gc; $("giftModal").classList.add("open"); loadGiftHistory(); return; } if(/^gift_/i.test(sp)) return; let code = (params.get("ref") || "").trim(); if(!code && sp){ code = sp.startsWith("ref_") ? sp.slice(4) : sp; } if(!/^[A-Za-z0-9_-]{1,80}$/.test(code)) return; try { if(sessionStorage.getItem("ctp_ref_done") === code) return; } catch(_) {} try { await api("apply_referral",{referral_code:code}); referralData = null; try { sessionStorage.setItem("ctp_ref_done",code); } catch(_) {} } catch(error) { if(/already|invalid|own|relationship/i.test(error.message || "")){ try { sessionStorage.setItem("ctp_ref_done",code); } catch(_) {} } } } catch(_) {} }
+Object.assign(I18N.en,{ mTitle:"Your referrals", m_all:"All", m_active:"Active", m_inactive:"Inactive", mActive:"Active", mInactive:"Inactive", mPending:"Pending", mReceived:"Received", mJoined:"Joined", mLastPlayed:"Last played", mNever:"Never played", mNoName:"No username", mSumActive:"Active referrals", mSumInactive:"Inactive referrals", mSumPending:"Pending reward", mSumReceived:"Reward received", mActiveNote:"Active = placed a bet in the last 7 days.", mNoReward:"No reward record", mCreditedOn:"Received on" });
+Object.assign(I18N.hi,{ mTitle:"आपके रेफरल", m_all:"सभी", m_active:"एक्टिव", m_inactive:"इनएक्टिव", mActive:"एक्टिव", mInactive:"इनएक्टिव", mPending:"पेंडिंग", mReceived:"मिला", mJoined:"जुड़े", mLastPlayed:"आखिरी बार खेला", mNever:"कभी नहीं खेला", mNoName:"यूज़रनेम नहीं", mSumActive:"एक्टिव रेफरल", mSumInactive:"इनएक्टिव रेफरल", mSumPending:"पेंडिंग रिवॉर्ड", mSumReceived:"मिला हुआ रिवॉर्ड", mActiveNote:"एक्टिव = पिछले 7 दिन में कम से कम एक बेट लगाई।", mNoReward:"रिवॉर्ड रिकॉर्ड नहीं", mCreditedOn:"मिलने की तारीख" });
+Object.assign(I18N.bn,{ mTitle:"আপনার রেফারেল", m_all:"সব", m_active:"অ্যাকটিভ", m_inactive:"ইনঅ্যাকটিভ", mActive:"অ্যাকটিভ", mInactive:"ইনঅ্যাকটিভ", mPending:"পেন্ডিং", mReceived:"পাওয়া গেছে", mJoined:"যোগ দিয়েছে", mLastPlayed:"শেষ খেলেছে", mNever:"কখনও খেলেনি", mNoName:"ইউজারনেম নেই", mSumActive:"অ্যাকটিভ রেফারেল", mSumInactive:"ইনঅ্যাকটিভ রেফারেল", mSumPending:"পেন্ডিং রিওয়ার্ড", mSumReceived:"পাওয়া রিওয়ার্ড", mActiveNote:"অ্যাকটিভ = গত ৭ দিনে অন্তত একটি বেট দিয়েছে।", mNoReward:"রিওয়ার্ড রেকর্ড নেই", mCreditedOn:"পাওয়ার তারিখ" });
+let membersData = null; let membersFor = null; let membersLoading = false; let membersFilter = "all"; let membersPage = 1;
+async function loadMembers(){ membersLoading = true; try { membersData = await api("referral_members"); } catch(error) { membersData = {error:error.message}; } finally { membersLoading = false; renderReferral(); } }
+function membersCardHtml(){ if(membersFor !== referralData && !membersLoading){ membersFor = referralData; loadMembers(); } const title = `<div class="section-title">${esc(t("mTitle"))}</div>`; if(!membersData){ return `<div class="card">${title}<div class="empty">${esc(t("loading"))}</div></div>`; } if(membersData.error){ return `<div class="card">${title}<div class="empty">${esc(membersData.error)}</div></div>`; } const s = membersData.summary || {}; const all = membersData.members || []; const list = all.filter(m => membersFilter === "all" || (membersFilter === "active" ? m.is_active : !m.is_active)); const stats = `<div class="stats"><div class="stat"><div class="l">${esc(t("mSumActive"))}</div><div class="v">${esc(s.active || 0)}</div></div><div class="stat"><div class="l">${esc(t("mSumInactive"))}</div><div class="v">${esc((s.total || 0) - (s.active || 0))}</div></div><div class="stat"><div class="l">${esc(t("mSumPending"))}</div><div class="v">${esc(money(s.inactive_pending_points))}</div></div><div class="stat"><div class="l">${esc(t("mSumReceived"))}</div><div class="v">${esc(money(Number(s.credited_points || 0) + Number(s.active_pending_points || 0)))}</div></div></div>`; const tabs = ["all","active","inactive"].map(k => `<button type="button" class="tab${membersFilter === k ? " on" : ""}" data-mfilter="${k}">${esc(t("m_" + k))}</button>`).join(""); const maxPage = Math.max(1, Math.ceil(list.length / PAGE)); if (membersPage > maxPage) membersPage = maxPage; if (membersPage < 1) membersPage = 1; const pageList = list.slice((membersPage - 1) * PAGE, membersPage * PAGE); const rows = pageList.map(m => { const active = !!m.is_active; let reward = ""; if (active || m.reward_status === "credited") { reward = m.reward_status === "credited" ? `<span class="pill ok">${esc(t("mReceived"))} +${esc(money(m.reward_points))}</span><div class="utc-time">${esc(t("mCreditedOn"))}: ${esc(dateUTC(m.credited_at))}</div>` : m.reward_status === "pending" ? `<span class="pill wait">${esc(t("mPending"))} · ${esc(money(m.reward_points))}</span>` : `<span class="pill">${esc(t("mNoReward"))}</span>`; } else { reward = `<span class="pill off">Inactive - No Reward</span>`; } return `<div class="member"><div class="row"><strong>${esc([m.first_name, m.last_name].filter(Boolean).join(" ") || (m.username ? "@" + m.username : t("mNoName")))}</strong><span class="pill ${active ? "ok" : "off"}">${esc(t(active ? "mActive" : "mInactive"))}</span></div>${([m.first_name, m.last_name].some(Boolean) && m.username) ? `<div class="utc-time">@${esc(m.username)}</div>` : ""}<div class="utc-time">${esc(t("mJoined"))}: ${esc(dateUTC(m.created_at))}</div><div class="utc-time">${esc(t("mLastPlayed"))}: ${esc(m.last_bet_at ? dateUTC(m.last_bet_at) : t("mNever"))}</div><div style="margin-top:8px">${reward}</div></div>`; }).join(""); return `<div class="card">${title}${stats}<div class="notice" style="margin-top:0">${esc(t("mActiveNote"))}</div><div class="tabs">${tabs}</div>${rows || `<div class="empty">${esc(t("noRef"))}</div>`}${pager("members", membersPage, list.length)}</div>`; }
+document.addEventListener("click",event => { const b = event.target.closest("[data-mfilter]"); if(!b) return; membersFilter = b.dataset.mfilter; membersPage = 1; renderReferral(); });
+function queuePopup(round){ if(queuedResults.has(round.round_code)) return; queuedResults.add(round.round_code); resultPopupQueue.push(round); showNextResultPopup(); }
+function showNextResultPopup(){ if(resultPopupOpen || !resultPopupQueue.length) return; const round = resultPopupQueue.shift(); const n = Number(round.result_number); if(!Number.isInteger(n) || n < 0 || n > 9){ showNextResultPopup(); return; } resultPopupOpen = true; $("resultPopupPeriod").textContent = t("rPeriod") + " " + fmtPeriod(round.round_code); $("resultPopupNumber").textContent = String(n); $("resultPopupNumber").style.background = popupBg(n); $("resultPopupColor").textContent = "🎨 " + popupColourName(n); $("resultPopupSize").textContent = n >= 5 ? "📈 " + t("sBig") : "📉 " + t("sSmall"); $("resultModal").classList.add("open"); playResultSound(); haptic("success"); }
+function closeResultPopup(){ $("resultModal").classList.remove("open"); resultPopupOpen = false; if(resultPopupQueue.length) setTimeout(showNextResultPopup,250); }
+function showBanner(round){ const n = Number(round.result_number); if(!Number.isInteger(n) || n < 0 || n > 9) return; const text = t("bannerResult",{ period:fmtPeriod(round.round_code), n:n, colour:popupColourName(n), size:tk("bt_",n >= 5 ? "Big" : "Small") }); $("banner").innerHTML = `<span>${dotsHtml(n)}</span><span>${esc(text)}</span>`; $("banner").classList.add("show"); clearTimeout(bannerTimer); bannerTimer = setTimeout(() => $("banner").classList.remove("show"),4500); }
+function detectResults(){ if(!authed) return; const rev = latestRounds.filter(revealed); if(!rev.length) return; if(!firstResultShown){ firstResultShown = true; rev.forEach(r => seenResults.add(r.round_code)); queuePopup(rev[0]); return; } const fresh = rev.filter(r => !seenResults.has(r.round_code)).sort((a,b) => new Date(a.ends_at) - new Date(b.ends_at)); if(!fresh.length) return; fresh.forEach(r => seenResults.add(r.round_code)); const played = fresh.filter(r => playedRounds.has(r.round_code)); played.forEach(queuePopup); showBanner(fresh[fresh.length - 1]); if(!played.length){ playPing(); haptic("light"); } syncUser(true); }
+function getActiveRound(){ const r = currentRound; if(!r) return null; const now = nowMs(); const starts = new Date(r.starts_at).getTime(); const ends = new Date(r.ends_at).getTime(); return Number.isFinite(starts) && Number.isFinite(ends) && now >= starts && now < ends ? r : null; }
+function isBettingOpen(round){ if(!round || round.status !== "open") return false; const now = nowMs(); const starts = new Date(round.starts_at).getTime(); const closes = new Date(round.betting_closes_at).getTime(); const ends = new Date(round.ends_at).getTime(); return Number.isFinite(starts) && Number.isFinite(closes) && Number.isFinite(ends) && now >= starts && now < closes && now < ends; }
+async function syncRounds(){ if(roundsBusy) return roundsOk; roundsBusy = true; try { const d = await getRounds(1); const serverMs = new Date(d.server_time).getTime(); if(Number.isFinite(serverMs)) serverTimeOffset = serverMs - d._mid; currentRound = d.current_round || null; latestRounds = d.rounds || []; roundsLoaded = true; roundsFailed = false; roundsOk = true; if(resultPage === 1){ resultData = {rounds:latestRounds,total:Number(d.rounds_page && d.rounds_page.total || 0)}; renderResults(); } detectResults(); setNotice("nConnected"); } catch(error) { roundsFailed = true; roundsOk = false; setNotice("nUnavailable",{msg:error.message}); } finally { lastRoundsSync = Date.now(); roundsBusy = false; updateRoundDisplay(); } return roundsOk; }
+async function syncUser(){ if(!authed) return false; if(userBusy) return userOk; userBusy = true; try { const [balData,betData] = await Promise.all([ api("balance"), api("my_bets",{page:tradePage,page_size:PAGE}) ]); updateBalance(balData.balance); if (balData.total_staked !== undefined) totalStaked = Number(balData.total_staked) || 0; if (balData.wallet_address !== undefined) savedWalletAddress = balData.wallet_address || null; tradeData = {bets:betData.bets || [],total:Number(betData.pagination && betData.pagination.total || 0)}; renderTrades(); if(activePage === "wallet") await loadWallet(true); if (activePage === "withdraw") populateWithdrawPage(); userOk = true; } catch(error) { userOk = false; } finally { lastUserSync = Date.now(); userBusy = false; } return userOk; }
+function setRing(frac,locked){ const el = $("ringFg"); el.style.transition = frac > lastRingFrac + 0.01 ? "none" : ""; el.style.strokeDashoffset = String(RING_LENGTH * (1 - frac)); el.classList.toggle("locked",locked); lastRingFrac = frac; }
+function updateRoundDisplay(){ const server = getActiveRound(); let info = null; if(server){ info = { code:server.round_code, endsMs:new Date(server.ends_at).getTime(), open:isBettingOpen(server), virtual:false }; } else if(roundsLoaded){ const s = slotInfo(nowMs()); info = {code:s.code,endsMs:s.endsMs,open:false,virtual:true}; } if(!info){ $("periodId").textContent = t("loadingRound"); $("timer").textContent = "--:--"; setRing(0,true); setStatus(authBlock || (roundsFailed ? "stError" : "stConnecting")); updateBetButtons(false); previousBettingOpen = false; lastTickSecond = -1; return; } const left = Math.max(0,Math.ceil((info.endsMs - nowMs()) / 1000)); $("periodId").textContent = fmtPeriod(info.code); $("timer").textContent = String(Math.floor(left / 60)).padStart(2,"0") + ":" + String(left % 60).padStart(2,"0"); setRing(Math.min(1,left / ROUND_SECONDS),!info.open); setStatus(authBlock || (info.virtual ? "stSyncing" : info.open ? "stOpen" : "stLocked")); const tc = $("timerCard"); if(tc){ tc.classList.toggle("urgent", !!info.open && left <= 40); tc.classList.toggle("locked-state", !info.open); }
+ updateBetButtons(info.open && authed); if(previousBettingOpen === true && !info.open){ playLockSound(); haptic("light"); } previousBettingOpen = info.open; if(left <= 10 && left > 0 && left !== lastTickSecond){ playTickSound(); lastTickSecond = left; } else if(left > 10 || left === 0){ lastTickSecond = -1; } if(lastDisplayedRoundCode !== info.code){ lastDisplayedRoundCode = info.code; lastTickSecond = -1; previousBettingOpen = info.open; } }
+function updateBetButtons(enabled){ document.querySelectorAll("[data-bet],.number-btn").forEach(button => { button.disabled = !enabled; }); }
+function poll(){ if(document.hidden) return; const now = Date.now(); if(!roundsBusy){ const r = currentRound; const ended = r && nowMs() >= new Date(r.ends_at).getTime(); const slot = slotInfo(nowMs()); const prevCode = slotInfo(slot.startMs - 1).code; const prevMissing = roundsLoaded && nowMs() - slot.startMs < 30000 && !latestRounds.some(x => x.round_code === prevCode && revealed(x)); const due = now - lastRoundsSync >= ROUND_POLL || ((ended || prevMissing) && now - lastRoundsSync >= 1000); if(due) syncRounds(); } if(authed && !userBusy && now - lastUserSync >= USER_POLL){ syncUser(); } }
+async function manualRefresh(button){ if(button) button.classList.add("busy"); try { if(!authed){ await authenticate(); } else { const okRounds = await syncRounds(); const okUser = await syncUser(); if(resultPage !== 1) await loadResults(); if(activePage === "wallet") await loadWallet(true); if(activePage === "referral") await loadReferral(true); toast(okRounds && okUser ? t("refreshed") : t("refreshFailed")); } } catch(error) { toast(error.message || t("refreshFailed")); } finally { if(button) button.classList.remove("busy"); } }
+async function authenticate(){ try { if(!tg){ authed = false; authBlock = "stTelegram"; profName = {k:"notTg"}; profStatus = {k:"openInTg"}; renderProfile(); renderTrades(); syncRounds(); return; } tg.ready(); tg.expand(); initData = tg.initData || ""; if(!initData){ authed = false; authBlock = "stAuth"; profName = {k:"tgMissing"}; profStatus = {k:"openOfficial"}; renderProfile(); renderTrades(); syncRounds(); return; } const response = await fetch("/api/auth",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({initData}) }); const data = await parseResponse(response); authed = true; authBlock = null; user = data.user; if (typeof loadNotifications === "function") await loadNotifications().catch(() => {}); if (typeof loadAppConfig === "function") await loadAppConfig(); profName = user.username ? {raw:"@" + user.username} : {k:"tgUser",v:{id:user.telegram_id}}; profStatus = {k:"verified"}; renderProfile(); try { await syncRounds(); await syncUser(); await applyReferralFromUrl(); } catch (error) { console.warn("[v0] post-auth sync failed", error.message); authBlock = "stConnecting"; renderProfile(); toast("Account authenticated; syncing game data…"); } } catch(error) { authed = false; authBlock = "stAuth"; profStatus = {raw:error.message}; renderProfile(); renderReferral(); toast(error.message); } }
+function renderBreakdown(){
+  const text = $("betAmount").value.trim();
+  const ok = /^\d{1,18}(\.\d{1,2})?$/.test(text);
+  const baseStakeC = ok ? cents(text) : 0;
+  const totalStakeC = baseStakeC * betMultiplier;
+  const feeC = Math.floor((totalStakeC * FEE_PERCENT + 50) / 100);
+  const actualC = totalStakeC - feeC;
+  let html = `<div class="kv"><span>${esc(t("dStake"))}</span><span>${esc(money(baseStakeC / 100))}</span></div>`;
+  if (betMultiplier > 1) {
+    html += `<div class="kv"><span>Multiplier</span><span>×${betMultiplier}</span></div>`;
+    html += `<div class="kv"><span>Total Stake</span><span>${esc(money(totalStakeC / 100))}</span></div>`;
+  }
+  html += `<div class="kv"><span>${esc(t("bkFee",{pct:FEE_PERCENT}))}</span><span>−${esc(money(feeC / 100))}</span></div>`;
+  html += `<div class="kv strong"><span>${esc(t("dActual"))}</span><span>${esc(money(actualC / 100))}</span></div>`;
+  if (Number.isFinite(balance) && (totalStakeC / 100) > Number(balance)) {
+    html += `<div class="kv" style="color:#ef4444"><span>⚠ Insufficient balance</span><span>${esc(money(balance))}</span></div>`;
+  }
+  $("betBreakdown").innerHTML = html;
+}
+function openBet(type,selection = null){
+  if(!authed){ toast(t("toastAuth")); return; }
+  const round = getActiveRound();
+  if(!isBettingOpen(round)){ toast(t("toastLocked")); syncRounds(); return; }
+  haptic("light");
+  currentBet = {type,selection,roundCode:round.round_code};
+  pendingBetRequest = null;
+  betMultiplier = 1;
+  betStep = 100;
+  document.querySelectorAll("[data-mult]").forEach(b => b.classList.toggle("active", Number(b.dataset.mult) === 1));
+  $("betModalTitle").textContent = t("betOn") + " " + tk("bt_",type) + (selection === null ? "" : " " + selection);
+  $("betModalPeriod").textContent = t("serverRound") + " " + fmtPeriod(round.round_code);
+
+  const balEl = $("betAvailableBalance");
+  if (balEl) balEl.textContent = `Available: ${money(balance)} Points`;
+
+  $("betAmount").value = "100";
+  renderBreakdown();
+  $("confirmBet").disabled = false;
+  $("betModal").classList.add("open");
+}
+async function confirmBet(){
+  if(!currentBet || !authed) return;
+  const baseText = $("betAmount").value.trim();
+  const baseAmount = Number(baseText);
+  if(!/^\d{1,18}(\.\d{1,2})?$/.test(baseText) || !Number.isFinite(baseAmount) || baseAmount < 10){
+    toast(t("toastAmount"));
+    return;
+  }
+  const totalStake = baseAmount * betMultiplier;
+  if (Number.isFinite(balance) && totalStake > Number(balance)) {
+    toast("Insufficient wallet balance for this bet.");
+    return;
+  }
+  const totalStakeStr = totalStake.toFixed(2);
+  const btn = $("confirmBet");
+  btn.disabled = true;
+  try {
+    if(!pendingBetRequest){
+      pendingBetRequest = { requestId: makeRequestId(), roundCode: currentBet.roundCode, betType: currentBet.type, selection: currentBet.type === "Number" ? currentBet.selection : null, stake: totalStakeStr, multiplier: betMultiplier };
+    }
+    const r = pendingBetRequest;
+    if(r.roundCode !== currentBet.roundCode || r.betType !== currentBet.type || r.selection !== (currentBet.type === "Number" ? currentBet.selection : null) || r.stake !== totalStakeStr || r.multiplier !== betMultiplier){
+      pendingBetRequest = null;
+      toast(t("toastChanged"));
+      return;
+    }
+    await api("place_bet",{ round_code: r.roundCode, bet_type: r.betType, selection: r.selection, stake: r.stake, multiplier: r.multiplier, request_id: r.requestId });
+    playedRounds.add(r.roundCode);
+    pendingBetRequest = null;
+    $("betModal").classList.remove("open");
+    playBetSound();
+    haptic("success");
+    toast(t("toastBetOk"));
+    tradePage = 1;
+    await syncUser();
+  } catch(error) {
+    haptic("error");
+    toast(error.message || t("toastBetFail"));
+  } finally {
+    btn.disabled = false;
+  }
+}
+function showPage(name){
+  activePage = name;
+  document.querySelectorAll(".page").forEach(page => { page.classList.toggle("active", page.id === "page-" + name); });
+  document.querySelectorAll(".nav-btn").forEach(button => { button.classList.toggle("active", button.dataset.page === name); });
+  if(name === "wallet" || name === "deposit" || name === "withdraw") loadWallet();
+  if(name === "referral" || name === "profile") loadReferral();
+  if(name === "deposit") loadDepositPage();
+  if(name === "withdraw") populateWithdrawPage();
+  window.scrollTo(0,0);
+}
+function renderLangList(filter){ const q = String(filter || "").trim().toLowerCase(); const list = LANGS.filter(l => !q || String(l.name || "").toLowerCase().includes(q) || String(l.en || "").toLowerCase().includes(q) || l.code.toLowerCase().includes(q)); $("langListModal").innerHTML = list.length ? list.map(l => `<button class="lang-btn${l.code === lang ? " active" : ""}" type="button" data-lang="${esc(l.code)}">${esc(l.name)}${l.en && l.en !== l.name ? " · " + esc(l.en) : ""}</button>`).join("") : `<div class="empty">${esc(t("noLangs"))}</div>`; }
+function openLangModal(){ $("langSearch").value = ""; renderLangList(""); $("langModal").classList.add("open"); }
+function renderCurrentLang(){ const meta = LANGS.find(l => l.code === lang) || LANGS[0]; const currentLanguage = $("curLangName"); if(currentLanguage) currentLanguage.textContent = meta ? `${meta.name} (${meta.en})` : "English"; }
+function rerender(){ applyStatic(); renderCurrentLang(); renderSettings(); renderProfile(); setStatus(statusKey); setNotice(notice.key,notice.vars); renderResults(); renderTrades(); renderWallet(); renderReferral(); updateRoundDisplay(); }
+function setLanguage(code){ if(!dict(code)) return; lang = code; const meta = LANGS.find(l => l.code === code); document.documentElement.lang = code; document.documentElement.dir = meta && meta.dir === "rtl" ? "rtl" : "ltr"; try { localStorage.setItem("ctp_lang",code); } catch(_) {} $("langModal").classList.remove("open"); rerender(); }
+function renderNumbers(){ const box = $("numberGrid"); box.innerHTML = ""; for(let n = 0; n <= 9; n++){ const button = document.createElement("button"); button.type = "button"; button.className = "number-btn " + numClass(n); button.textContent = n; button.onclick = () => openBet("Number",n); box.appendChild(button); } }
+async function loadNotifications() { try { const data = await api("notifications"); const list = $("notificationList"); let rows = data.notifications || []; if (!rows.length && (tradeData.bets || []).length) { rows = tradeData.bets.slice(0, 5).map(b => ({ title: "Trade activity", message: `${b.bet_type} bet ${b.status || "pending"}`, created_at: b.created_at, is_read: false })); } $("notificationCount").textContent = 0; $("notificationCount").hidden = true; list.innerHTML = rows.length ? rows.map(item => `<div class="notification-item"><strong>${esc(item.title)}</strong><small>${esc(item.message)} · ${new Date(item.created_at).toLocaleString()}</small>${item.kind === "withdrawal" ? '<button type="button" class="sec-btn notification-action" data-notification-page="withdraw">Open withdraw</button>' : ""}</div>`).join("") : '<div class="empty">No activity yet.</div>'; list.querySelectorAll("[data-notification-page]").forEach(button => { button.onclick = () => { $("notificationModal").classList.remove("open"); showPage(button.dataset.notificationPage); }; }); } catch (error) { console.warn("[v0] notifications unavailable", error.message); } }
+async function loadGiftHistory() {
+  const box = $("giftHistoryList");
+  if (!box) return;
+  try {
+    const d = await api("wallet_history", { page: 1, page_size: 20 });
+    const gifts = (d.transactions || []).filter(x => String(x.transaction_type || "").toLowerCase() === "gift");
+    box.innerHTML = gifts.length ? `<div class="wrap"><table class="tbl"><thead><tr><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody>${gifts.map(g => `<tr><td>${esc(dateUTC(g.created_at))}</td><td class="n-green">+${esc(money(g.amount))}</td><td>${esc(txStatusLabel(g))}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">No gift codes redeemed yet.</div>`;
+  } catch (e) {
+    box.innerHTML = `<div class="empty">Unable to load gift history.</div>`;
+  }
+}
+function renderDashLinks() {
+  const box = $("dashLinks");
+  if (!box) return;
+  let list = [];
+  try { list = JSON.parse(appConfig.dashboard_links || "[]"); } catch (_) { list = []; }
+  list = (Array.isArray(list) ? list : []).filter(x => x && x.enabled && x.url && x.label).slice(0, 4);
+  box.style.display = list.length ? "" : "none";
+  box.innerHTML = list.map((x, i) => `<button class="dash-link" type="button" data-dash="${i}">${esc(x.label)}</button>`).join("");
+  box.querySelectorAll("[data-dash]").forEach(btn => { btn.onclick = () => openExternalLink(list[Number(btn.dataset.dash)].url); });
+}
+
+async function loadAppConfig() {
+  try {
+    const data = await api("app_config");
+    if (data && data.config) appConfig = { ...appConfig, ...data.config };
+  } catch (_) {}
+  renderDashLinks();
+  const mb = $("maintBanner");
+  if (mb) { const on = appConfig.maintenance_mode === true; mb.style.display = on ? "" : "none"; mb.textContent = on ? (appConfig.maintenance_message || "Betting is paused for maintenance. Please check back soon.") : ""; }
+  renderHeaderButtons();
+}
+function renderHeaderButtons() {
+  const ch = $("headerChannelBtn");
+  const sp = $("headerSupportBtn");
+  const sd = $("headerSoundBtn");
+  if (ch) ch.style.display = appConfig.channel_button_enabled ? "" : "none";
+  if (sp) sp.style.display = appConfig.support_button_enabled ? "" : "none";
+  if (sd) sd.style.display = appConfig.sound_button_enabled === false ? "none" : "";
+  const hc = $("helpChannelBtn");
+  const hs = $("helpSupportBtn");
+  if (hc) hc.style.display = appConfig.channel_url ? "" : "none";
+  if (hs) hs.style.display = appConfig.support_url ? "" : "none";
+}
+function openExternalLink(url) {
+  if (!url) { toast("Link not configured"); return; }
+  try {
+    if (tg && tg.openLink) { tg.openLink(url); return; }
+  } catch (_) {}
+  window.open(url, "_blank");
+}
+function handleProfileAction(action) {
+  if (action === "wallet") { showPage("wallet"); return; }
+  if (action === "tx") { showPage("wallet"); return; }
+  if (action === "referral") { showPage("referral"); return; }
+  if (action === "gift") { $("giftModal").classList.add("open"); loadGiftHistory(); return; }
+  if (action === "lang") { openLangModal(); return; }
+  if (action === "notif") { $("notifSettingsModal").classList.add("open"); return; }
+  if (action === "settings") { $("settingsModal").classList.add("open"); return; }
+  if (action === "help") { $("helpModal").classList.add("open"); renderHeaderButtons(); return; }
+  if (action === "logout") {
+    try {
+      if (confirm("Logout and close the app?")) {
+        try { localStorage.removeItem("ctp_lang"); localStorage.removeItem("ctp_settings"); } catch (_) {}
+        if (tg && tg.close) tg.close();
+      }
+    } catch (_) {}
+    return;
+  }
+}
+function init(){
+  loadSettings(); document.addEventListener("pointerdown",unlockAudio,{passive:true}); document.addEventListener("keydown",unlockAudio);
+  renderNumbers(); applyStatic(); renderCurrentLang(); renderSettings(); renderProfile(); setStatus("stConnecting"); setNotice("nConnecting"); renderHeaderButtons();
+  document.querySelectorAll("#txFilters .tab").forEach(tab => { tab.onclick = () => { document.querySelectorAll("#txFilters .tab").forEach(t => t.classList.remove("on")); tab.classList.add("on"); activeTxFilter = tab.dataset.txFilter; renderWallet(); }; });
+  document.querySelectorAll(".nav-btn").forEach(button => { button.onclick = () => showPage(button.dataset.page); });
+  document.querySelectorAll("[data-page-go]").forEach(button => { button.onclick = () => showPage(button.dataset.pageGo); });
+  document.querySelectorAll("[data-refresh]").forEach(button => { button.onclick = () => manualRefresh(button); });
+  $("notificationBell").onclick = async () => { $("notificationModal").classList.add("open"); await loadNotifications(); };
+  setInterval(() => { if (initData) loadNotifications(); }, 30000);
+  $("closeNotifications").onclick = () => $("notificationModal").classList.remove("open");
+  $("headerProfile").onclick = () => showPage("profile");
+  $("headerSoundBtn").onclick = () => { unlockAudio(); settings.sound = !settings.sound; saveSettings(); renderSettings(); if (settings.sound) playPing(); haptic("light"); };
+  $("headerChannelBtn").onclick = () => openExternalLink(appConfig.channel_url);
+  $("headerSupportBtn").onclick = () => openExternalLink(appConfig.support_url);
+  $("editProfileBtn").onclick = openProfileModal;
+  $("walletAddressBtn").onclick = openWalletAddressModal;
+  $("saveProfileBtn").onclick = saveProfile;
+  $("saveWalletAddressBtn").onclick = saveWalletAddress;
+  $("gameRulesBtn").onclick = () => $("gameRulesModal").classList.add("open");
+  $("authRetry").onclick = authenticate;
+  document.querySelectorAll("[data-profile-action]").forEach(button => { button.onclick = () => handleProfileAction(button.dataset.profileAction); });
+  $("settingsLangBtn").onclick = () => { $("settingsModal").classList.remove("open"); openLangModal(); };
+  $("settingsNotifBtn").onclick = () => { $("settingsModal").classList.remove("open"); $("notifSettingsModal").classList.add("open"); };
+  $("settingsResetBtn").onclick = () => { settings.sound = true; settings.vibrate = true; settings.updates = true; saveSettings(); renderSettings(); toast("Preferences reset to defaults"); };
+  $("helpChannelBtn").onclick = () => openExternalLink(appConfig.channel_url);
+  $("helpSupportBtn").onclick = () => openExternalLink(appConfig.support_url);
+  $("sendSupportMsgBtn").onclick = async () => {
+    const box = $("supportMsgInput");
+    const msg = box.value.trim();
+    if (msg.length < 5) return toast("Write at least 5 characters.");
+    if (!authed) return toast(t("toastAuth"));
+    const btn = $("sendSupportMsgBtn");
+    btn.disabled = true;
+    try {
+      const r = await api("support_message", { message: msg });
+      toast(r.message || "Message sent.");
+      box.value = "";
+    } catch (e) { toast(e.message); }
+    finally { btn.disabled = false; }
+  };
+  $("redeemGiftBtn").onclick = async () => {
+    const code = $("giftCodeInput").value.trim();
+    if (!code) return toast("Enter a gift code.");
+    const btn = $("redeemGiftBtn");
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.textContent = "…";
+    try {
+      const result = await api("redeem_gift", { code });
+      const pts = Number(result && result.points) || 0;
+      toast(`✅ Gift redeemed: ${money(pts)} points added.`);
+      $("giftCodeInput").value = "";
+      await syncUser();
+      await loadWallet(true);
+      await loadGiftHistory();
+      await loadNotifications();
+    } catch (error) {
+      toast(error.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Redeem";
+    }
+  };
+  $("confirmBet").onclick = confirmBet;
+  $("resultPopupClose").onclick = closeResultPopup;
+  $("depositBtn").onclick = () => showPage("deposit");
+  $("homeDepositBtn").onclick = () => showPage("deposit");
+  $("withdrawBtn").onclick = () => showPage("withdraw");
+  $("homeWithdrawBtn").onclick = () => showPage("withdraw");
+  $("depositPageBack").onclick = () => showPage("wallet");
+  $("withdrawPageBack").onclick = () => showPage("wallet");
+  $("copyDepositAddressPage").onclick = async () => { const v = $("depositAddressPage").value; if (v && await copyText(v)) toast("Deposit address copied."); };
+  $("downloadQrBtn").onclick = downloadQrCode;
+  $("submitDepositPage").onclick = submitDepositPage;
+  $("submitWithdrawalPage").onclick = submitWithdrawalPage;
+  $("withdrawAmountPage").addEventListener("input", () => { const pts = Math.max(0, Number($("withdrawAmountPage").value) || 0); $("withdrawUsdtPreviewPage").textContent = `${(pts * 0.9 / 100).toFixed(2)} USDT after 10% fee`; });
+  document.querySelectorAll(".withdraw-preset-page").forEach(btn => {
+    btn.onclick = () => {
+      const avail = Math.max(0, Number(balance) || 0);
+      const pct = btn.dataset.percent === "max" ? 100 : Number(btn.dataset.percent);
+      const amt = Math.floor((avail * pct / 100) * 100) / 100;
+      $("withdrawAmountPage").value = amt >= 500 ? amt.toFixed(2) : "";
+      $("withdrawUsdtPreviewPage").textContent = amt >= 500 ? `${(amt * 0.9 / 100).toFixed(2)} USDT after 10% fee` : "Minimum 5.00 USDT";
+    };
+  });
+  document.addEventListener("click", async (event) => {
+    const btn = event.target.closest("#claimCommissionBtn") || event.target.closest("#claimRewardBtn");
+    if (!btn) return;
+    const isReward = btn.id === "claimRewardBtn";
+    if (btn.disabled) return;
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = "Claiming…";
+    try {
+      const endpoint = isReward ? "claim_rewards" : "claim_commission";
+      const result = await api(endpoint);
+      const claimed = Number(result && (result.claimed_points || result.amount)) || 0;
+      toast(`✅ Claimed ${money(claimed)} points (${(claimed / 100).toFixed(2)} USDT)`);
+      await loadReferral(true);
+      await syncUser();
+      await loadWallet(true);
+    } catch (error) {
+      btn.disabled = false;
+      btn.textContent = originalText;
+      toast(error.message);
+    }
+  });
+  $("sndSwitch").onclick = () => { unlockAudio(); settings.sound = !settings.sound; saveSettings(); renderSettings(); if (settings.sound) playPing(); haptic("light"); };
+  $("vibSwitch").onclick = () => { settings.vibrate = !settings.vibrate; saveSettings(); renderSettings(); if (settings.vibrate) haptic("success"); };
+  $("updatesSwitch").onclick = () => { settings.updates = !settings.updates; saveSettings(); renderSettings(); haptic("light"); };
+  $("resultModal").addEventListener("click", event => { if (event.target === $("resultModal")) closeResultPopup(); });
+  document.querySelectorAll("[data-bet]").forEach(button => { button.onclick = () => openBet(button.dataset.bet); });
+  document.querySelectorAll("[data-close]").forEach(button => { button.onclick = () => $(button.dataset.close).classList.remove("open"); });
+  document.querySelectorAll(".modal-backdrop").forEach(modal => { modal.addEventListener("click", event => { if (event.target === modal && modal.id !== "resultModal" && modal.id !== "termsModal") { modal.classList.remove("open"); } }); });
+  document.querySelectorAll("[data-amount]").forEach(button => {
+    button.onclick = () => {
+      const amt = button.dataset.amount;
+      if (amt === "max") {
+        $("betAmount").value = balance ? Number(balance).toFixed(2) : "100";
+      } else {
+        betStep = Number(amt);
+        $("betAmount").value = amt;
+      }
+      pendingBetRequest = null;
+      renderBreakdown();
+    };
+  });
+  $("minusAmount").onclick = () => {
+    const cur = Number($("betAmount").value) || betStep;
+    const floor = Math.min(betStep, cur);
+    const newVal = Math.max(floor, cur - betStep);
+    $("betAmount").value = newVal.toFixed(2);
+    pendingBetRequest = null;
+    renderBreakdown();
+  };
+  $("plusAmount").onclick = () => {
+    const cur = Number($("betAmount").value) || 0;
+    $("betAmount").value = (cur + betStep).toFixed(2);
+    pendingBetRequest = null;
+    renderBreakdown();
+  };
+  document.querySelectorAll("[data-mult]").forEach(button => {
+    button.onclick = () => {
+      betMultiplier = Number(button.dataset.mult) || 1;
+      document.querySelectorAll("[data-mult]").forEach(b => b.classList.toggle("active", Number(b.dataset.mult) === betMultiplier));
+      pendingBetRequest = null;
+      renderBreakdown();
+    };
+  });
+  $("betAmount").addEventListener("input", () => {
+    const val = Number($("betAmount").value);
+    const presets = [10, 20, 50, 100];
+    if (presets.includes(val)) betStep = val;
+    pendingBetRequest = null;
+    renderBreakdown();
+  });
+  document.addEventListener("click", async event => {
+    const pg = event.target.closest("[data-pager]"); if (pg && !pg.disabled) { const dir = Number(pg.dataset.dir); const id = pg.dataset.pager; if (id === "results") { resultPage = Math.max(1, resultPage + dir); loadResults(); } else if (id === "trades") { tradePage = Math.max(1, tradePage + dir); loadTrades(); } else if (id === "wallet") { walletPage = Math.max(1, walletPage + dir); loadWallet(); } else if (id === "comm") { commPage = Math.max(1, commPage + dir); loadCommissions(); } else if (id === "members") { membersPage = Math.max(1, membersPage + dir); renderReferral(); } return; }
+    const tr = event.target.closest("[data-trade]"); if (tr) { tr.parentElement.classList.toggle("open"); return; }
+    const lb = event.target.closest("[data-lang]"); if (lb) { setLanguage(lb.dataset.lang); return; }
+    const cp = event.target.closest("[data-copy]"); if (cp && referralData) { const value = cp.dataset.copy === "link" ? referralData.referral_link : referralData.referral_code; const ok = value ? await copyText(value) : false; toast(ok ? t("copied") : t("copyFail")); return; }
+    const sh = event.target.closest("[data-share]"); if (sh && referralData && referralData.referral_link) { const url = "https://t.me/share/url?url=" + encodeURIComponent(referralData.referral_link) + "&text=" + encodeURIComponent(t("shareText")); try { if (tg && tg.openTelegramLink) tg.openTelegramLink(url); else window.open(url, "_blank"); } catch (_) { window.open(url, "_blank"); } return; }
+    const ap = event.target.closest("[data-apply-ref]"); if (ap) { applyReferral(); }
+  });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { syncRounds(); syncUser(); } });
+  renderResults(); renderTrades(); renderWallet(); renderReferral();
+  authenticate(); if (!tg) syncRounds();
+  setInterval(updateRoundDisplay, 1000); setInterval(poll, 1000);
+}
+init();
+})();
+</script>
+</body>
+</html></html>
