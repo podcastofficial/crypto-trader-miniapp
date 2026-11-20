@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const { Pool } = require("pg");
+const { redeemGiftForTelegramUser } = require("../lib/gift-redeem");
 
 const APP_URL = "https://crypto-trader-miniapp.vercel.app";
 
@@ -139,6 +140,38 @@ module.exports = async function handler(req, res) {
     const referralMatch = startParameter.match(
       /^ref_([A-Za-z0-9_-]{1,64})$/
     );
+
+    // ==========================================
+    // 🎁 GIFT LINK: t.me/<bot>?start=gift_CODE  -> redeem right away, no Mini App needed
+    // ==========================================
+    const giftMatch = startParameter.match(/^gift_([A-Za-z0-9-]{4,64})$/i);
+    if (giftMatch) {
+      let giftText;
+      try {
+        const out = await redeemGiftForTelegramUser(getPool(), message.from, giftMatch[1]);
+        giftText = out.success
+          ? "🎁 <b>Gift redeemed!</b>\n\n✅ <b>" + out.points.toFixed(2) + " points</b> were added to your wallet.\n\n👇 Tap below to start playing!"
+          : "ℹ️ <b>" + out.message + "</b>";
+      } catch (error) {
+        console.error("Gift redeem error:", error.message);
+        giftText = "⚠️ Gift could not be redeemed right now. Please open the app and enter the code in the Gift section.";
+      }
+
+      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: giftText,
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [[{ text: "🚀 Play Now", web_app: { url: APP_URL } }]]
+          }
+        })
+      }).catch((err) => console.error("Telegram gift reply failed:", err.message));
+
+      return res.status(200).json({ success: true });
+    }
 
     // ==========================================
     // 🔥 PREMIUM WELCOME MESSAGE (PURE ENGLISH)
