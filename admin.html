@@ -2076,7 +2076,7 @@ function copyGiftLink(code) {
     toast("Save the correct Bot Username in Channel Settings first.", true);
     return;
   }
-  copyText(`https://t.me/${botName}?startapp=gift_${code}`);
+  copyText(`https://t.me/${botName}?start=gift_${code}`);
 }
 
 /* ============ GIFT REDEMPTIONS ============ */
@@ -2343,7 +2343,7 @@ async function renderChannelSettings() {
           <div class="field">
             <label>Bot Username</label>
             <input name="bot_username" value="${escapeHtml(s.bot_username || "")}" placeholder="YourBot" required>
-            <div class="small muted">Gift links use this: t.me/BotName?startapp=gift_CODE</div>
+            <div class="small muted">Gift links use this: t.me/BotName?start=gift_CODE (reward is added as soon as the user opens the link)</div>
           </div>
         </div>
 
