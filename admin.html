@@ -2760,11 +2760,12 @@ async function renderAppSettings() {
 
         <div class="card" style="margin:6px 0 14px;padding:14px">
           <div class="card-head"><h3>Rewards, Game &amp; Security Features</h3></div>
-          <p class="small muted">These values are saved as platform configuration. Runtime activation requires the matching server-side feature handler and compliance checks.</p>
+          <p class="small muted">These controls are saved centrally. Daily check-in and leaderboard are connected to the user dashboard; other options remain configuration switches until their server-side handlers are enabled.</p>
           <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px">
             <div>
               <h4>Rewards &amp; engagement</h4>
               ${[
+                ["rewards_enabled","Master switch: Rewards panel"],
                 ["daily_checkin_enabled","Daily check-in bonus"],["leaderboard_enabled","Daily / weekly leaderboard"],
                 ["vip_enabled","VIP levels"],["missions_enabled","Tasks / missions"],
                 ["deposit_bonus_enabled","First deposit bonus"]
@@ -2832,7 +2833,7 @@ async function renderAppSettings() {
         signup_bonus_amount: fd.get("signup_bonus_amount"),
         min_bet_to_withdraw: fd.get("min_bet_to_withdraw"),
         feature_settings: {
-          ...Object.fromEntries(["daily_checkin_enabled","leaderboard_enabled","vip_enabled","missions_enabled","deposit_bonus_enabled","game_modes_enabled","auto_bet_enabled","sound_enabled","result_animation_enabled","auto_withdraw_enabled","kyc_lite_enabled","one_wallet_one_account","fraud_detection_enabled","telegram_notifications_enabled","analytics_dashboard_enabled","broadcast_enabled","bulk_gift_codes_enabled","campaign_tracking_enabled"].map(k => [k, fd.get(`fs_${k}`) === "on"])),
+          ...Object.fromEntries(["rewards_enabled","daily_checkin_enabled","leaderboard_enabled","vip_enabled","missions_enabled","deposit_bonus_enabled","game_modes_enabled","auto_bet_enabled","sound_enabled","result_animation_enabled","auto_withdraw_enabled","kyc_lite_enabled","one_wallet_one_account","fraud_detection_enabled","telegram_notifications_enabled","analytics_dashboard_enabled","broadcast_enabled","bulk_gift_codes_enabled","campaign_tracking_enabled"].map(k => [k, fd.get(`fs_${k}`) === "on"])),
           daily_checkin_points: fd.get("fs_daily_checkin_points"),
           streak_7_bonus: fd.get("fs_streak_7_bonus"),
           deposit_bonus_percent: fd.get("fs_deposit_bonus_percent"),

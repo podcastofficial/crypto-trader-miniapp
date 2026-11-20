@@ -1283,6 +1283,7 @@ async function loadFeatureDashboard(){
   if(box.parentElement) box.parentElement.appendChild(box);
   try{
     const d=await api("feature_dashboard"), f=d.features||{}; const tiles=[];
+    if(f.rewards_enabled === false){body.innerHTML='<div class="muted">Rewards are currently disabled by the administrator.</div>';box.style.display='';return;}
     if(f.daily_checkin_enabled){tiles.push(`<div class="feature-tile"><strong>📅 Daily check-in</strong><div class="muted">${Number(f.daily_checkin_points||10)} points · streak ${Number(d.checkin?.streak||0)} days</div>${d.checkin_claimed?'<span class="pill ok">Claimed today</span>':'<button type="button" data-feature-claim="daily">Claim daily bonus</button>'}</div>`);}
     if(f.vip_enabled){tiles.push(`<div class="feature-tile"><strong>👑 VIP: ${esc(d.vip?.name||'Bronze')}</strong><div class="muted">Total bets: ${money(d.total_bet)} points · Fee discount: ${Number(d.vip?.fee_discount||0)}%</div></div>`);}
     if(f.leaderboard_enabled){const rows=(d.leaderboard||[]).map((x,i)=>`<li>#${i+1} ${esc(x.first_name||x.username||'Player')} — ${money(x.total_bet)} pts</li>`).join('');tiles.push(`<div class="feature-tile"><strong>🏆 ${esc(f.leaderboard_period||'daily')} leaderboard</strong><div class="muted">Prize pool: ${Number(f.leaderboard_prize_pool_usdt||0).toFixed(2)} USDT</div><ol>${rows||'<li>No ranking yet</li>'}</ol><div class="muted">Ranking shown; prize distribution is not automatic.</div></div>`);}

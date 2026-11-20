@@ -29,3 +29,11 @@ looked for deposits with status `completed` while deposits are saved as `confirm
 - Reward is claimable once the referred user has a confirmed deposit >= 1 USDT (status `confirmed` or `completed`; the
   "bet in last 7 days" condition was removed).
 - Trade commission (L1 15% / L2 10% / L3 5% of the fee) already runs in `place_bet_atomic` via `users.referred_by`.
+
+
+## Rewards dashboard and admin controls (2026-11-20)
+- Added the missing `feature_dashboard` game API action that the home screen already called, removing the generic “Rewards are temporarily unavailable” caused by the missing action.
+- Added persistent daily check-in storage with one claim per user per database day, wallet credit, transaction history, and a 7-day streak bonus.
+- Added a Rewards master switch to Admin → Settings and connected it to the user dashboard and claim endpoint.
+- Connected the existing leaderboard setting to a daily/weekly leaderboard data query.
+- Existing app/game/wallet/referral settings and files were preserved.
