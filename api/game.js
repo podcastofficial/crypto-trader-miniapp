@@ -45,6 +45,16 @@ async function initSchemaOnce(client) {
           )
         `);
         await client.query(`
+          CREATE TABLE IF NOT EXISTS public.daily_checkins (
+            id BIGSERIAL PRIMARY KEY,
+            user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+            checkin_date DATE NOT NULL DEFAULT CURRENT_DATE,
+            points NUMERIC(20,2) NOT NULL DEFAULT 0,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            UNIQUE(user_id, checkin_date)
+          )
+        `);
+        await client.query(`
           CREATE TABLE IF NOT EXISTS public.gift_codes (
             id BIGSERIAL PRIMARY KEY,
             code TEXT UNIQUE NOT NULL,
@@ -1067,6 +1077,77 @@ module.exports = async function handler(req, res) {
       } catch { config.feature_settings = null; }
       await client.query("COMMIT"); transactionStarted = false;
       return json(res, 200, { success: true, config });
+    }
+
+    // Dashboard data for the Rewards & account perks card.
+    if (action === "feature_dashboard") {
+      let features = {};
+      try {
+        const raw = await getAppSetting(client, "feature_settings", "{}");
+        const parsed = JSON.parse(raw || "{}");
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) features = parsed;
+      } catch (_) { features = {}; }
+      features.rewards_enabled = features.rewards_enabled !== false;
+      const today = await client.query(
+        `SELECT EXISTS(SELECT 1 FROM public.daily_checkins WHERE user_id=$1 AND checkin_date=CURRENT_DATE) AS claimed`,
+        [user.id]
+      );
+      const recent = await client.query(
+        `SELECT checkin_date::text AS day FROM public.daily_checkins WHERE user_id=$1 ORDER BY checkin_date DESC LIMIT 7`,
+        [user.id]
+      );
+      let streak = 0;
+      const days = recent.rows.map(r => String(r.day).slice(0,10));
+      const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+      let expected = today.rows[0]?.claimed ? todayStr : yesterday;
+      for (const day of days) {
+        if (day !== expected) break;
+        streak++;
+        expected = new Date(Date.parse(expected + "T00:00:00Z")-86400000).toISOString().slice(0,10);
+      }
+      const betTotal = await client.query(`SELECT COALESCE(SUM(stake),0)::numeric(20,2) AS total FROM public.bets WHERE user_id=$1`, [user.id]);
+      let leaderboard = [];
+      if (features.leaderboard_enabled) {
+        const period = features.leaderboard_period === "weekly" ? "7 days" : "1 day";
+        const ranks = await client.query(
+          `SELECT u.first_name,u.username,COALESCE(SUM(b.stake),0)::numeric(20,2) AS total_bet
+           FROM public.bets b JOIN public.users u ON u.id=b.user_id
+           WHERE b.created_at >= NOW() - $1::interval
+           GROUP BY u.id,u.first_name,u.username ORDER BY total_bet DESC LIMIT 10`, [period]
+        );
+        leaderboard = ranks.rows;
+      }
+      await client.query("COMMIT"); transactionStarted = false;
+      return json(res, 200, { success:true, features, checkin:{streak}, checkin_claimed:!!today.rows[0]?.claimed, total_bet:String(betTotal.rows[0]?.total||"0"), leaderboard, missions:[] });
+    }
+
+    if (action === "claim_daily_checkin") {
+      let features = {};
+      try { features = JSON.parse((await getAppSetting(client,"feature_settings","{}")) || "{}"); } catch (_) {}
+      if (features.rewards_enabled === false || !features.daily_checkin_enabled) {
+        await client.query("ROLLBACK"); transactionStarted=false;
+        return json(res,400,{success:false,message:"Daily check-in is currently disabled."});
+      }
+      await client.query(`SELECT id FROM public.users WHERE id=$1 FOR UPDATE`,[user.id]);
+      const recent = await client.query(`SELECT checkin_date::text AS day FROM public.daily_checkins WHERE user_id=$1 ORDER BY checkin_date DESC LIMIT 6`,[user.id]);
+      const today = new Date().toISOString().slice(0,10);
+      const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+      let previousStreak=0, expected=yesterday;
+      for (const row of recent.rows) {
+        const day=String(row.day).slice(0,10);
+        if(day!==expected) break;
+        previousStreak++;
+        expected=new Date(Date.parse(expected+"T00:00:00Z")-86400000).toISOString().slice(0,10);
+      }
+      const base=Math.max(0,Number(features.daily_checkin_points ?? 10));
+      const streakBonus=previousStreak+1===7?Math.max(0,Number(features.streak_7_bonus ?? 50)):0;
+      const points=base+streakBonus;
+      const added=await client.query(`INSERT INTO public.daily_checkins(user_id,checkin_date,points) VALUES($1,CURRENT_DATE,$2) ON CONFLICT(user_id,checkin_date) DO NOTHING RETURNING id`,[user.id,points]);
+      if(!added.rowCount){await client.query("ROLLBACK");transactionStarted=false;return json(res,409,{success:false,message:"You have already claimed today's check-in."});}
+      await client.query(`INSERT INTO public.wallet_balances(user_id,balance) VALUES($1,$2) ON CONFLICT(user_id) DO UPDATE SET balance=public.wallet_balances.balance+EXCLUDED.balance,updated_at=NOW()`,[user.id,points.toFixed(2)]);
+      await client.query(`INSERT INTO public.transactions(user_id,transaction_type,amount,status,created_at,updated_at) VALUES($1,'reward',$2,'completed',NOW(),NOW())`,[user.id,points.toFixed(2)]);
+      await client.query("COMMIT");transactionStarted=false;
+      return json(res,200,{success:true,message:`Daily bonus credited: ${points} points.`,claimed_points:points.toFixed(2),streak:previousStreak+1});
     }
 
     if (action === "balance") {
