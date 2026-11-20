@@ -106,6 +106,20 @@ CREATE TABLE IF NOT EXISTS public.prediction_history (
     result TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
   );
 
+DO $do$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT column_name FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = 'bets'
+       AND is_nullable = 'NO' AND column_default IS NULL AND is_identity = 'NO'
+       AND column_name NOT IN ('id','user_id','round_id','bet_type','stake')
+  LOOP
+    EXECUTE format('ALTER TABLE public.bets ALTER COLUMN %I DROP NOT NULL', r.column_name);
+  END LOOP;
+END
+$do$;
+
 CREATE OR REPLACE FUNCTION public.place_bet_atomic(
   p_user_id    bigint,
   p_round_code text,
