@@ -1108,6 +1108,22 @@ async function reviewWalletTransaction(action, body, session, req) {
       }
     }
 
+    if (action === "deposit_approve") {
+      await client.query(`SELECT id FROM public.users WHERE id=$1 FOR UPDATE`, [tx.user_id]);
+      const priorDeposits = await client.query(`SELECT COUNT(*)::int AS n FROM public.transactions WHERE user_id=$1 AND transaction_type='deposit' AND status IN ('confirmed','completed')`, [tx.user_id]);
+      if (Number(priorDeposits.rows[0]?.n || 0) === 0) {
+        const settings = await client.query(`SELECT value FROM public.app_settings WHERE key='feature_settings'`);
+        let featureSettings = {}; try { featureSettings = JSON.parse(settings.rows[0]?.value || "{}"); } catch (_) {}
+        const pct = featureSettings.deposit_bonus_enabled === true ? Math.max(0, Math.min(20, Number(featureSettings.deposit_bonus_percent) || 0)) : 0;
+        const bonusPoints = Math.round(Number(tx.amount) * 100 * pct * 100) / 100;
+        if (bonusPoints > 0) {
+          await client.query(`UPDATE public.wallet_balances SET balance=balance+$1 WHERE user_id=$2`, [bonusPoints.toFixed(2), tx.user_id]);
+          await client.query(`INSERT INTO public.transactions(user_id,transaction_type,amount,status,created_at,updated_at) VALUES($1,'reward',$2,'completed',NOW(),NOW())`, [tx.user_id, bonusPoints.toFixed(2)]);
+          await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'reward','First deposit bonus',$2)`, [tx.user_id, `${bonusPoints.toFixed(2)} bonus points credited (${pct}% first deposit bonus).`]);
+        }
+      }
+    }
+
     await client.query(
       `UPDATE public.transactions
        SET status=$1, admin_note=$2,
