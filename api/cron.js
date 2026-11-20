@@ -1,4 +1,5 @@
 const { Pool } = require("pg");
+const { ensureGameFunctions } = require("../lib/game-functions");
 
 const ROUND_SECONDS = 180;
 const BETTING_SECONDS = 150;
@@ -520,6 +521,8 @@ module.exports = async function handler(req, res) {
 
     // Database tables safety check (runs once per server instance)
     if (!cronSchemaReady) {
+      // Creates place_bet_atomic() / settle_expired_round() + bets/prediction tables if the DB lacks them.
+      await ensureGameFunctions(client, { inTransaction: true });
       await client.query(`CREATE TABLE IF NOT EXISTS public.app_settings (
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL,

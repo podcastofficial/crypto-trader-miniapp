@@ -1,5 +1,6 @@
 const { Pool } = require("pg");
 const crypto = require("crypto");
+const { ensureGameFunctions } = require("../lib/game-functions");
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -19,6 +20,8 @@ async function initSchemaOnce(client) {
     _schemaPromise = (async () => {
       await client.query("BEGIN");
       try {
+        // Creates place_bet_atomic() / settle_expired_round() + bets/referral tables if the DB lacks them.
+        await ensureGameFunctions(client, { inTransaction: true });
         await ensureAppSettings(client);
         await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS first_name TEXT`);
         await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS last_name TEXT`);
@@ -393,6 +396,8 @@ async function settleDueRounds(client) {
     `);
 
     if (!due.rowCount) return;
+
+    await ensureGameFunctions(client, { inTransaction: false });
 
     for (let attempt = 0; attempt < 3; attempt++) {
       const settlement = await client.query(
