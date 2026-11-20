@@ -1,6 +1,7 @@
 const { Pool } = require("pg");
 const crypto = require("crypto");
 const { ensureGameFunctions } = require("../lib/game-functions");
+const { ensureReferralFunctions } = require("../lib/referral-functions");
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -22,6 +23,7 @@ async function initSchemaOnce(client) {
       try {
         // Creates place_bet_atomic() / settle_expired_round() + bets/referral tables if the DB lacks them.
         await ensureGameFunctions(client, { inTransaction: true });
+        await ensureReferralFunctions(client, { inTransaction: true });
         await ensureAppSettings(client);
         await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS first_name TEXT`);
         await client.query(`ALTER TABLE public.users ADD COLUMN IF NOT EXISTS last_name TEXT`);
@@ -600,8 +602,7 @@ async function autoCreditReferralRewards(client, referrerUserId) {
     const check = await client.query(`
       SELECT COUNT(*)::int AS cnt FROM public.referral_rewards rr
       WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
-        AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')
-        AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = rr.referred_user_id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
+        AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = rr.referred_user_id AND t.transaction_type = 'deposit' AND t.status IN ('confirmed','completed') AND t.amount >= 1)
     `, [referrerUserId]);
 
     if (check.rows[0].cnt === 0) {
@@ -612,8 +613,7 @@ async function autoCreditReferralRewards(client, referrerUserId) {
     const locked = await client.query(`
       SELECT rr.id, rr.reward_points FROM public.referral_rewards rr
       WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
-        AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')
-        AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = rr.referred_user_id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
+        AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = rr.referred_user_id AND t.transaction_type = 'deposit' AND t.status IN ('confirmed','completed') AND t.amount >= 1)
       FOR UPDATE
     `, [referrerUserId]);
 
@@ -729,13 +729,12 @@ async function getReferralData(client, userId) {
   const rewardSummary = await client.query(
     `SELECT
       COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' 
-        AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')
-        AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = rr.referred_user_id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
+        AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = rr.referred_user_id AND t.transaction_type = 'deposit' AND t.status IN ('confirmed','completed') AND t.amount >= 1)
       ), 0)::numeric(20,2) AS active_pending_points,
       
       COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' AND NOT (
-        EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = rr.referred_user_id AND b.created_at > NOW() - INTERVAL '7 days')
-        AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = rr.referred_user_id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
+        TRUE
+        AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = rr.referred_user_id AND t.transaction_type = 'deposit' AND t.status IN ('confirmed','completed') AND t.amount >= 1)
       )), 0)::numeric(20,2) AS inactive_pending_points,
       
       COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'credited'), 0)::numeric(20,2) AS credited_points
@@ -825,16 +824,12 @@ async function getReferralMembers(client, userId) {
        u.last_name,
        u.created_at,
        (
-         EXISTS (
-           SELECT 1 FROM public.bets b
-           WHERE b.user_id = u.id
-             AND b.created_at > NOW() - INTERVAL '7 days'
-         )
+         TRUE
          AND EXISTS (
            SELECT 1 FROM public.transactions t
            WHERE t.user_id = u.id
              AND t.transaction_type = 'deposit'
-             AND t.status = 'completed'
+             AND t.status IN ('confirmed','completed')
              AND t.amount >= 1
          )
        ) AS is_active,
@@ -858,28 +853,26 @@ async function getReferralMembers(client, userId) {
     `SELECT
        COUNT(*)::int AS total,
        COUNT(*) FILTER (WHERE 
-         EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
-         AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
+         TRUE
+         AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status IN ('confirmed','completed') AND t.amount >= 1)
        )::int AS active,
        
        COUNT(*) FILTER (WHERE rr.status = 'pending' 
-         AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
-         AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
+         AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status IN ('confirmed','completed') AND t.amount >= 1)
        )::int AS active_pending_count,
        
        COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' 
-         AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
-         AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
+         AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status IN ('confirmed','completed') AND t.amount >= 1)
        ), 0)::text AS active_pending_points,
        
        COUNT(*) FILTER (WHERE rr.status = 'pending' AND NOT (
-         EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
-         AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
+         TRUE
+         AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status IN ('confirmed','completed') AND t.amount >= 1)
        ))::int AS inactive_pending_count,
        
        COALESCE(SUM(rr.reward_points) FILTER (WHERE rr.status = 'pending' AND NOT (
-         EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
-         AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
+         TRUE
+         AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status IN ('confirmed','completed') AND t.amount >= 1)
        )), 0)::text AS inactive_pending_points,
        
        COUNT(*) FILTER (WHERE rr.status = 'credited')::int AS credited_count,
@@ -1615,8 +1608,7 @@ module.exports = async function handler(req, res) {
         SELECT rr.id, rr.reward_points FROM public.referral_rewards rr
         JOIN public.users u ON u.id = rr.referred_user_id
         WHERE rr.referrer_user_id = $1 AND rr.status = 'pending'
-        AND EXISTS (SELECT 1 FROM public.bets b WHERE b.user_id = u.id AND b.created_at > NOW() - INTERVAL '7 days')
-        AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status = 'completed' AND t.amount >= 1)
+        AND EXISTS (SELECT 1 FROM public.transactions t WHERE t.user_id = u.id AND t.transaction_type = 'deposit' AND t.status IN ('confirmed','completed') AND t.amount >= 1)
         FOR UPDATE
       `, [user.id]);
 

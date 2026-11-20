@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const { Pool } = require("pg");
 const { redeemGiftForTelegramUser } = require("../lib/gift-redeem");
+const { ensureReferralFunctions } = require("../lib/referral-functions");
 
 const APP_URL = "https://crypto-trader-miniapp.vercel.app";
 
@@ -29,6 +30,9 @@ async function applyReferralFromStart(from, code) {
   const client = await getPool().connect();
 
   try {
+    // Creates apply_referral_code() (and referral columns/tables) if the DB lacks them.
+    await ensureReferralFunctions(client, { inTransaction: false });
+
     await client.query("BEGIN");
 
     const userResult = await client.query(
