@@ -320,17 +320,7 @@ header { background:linear-gradient(180deg,#0a0a0d,#0b0b0e); border-bottom:1px s
 .dash-links { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 13px; }
 .dash-link { flex:1 1 140px; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 10px; border-radius:12px; background:linear-gradient(180deg,#1a1710,#12110c); border:1px solid #6b5514; color:#facc15; font-weight:800; font-size:13px; box-shadow:0 4px 14px #0006; }
 .dash-link:active { transform:scale(.98); }
-
-.feature-center{margin:0 0 14px;padding:14px;border:1px solid #34343b;border-radius:16px;background:linear-gradient(145deg,#202027,#17171c)}
-.feature-center-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
-.feature-center-head strong{font-size:15px}.feature-center-head small,.feature-note{color:#a1a1aa;font-size:11px}
-.feature-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.feature-tile{min-width:0;padding:10px;border:1px solid #383840;border-radius:12px;background:#24242b}
-.feature-tile strong{display:block;font-size:12px;margin-bottom:4px}.feature-tile span{display:block;color:#b4b4bd;font-size:11px;line-height:1.4}
-.feature-state{display:inline-block!important;width:max-content;margin-top:6px;padding:3px 7px;border-radius:20px;background:#34343d;color:#c4c4ce!important;font-size:10px!important}
-.feature-state.on{background:#123b2c;color:#86efac!important}
-@media(min-width:560px){.feature-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-
+#featureDashboard .feature-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}#featureDashboard .feature-tile{background:#202127;border:1px solid #34353d;border-radius:13px;padding:12px;min-width:0}#featureDashboard .feature-tile strong{display:block;color:#f5f5f5;margin-bottom:5px}#featureDashboard .feature-tile .muted{line-height:1.45}#featureDashboard button{margin-top:9px;background:#facc15;color:#17130a;border:0;border-radius:9px;padding:8px 12px;font-weight:800}#featureDashboard ol{padding-left:20px;margin:8px 0}
 </style>
 </head>
 <body>
@@ -379,13 +369,9 @@ header { background:linear-gradient(180deg,#0a0a0d,#0b0b0e); border-bottom:1px s
     </div>
 
     <div class="section">
+      <div class="card" id="featureDashboard" style="display:none;margin-bottom:14px"><div class="section-title">🎁 Rewards &amp; account perks</div><div id="featureDashboardBody" class="muted small">Loading rewards…</div></div>
       <div class="dash-links" id="dashLinks" style="display:none"></div>
       <div class="notice" id="maintBanner" style="display:none;margin:0 0 12px"></div>
-      <div class="feature-center" id="featureCenter" hidden aria-live="polite">
-        <div class="feature-center-head"><strong>🎁 Rewards & account perks</strong><small id="featureVipSummary">Feature settings</small></div>
-        <div class="feature-grid" id="featureGrid"></div>
-        <p class="feature-note" id="featureNote" style="margin:10px 0 0">Feature availability is controlled by the administrator.</p>
-      </div>
       <div class="timer-card" id="timerCard"><div class="timer-anim" aria-hidden="true"><i class="candle" style="--l:3%;--h:38px;--d:0.0s"></i><i class="candle" style="--l:8%;--h:56px;--d:0.4s"></i><i class="candle" style="--l:13%;--h:30px;--d:0.9s"></i><i class="candle" style="--l:18%;--h:66px;--d:0.2s"></i><i class="candle" style="--l:23%;--h:44px;--d:1.1s"></i><i class="candle" style="--l:28%;--h:58px;--d:0.6s"></i><i class="candle" style="--l:68%;--h:40px;--d:0.3s"></i><i class="candle" style="--l:73%;--h:62px;--d:1.0s"></i><i class="candle" style="--l:78%;--h:34px;--d:0.7s"></i><i class="candle" style="--l:83%;--h:68px;--d:0.1s"></i><i class="candle" style="--l:88%;--h:48px;--d:0.8s"></i><i class="candle" style="--l:93%;--h:60px;--d:1.3s"></i><svg class="trend" viewBox="0 0 600 120" preserveAspectRatio="none"><path class="trend-base" d="M0 100C100 95 160 70 260 80S440 55 600 15" pathLength="1"/><path class="trend-glow" d="M0 100C100 95 160 70 260 80S440 55 600 15" pathLength="1"/></svg><b class="spark" style="--l:10%;--d:0s"></b><b class="spark" style="--l:30%;--d:1.6s"></b><b class="spark" style="--l:52%;--d:3.1s"></b><b class="spark" style="--l:74%;--d:0.8s"></b><b class="spark" style="--l:90%;--d:2.4s"></b></div>
         <div class="row">
           <span class="muted small" data-i18n="currentPeriod">Current Period</span>
@@ -1159,7 +1145,7 @@ function detectResults(){ if(!authed) return; const rev = latestRounds.filter(re
 function getActiveRound(){ const r = currentRound; if(!r) return null; const now = nowMs(); const starts = new Date(r.starts_at).getTime(); const ends = new Date(r.ends_at).getTime(); return Number.isFinite(starts) && Number.isFinite(ends) && now >= starts && now < ends ? r : null; }
 function isBettingOpen(round){ if(!round || round.status !== "open") return false; const now = nowMs(); const starts = new Date(round.starts_at).getTime(); const closes = new Date(round.betting_closes_at).getTime(); const ends = new Date(round.ends_at).getTime(); return Number.isFinite(starts) && Number.isFinite(closes) && Number.isFinite(ends) && now >= starts && now < closes && now < ends; }
 async function syncRounds(){ if(roundsBusy) return roundsOk; roundsBusy = true; try { const d = await getRounds(1); const serverMs = new Date(d.server_time).getTime(); if(Number.isFinite(serverMs)) serverTimeOffset = serverMs - d._mid; currentRound = d.current_round || null; latestRounds = d.rounds || []; roundsLoaded = true; roundsFailed = false; roundsOk = true; if(resultPage === 1){ resultData = {rounds:latestRounds,total:Number(d.rounds_page && d.rounds_page.total || 0)}; renderResults(); } detectResults(); setNotice("nConnected"); } catch(error) { roundsFailed = true; roundsOk = false; setNotice("nUnavailable",{msg:error.message}); } finally { lastRoundsSync = Date.now(); roundsBusy = false; updateRoundDisplay(); } return roundsOk; }
-async function syncUser(){ if(!authed) return false; if(userBusy) return userOk; userBusy = true; try { const [balData,betData] = await Promise.all([ api("balance"), api("my_bets",{page:tradePage,page_size:PAGE}) ]); updateBalance(balData.balance); if (balData.total_staked !== undefined) totalStaked = Number(balData.total_staked) || 0; renderFeatureCenter(); if (balData.wallet_address !== undefined) savedWalletAddress = balData.wallet_address || null; tradeData = {bets:betData.bets || [],total:Number(betData.pagination && betData.pagination.total || 0)}; renderTrades(); if(activePage === "wallet") await loadWallet(true); if (activePage === "withdraw") populateWithdrawPage(); userOk = true; } catch(error) { userOk = false; } finally { lastUserSync = Date.now(); userBusy = false; } return userOk; }
+async function syncUser(){ if(!authed) return false; if(userBusy) return userOk; userBusy = true; try { const [balData,betData] = await Promise.all([ api("balance"), api("my_bets",{page:tradePage,page_size:PAGE}) ]); updateBalance(balData.balance); if (balData.total_staked !== undefined) totalStaked = Number(balData.total_staked) || 0; if (balData.wallet_address !== undefined) savedWalletAddress = balData.wallet_address || null; tradeData = {bets:betData.bets || [],total:Number(betData.pagination && betData.pagination.total || 0)}; renderTrades(); if(activePage === "wallet") await loadWallet(true); if (activePage === "withdraw") populateWithdrawPage(); userOk = true; } catch(error) { userOk = false; } finally { lastUserSync = Date.now(); userBusy = false; } return userOk; }
 function setRing(frac,locked){ const el = $("ringFg"); el.style.transition = frac > lastRingFrac + 0.01 ? "none" : ""; el.style.strokeDashoffset = String(RING_LENGTH * (1 - frac)); el.classList.toggle("locked",locked); lastRingFrac = frac; }
 function updateRoundDisplay(){ const server = getActiveRound(); let info = null; if(server){ info = { code:server.round_code, endsMs:new Date(server.ends_at).getTime(), open:isBettingOpen(server), virtual:false }; } else if(roundsLoaded){ const s = slotInfo(nowMs()); info = {code:s.code,endsMs:s.endsMs,open:false,virtual:true}; } if(!info){ $("periodId").textContent = t("loadingRound"); $("timer").textContent = "--:--"; setRing(0,true); setStatus(authBlock || (roundsFailed ? "stError" : "stConnecting")); updateBetButtons(false); previousBettingOpen = false; lastTickSecond = -1; return; } const left = Math.max(0,Math.ceil((info.endsMs - nowMs()) / 1000)); $("periodId").textContent = fmtPeriod(info.code); $("timer").textContent = String(Math.floor(left / 60)).padStart(2,"0") + ":" + String(left % 60).padStart(2,"0"); setRing(Math.min(1,left / ROUND_SECONDS),!info.open); setStatus(authBlock || (info.virtual ? "stSyncing" : info.open ? "stOpen" : "stLocked")); const tc = $("timerCard"); if(tc){ tc.classList.toggle("urgent", !!info.open && left <= 40); tc.classList.toggle("locked-state", !info.open); }
  updateBetButtons(info.open && authed); if(previousBettingOpen === true && !info.open){ playLockSound(); haptic("light"); } previousBettingOpen = info.open; if(left <= 10 && left > 0 && left !== lastTickSecond){ playTickSound(); lastTickSecond = left; } else if(left > 10 || left === 0){ lastTickSecond = -1; } if(lastDisplayedRoundCode !== info.code){ lastDisplayedRoundCode = info.code; lastTickSecond = -1; previousBettingOpen = info.open; } }
@@ -1290,34 +1276,18 @@ function renderDashLinks() {
   box.querySelectorAll("[data-dash]").forEach(btn => { btn.onclick = () => openExternalLink(list[Number(btn.dataset.dash)].url); });
 }
 
-function renderFeatureCenter() {
-  const wrap = $("featureCenter"), grid = $("featureGrid");
-  if (!wrap || !grid) return;
-  const fs = appConfig.feature_settings && typeof appConfig.feature_settings === "object" ? appConfig.feature_settings : {};
-  const definitions = [
-    ["daily_checkin_enabled", "📅 Daily check-in", `${Number(fs.daily_checkin_points || 0)} points per day`, "Daily reward claim is not connected in this app build."],
-    ["leaderboard_enabled", "🏆 Leaderboard", `${String(fs.leaderboard_period || "daily")} · ${money(fs.leaderboard_prize_pool_usdt || 0)} USDT pool`, "Live ranking and prize distribution are not connected yet."],
-    ["vip_enabled", "👑 VIP level", "Based on total bets", "VIP fee/commission benefits are not applied to bets yet."],
-    ["missions_enabled", "🎯 Tasks & missions", "Rewards for activity", "Mission progress and claiming are not connected yet."],
-    ["deposit_bonus_enabled", "💎 First deposit bonus", `${Number(fs.deposit_bonus_percent || 0)}% configured`, "Bonus crediting needs a verified deposit integration."],
-    ["game_modes_enabled", "⏱ Game modes", `${(Array.isArray(fs.round_durations) ? fs.round_durations : [1,3,5]).join(" / ")} min configured`, "Round duration is currently controlled by the server; mode switching is not connected."]
-  ];
-  const visible = definitions.filter(([key]) => fs[key]);
-  if (!visible.length) { wrap.hidden = true; return; }
-  grid.innerHTML = visible.map(([key,title,summary,detail]) => {
-    let state = "Admin ON";
-    let extra = detail;
-    if (key === "vip_enabled") {
-      const levels = Array.isArray(fs.vip_levels) ? [...fs.vip_levels].sort((a,b) => Number(a.total_bet || 0)-Number(b.total_bet || 0)) : [];
-      const current = levels.filter(v => totalStaked >= Number(v.total_bet || 0)).pop();
-      state = current ? `Current: ${String(current.name || "VIP")}` : "VIP configured";
-      extra = current ? `Total bets: ${money(totalStaked)} points · ${Number(current.fee_discount || 0)}% fee discount configured` : detail;
-    }
-    return `<div class="feature-tile"><strong>${esc(title)}</strong><span>${esc(summary)}</span><span class="feature-state on">${esc(state)}</span><span style="margin-top:6px">${esc(extra)}</span></div>`;
-  }).join("");
-  $("featureVipSummary").textContent = visible.length + " configured";
-  $("featureNote").textContent = "These are admin-configured indicators. Items marked above are not yet active user actions; deposits and withdrawals continue through the existing verified flow.";
-  wrap.hidden = false;
+async function loadFeatureDashboard(){
+  const box=$("featureDashboard"), body=$("featureDashboardBody"); if(!box||!body||!authed)return;
+  try{
+    const d=await api("feature_dashboard"), f=d.features||{}; const tiles=[];
+    if(f.daily_checkin_enabled){tiles.push(`<div class="feature-tile"><strong>📅 Daily check-in</strong><div class="muted">${Number(f.daily_checkin_points||10)} points · streak ${Number(d.checkin?.streak||0)} days</div>${d.checkin_claimed?'<span class="pill ok">Claimed today</span>':'<button type="button" data-feature-claim="daily">Claim daily bonus</button>'}</div>`);}
+    if(f.vip_enabled){tiles.push(`<div class="feature-tile"><strong>👑 VIP: ${esc(d.vip?.name||'Bronze')}</strong><div class="muted">Total bets: ${money(d.total_bet)} points · Fee discount: ${Number(d.vip?.fee_discount||0)}%</div></div>`);}
+    if(f.leaderboard_enabled){const rows=(d.leaderboard||[]).map((x,i)=>`<li>#${i+1} ${esc(x.first_name||x.username||'Player')} — ${money(x.total_bet)} pts</li>`).join('');tiles.push(`<div class="feature-tile"><strong>🏆 ${esc(f.leaderboard_period||'daily')} leaderboard</strong><div class="muted">Prize pool: ${Number(f.leaderboard_prize_pool_usdt||0).toFixed(2)} USDT</div><ol>${rows||'<li>No ranking yet</li>'}</ol><div class="muted">Ranking shown; prize distribution is not automatic.</div></div>`);}
+    if(f.missions_enabled){const ms=(d.missions||[]).map(m=>`<div class="feature-tile"><strong>🎯 ${esc(m.title)}</strong><div class="muted">Reward: ${m.reward} points</div>${m.claimed?'<span class="pill ok">Claimed</span>':m.done?`<button type="button" data-feature-claim="mission" data-mission="${esc(m.key)}">Claim reward</button>`:'<span class="muted">In progress</span>'}</div>`).join('');tiles.push(ms);}
+    if(f.deposit_bonus_enabled){tiles.push(`<div class="feature-tile"><strong>💎 First deposit bonus</strong><div class="muted">${Number(f.deposit_bonus_percent||0)}% on your first verified deposit. Credited after admin approval.</div></div>`);}
+    if(f.game_modes_enabled){tiles.push(`<div class="feature-tile"><strong>⏱ Game modes</strong><div class="muted">Configured: ${(f.round_durations||[3]).join(' / ')} min. Mode switching requires the round scheduler upgrade.</div></div>`);}
+    body.innerHTML=tiles.length?`<div class="feature-grid">${tiles.join('')}</div>`:'<div class="muted">No reward features are currently enabled.</div>'; box.style.display='';
+  }catch(e){body.textContent='Rewards are temporarily unavailable.';box.style.display='';}
 }
 
 async function loadAppConfig() {
@@ -1326,10 +1296,10 @@ async function loadAppConfig() {
     if (data && data.config) appConfig = { ...appConfig, ...data.config };
   } catch (_) {}
   renderDashLinks();
-  renderFeatureCenter();
   const mb = $("maintBanner");
   if (mb) { const on = appConfig.maintenance_mode === true; mb.style.display = on ? "" : "none"; mb.textContent = on ? (appConfig.maintenance_message || "Betting is paused for maintenance. Please check back soon.") : ""; }
   renderHeaderButtons();
+  loadFeatureDashboard();
 }
 function renderHeaderButtons() {
   const ch = $("headerChannelBtn");
@@ -1526,6 +1496,7 @@ function init(){
     renderBreakdown();
   });
   document.addEventListener("click", async event => {
+    const featureClaim=event.target.closest("[data-feature-claim]"); if(featureClaim){try{featureClaim.disabled=true;const mode=featureClaim.dataset.featureClaim;const result=mode==="daily"?await api("claim_daily_checkin"):await api("claim_mission",{mission_key:featureClaim.dataset.mission});toast(result.message||"Reward claimed.");await loadFeatureDashboard();await syncUser();}catch(err){toast(err.message||"Could not claim reward.",true);featureClaim.disabled=false;}return;}
     const pg = event.target.closest("[data-pager]"); if (pg && !pg.disabled) { const dir = Number(pg.dataset.dir); const id = pg.dataset.pager; if (id === "results") { resultPage = Math.max(1, resultPage + dir); loadResults(); } else if (id === "trades") { tradePage = Math.max(1, tradePage + dir); loadTrades(); } else if (id === "wallet") { walletPage = Math.max(1, walletPage + dir); loadWallet(); } else if (id === "comm") { commPage = Math.max(1, commPage + dir); loadCommissions(); } else if (id === "members") { membersPage = Math.max(1, membersPage + dir); renderReferral(); } return; }
     const tr = event.target.closest("[data-trade]"); if (tr) { tr.parentElement.classList.toggle("open"); return; }
     const lb = event.target.closest("[data-lang]"); if (lb) { setLanguage(lb.dataset.lang); return; }
@@ -1533,7 +1504,7 @@ function init(){
     const sh = event.target.closest("[data-share]"); if (sh && referralData && referralData.referral_link) { const url = "https://t.me/share/url?url=" + encodeURIComponent(referralData.referral_link) + "&text=" + encodeURIComponent(t("shareText")); try { if (tg && tg.openTelegramLink) tg.openTelegramLink(url); else window.open(url, "_blank"); } catch (_) { window.open(url, "_blank"); } return; }
     const ap = event.target.closest("[data-apply-ref]"); if (ap) { applyReferral(); }
   });
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) { lastInteraction = Date.now(); syncRounds(); syncUser(); } });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { lastInteraction = Date.now(); syncRounds(); syncUser(); loadFeatureDashboard(); } });
   ["touchstart","click","keydown","scroll"].forEach(ev => document.addEventListener(ev, markInteraction, { passive: true, capture: true }));
   renderResults(); renderTrades(); renderWallet(); renderReferral();
   authenticate(); if (!tg) syncRounds();
