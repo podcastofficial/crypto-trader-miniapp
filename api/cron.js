@@ -1,8 +1,8 @@
 const { Pool } = require("pg");
 const { ensureGameFunctions } = require("../lib/game-functions");
 
-const ROUND_SECONDS = 180;
-const BETTING_SECONDS = 150;
+let ROUND_SECONDS = 180;
+let BETTING_SECONDS = 150;
 const FUTURE_ROUNDS = 5;
 const MAX_SETTLEMENT_ATTEMPTS = 20;
 const RESULTS_CHANNEL = "@crypto_trader_results";
@@ -53,7 +53,7 @@ function normalizeAddress(value) {
 function slotOfRound(code) {
   const m = String(code || "").match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/);
   if (!m) return 0;
-  return Math.floor(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) / 180000);
+  return Math.floor(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) / (ROUND_SECONDS * 1000));
 }
 
 // Batch windows like "10:00-12:00,18:00-22:00" in IST (UTC+5:30). Empty = always on.
@@ -77,7 +77,7 @@ function fmtPeriod(code) {
   const day = raw.slice(0, 8);
   const hour = Number(raw.slice(8, 10));
   const minute = Number(raw.slice(10, 12));
-  const serial = Math.floor((hour * 60 + minute) / 3) + 1;
+  const serial = Math.floor((hour * 60 + minute) / (ROUND_SECONDS / 60)) + 1;
   return `${day}${String(serial).padStart(4, "0")}`;
 }
 
@@ -172,7 +172,7 @@ async function sendTelegramMessage(client, type, data) {
     const settings = await getChannelSettings(client);
     if (settings.channel_updates_enabled === false) return;
     const slot = slotOfRound(data.round);
-    if (!inBatchWindow(settings.batch_windows, slot * 180000)) return;
+    if (!inBatchWindow(settings.batch_windows, slot * ROUND_SECONDS * 1000)) return;
 
     const inlineKeyboard = buildKeyboard(settings);
 
@@ -552,6 +552,12 @@ module.exports = async function handler(req, res) {
       cronSchemaReady = true;
     }
 
+    // One platform-wide timer, selected by the admin. Never trust a client timer.
+    const timerSetting = await client.query(`SELECT value FROM public.app_settings WHERE key='active_round_minutes'`);
+    const selectedMinutes = Number(timerSetting.rows[0]?.value || 3);
+    ROUND_SECONDS = ([1, 3, 5].includes(selectedMinutes) ? selectedMinutes : 3) * 60;
+    BETTING_SECONDS = Math.max(1, ROUND_SECONDS - 30);
+
     const timeResult = await client.query(
       `
         SELECT
@@ -712,7 +718,7 @@ module.exports = async function handler(req, res) {
     if (activeRoundRes.rows.length > 0) {
       const r = activeRoundRes.rows[0];
       const settings = await getChannelSettings(client);
-      const timing = Number(settings.prediction_timing) || 150;
+      const timing = Math.min(ROUND_SECONDS - 10, Math.max(1, Number(settings.prediction_timing) || 150));
       const startMs = new Date(r.starts_at).getTime();
       const nowMs = dbNow.getTime();
 

@@ -33,17 +33,6 @@ async function initSchemaOnce(client) {
         await client.query(`ALTER TABLE public.referral_rewards ADD COLUMN IF NOT EXISTS credited_at TIMESTAMPTZ`);
         await client.query(`ALTER TABLE public.referral_commissions ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ`);
         await client.query(`ALTER TABLE public.transactions DROP CONSTRAINT IF EXISTS transactions_transaction_type_check`).catch(() => {});
-        await client.query(`CREATE TABLE IF NOT EXISTS public.daily_checkins (
-          user_id BIGINT PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
-          last_claim_date DATE NOT NULL, streak INTEGER NOT NULL DEFAULT 1,
-          total_claims INTEGER NOT NULL DEFAULT 1, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )`);
-        await client.query(`CREATE TABLE IF NOT EXISTS public.mission_claims (
-          user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-          mission_key TEXT NOT NULL, reward_points NUMERIC(20,2) NOT NULL,
-          claimed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY(user_id, mission_key)
-        )`);
-        await client.query(`CREATE INDEX IF NOT EXISTS bets_user_created_idx ON public.bets(user_id,created_at)`);
         await client.query(`
           CREATE TABLE IF NOT EXISTS public.user_notifications (
             id BIGSERIAL PRIMARY KEY,
@@ -970,10 +959,14 @@ module.exports = async function handler(req, res) {
 
       const total = Number(countResult.rows[0].total);
       const serverTime = timeResult.rows[0].server_time;
+      const configuredMinutes = Number(await getAppSetting(client, "active_round_minutes", "3"));
+      const roundDurationSeconds = ([1, 3, 5].includes(configuredMinutes) ? configuredMinutes : 3) * 60;
 
       const body = {
         success: true,
         server_time: serverTime,
+        round_duration_seconds: roundDurationSeconds,
+        betting_duration_seconds: Math.max(1, roundDurationSeconds - 30),
         current_round: currentResult.rows[0] || null,
         rounds: roundsResult.rows,
         rounds_page: {
@@ -1074,64 +1067,6 @@ module.exports = async function handler(req, res) {
       } catch { config.feature_settings = null; }
       await client.query("COMMIT"); transactionStarted = false;
       return json(res, 200, { success: true, config });
-    }
-
-    if (action === "feature_dashboard") {
-      const raw = await getAppSetting(client, "feature_settings", "{}");
-      let fs = {}; try { fs = JSON.parse(raw || "{}"); } catch (_) {}
-      const today = await client.query(`SELECT CURRENT_DATE::text AS d`);
-      const check = await client.query(`SELECT last_claim_date::text,streak,total_claims FROM public.daily_checkins WHERE user_id=$1`, [user.id]);
-      const bets = await client.query(`SELECT COALESCE(SUM(stake),0)::numeric(20,2) AS total,COUNT(*)::int AS count FROM public.bets WHERE user_id=$1`, [user.id]);
-      const totalBet = Number(bets.rows[0]?.total || 0);
-      let vip = (Array.isArray(fs.vip_levels) ? fs.vip_levels : [{name:"Bronze",total_bet:0,fee_discount:0,commission:1}]).filter(x => Number(x.total_bet||0) <= totalBet).sort((a,b)=>Number(b.total_bet||0)-Number(a.total_bet||0))[0] || {name:"Bronze",fee_discount:0,commission:1};
-      const period = fs.leaderboard_period === "weekly" ? "week" : "day";
-      const leaderboard = await client.query(`SELECT u.username,u.first_name, SUM(b.stake)::numeric(20,2) AS total_bet, COUNT(*)::int AS bets_count FROM public.bets b JOIN public.users u ON u.id=b.user_id WHERE b.created_at >= date_trunc($1, NOW()) GROUP BY u.id,u.username,u.first_name ORDER BY SUM(b.stake) DESC LIMIT 10`, [period]);
-      const deposits = await client.query(`SELECT COUNT(*)::int AS n FROM public.transactions WHERE user_id=$1 AND transaction_type='deposit' AND status IN ('confirmed','completed')`, [user.id]);
-      const missionRows = [
-        {key:"bet_1",title:"Place your first bet",reward:10,done:Number(bets.rows[0]?.count||0)>=1},
-        {key:"bet_10",title:"Complete 10 bets",reward:25,done:Number(bets.rows[0]?.count||0)>=10},
-        {key:"deposit_1",title:"Make your first verified deposit",reward:50,done:Number(deposits.rows[0]?.n||0)>=1}
-      ];
-      const claimed = await client.query(`SELECT mission_key FROM public.mission_claims WHERE user_id=$1`, [user.id]);
-      const claimedSet = new Set(claimed.rows.map(x=>x.mission_key));
-      await client.query("COMMIT"); transactionStarted = false;
-      return json(res,200,{success:true,features:fs,today:today.rows[0].d,checkin:check.rows[0]||null,checkin_claimed:check.rows[0]?.last_claim_date===today.rows[0].d,total_bet:totalBet,bets_count:Number(bets.rows[0]?.count||0),vip,leaderboard:leaderboard.rows,missions:missionRows.map(m=>({...m,claimed:claimedSet.has(m.key)})),deposit_count:Number(deposits.rows[0]?.n||0)});
-    }
-
-    if (action === "claim_daily_checkin") {
-      const raw = await getAppSetting(client,"feature_settings","{}"); let fs={}; try{fs=JSON.parse(raw||"{}");}catch(_){}
-      if (fs.daily_checkin_enabled !== true) { await client.query("ROLLBACK"); transactionStarted=false; return json(res,403,{success:false,message:"Daily check-in is disabled."}); }
-      const points = Math.max(0,Math.min(100000,Number(fs.daily_checkin_points)||10));
-      const streakBonus = Math.max(0,Math.min(100000,Number(fs.streak_7_bonus)||0));
-      const dateRow = await client.query(`SELECT CURRENT_DATE::text AS d, (CURRENT_DATE - INTERVAL '1 day')::date::text AS yesterday`);
-      const d=dateRow.rows[0].d, yesterday=dateRow.rows[0].yesterday;
-      const prev=await client.query(`SELECT last_claim_date::text,streak FROM public.daily_checkins WHERE user_id=$1 FOR UPDATE`,[user.id]);
-      if(prev.rows[0]?.last_claim_date===d){await client.query("ROLLBACK");transactionStarted=false;return json(res,409,{success:false,message:"Today's check-in has already been claimed."});}
-      const streak=prev.rows[0]?.last_claim_date===yesterday ? Number(prev.rows[0].streak)+1 : 1;
-      const bonus=points+(streak%7===0?streakBonus:0);
-      await client.query(`INSERT INTO public.daily_checkins(user_id,last_claim_date,streak,total_claims) VALUES($1,$2::date,$3,1) ON CONFLICT(user_id) DO UPDATE SET last_claim_date=EXCLUDED.last_claim_date,streak=EXCLUDED.streak,total_claims=public.daily_checkins.total_claims+1,updated_at=NOW()`,[user.id,d,streak]);
-      await client.query(`UPDATE public.wallet_balances SET balance=balance+$1 WHERE user_id=$2`,[bonus.toFixed(2),user.id]);
-      await client.query(`INSERT INTO public.transactions(user_id,transaction_type,amount,status,created_at,updated_at) VALUES($1,'reward',$2,'completed',NOW(),NOW())`,[user.id,bonus.toFixed(2)]);
-      await client.query("COMMIT");transactionStarted=false;
-      return json(res,200,{success:true,points:bonus,streak,message:`${bonus} points added. Day ${streak} streak.`});
-    }
-
-    if (action === "claim_mission") {
-      const key=String(body.mission_key||"");
-      const allowed={bet_1:{title:"Place your first bet",reward:10},bet_10:{title:"Complete 10 bets",reward:25},deposit_1:{title:"Make your first verified deposit",reward:50}};
-      if(!allowed[key]){await client.query("ROLLBACK");transactionStarted=false;return json(res,400,{success:false,message:"Unknown mission."});}
-      const raw=await getAppSetting(client,"feature_settings","{}");let fs={};try{fs=JSON.parse(raw||"{}");}catch(_){}
-      if(fs.missions_enabled!==true){await client.query("ROLLBACK");transactionStarted=false;return json(res,403,{success:false,message:"Missions are disabled."});}
-      const counts=await client.query(`SELECT (SELECT COUNT(*) FROM public.bets WHERE user_id=$1)::int AS bets,(SELECT COUNT(*) FROM public.transactions WHERE user_id=$1 AND transaction_type='deposit' AND status IN ('confirmed','completed'))::int AS deposits`,[user.id]);
-      const done=key==="bet_1"?counts.rows[0].bets>=1:key==="bet_10"?counts.rows[0].bets>=10:counts.rows[0].deposits>=1;
-      if(!done){await client.query("ROLLBACK");transactionStarted=false;return json(res,400,{success:false,message:"Mission requirement is not complete yet."});}
-      const m=allowed[key];
-      const ins=await client.query(`INSERT INTO public.mission_claims(user_id,mission_key,reward_points) VALUES($1,$2,$3) ON CONFLICT DO NOTHING RETURNING mission_key`,[user.id,key,m.reward]);
-      if(!ins.rowCount){await client.query("ROLLBACK");transactionStarted=false;return json(res,409,{success:false,message:"Mission already claimed."});}
-      await client.query(`UPDATE public.wallet_balances SET balance=balance+$1 WHERE user_id=$2`,[m.reward,user.id]);
-      await client.query(`INSERT INTO public.transactions(user_id,transaction_type,amount,status,created_at,updated_at) VALUES($1,'reward',$2,'completed',NOW(),NOW())`,[user.id,m.reward]);
-      await client.query("COMMIT");transactionStarted=false;
-      return json(res,200,{success:true,points:m.reward,message:`${m.reward} points added for: ${m.title}`});
     }
 
     if (action === "balance") {

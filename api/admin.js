@@ -1108,22 +1108,6 @@ async function reviewWalletTransaction(action, body, session, req) {
       }
     }
 
-    if (action === "deposit_approve") {
-      await client.query(`SELECT id FROM public.users WHERE id=$1 FOR UPDATE`, [tx.user_id]);
-      const priorDeposits = await client.query(`SELECT COUNT(*)::int AS n FROM public.transactions WHERE user_id=$1 AND transaction_type='deposit' AND status IN ('confirmed','completed')`, [tx.user_id]);
-      if (Number(priorDeposits.rows[0]?.n || 0) === 0) {
-        const settings = await client.query(`SELECT value FROM public.app_settings WHERE key='feature_settings'`);
-        let featureSettings = {}; try { featureSettings = JSON.parse(settings.rows[0]?.value || "{}"); } catch (_) {}
-        const pct = featureSettings.deposit_bonus_enabled === true ? Math.max(0, Math.min(20, Number(featureSettings.deposit_bonus_percent) || 0)) : 0;
-        const bonusPoints = Math.round(Number(tx.amount) * 100 * pct * 100) / 100;
-        if (bonusPoints > 0) {
-          await client.query(`UPDATE public.wallet_balances SET balance=balance+$1 WHERE user_id=$2`, [bonusPoints.toFixed(2), tx.user_id]);
-          await client.query(`INSERT INTO public.transactions(user_id,transaction_type,amount,status,created_at,updated_at) VALUES($1,'reward',$2,'completed',NOW(),NOW())`, [tx.user_id, bonusPoints.toFixed(2)]);
-          await client.query(`INSERT INTO public.user_notifications(user_id,kind,title,message) VALUES($1,'reward','First deposit bonus',$2)`, [tx.user_id, `${bonusPoints.toFixed(2)} bonus points credited (${pct}% first deposit bonus).`]);
-        }
-      }
-    }
-
     await client.query(
       `UPDATE public.transactions
        SET status=$1, admin_note=$2,
@@ -1702,7 +1686,11 @@ async function saveAppSettings(body) {
   clean.leaderboard_period = fs.leaderboard_period === "weekly" ? "weekly" : "daily";
   const durations = Array.isArray(fs.round_durations) ? fs.round_durations.map(Number).filter(n => [1,3,5].includes(n)) : [1,3,5];
   clean.round_durations = [...new Set(durations)].sort((a,b) => a-b);
-  if (clean.game_modes_enabled && !clean.round_durations.length) throw new Error("Select at least one round length.");
+  const activeMinutes = Number(fs.active_round_minutes ?? (clean.round_durations.includes(3) ? 3 : clean.round_durations[0] || 3));
+  if (![1,3,5].includes(activeMinutes)) throw new Error("Choose 1, 3 or 5 minutes for the global game timer.");
+  clean.active_round_minutes = activeMinutes;
+  clean.round_durations = [activeMinutes];
+  await setAppSetting("active_round_minutes", String(activeMinutes));
   let vipLevels = fs.vip_levels;
   if (typeof vipLevels === "string") { try { vipLevels = JSON.parse(vipLevels); } catch { throw new Error("VIP levels must be valid JSON."); } }
   if (!Array.isArray(vipLevels) || vipLevels.length > 20) throw new Error("VIP levels must be a JSON array with at most 20 entries.");
