@@ -112,8 +112,9 @@ BEGIN
   FOR r IN
     SELECT column_name FROM information_schema.columns
      WHERE table_schema = 'public' AND table_name = 'bets'
-       AND is_nullable = 'NO' AND column_default IS NULL AND is_identity = 'NO'
-       AND column_name NOT IN ('id','user_id','round_id','bet_type','stake')
+       AND is_nullable = 'NO' AND is_identity = 'NO'
+       AND (column_name = 'selection'
+            OR (column_default IS NULL AND column_name NOT IN ('id','user_id','round_id','bet_type','stake')))
   LOOP
     EXECUTE format('ALTER TABLE public.bets ALTER COLUMN %I DROP NOT NULL', r.column_name);
   END LOOP;
