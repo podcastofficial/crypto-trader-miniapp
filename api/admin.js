@@ -1615,7 +1615,8 @@ async function postPrediction(body, session, req) {
 
 const APP_SETTING_DEFAULTS = {
   maintenance_mode: "false", maintenance_message: "", withdrawals_paused: "false",
-  withdraw_daily_limit_usdt: "0", signup_bonus_enabled: "true", signup_bonus_amount: "25", dashboard_links: "[]", min_bet_to_withdraw: "1000"
+  withdraw_daily_limit_usdt: "0", signup_bonus_enabled: "true", signup_bonus_amount: "25", dashboard_links: "[]", min_bet_to_withdraw: "1000",
+  feature_settings: "{\"daily_checkin_enabled\":false,\"daily_checkin_points\":10,\"streak_7_bonus\":50,\"leaderboard_enabled\":false,\"leaderboard_prize_pool_usdt\":0,\"leaderboard_period\":\"daily\",\"vip_enabled\":false,\"vip_levels\":[{\"name\":\"Bronze\",\"total_bet\":0,\"fee_discount\":0,\"commission\":1},{\"name\":\"Silver\",\"total_bet\":10000,\"fee_discount\":2,\"commission\":2},{\"name\":\"Gold\",\"total_bet\":50000,\"fee_discount\":5,\"commission\":3}],\"missions_enabled\":false,\"deposit_bonus_enabled\":false,\"deposit_bonus_percent\":10,\"game_modes_enabled\":false,\"round_durations\":[1,3,5],\"auto_bet_enabled\":false,\"sound_enabled\":true,\"result_animation_enabled\":true,\"auto_withdraw_enabled\":false,\"auto_withdraw_max_usdt\":10,\"min_withdraw_usdt\":5,\"max_withdraw_usdt\":1000,\"kyc_lite_enabled\":false,\"one_wallet_one_account\":true,\"fraud_detection_enabled\":true,\"telegram_notifications_enabled\":false,\"analytics_dashboard_enabled\":true,\"broadcast_enabled\":true,\"bulk_gift_codes_enabled\":true,\"campaign_tracking_enabled\":false}"
 };
 
 async function getAppSettings() {
@@ -1633,7 +1634,8 @@ async function getAppSettings() {
     signup_bonus_enabled: isOn(out.signup_bonus_enabled),
     signup_bonus_amount: Number(out.signup_bonus_amount) || 0,
     min_bet_to_withdraw: Number(out.min_bet_to_withdraw) || 0,
-    dashboard_links: (() => { try { const l = JSON.parse(out.dashboard_links || "[]"); return Array.isArray(l) ? l : []; } catch { return []; } })()
+    dashboard_links: (() => { try { const l = JSON.parse(out.dashboard_links || "[]"); return Array.isArray(l) ? l : []; } catch { return []; } })(),
+    feature_settings: (() => { try { const f = JSON.parse(out.feature_settings || "{}"); return { ...{"daily_checkin_enabled":false,"daily_checkin_points":10,"streak_7_bonus":50,"leaderboard_enabled":false,"leaderboard_prize_pool_usdt":0,"leaderboard_period":"daily","vip_enabled":false,"vip_levels":[{"name":"Bronze","total_bet":0,"fee_discount":0,"commission":1},{"name":"Silver","total_bet":10000,"fee_discount":2,"commission":2},{"name":"Gold","total_bet":50000,"fee_discount":5,"commission":3}],"missions_enabled":false,"deposit_bonus_enabled":false,"deposit_bonus_percent":10,"game_modes_enabled":false,"round_durations":[1,3,5],"auto_bet_enabled":false,"sound_enabled":true,"result_animation_enabled":true,"auto_withdraw_enabled":false,"auto_withdraw_max_usdt":10,"min_withdraw_usdt":5,"max_withdraw_usdt":1000,"kyc_lite_enabled":false,"one_wallet_one_account":true,"fraud_detection_enabled":true,"telegram_notifications_enabled":false,"analytics_dashboard_enabled":true,"broadcast_enabled":true,"bulk_gift_codes_enabled":true,"campaign_tracking_enabled":false} , ...(f && typeof f === "object" && !Array.isArray(f) ? f : {}) }; } catch { return {"daily_checkin_enabled":false,"daily_checkin_points":10,"streak_7_bonus":50,"leaderboard_enabled":false,"leaderboard_prize_pool_usdt":0,"leaderboard_period":"daily","vip_enabled":false,"vip_levels":[{"name":"Bronze","total_bet":0,"fee_discount":0,"commission":1},{"name":"Silver","total_bet":10000,"fee_discount":2,"commission":2},{"name":"Gold","total_bet":50000,"fee_discount":5,"commission":3}],"missions_enabled":false,"deposit_bonus_enabled":false,"deposit_bonus_percent":10,"game_modes_enabled":false,"round_durations":[1,3,5],"auto_bet_enabled":false,"sound_enabled":true,"result_animation_enabled":true,"auto_withdraw_enabled":false,"auto_withdraw_max_usdt":10,"min_withdraw_usdt":5,"max_withdraw_usdt":1000,"kyc_lite_enabled":false,"one_wallet_one_account":true,"fraud_detection_enabled":true,"telegram_notifications_enabled":false,"analytics_dashboard_enabled":true,"broadcast_enabled":true,"bulk_gift_codes_enabled":true,"campaign_tracking_enabled":false} ; } })()
   } };
 }
 
@@ -1663,7 +1665,42 @@ async function saveAppSettings(body) {
     links.push({ label, url, enabled: item.enabled === true || item.enabled === "true" });
   }
   await setAppSetting("dashboard_links", JSON.stringify(links));
-  return { ok: true, message: "Settings saved." };
+
+  const fs = body.feature_settings && typeof body.feature_settings === "object" ? body.feature_settings : {};
+  const boolKeys = ["daily_checkin_enabled","leaderboard_enabled","vip_enabled","missions_enabled","deposit_bonus_enabled","game_modes_enabled","auto_bet_enabled","sound_enabled","result_animation_enabled","auto_withdraw_enabled","kyc_lite_enabled","one_wallet_one_account","fraud_detection_enabled","telegram_notifications_enabled","analytics_dashboard_enabled","broadcast_enabled","bulk_gift_codes_enabled","campaign_tracking_enabled"];
+  const clean = {};
+  for (const key of boolKeys) clean[key] = fs[key] === true || fs[key] === "true";
+  const numeric = (key, fallback, max) => {
+    const n = Number(fs[key] ?? fallback);
+    if (!Number.isFinite(n) || n < 0 || n > max) throw new Error("Invalid feature setting: " + key);
+    return n;
+  };
+  clean.daily_checkin_points = numeric("daily_checkin_points", 10, 100000);
+  clean.streak_7_bonus = numeric("streak_7_bonus", 50, 100000);
+  clean.deposit_bonus_percent = numeric("deposit_bonus_percent", 10, 20);
+  clean.leaderboard_prize_pool_usdt = numeric("leaderboard_prize_pool_usdt", 0, 100000000);
+  clean.auto_withdraw_max_usdt = numeric("auto_withdraw_max_usdt", 10, 100000000);
+  clean.min_withdraw_usdt = numeric("min_withdraw_usdt", 5, 100000000);
+  clean.max_withdraw_usdt = numeric("max_withdraw_usdt", 1000, 100000000);
+  if (clean.max_withdraw_usdt > 0 && clean.min_withdraw_usdt > clean.max_withdraw_usdt) throw new Error("Minimum withdrawal cannot exceed maximum withdrawal.");
+  clean.leaderboard_period = fs.leaderboard_period === "weekly" ? "weekly" : "daily";
+  const durations = Array.isArray(fs.round_durations) ? fs.round_durations.map(Number).filter(n => [1,3,5].includes(n)) : [1,3,5];
+  clean.round_durations = [...new Set(durations)].sort((a,b) => a-b);
+  if (clean.game_modes_enabled && !clean.round_durations.length) throw new Error("Select at least one round length.");
+  let vipLevels = fs.vip_levels;
+  if (typeof vipLevels === "string") { try { vipLevels = JSON.parse(vipLevels); } catch { throw new Error("VIP levels must be valid JSON."); } }
+  if (!Array.isArray(vipLevels) || vipLevels.length > 20) throw new Error("VIP levels must be a JSON array with at most 20 entries.");
+  clean.vip_levels = vipLevels.map((v, i) => {
+    const name = String(v?.name || "").trim().slice(0, 30);
+    const total_bet = Number(v?.total_bet);
+    const fee_discount = Number(v?.fee_discount || 0);
+    const commission = Number(v?.commission || 0);
+    if (!name || ![total_bet,fee_discount,commission].every(Number.isFinite) || total_bet < 0 || fee_discount < 0 || fee_discount > 100 || commission < 0 || commission > 100) throw new Error("Invalid VIP level at row " + (i+1) + ".");
+    return { name, total_bet, fee_discount, commission };
+  });
+  clean.vip_levels.sort((a,b) => a.total_bet-b.total_bet);
+  await setAppSetting("feature_settings", JSON.stringify(clean));
+  return { ok: true, message: "Settings saved.", feature_settings: clean };
 }
 
 async function getSupportSettings() {

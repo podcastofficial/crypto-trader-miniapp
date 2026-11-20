@@ -1057,6 +1057,10 @@ module.exports = async function handler(req, res) {
         const parsed = parseSettingValue(row.value);
         if (parsed !== null) config[row.key] = parsed;
       });
+      try {
+        const featureRaw = rows.rows.find(row => row.key === "feature_settings")?.value;
+        config.feature_settings = featureRaw ? JSON.parse(featureRaw) : null;
+      } catch { config.feature_settings = null; }
       await client.query("COMMIT"); transactionStarted = false;
       return json(res, 200, { success: true, config });
     }
